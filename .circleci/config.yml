@@ -23,7 +23,7 @@ jobs:
             - run: npm run build-prod
             - setup_remote_docker
             - aws-ecr/build-and-push-image:
-                repo: 'client'
+                repo: 'sg-app-fe'
                 tag: latest
                 assume-web-identity: false
                 attach-workspace: false
