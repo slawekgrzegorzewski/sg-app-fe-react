@@ -8,8 +8,8 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
 
     const [loggedId, setLoggedIn] = useState(localStorage.getItem("tokens") !== null);
 
-    const a = process.env.NODE_ENV;
-    const b = process.env.REACT_APP_BACKEND_URL;
+    // const a = process.env.NODE_ENV;
+    // const b = process.env.REACT_APP_BACKEND_URL;
     // const httpLink = new HttpLink({uri: /graphql'})
     const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
 

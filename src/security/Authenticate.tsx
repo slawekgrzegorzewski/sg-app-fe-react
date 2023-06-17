@@ -13,7 +13,7 @@ export type Token = {
 }
 
 export function Authenticate() {
-    let [searchParams, setSearchParams] = useSearchParams();
+    let [searchParams] = useSearchParams();
 
     async function getToken(): Promise<Token> {
 
@@ -37,7 +37,7 @@ export function Authenticate() {
         })).json();
     }
 
-    const {data, status} = useQuery('token', getToken);
+    const {data} = useQuery('token', getToken);
 
     if (data) {
         localStorage.setItem("tokens", JSON.stringify(data));
