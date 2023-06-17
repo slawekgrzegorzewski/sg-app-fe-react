@@ -19,6 +19,7 @@ jobs:
                 key: ReactCircleCI-{{ .Branch }}-{{ checksum "package.json" }}
                 paths:
                   - "node_modules"
+            - run: npm run compile
             - run: npm run build-prod
             - setup_remote_docker
             - aws-ecr/build-and-push-image:
