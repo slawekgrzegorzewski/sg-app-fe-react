@@ -7,6 +7,7 @@ export function Login({navigateTo}: { navigateTo: string }) {
             pathname: navigateTo
         }}></Navigate>
     } else {
+        console.log(process.env.NODE_ENV)
         const link = process.env.COGNITO_LOGIN_URI! +
             '?response_type=code' +
             '&client_id=' + process.env.COGNITO_CLIENT_ID! +
