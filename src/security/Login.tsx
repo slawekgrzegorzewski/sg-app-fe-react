@@ -7,10 +7,10 @@ export function Login({navigateTo}: { navigateTo: string }) {
             pathname: navigateTo
         }}></Navigate>
     } else {
-        const link = 'https://sg-app.auth.eu-central-1.amazoncognito.com/login?' +
-            'response_type=code' +
-            '&client_id=2bv3i268vv3v1f5kmfo2sqljfa' +
-            '&redirect_uri=http://localhost:3000/authenticate';
+        const link = process.env.COGNITO_LOGIN_URI! +
+            '?response_type=code' +
+            '&client_id=' + process.env.COGNITO_CLIENT_ID! +
+            '&redirect_uri=' + process.env.COGNITO_REDIRECT_URI!;
         return <a href={link}>Login</a>
     }
 }

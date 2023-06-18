@@ -23,12 +23,12 @@ export function Authenticate() {
 
         const form = [
             formEntry('grant_type', 'authorization_code'),
-            formEntry('client_id', '2bv3i268vv3v1f5kmfo2sqljfa'),
+            formEntry('client_id', process.env.COGNITO_CLIENT_ID!),
             formEntry('code', searchParams.get('code')!),
-            formEntry('redirect_uri', 'http://grzegorzewski.fun/authenticate')
+            formEntry('redirect_uri', process.env.COGNITO_REDIRECT_URI!)
         ]
 
-        return (await fetch('https://sg-app.auth.eu-central-1.amazoncognito.com/oauth2/token', {
+        return (await fetch(process.env.COGNITO_TOKEN_URI!, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
