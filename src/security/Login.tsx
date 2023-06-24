@@ -7,11 +7,11 @@ export function Login({navigateTo}: { navigateTo: string }) {
             pathname: navigateTo
         }}></Navigate>
     } else {
-        console.log(process.env.NODE_ENV)
-        const link = process.env.COGNITO_LOGIN_URI! +
+        console.log(JSON.stringify(process.env))
+        const link = process.env.REACT_APP_COGNITO_LOGIN_URI! +
             '?response_type=code' +
-            '&client_id=' + process.env.COGNITO_CLIENT_ID! +
-            '&redirect_uri=' + process.env.COGNITO_REDIRECT_URI!;
+            '&client_id=' + process.env.REACT_APP_COGNITO_CLIENT_ID! +
+            '&redirect_uri=' + process.env.REACT_APP_COGNITO_REDIRECT_URI!;
         return <a href={link}>Login</a>
     }
 }

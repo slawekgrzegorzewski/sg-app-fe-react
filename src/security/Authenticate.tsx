@@ -23,12 +23,12 @@ export function Authenticate() {
 
         const form = [
             formEntry('grant_type', 'authorization_code'),
-            formEntry('client_id', process.env.COGNITO_CLIENT_ID!),
+            formEntry('client_id', process.env.REACT_APP_COGNITO_CLIENT_ID!),
             formEntry('code', searchParams.get('code')!),
-            formEntry('redirect_uri', process.env.COGNITO_REDIRECT_URI!)
+            formEntry('redirect_uri', process.env.REACT_APP_COGNITO_REDIRECT_URI!)
         ]
 
-        return (await fetch(process.env.COGNITO_TOKEN_URI!, {
+        return (await fetch(process.env.REACT_APP_COGNITO_TOKEN_URI!, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
