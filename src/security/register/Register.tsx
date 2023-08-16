@@ -109,7 +109,7 @@ export function Register({afterRegistration}: { afterRegistration: string }) {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p style={{fontWeight: 700}}>Rejestracja</p>
+                    <p style={{fontWeight: 700}}>REJESTRACJA</p>
                     <TextField label="Imię"
                                variant="standard"
                                onChange={event => setFirstName(event.target.value)}
