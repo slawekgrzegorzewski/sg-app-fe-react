@@ -1,5 +1,5 @@
 import {useQuery} from "@apollo/client";
-import {Account, Accounts as GraphqlAccounts, AccountsQuery} from "../types";
+import {Accounts as GraphqlAccounts, AccountsQuery} from "../types";
 
 export function Accounts() {
 
