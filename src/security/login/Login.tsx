@@ -48,7 +48,7 @@ export function Login({afterLogin}: { afterLogin: string }) {
             <input type="text" id="otp" name="otp" placeholder="Hasło jednorazowe" title="Wprowadćź hasło jednorazowe"
                    onChange={event => setOtp(event.target.value)} required/>
             <button onClick={performLogin}>Zaloguj się</button>
-            <p>Nie masz jeszcze konta?<a>Zarejestruj się tutaj</a></p>
+            <p>Nie masz jeszcze konta?<b>Zarejestruj się tutaj</b></p>
         </>
     }
 }
