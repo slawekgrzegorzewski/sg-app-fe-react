@@ -1,0 +1,23 @@
+query Login(
+    $login: String!
+    $password:String!
+    $otp:String!
+)
+{
+    login(loginParameters: {
+        login: $login,
+        password: $password,
+        otp: $otp
+    }){
+        jwt,
+        user {
+            name,
+            email,
+            defaultDomainId,
+            domains {
+                id,
+                name
+            }
+        }
+    }
+}

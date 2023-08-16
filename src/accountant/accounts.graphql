@@ -1,0 +1,27 @@
+query Accounts {
+    accounts {
+        id
+        name
+        currency
+        currentBalance
+        balanceIndex
+        visible
+        bankAccount {
+            id
+            iban
+            currency
+            owner
+            product
+            bic
+            externalId
+            domain {
+                id
+                name
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}

@@ -23,12 +23,15 @@
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^3.3.1",
-    "@graphql-codegen/client-preset": "^3.0.1",
+    "@graphql-codegen/typescript": "^3.0.2",
+    "@graphql-codegen/typescript-operations": "^3.0.2",
+    "@graphql-codegen/typed-document-node": "^3.0.2",
+    "@graphql-codegen/typescript-document-nodes": "^3.0.2",
     "@types/base-64": "^1.0.0",
     "webpack-cli": "^5.1.1"
   },
   "scripts": {
-    "compile": "graphql-codegen",
+    "codegen": "graphql-codegen --config codegen.yml",
     "watch": "graphql-codegen -w",
     "start-dev": "env-cmd -f .env react-scripts start",
     "start-prod": "env-cmd -f .env.production react-scripts start",

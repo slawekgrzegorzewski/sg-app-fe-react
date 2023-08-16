@@ -4,25 +4,27 @@ import './index.css';
 import reportWebVitals from './reportWebVitals';
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "react-query";
-import {Login} from "./security/Login";
-import {Authenticate} from "./security/Authenticate";
 import {Authenticated} from "./security/Authenticated";
 import {Home} from "./Home";
+import {Login} from "./security/login/Login";
+import {ApolloClient, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
 
 const queryClient = new QueryClient();
+
+
+const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
+
+const apolloClient = new ApolloClient({
+    cache: new InMemoryCache(),
+    link: httpLink
+});
 
 const router = createBrowserRouter([
     {
         path: "/login",
-        element:
-            <Login navigateTo={'/home'}/>
-    },
-    {
-        path: "/authenticate",
-        element:
-            <QueryClientProvider client={queryClient}>
-                <Authenticate/>
-            </QueryClientProvider>
+        element: <ApolloProvider client={apolloClient}>
+            <Login afterLogin={'/home'}/>
+        </ApolloProvider>
     },
     {
         path: "/home",

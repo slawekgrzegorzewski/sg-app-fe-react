@@ -1,33 +1,31 @@
 import {ApolloClient, ApolloLink, ApolloProvider, concat, HttpLink, InMemoryCache} from "@apollo/client";
-import {Token} from "./Authenticate";
 import {onError} from "@apollo/client/link/error";
 import React, {useState} from "react";
 import {Navigate} from "react-router-dom";
+import {JWT_TOKEN, LOGGED_IN_USER} from "../common/local-storage-keys";
+import {getDomainId} from "../common/domain-utils";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
 
-    const [loggedId, setLoggedIn] = useState(localStorage.getItem("tokens") !== null);
+    const [loggedId, setLoggedIn] = useState(localStorage.getItem(JWT_TOKEN) !== null);
 
     const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
 
     const authMiddleware = new ApolloLink((operation, forward) => {
-        const emptyToken = '{ "id_token": "", "access_token": "", "refresh_token": "", "expires_in": 0, "token_type": ""}';
-        const tokensString = localStorage.getItem("tokens") || emptyToken;
-        const tokens: Token = JSON.parse(tokensString);
+        const jwt = localStorage.getItem(JWT_TOKEN) || '';
         operation.setContext(({headers = {}}) => ({
             headers: {
                 ...headers,
-                domainId: '2',
-                authorization: 'Bearer ' + tokens.access_token,
+                domainId: getDomainId(),
+                authorization: 'Bearer ' + jwt,
             }
         }));
-
         return forward(operation);
     })
 
     function logout() {
-        localStorage.removeItem('tokens');
-        localStorage.removeItem('user');
+        localStorage.removeItem(JWT_TOKEN);
+        localStorage.removeItem(LOGGED_IN_USER);
         setLoggedIn(false);
     }
 
