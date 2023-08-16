@@ -1,0 +1,32 @@
+mutation Register (
+    $firstName:String!
+    $lastName:String!
+    $login:String!
+    $email: String!
+    $password: String!
+    $repeatedPassword: String!
+){
+    register(registrationParameters:{
+        firstName:$firstName
+        lastName:$lastName
+        login:$login
+        email:$email
+        password:$password
+        repeatedPassword:$repeatedPassword
+    }){
+        mfaCode
+        qrLink
+    }
+}
+
+mutation SetupMFA (
+    $login: String!
+    $password: String!
+    $otp: String!
+){
+    setupMFA(mfaParameters:{
+        login:$login
+        password:$password
+        otp:$otp
+    })
+}

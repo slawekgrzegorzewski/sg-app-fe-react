@@ -15,8 +15,8 @@ type Account {
     currentBalance: BigDecimal!
     balanceIndex: Int
     visible: Boolean!
-    bankAccount: BankAccount!
-    domain: DomainSimple!
+    bankAccount: BankAccount
+    domain: DomainSimple
 }
 
 enum AssignmentAction {
@@ -35,8 +35,8 @@ type BankAccount {
     iban: String!
     currency: Currency!
     owner: String!
-    product: String!
-    bic: String!
+    product: String
+    bic: String
     externalId: String!
     domain: DomainSimple!
 }
@@ -335,6 +335,17 @@ input LoginParameters {
     otp: String!
 }
 
+type MFAData {
+    mfaCode: String!
+    qrLink: String!
+}
+
+input MFAParameters {
+    login: String!
+    password: String!
+    otp: String!
+}
+
 type MortgageCalculationInstallment {
     paymentFrom: LocalDate!
     paymentTo: LocalDate!
@@ -357,6 +368,9 @@ input MortgageCalculationParams {
 }
 
 type Mutation {
+    login(loginParameters: LoginParameters!): AuthenticationInfo!
+    register(registrationParameters: RegistrationParameters!): MFAData!
+    setupMFA(mfaParameters: MFAParameters!): Boolean!
     addRevenueAndExpenseEntry(
         input: RevenueAndExpenseEntryInput
     ): RevenueAndExpenseEntry
@@ -383,7 +397,6 @@ type Mutation {
 
 type Query {
     accounts: [Account!]!
-    login(loginParameters: LoginParameters!): AuthenticationInfo!
     allIPRs: [IntellectualProperty!]!
     nonIPTimeRecords: [TimeRecord!]!
     allTimeRecordCategories: [TimeRecordCategory!]!
@@ -395,6 +408,15 @@ type Query {
         mortgageCalculationParams: MortgageCalculationParams
     ): [MortgageCalculationInstallment!]!
     _service: _Service!
+}
+
+input RegistrationParameters {
+    firstName: String!
+    lastName: String!
+    login: String!
+    email: String!
+    password: String!
+    repeatedPassword: String!
 }
 
 type RevenueAndExpenseEntry {

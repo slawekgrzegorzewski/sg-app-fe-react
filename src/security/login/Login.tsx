@@ -1,9 +1,10 @@
 import React, {useState} from "react";
 import {Navigate} from "react-router-dom";
-import {useLazyQuery} from "@apollo/client";
-import {Login as GraphqlLogin, LoginQuery} from "../../types";
+import {useMutation} from "@apollo/client";
+import {Login as GraphqlLogin, LoginMutation} from "../../types";
 import {CURRENT_DOMAIN_ID, JWT_TOKEN, LOGGED_IN_USER} from "../../common/local-storage-keys";
 import {getDomainId} from "../../common/domain-utils";
+import {Button, Link, Paper, Stack, TextField} from "@mui/material";
 
 export function Login({afterLogin}: { afterLogin: string }) {
 
@@ -13,7 +14,7 @@ export function Login({afterLogin}: { afterLogin: string }) {
 
     const [jwt, setJWT] = useState(localStorage.getItem(JWT_TOKEN));
 
-    const [loginGraphqlQuery, {called}] = useLazyQuery<LoginQuery>(GraphqlLogin, {
+    const [loginGraphqlMutation, {called}] = useMutation<LoginMutation>(GraphqlLogin, {
         variables: {
             login: login,
             password: password,
@@ -22,15 +23,23 @@ export function Login({afterLogin}: { afterLogin: string }) {
     });
 
     function performLogin() {
-
-
-        loginGraphqlQuery().then(value => {
+        loginGraphqlMutation().then(value => {
             const {jwt, user} = value.data?.login!;
             localStorage.setItem(JWT_TOKEN, jwt);
             localStorage.setItem(LOGGED_IN_USER, JSON.stringify(user));
             localStorage.setItem(CURRENT_DOMAIN_ID, String(getDomainId(user.domains, user.defaultDomainId)));
             setJWT(jwt);
         })
+    }
+
+    function validateLoginForm() {
+        function stringNotEmpty(value: string) {
+            return value !== null && value.length > 0;
+        }
+
+        return stringNotEmpty(login)
+            && stringNotEmpty(password)
+            && stringNotEmpty(otp);
     }
 
     if (jwt) {
@@ -40,15 +49,37 @@ export function Login({afterLogin}: { afterLogin: string }) {
     } else if (called) {
         return <></>
     } else {
-        return <>
-            <input type="text" id="user" name="user" placeholder="Nazwa użytkownika" title="Wprowadź nazwę użytkownika"
-                   onChange={event => setLogin(event.target.value)} required/>
-            <input type="password" id="pass" name="pass" placeholder="Hasło" title="Wprowadź hasło"
-                   onChange={event => setPassword(event.target.value)} required/>
-            <input type="text" id="otp" name="otp" placeholder="Hasło jednorazowe" title="Wprowadćź hasło jednorazowe"
-                   onChange={event => setOtp(event.target.value)} required/>
-            <button onClick={performLogin}>Zaloguj się</button>
-            <p>Nie masz jeszcze konta?<b>Zarejestruj się tutaj</b></p>
-        </>
+        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
+            <Paper elevation={6} sx={{width: 400, padding: 5}}>
+                <Stack direction={"column"} spacing={4} alignItems={"center"}>
+                    <p style={{fontWeight: 700}}>LOGOWANIE</p>
+                    <TextField label="Login"
+                               variant="standard"
+                               onChange={event => setLogin(event.target.value)}
+                               sx={{width: '100%'}}
+                               required/>
+                    <TextField label="Hasło"
+                               variant="standard"
+                               type="password"
+                               onChange={event => setPassword(event.target.value)}
+                               sx={{width: '100%'}}
+                               required/>
+                    <TextField label="OTP"
+                               variant="standard"
+                               onChange={event => setOtp(event.target.value)}
+                               sx={{width: '100%'}}
+                               required/>
+                    {(
+                        <Button
+                            variant="outlined"
+                            onClick={performLogin}
+                            disabled={!validateLoginForm()}>
+                            Zaloguj się
+                        </Button>
+                    )}
+                    <p>Nie masz jeszcze konta? <Link href="/register">Zarejestruj się tutaj</Link></p>
+                </Stack>
+            </Paper>
+        </Stack>
     }
 }

@@ -8,6 +8,11 @@ import {Authenticated} from "./security/Authenticated";
 import {Home} from "./Home";
 import {Login} from "./security/login/Login";
 import {ApolloClient, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
+import {Register} from "./security/register/Register";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +29,12 @@ const router = createBrowserRouter([
         path: "/login",
         element: <ApolloProvider client={apolloClient}>
             <Login afterLogin={'/home'}/>
+        </ApolloProvider>
+    },
+    {
+        path: "/register",
+        element: <ApolloProvider client={apolloClient}>
+            <Register afterRegistration={'/home'}/>
         </ApolloProvider>
     },
     {
