@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {Navigate, useNavigate} from "react-router-dom";
 import {useMutation} from "@apollo/client";
 import {
     Register as GraphqlRegister,
@@ -77,12 +77,16 @@ export function Register({afterRegistration}: { afterRegistration: string }) {
         })
     }
 
-    if (qrLink) {
+    if (setupMFAResult.called) {
+        return <Navigate to={{
+            pathname: '/name'
+        }}></Navigate>;
+    } else if (qrLink) {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
                     <p style={{fontWeight: 700}}>Konfigurowanie MFA</p>
-                    <img src={qrLink}></img>
+                    <img src={qrLink} alt={''}></img>
                     <TextField label="Kod"
                                variant="standard"
                                value={mfaSecret}
