@@ -145,7 +145,7 @@ export function Register({afterRegistration}: { afterRegistration: string }) {
                     <Button variant="outlined" onClick={performRegistration} disabled={!validateRegistrationForm()}>
                         Zarejestruj się
                     </Button>
-                    <p>Masz już konto?<Link href="/login">Zaloguj się tutaj</Link></p>
+                    <p>Masz już konto? <Link href="/login">Zaloguj się tutaj</Link></p>
                 </Stack>
             </Paper>
         </Stack>
