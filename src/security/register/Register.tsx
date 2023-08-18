@@ -82,7 +82,7 @@ export function Register({afterRegistration}: { afterRegistration: string }) {
             pathname: '/name'
         }}></Navigate>;
     } else if (qrLink) {
-        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
+        return <Stack alignItems={"center"} justifyContent={{xs: 'flex-start', lg: 'center'}} height={{lg: '100vh'}}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
                     <p style={{fontWeight: 700}}>Konfigurowanie MFA</p>
@@ -106,7 +106,7 @@ export function Register({afterRegistration}: { afterRegistration: string }) {
     } else if (registerResult.called) {
         return <></>
     } else {
-        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
+        return <Stack alignItems={"center"} justifyContent={{xs: 'flex-start', lg: 'center'}} height={{lg: '100vh'}}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
                     <p style={{fontWeight: 700}}>REJESTRACJA</p>

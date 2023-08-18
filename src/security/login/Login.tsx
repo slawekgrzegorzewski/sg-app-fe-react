@@ -49,8 +49,8 @@ export function Login({afterLogin}: { afterLogin: string }) {
     } else if (called) {
         return <></>
     } else {
-        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
-            <Paper elevation={6} sx={{width: 400, padding: 5}}>
+        return <Stack alignItems={"center"} justifyContent={{xs: 'flex-start', sm: 'center'}} height={{sm: '100vh'}}>
+            <Paper elevation={6} sx={{maxWidth: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
                     <p style={{fontWeight: 700}}>LOGOWANIE</p>
                     <TextField label="Login"
