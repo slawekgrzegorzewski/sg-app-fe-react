@@ -5,6 +5,7 @@ import {Login as GraphqlLogin, LoginMutation} from "../../types";
 import {CURRENT_DOMAIN_ID, JWT_TOKEN, LOGGED_IN_USER} from "../../common/local-storage-keys";
 import {getDomainId} from "../../common/domain-utils";
 import {Button, Link, Paper, Stack, TextField} from "@mui/material";
+import getUserApplications from "../../application/applications-access";
 
 export function Login({afterLogin}: { afterLogin: string }) {
 
@@ -28,6 +29,7 @@ export function Login({afterLogin}: { afterLogin: string }) {
             localStorage.setItem(JWT_TOKEN, jwt);
             localStorage.setItem(LOGGED_IN_USER, JSON.stringify(user));
             localStorage.setItem(CURRENT_DOMAIN_ID, String(getDomainId(user.domains, user.defaultDomainId)));
+            const userApplications = getUserApplications(user);
             setJWT(jwt);
         })
     }

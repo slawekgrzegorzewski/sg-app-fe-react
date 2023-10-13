@@ -45,9 +45,6 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
     if (loggedId) {
         return <ApolloProvider client={apolloClient}>
             <div style={{display: 'flex'}}>
-                <div>
-                    <span onClick={logout}>Logout</span>
-                </div>
                 {children}
             </div>
         </ApolloProvider>;

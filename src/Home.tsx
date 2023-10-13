@@ -1,9 +1,7 @@
-import {CurrentUser} from "./CurrentUser";
-import {Accounts} from "./accountant/Accounts";
+import DrawerAppBar from "./application/DrawerAppBar";
 
 export function Home() {
     return <>
-        <CurrentUser/>
-        <Accounts/>
+        <DrawerAppBar/>
     </>
 }

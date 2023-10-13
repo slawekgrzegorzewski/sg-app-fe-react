@@ -502,6 +502,7 @@ scalar UUID
 type User {
     name: String!
     email: String!
+    roles: [String!]!
     defaultDomainId: Int!
     domains: [DomainSimple!]!
 }
