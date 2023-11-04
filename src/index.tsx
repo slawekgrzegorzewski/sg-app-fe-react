@@ -13,6 +13,7 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import {Register} from "./security/register/Register";
+import DrawerAppBar from "./application/DrawerAppBar";
 
 const queryClient = new QueryClient();
 
@@ -42,10 +43,13 @@ const router = createBrowserRouter([
         element:
             <QueryClientProvider client={queryClient}>
                 <Authenticated>
-                    <Home/>
+                    <>
+                        <DrawerAppBar/>
+                        <Home/>
+                    </>
                 </Authenticated>
             </QueryClientProvider>
-    },
+    }
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);

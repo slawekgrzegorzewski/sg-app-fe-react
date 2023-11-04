@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {Navigate} from "react-router-dom";
 import {useMutation} from "@apollo/client";
 import {Login as GraphqlLogin, LoginMutation} from "../../types";
-import {CURRENT_DOMAIN_ID, JWT_TOKEN, LOGGED_IN_USER} from "../../common/local-storage-keys";
+import {CURRENT_DOMAIN_ID, JWT_TOKEN, LOGGED_IN_USER, USER_APPLICATIONS_ACCESS} from "../../common/local-storage-keys";
 import {getDomainId} from "../../common/domain-utils";
 import {Button, Link, Paper, Stack, TextField} from "@mui/material";
 import getUserApplications from "../../application/applications-access";
@@ -26,10 +26,11 @@ export function Login({afterLogin}: { afterLogin: string }) {
     function performLogin() {
         loginGraphqlMutation().then(value => {
             const {jwt, user} = value.data?.login!;
+            const userApplications = getUserApplications(user);
             localStorage.setItem(JWT_TOKEN, jwt);
             localStorage.setItem(LOGGED_IN_USER, JSON.stringify(user));
             localStorage.setItem(CURRENT_DOMAIN_ID, String(getDomainId(user.domains, user.defaultDomainId)));
-            const userApplications = getUserApplications(user);
+            localStorage.setItem(USER_APPLICATIONS_ACCESS, JSON.stringify(userApplications));
             setJWT(jwt);
         })
     }
