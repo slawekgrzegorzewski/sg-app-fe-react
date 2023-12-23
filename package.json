@@ -43,7 +43,8 @@
     "build": "env-cmd -f .env react-scripts build",
     "build-prod": "env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy to s3": "aws s3 sync build/ s3://sg-application"
   },
   "eslintConfig": {
     "extends": [
