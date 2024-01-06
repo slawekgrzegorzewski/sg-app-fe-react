@@ -1,7 +1,6 @@
 import * as React from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import CssBaseline from '@mui/material/CssBaseline';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
@@ -17,7 +16,7 @@ import {CurrentUserDisplay} from "../application/CurrentUserDisplay";
 import ApplicationPicker from "./applications/components/ApplicationPicker";
 import DomainPicker from './domains/DomainPicker';
 import {useCurrentUser} from "./users/use-current-user";
-import {useTheme} from "@mui/material";
+import {Stack, styled, useTheme} from "@mui/material";
 
 interface Props {
     /**
@@ -66,11 +65,12 @@ export default function DrawerAppBar(props: Props) {
 
     const container = window !== undefined ? () => window().document.body : undefined;
 
+    const Offset = styled('div')(({theme}) => theme.mixins.toolbar);
+
     const hideWhenXS = {display: {xs: 'none', sm: 'block'}};
     return (
-        <Box sx={{display: 'flex'}}>
-            <CssBaseline/>
-            <AppBar component="nav">
+        <Stack direction="column" sx={{width: '100%'}}>
+            <AppBar position="sticky">
                 <Toolbar>
                     <IconButton
                         color="inherit"
@@ -81,6 +81,7 @@ export default function DrawerAppBar(props: Props) {
                     >
                         <MenuIcon/>
                     </IconButton>
+
                     <ApplicationPicker sx={hideWhenXS}/>
                     <DomainPicker sx={hideWhenXS}/>
                     <Box sx={{display: {xs: 'none', sm: 'block'}}}>
@@ -92,30 +93,25 @@ export default function DrawerAppBar(props: Props) {
                     </Box>
                 </Toolbar>
             </AppBar>
-            <Box component="nav">
-                <Drawer
-                    container={container}
-                    variant="temporary"
-                    open={mobileOpen}
-                    onClose={handleDrawerToggle}
-                    ModalProps={{
-                        keepMounted: true, // Better open performance on mobile.
-                    }}
-                    sx={{
-                        display: {xs: 'block', sm: 'none'},
-                        '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
-                    }}
-                >
-                    {drawer}
-                </Drawer>
-            </Box>
-            <Box component="main" sx={{p: 3}}>
-                <Toolbar/>
-                <Box>
-                    {children}
-                </Box>
-            </Box>
-        </Box>
+            <Drawer
+                container={container}
+                variant="temporary"
+                open={mobileOpen}
+                onClose={handleDrawerToggle}
+                ModalProps={{
+                    keepMounted: true,
+                }}
+                sx={{
+                    display: {xs: 'block', sm: 'none'},
+                    '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+                }}
+            >
+                {drawer}
+            </Drawer>
+            <Offset>
+                {children}
+            </Offset>
+        </Stack>
     )
         ;
 }

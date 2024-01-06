@@ -14,6 +14,7 @@ import '@fontsource/roboto/700.css';
 import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
 import {Dispatcher} from "./application/Dispatcher";
+import CssBaseline from "@mui/material/CssBaseline";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
         path: "/:applicationId/:domainId/:page?",
         element:
             <QueryClientProvider client={queryClient}>
+                <CssBaseline/>
                 <Authenticated>
                     <>
                         <DrawerAppBar>

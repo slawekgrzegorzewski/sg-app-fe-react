@@ -1,18 +1,10 @@
-import {
-    FormControl,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
-    SelectChangeEvent,
-    Theme,
-    useTheme
-} from "@mui/material";
+import {Menu, MenuItem, SelectChangeEvent, Theme, useTheme} from "@mui/material";
 import * as React from "react";
 import {useDomain} from "./use-domain";
 import {useCurrentUser} from "../users/use-current-user";
 import {SxProps} from "@mui/system";
-import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 export default function DomainPicker(properties: {
     sx?: SxProps<Theme>;
@@ -20,30 +12,46 @@ export default function DomainPicker(properties: {
     const theme = useTheme();
     const {user} = useCurrentUser();
     const {currentDomainId, changeCurrentDomainId} = useDomain();
-    const handleApplicationChange = (event: SelectChangeEvent) => {
-        changeCurrentDomainId(Number(event.target.value));
+    const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const domain = user!.user.domains.find(domain => domain.id === currentDomainId!)?.name || "";
+    const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setMenuAnchor(event.currentTarget);
+
     };
-    return (
-        <Box sx={properties.sx}>
-            <FormControl fullWidth>
-                <InputLabel id="domains-label"
-                            sx={{color: theme.palette.primary.contrastText}}>Domena</InputLabel>
-                <Select
-                    labelId="domains-label"
-                    id="domains"
-                    value={currentDomainId.toString()}
-                    onChange={handleApplicationChange}
-                    input={<OutlinedInput sx={{color: 'white'}}/>}
-                >
-                    {user!.user.domains.map((domain) => (
-                        <MenuItem
-                            key={domain.id}
-                            value={domain.id}>
-                            {domain.name}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-        </Box>
-    );
+    const closeMenu = () => {
+        setMenuAnchor(null);
+    };
+
+    function changeDomain(domainId: number) {
+        changeCurrentDomainId(domainId);
+        closeMenu();
+    }
+
+
+    return (<>
+        <Button sx={{...properties.sx, color: theme.palette.primary.contrastText}} variant="text" onClick={openMenu}>
+            {domain}
+        </Button>
+        <Menu
+            id="menu-appbar"
+            anchorEl={menuAnchor}
+            anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+            }}
+            open={Boolean(menuAnchor)}
+            onClose={closeMenu}
+        >
+            {user!.user.domains.map((domain) => (
+                <MenuItem onClick={() => changeDomain(domain.id)}>
+                    <Typography>{domain.name}</Typography>
+                </MenuItem>
+            ))}
+        </Menu>
+    </>);
 }

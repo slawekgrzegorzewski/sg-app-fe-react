@@ -1,18 +1,10 @@
-import {
-    FormControl,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
-    SelectChangeEvent,
-    Theme,
-    useTheme
-} from "@mui/material";
+import {Menu, MenuItem, Theme, useTheme} from "@mui/material";
 import {useCurrentUser} from "../../users/use-current-user";
 import * as React from "react";
 import {useApplication} from "../use-application";
 import {SxProps} from "@mui/system";
-import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
 
 export default function ApplicationPicker(properties: {
     sx?: SxProps<Theme>;
@@ -20,30 +12,48 @@ export default function ApplicationPicker(properties: {
     const theme = useTheme();
     const {currentApplicationId, changeCurrentApplicationId} = useApplication();
     const {user} = useCurrentUser();
-    const handleApplicationChange = (event: SelectChangeEvent) => {
-        changeCurrentApplicationId(event.target.value);
+    const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const application = user!.applications.find(application => application.id === currentApplicationId!)?.name || "";
+
+    const openMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setMenuAnchor(event.currentTarget);
+
     };
-    return (
-        <Box sx={properties.sx}>
-            <FormControl fullWidth>
-                <InputLabel id="applications-label"
-                            sx={{color: theme.palette.primary.contrastText}}>Aplikacja</InputLabel>
-                <Select
-                    labelId="applications-label"
-                    id="applications"
-                    value={currentApplicationId}
-                    onChange={handleApplicationChange}
-                    input={<OutlinedInput sx={{color: 'white'}}/>}
-                >
-                    {user!.applications.map((application) => (
-                        <MenuItem
-                            key={application.id}
-                            value={application.id}>
-                            {application.name}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
-        </Box>
-    );
+    const closeMenu = () => {
+        setMenuAnchor(null);
+
+    };
+
+    function changeApplication(applicationId: string) {
+        changeCurrentApplicationId(applicationId);
+        closeMenu();
+
+    }
+
+    return (<>
+        <Button sx={{...properties.sx, color: theme.palette.primary.contrastText}} variant="text" onClick={openMenu}>
+            {application}
+        </Button>
+        <Menu
+            id="menu-appbar"
+            anchorEl={menuAnchor}
+            anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+            }}
+            open={Boolean(menuAnchor)}
+            onClose={closeMenu}
+        >
+            {user!.applications.map((application) => (
+                <MenuItem onClick={() => changeApplication(application.id)}>
+                    <Typography>{application.name}</Typography>
+                </MenuItem>
+            ))}
+        </Menu>
+    </>);
 }
