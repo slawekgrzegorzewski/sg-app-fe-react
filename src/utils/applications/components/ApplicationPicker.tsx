@@ -1,15 +1,15 @@
-import {Menu, MenuItem, Theme, useTheme} from "@mui/material";
+import {Menu, MenuItem, Theme} from "@mui/material";
 import {useCurrentUser} from "../../users/use-current-user";
 import * as React from "react";
 import {useApplication} from "../use-application";
 import {SxProps} from "@mui/system";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import {ApplicationId} from "../applications-access";
 
 export default function ApplicationPicker(properties: {
     sx?: SxProps<Theme>;
 }) {
-    const theme = useTheme();
     const {currentApplicationId, changeCurrentApplicationId} = useApplication();
     const {user} = useCurrentUser();
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
@@ -24,15 +24,15 @@ export default function ApplicationPicker(properties: {
 
     };
 
-    function changeApplication(applicationId: string) {
+    function changeApplication(applicationId: ApplicationId) {
         changeCurrentApplicationId(applicationId);
         closeMenu();
 
     }
 
     return (<>
-        <Button sx={{...properties.sx, color: theme.palette.primary.contrastText}} variant="text" onClick={openMenu}>
-            {application}
+        <Button sx={{...properties.sx}} variant="text" onClick={openMenu} color="inherit">
+            <Typography>{application}</Typography>
         </Button>
         <Menu
             id="menu-appbar"

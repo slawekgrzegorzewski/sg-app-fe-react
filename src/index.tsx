@@ -15,6 +15,7 @@ import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
 import {Dispatcher} from "./application/Dispatcher";
 import CssBaseline from "@mui/material/CssBaseline";
+import {createTheme, ThemeProvider} from "@mui/material";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,12 @@ const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphq
 const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
     link: httpLink
+});
+
+const theme = createTheme({
+    // palette: {
+    //     mode: 'dark',
+    // },
 });
 
 const router = createBrowserRouter([
@@ -43,14 +50,16 @@ const router = createBrowserRouter([
         path: "/:applicationId/:domainId/:page?",
         element:
             <QueryClientProvider client={queryClient}>
-                <CssBaseline/>
-                <Authenticated>
-                    <>
-                        <DrawerAppBar>
-                            <Dispatcher/>
-                        </DrawerAppBar>
-                    </>
-                </Authenticated>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline/>
+                    <Authenticated>
+                        <>
+                            <DrawerAppBar>
+                                <Dispatcher/>
+                            </DrawerAppBar>
+                        </>
+                    </Authenticated>
+                </ThemeProvider>
             </QueryClientProvider>
     }
 ]);

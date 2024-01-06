@@ -9,6 +9,8 @@ export function useDomain() {
     return {
         currentDomainId: Number(domainId),
         changeCurrentDomainId: (newDomainId: number) => {
+            if (newDomainId === Number(domainId))
+                return;
             if (!user!.user.domains.find(domain => domain.id === newDomainId))
                 throw Error("Domain not assigned to the user");
             navigate('/' + applicationId + '/' + newDomainId);

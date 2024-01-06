@@ -81,13 +81,13 @@ export default function DrawerAppBar(props: Props) {
                     >
                         <MenuIcon/>
                     </IconButton>
-
+                    <Box sx={{flexGrow: 1}}/>
                     <ApplicationPicker sx={hideWhenXS}/>
                     <DomainPicker sx={hideWhenXS}/>
                     <Box sx={{display: {xs: 'none', sm: 'block'}}}>
                         {navItems.map((item) => (
-                            <Button key={item.id} sx={{color: '#fff'}} onClick={item.action}>
-                                {item.label}
+                            <Button key={item.id} onClick={item.action} color="inherit">
+                                <Typography>{item.label}</Typography>
                             </Button>
                         ))}
                     </Box>

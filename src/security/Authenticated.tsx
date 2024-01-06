@@ -16,7 +16,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
             headers: {
                 ...headers,
                 domainId: currentDomainId,
-                authorization: 'Bearer ' + (user || ''),
+                authorization: 'Bearer ' + (user?.jwtToken || ''),
             }
         }));
         return forward(operation);

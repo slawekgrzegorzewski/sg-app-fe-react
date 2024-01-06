@@ -1,4 +1,4 @@
-import {Menu, MenuItem, SelectChangeEvent, Theme, useTheme} from "@mui/material";
+import {Menu, MenuItem, Theme} from "@mui/material";
 import * as React from "react";
 import {useDomain} from "./use-domain";
 import {useCurrentUser} from "../users/use-current-user";
@@ -9,7 +9,6 @@ import Typography from "@mui/material/Typography";
 export default function DomainPicker(properties: {
     sx?: SxProps<Theme>;
 }) {
-    const theme = useTheme();
     const {user} = useCurrentUser();
     const {currentDomainId, changeCurrentDomainId} = useDomain();
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
@@ -29,8 +28,8 @@ export default function DomainPicker(properties: {
 
 
     return (<>
-        <Button sx={{...properties.sx, color: theme.palette.primary.contrastText}} variant="text" onClick={openMenu}>
-            {domain}
+        <Button sx={{...properties.sx}} variant="text" onClick={openMenu} color="inherit">
+            <Typography>{domain}</Typography>
         </Button>
         <Menu
             id="menu-appbar"
