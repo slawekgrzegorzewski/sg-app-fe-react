@@ -1,37 +1,33 @@
 import React, {useState} from "react";
-import {Navigate} from "react-router-dom";
 import {useMutation} from "@apollo/client";
 import {Login as GraphqlLogin, LoginMutation} from "../../types";
-import {CURRENT_DOMAIN_ID, JWT_TOKEN, LOGGED_IN_USER, USER_APPLICATIONS_ACCESS} from "../../common/local-storage-keys";
-import {getDomainId} from "../../common/domain-utils";
+import {useCurrentUser} from "../../utils/users/use-current-user";
 import {Button, Link, Paper, Stack, TextField} from "@mui/material";
-import getUserApplications from "../../application/applications-access";
+import getUserApplications, {Application} from "../../utils/applications/applications-access";
 
-export function Login({afterLogin}: { afterLogin: string }) {
+export function Login() {
 
-    const [login, setLogin] = useState('');
-    const [password, setPassword] = useState('');
-    const [otp, setOtp] = useState('');
+    const {setCurrentUser} = useCurrentUser();
 
-    const [jwt, setJWT] = useState(localStorage.getItem(JWT_TOKEN));
+    const [loginData, setLoginData] = useState({
+        login: '',
+        password: '',
+        otp: ''
+    });
 
     const [loginGraphqlMutation, {called}] = useMutation<LoginMutation>(GraphqlLogin, {
-        variables: {
-            login: login,
-            password: password,
-            otp: otp
-        }
+        variables: loginData
     });
 
     function performLogin() {
         loginGraphqlMutation().then(value => {
             const {jwt, user} = value.data?.login!;
-            const userApplications = getUserApplications(user);
-            localStorage.setItem(JWT_TOKEN, jwt);
-            localStorage.setItem(LOGGED_IN_USER, JSON.stringify(user));
-            localStorage.setItem(CURRENT_DOMAIN_ID, String(getDomainId(user.domains, user.defaultDomainId)));
-            localStorage.setItem(USER_APPLICATIONS_ACCESS, JSON.stringify(userApplications));
-            setJWT(jwt);
+            const applications: Application[] = getUserApplications(user);
+            setCurrentUser({
+                jwtToken: jwt,
+                user: user,
+                applications: applications
+            });
         })
     }
 
@@ -40,16 +36,12 @@ export function Login({afterLogin}: { afterLogin: string }) {
             return value !== null && value.length > 0;
         }
 
-        return stringNotEmpty(login)
-            && stringNotEmpty(password)
-            && stringNotEmpty(otp);
+        return stringNotEmpty(loginData.login)
+            && stringNotEmpty(loginData.password)
+            && stringNotEmpty(loginData.otp);
     }
 
-    if (jwt) {
-        return <Navigate to={{
-            pathname: afterLogin
-        }}></Navigate>
-    } else if (called) {
+    if (called) {
         return <></>
     } else {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
@@ -58,18 +50,27 @@ export function Login({afterLogin}: { afterLogin: string }) {
                     <p style={{fontWeight: 700}}>LOGOWANIE</p>
                     <TextField label="Login"
                                variant="standard"
-                               onChange={event => setLogin(event.target.value)}
+                               onChange={event => setLoginData({
+                                   ...loginData,
+                                   login: event.target.value
+                               })}
                                sx={{width: '100%'}}
                                required/>
                     <TextField label="Hasło"
                                variant="standard"
                                type="password"
-                               onChange={event => setPassword(event.target.value)}
+                               onChange={event => setLoginData({
+                                   ...loginData,
+                                   password: event.target.value
+                               })}
                                sx={{width: '100%'}}
                                required/>
                     <TextField label="OTP"
                                variant="standard"
-                               onChange={event => setOtp(event.target.value)}
+                               onChange={event => setLoginData({
+                                   ...loginData,
+                                   otp: event.target.value
+                               })}
                                sx={{width: '100%'}}
                                required/>
                     {(
