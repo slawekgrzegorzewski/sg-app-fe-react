@@ -10,7 +10,7 @@ import {
 import {Button, Link, Paper, Stack, TextField} from "@mui/material";
 
 
-export function Register({afterRegistration}: { afterRegistration: string }) {
+export function Register() {
 
     const navigate = useNavigate();
 

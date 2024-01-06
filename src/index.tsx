@@ -35,7 +35,7 @@ const router = createBrowserRouter([
     {
         path: "/register",
         element: <ApolloProvider client={apolloClient}>
-            <Register afterRegistration={'/home'}/>
+            <Register/>
         </ApolloProvider>
     },
     {
