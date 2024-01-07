@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import {useMutation} from "@apollo/client";
 import {Login as GraphqlLogin, LoginMutation} from "../../types";
 import {useCurrentUser} from "../../utils/users/use-current-user";
-import {Button, Link, Paper, Stack, TextField} from "@mui/material";
+import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
 
 export function Login() {
@@ -42,7 +42,9 @@ export function Login() {
     }
 
     if (called) {
-        return <></>
+        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
+            <Skeleton variant="rectangular" width={400} height={400}/>
+        </Stack>;
     } else {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>

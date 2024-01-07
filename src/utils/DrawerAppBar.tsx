@@ -4,10 +4,6 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -16,7 +12,7 @@ import {CurrentUserDisplay} from "../application/CurrentUserDisplay";
 import ApplicationPicker from "./applications/components/ApplicationPicker";
 import DomainPicker from './domains/DomainPicker';
 import {useCurrentUser} from "./users/use-current-user";
-import {Stack, styled, useTheme} from "@mui/material";
+import {Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 
 interface Props {
     /**
@@ -34,11 +30,7 @@ export default function DrawerAppBar(props: Props) {
     const {window, children} = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const {deleteCurrentUser} = useCurrentUser();
-
-    const navItems = [{
-        id: 'logout', label: 'Wyloguj', action: deleteCurrentUser
-    }];
-
+    const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
@@ -51,15 +43,9 @@ export default function DrawerAppBar(props: Props) {
             <Divider/>
             <ApplicationPicker/>
             <DomainPicker/>
-            <List>
-                {navItems.map((item) => (
-                    <ListItem key={item.id} disablePadding>
-                        <ListItemButton sx={{textAlign: 'center'}} onClick={item.action}>
-                            <ListItemText primary={item.label}/>
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
+            <Button key="logout" onClick={(event) => setMenuAnchor(event.currentTarget)} color="inherit">
+                <CurrentUserDisplay/>
+            </Button>
         </Box>
     );
 
@@ -84,13 +70,34 @@ export default function DrawerAppBar(props: Props) {
                     <Box sx={{flexGrow: 1}}/>
                     <ApplicationPicker sx={hideWhenXS}/>
                     <DomainPicker sx={hideWhenXS}/>
-                    <Box sx={{display: {xs: 'none', sm: 'block'}}}>
-                        {navItems.map((item) => (
-                            <Button key={item.id} onClick={item.action} color="inherit">
-                                <Typography>{item.label}</Typography>
-                            </Button>
-                        ))}
-                    </Box>
+                    <Button key="logout"
+                            onClick={(event) => setMenuAnchor(event.currentTarget)}
+                            color="inherit"
+                            sx={hideWhenXS}>
+                        <CurrentUserDisplay/>
+                    </Button>
+                    <Menu
+                        id="menu-appbar"
+                        anchorEl={menuAnchor}
+                        anchorOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        keepMounted
+                        transformOrigin={{
+                            vertical: 'top',
+                            horizontal: 'right',
+                        }}
+                        open={Boolean(menuAnchor)}
+                        onClose={() => {
+                            setMenuAnchor(null);
+
+                        }}
+                    >
+                        <MenuItem onClick={deleteCurrentUser}>
+                            <Typography>Wyloguj</Typography>
+                        </MenuItem>
+                    </Menu>
                 </Toolbar>
             </AppBar>
             <Drawer
