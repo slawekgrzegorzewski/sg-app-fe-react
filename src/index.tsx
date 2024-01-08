@@ -31,6 +31,14 @@ const theme = createTheme({
     // palette: {
     //     mode: 'dark',
     // },
+    palette: {
+        primary: {
+            main: "#2a9461"
+        },
+        secondary: {
+            main: "#494c7d"
+        }
+    }
 });
 
 const router = createBrowserRouter([

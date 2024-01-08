@@ -9,8 +9,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from "../application/CurrentUserDisplay";
-import ApplicationPicker from "./applications/components/ApplicationPicker";
-import DomainPicker from './domains/DomainPicker';
+import ApplicationAndDomainPicker from "./ApplicationAndDomainPicker";
 import {useCurrentUser} from "./users/use-current-user";
 import {Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 
@@ -37,15 +36,13 @@ export default function DrawerAppBar(props: Props) {
 
     const drawer = (
         <Box onClick={handleDrawerToggle} sx={{textAlign: 'center', backgroundColor: theme.palette.primary.main}}>
-            <Typography variant="h6" sx={{my: 2}}>
-                <CurrentUserDisplay/>
-            </Typography>
-            <Divider/>
-            <ApplicationPicker/>
-            <DomainPicker/>
-            <Button key="logout" onClick={(event) => setMenuAnchor(event.currentTarget)} color="inherit">
-                <CurrentUserDisplay/>
+            <Button key="logout" onClick={(event) => {setMenuAnchor(event.currentTarget); handleDrawerToggle();}} color="inherit">
+                <Typography>
+                    <CurrentUserDisplay/>
+                </Typography>
             </Button>
+            <Divider/>
+            <ApplicationAndDomainPicker onClick={()=> {console.log('a');setMobileOpen(false);}}/>
         </Box>
     );
 
@@ -68,13 +65,15 @@ export default function DrawerAppBar(props: Props) {
                         <MenuIcon/>
                     </IconButton>
                     <Box sx={{flexGrow: 1}}/>
-                    <ApplicationPicker sx={hideWhenXS}/>
-                    <DomainPicker sx={hideWhenXS}/>
-                    <Button key="logout"
+                    <ApplicationAndDomainPicker sx={hideWhenXS}/>
+                    <Button key="account"
+                            variant="text"
                             onClick={(event) => setMenuAnchor(event.currentTarget)}
                             color="inherit"
                             sx={hideWhenXS}>
-                        <CurrentUserDisplay/>
+                        <Typography>
+                            <CurrentUserDisplay/>
+                        </Typography>
                     </Button>
                     <Menu
                         id="menu-appbar"
@@ -91,7 +90,6 @@ export default function DrawerAppBar(props: Props) {
                         open={Boolean(menuAnchor)}
                         onClose={() => {
                             setMenuAnchor(null);
-
                         }}
                     >
                         <MenuItem onClick={deleteCurrentUser}>
