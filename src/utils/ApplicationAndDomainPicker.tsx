@@ -11,7 +11,8 @@ import {useApplicationAndDomain} from "./use-application-and-domain";
 
 export default function ApplicationAndDomainPicker(properties: {
     sx?: SxProps<Theme>;
-    onClick?: () => void;
+    fullScreen?: boolean;
+    onClose?: () => void;
 }) {
     const {currentApplicationId, currentDomainId, changeCurrentSettings} = useApplicationAndDomain();
     const {user} = useCurrentUser();
@@ -20,18 +21,23 @@ export default function ApplicationAndDomainPicker(properties: {
     const application = user!.applications.find(application => application.id === currentApplicationId!)!;
     const domain = user!.user.domains.find(domain => domain.id === currentDomainId)!;
 
-    function changeApplication(selected: string[]) {
+    function changeSettings(selected: string[]) {
         const applicationId = selected[0] as ApplicationId;
         const domainId = Number(selected[1]);
         console.log(applicationId);
         console.log(domainId);
         changeCurrentSettings(applicationId, domainId);
         setDialogOpen(false);
+        properties.onClose?.();
+    }
+
+    function cancel() {
+        setDialogOpen(false);
+        properties.onClose?.();
     }
 
     return (<>
         <Button sx={{...properties.sx}} variant="text" onClick={() => {
-            if(properties.onClick) properties.onClick();
             setDialogOpen(true);
         }} color="inherit">
             <Stack direction="column">
@@ -56,7 +62,9 @@ export default function ApplicationAndDomainPicker(properties: {
             ]}
             selectedValue={[currentApplicationId, currentDomainId.toString()]}
             open={dialogOpen}
-            onClose={changeApplication}
+            onClose={changeSettings}
+            onCancel={cancel}
+            fullScreen={properties.fullScreen || false}
         />
     </>);
 }

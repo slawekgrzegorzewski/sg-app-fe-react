@@ -1,6 +1,7 @@
-import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText} from "@mui/material";
+import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText, Stack} from "@mui/material";
 import * as React from "react";
 import {useState} from "react";
+import Button from "@mui/material/Button";
 
 export type Option = {
     id: string;
@@ -10,11 +11,13 @@ export type MultiPickDialogProps = {
     options: Option[][];
     open: boolean;
     selectedValue: string[];
-    onClose: (value: string[]) => void;
+    onClose?: (value: string[]) => void;
+    onCancel?: () => void;
+    fullScreen?: boolean
 }
 
 export default function MultiPickDialog(props: MultiPickDialogProps) {
-    const {onClose, selectedValue, open, options} = props;
+    const {onClose, onCancel, selectedValue, open, options, fullScreen} = props;
     const populateOptions = function () {
         const selected: Option[] = [];
         const notSelected: Option[][] = [];
@@ -28,9 +31,6 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
     const o = populateOptions();
     const [selectedOptions, setSelectedOptions] = useState<Option[]>(o.selected);
     let notSelectedOptions: Option[][] = o.notSelected;
-    const handleClose = () => {
-        onClose(selectedValue);
-    };
 
     const handleListItemClick = (index: number, value: string) => {
         selectedValue[index] = value;
@@ -39,8 +39,9 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
         setSelectedOptions(o.selected);
     };
 
+    const halfWidth = {width: '50%'};
     return (
-        <Dialog onClose={handleClose} open={open}>
+        <Dialog onClose={() => onCancel?.()} open={open} fullScreen={fullScreen || false}>
             {options.map((option, i) => (
                     <>
                         <DialogTitle>{selectedOptions ? selectedOptions[i].value : 'Wybierz aplikację'}</DialogTitle>
@@ -56,6 +57,14 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
                     </>
                 )
             )}
+            <Stack direction="row">
+                <Button variant="text" sx={halfWidth} onClick={() => onCancel?.()}>
+                    Anuluj
+                </Button>
+                <Button variant="text" sx={halfWidth} onClick={() => onClose?.(selectedValue)}>
+                    Potwierdź
+                </Button>
+            </Stack>
         </Dialog>
     );
 }

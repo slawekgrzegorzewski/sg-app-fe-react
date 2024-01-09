@@ -22,8 +22,6 @@ interface Props {
     children: React.ReactNode;
 }
 
-const drawerWidth = 240;
-
 export default function DrawerAppBar(props: Props) {
     const theme = useTheme();
     const {window, children} = props;
@@ -33,18 +31,6 @@ export default function DrawerAppBar(props: Props) {
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
-
-    const drawer = (
-        <Box onClick={handleDrawerToggle} sx={{textAlign: 'center', backgroundColor: theme.palette.primary.main}}>
-            <Button key="logout" onClick={(event) => {setMenuAnchor(event.currentTarget); handleDrawerToggle();}} color="inherit">
-                <Typography>
-                    <CurrentUserDisplay/>
-                </Typography>
-            </Button>
-            <Divider/>
-            <ApplicationAndDomainPicker onClick={()=> {console.log('a');setMobileOpen(false);}}/>
-        </Box>
-    );
 
     const container = window !== undefined ? () => window().document.body : undefined;
 
@@ -103,15 +89,24 @@ export default function DrawerAppBar(props: Props) {
                 variant="temporary"
                 open={mobileOpen}
                 onClose={handleDrawerToggle}
-                ModalProps={{
-                    keepMounted: true,
-                }}
-                sx={{
-                    display: {xs: 'block', sm: 'none'},
-                    '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
-                }}
             >
-                {drawer}
+                {(
+                    <Box
+                        sx={{textAlign: 'center', backgroundColor: theme.palette.primary.main}}>
+                        <Button key="logout" onClick={(event) => {
+                            setMenuAnchor(event.currentTarget);
+                            handleDrawerToggle();
+                        }}
+                                sx={{color: theme.palette.primary.contrastText}}>
+                            <Typography>
+                                <CurrentUserDisplay/>
+                            </Typography>
+                        </Button>
+                        <Divider/>
+                        <ApplicationAndDomainPicker onClose={handleDrawerToggle}
+                                                    sx={{color: theme.palette.primary.contrastText}}/>
+                    </Box>
+                )}
             </Drawer>
             <Offset>
                 {children}
