@@ -12,6 +12,9 @@ import {CurrentUserDisplay} from "../application/CurrentUserDisplay";
 import ApplicationAndDomainPicker from "./ApplicationAndDomainPicker";
 import {useCurrentUser} from "./users/use-current-user";
 import {Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
+import {useApplication} from "./applications/use-application";
+import {applications} from "./applications/applications-access";
+import {useApplicationNavigation} from "./use-application-navigation";
 
 interface Props {
     /**
@@ -23,6 +26,8 @@ interface Props {
 }
 
 export default function DrawerAppBar(props: Props) {
+    const navigate = useApplicationNavigation();
+    const {currentApplicationId} = useApplication();
     const theme = useTheme();
     const {window, children} = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -50,6 +55,12 @@ export default function DrawerAppBar(props: Props) {
                     >
                         <MenuIcon/>
                     </IconButton>
+                    {
+                        Array.from(applications.get(currentApplicationId)?.pages.values() || []).map(page => (
+                            <Button color="inherit" onClick={() => navigate(page.links[0])}>
+                                {page.label}
+                            </Button>))
+                    }
                     <Box sx={{flexGrow: 1}}/>
                     <ApplicationAndDomainPicker sx={hideWhenXS}/>
                     <Button key="account"

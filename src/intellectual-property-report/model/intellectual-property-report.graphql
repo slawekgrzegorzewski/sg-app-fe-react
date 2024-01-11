@@ -1,0 +1,66 @@
+query AllIPRs {
+    allIPRs {
+        id
+        description
+        tasks {
+            id
+            attachments
+            coAuthors
+            description
+            timeRecords {
+                id
+                date
+                numberOfHours
+                description
+                timeRecordCategory {
+                    id
+                    name
+                    domain {
+                        id
+                        name
+                    }
+                }
+                domain {
+                    id
+                    name
+                }
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}
+
+query AllTimeRecordCategories {
+    allTimeRecordCategories {
+        id
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+query NonIpTimeRecords {
+    nonIPTimeRecords {
+        id
+        date
+        numberOfHours
+        description
+        timeRecordCategory {
+            id
+            name
+            domain {
+                id
+                name
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}
