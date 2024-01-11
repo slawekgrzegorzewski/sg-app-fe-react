@@ -13,6 +13,7 @@ mutation Login(
         user {
             name,
             email,
+            roles,
             defaultDomainId,
             domains {
                 id,

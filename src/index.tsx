@@ -5,7 +5,6 @@ import reportWebVitals from './reportWebVitals';
 import {createBrowserRouter, RouterProvider} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "react-query";
 import {Authenticated} from "./security/Authenticated";
-import {Home} from "./Home";
 import {Login} from "./security/login/Login";
 import {ApolloClient, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
 import '@fontsource/roboto/300.css';
@@ -13,6 +12,10 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import {Register} from "./security/register/Register";
+import DrawerAppBar from "./utils/DrawerAppBar";
+import {Dispatcher} from "./application/Dispatcher";
+import CssBaseline from "@mui/material/CssBaseline";
+import {createTheme, ThemeProvider} from "@mui/material";
 
 const queryClient = new QueryClient();
 
@@ -24,28 +27,49 @@ const apolloClient = new ApolloClient({
     link: httpLink
 });
 
+const theme = createTheme({
+    // palette: {
+    //     mode: 'dark',
+    // },
+    palette: {
+        primary: {
+            main: "#2a9461"
+        },
+        secondary: {
+            main: "#494c7d"
+        }
+    }
+});
+
 const router = createBrowserRouter([
     {
         path: "/login",
         element: <ApolloProvider client={apolloClient}>
-            <Login afterLogin={'/home'}/>
+            <Login/>
         </ApolloProvider>
     },
     {
         path: "/register",
         element: <ApolloProvider client={apolloClient}>
-            <Register afterRegistration={'/home'}/>
+            <Register/>
         </ApolloProvider>
     },
     {
-        path: "/home",
+        path: "/:applicationId/:domainId/:page?",
         element:
             <QueryClientProvider client={queryClient}>
-                <Authenticated>
-                    <Home/>
-                </Authenticated>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline/>
+                    <Authenticated>
+                        <>
+                            <DrawerAppBar>
+                                <Dispatcher/>
+                            </DrawerAppBar>
+                        </>
+                    </Authenticated>
+                </ThemeProvider>
             </QueryClientProvider>
-    },
+    }
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);

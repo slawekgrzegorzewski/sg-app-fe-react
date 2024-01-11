@@ -1,31 +1,29 @@
 import {ApolloClient, ApolloLink, ApolloProvider, concat, HttpLink, InMemoryCache} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 import React, {useState} from "react";
-import {Navigate} from "react-router-dom";
-import {JWT_TOKEN, LOGGED_IN_USER} from "../common/local-storage-keys";
-import {getDomainId} from "../common/domain-utils";
+import {useNavigate} from "react-router-dom";
+import {useCurrentUser} from "../utils/users/use-current-user";
+import {useDomain} from "../utils/domains/use-domain";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
-
-    const [loggedId, setLoggedIn] = useState(localStorage.getItem(JWT_TOKEN) !== null);
-
+    const navigate = useNavigate();
+    const {currentDomainId} = useDomain();
+    const {user, deleteCurrentUser} = useCurrentUser();
+    const [loggedId, setLoggedIn] = useState(user !== null);
     const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
-
     const authMiddleware = new ApolloLink((operation, forward) => {
-        const jwt = localStorage.getItem(JWT_TOKEN) || '';
         operation.setContext(({headers = {}}) => ({
             headers: {
                 ...headers,
-                domainId: getDomainId(),
-                authorization: 'Bearer ' + jwt,
+                domainId: currentDomainId,
+                authorization: 'Bearer ' + (user?.jwtToken || ''),
             }
         }));
         return forward(operation);
     })
 
     function logout() {
-        localStorage.removeItem(JWT_TOKEN);
-        localStorage.removeItem(LOGGED_IN_USER);
+        deleteCurrentUser();
         setLoggedIn(false);
     }
 
@@ -45,15 +43,11 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
     if (loggedId) {
         return <ApolloProvider client={apolloClient}>
             <div style={{display: 'flex'}}>
-                <div>
-                    <span onClick={logout}>Logout</span>
-                </div>
                 {children}
             </div>
         </ApolloProvider>;
     } else {
-        return <Navigate to={{
-            pathname: "/login"
-        }}/>
+        navigate("/login");
+        return <></>;
     }
 }

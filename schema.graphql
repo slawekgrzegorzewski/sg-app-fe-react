@@ -1,28 +1,13 @@
-directive @extends on OBJECT | INTERFACE
-
-directive @external on FIELD_DEFINITION
-
-directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
-
-directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
-
-directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
-
 type Account {
-    id: Int!
-    name: String!
+    balanceIndex: Int
+    bankAccount: BankAccount
+    creditLimit: BigDecimal!
     currency: Currency!
     currentBalance: BigDecimal!
-    balanceIndex: Int
-    visible: Boolean!
-    bankAccount: BankAccount
     domain: DomainSimple
-}
-
-enum AssignmentAction {
-    NOP
-    ASSIGN
-    UNASSIGN
+    id: Int!
+    name: String!
+    visible: Boolean!
 }
 
 type AuthenticationInfo {
@@ -31,42 +16,155 @@ type AuthenticationInfo {
 }
 
 type BankAccount {
-    id: Int!
-    iban: String!
+    bic: String
     currency: Currency!
+    domain: DomainSimple!
+    externalId: String!
+    iban: String!
+    id: Int!
     owner: String!
     product: String
-    bic: String
-    externalId: String!
-    domain: DomainSimple!
 }
-
-"""
-An arbitrary precision signed decimal
-"""
-scalar BigDecimal
-
-"""
-An ISO-4217 compliant Currency Scalar
-"""
-scalar Currency
 
 type DomainSimple {
     id: Int!
     name: String!
 }
 
+type IntellectualProperty {
+    description: String!
+    domain: DomainSimple!
+    id: Int!
+    tasks: [Task!]
+}
+
+type MFAData {
+    mfaCode: String!
+    qrLink: String!
+}
+
+type MortgageCalculationInstallment {
+    installment: BigDecimal!
+    overpayment: BigDecimal!
+    paidInterest: BigDecimal!
+    paymentFrom: LocalDate!
+    paymentTo: LocalDate!
+    remainingCapitalAtTheBeginning: BigDecimal!
+    repaidCapital: BigDecimal!
+}
+
+type Mutation {
+    addIPR(input: IntellectualPropertyData): IntellectualProperty
+    addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput): RevenueAndExpenseEntry
+    assignCategoryToTimeRecord(timeRecordCategoryId: Int, timeRecordId: Int!): String!
+    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
+    createTimeRecord(timeRecordData: TimeRecordData!): String!
+    createTimeRecordCategory(name: String!): TimeRecordCategory!
+    deleteIPR(intellectualPropertyId: Int!): String!
+    deleteTask(taskId: Int!): String!
+    deleteTimeRecord(timeRecordId: Int!): String!
+    deleteTimeRecordCategory(timeRecordId: Int!): String!
+    login(loginParameters: LoginParameters!): AuthenticationInfo!
+    register(registrationParameters: RegistrationParameters!): MFAData!
+    setupMFA(mfaParameters: MFAParameters!): Boolean!
+    updateIPR(input: IntellectualPropertyData, intellectualPropertyId: Int!): IntellectualProperty
+    updateTask(taskData: TaskData!, taskId: Int!): String!
+    updateTimeRecord(timeRecordData: TimeRecordData!, timeRecordId: Int!): String!
+    updateTimeRecordCategory(name: String!, timeRecordId: Int!): String!
+}
+
+type Query {
+    _service: _Service!
+    accounts: [Account!]!
+    allIPRs: [IntellectualProperty!]!
+    allTimeRecordCategories: [TimeRecordCategory!]!
+    monthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
+    nonIPTimeRecords: [TimeRecord!]!
+    simulateMortgage(mortgageCalculationParams: MortgageCalculationParams): [MortgageCalculationInstallment!]!
+}
+
+type RevenueAndExpenseEntry {
+    accountingDocumentNumber: String!
+    additionalCostOfPurchase: BigDecimal!
+    comments: String!
+    counterparty: String!
+    counterpartyAddress: String!
+    description: String!
+    domain: DomainSimple!
+    entryDate: LocalDate!
+    entryOrder: Int!
+    otherExpense: BigDecimal!
+    otherIncome: BigDecimal!
+    providedGoodsAndServicesValue: BigDecimal!
+    publicId: UUID!
+    purchasedGoodsAndMaterialsValue: BigDecimal!
+    remunerationInCashOrInKind: BigDecimal!
+    totalExpense: BigDecimal!
+    totalIncome: BigDecimal!
+}
+
+type Task {
+    attachments: [String!]
+    coAuthors: String!
+    description: String!
+    id: Int!
+    timeRecords: [TimeRecord!]
+}
+
+type TimeRecord {
+    date: LocalDate!
+    description: String
+    domain: DomainSimple!
+    id: Int!
+    numberOfHours: BigDecimal!
+    timeRecordCategory: TimeRecordCategory
+}
+
+type TimeRecordCategory {
+    domain: DomainSimple!
+    id: Int!
+    name: String!
+}
+
+type User {
+    defaultDomainId: Int!
+    domains: [DomainSimple!]!
+    email: String!
+    name: String!
+    roles: [String!]!
+}
+
+type _Service {
+    sdl: String!
+}
+
+enum AssignmentAction {
+    ASSIGN
+    NOP
+    UNASSIGN
+}
+
 enum ErrorDetail {
     """
-    Unknown error.
+    The deadline expired before the operation could complete.
 
-    This error should only be returned when no other error detail applies.
-    If a client sees an unknown errorDetail, it will be interpreted as UNKNOWN.
+    For operations that change the state of the system, this error
+    may be returned even if the operation has completed successfully.
+    For example, a successful response from a server could have been
+    delayed long enough for the deadline to expire.
 
-    HTTP Mapping: 500 Internal Server Error
+    HTTP Mapping: 504 Gateway Timeout
+    Error Type: UNAVAILABLE
     """
-    UNKNOWN
+    DEADLINE_EXCEEDED
+    """
+    The server detected that the client is exhibiting a behavior that
+    might be generating excessive load.
 
+    HTTP Mapping: 429 Too Many Requests or 420 Enhance Your Calm
+    Error Type: UNAVAILABLE
+    """
+    ENHANCE_YOUR_CALM
     """
     The requested field is not found in the schema.
 
@@ -82,27 +180,6 @@ enum ErrorDetail {
     Error Type: BAD_REQUEST
     """
     FIELD_NOT_FOUND
-
-    """
-    The provided cursor is not valid.
-
-    The most common usage for this error is when a client is paginating
-    through a list that uses stateful cursors. In that case, the provided
-    cursor may be expired.
-
-    HTTP Mapping: 404 Not Found
-    Error Type: NOT_FOUND
-    """
-    INVALID_CURSOR
-
-    """
-    The operation is not implemented or is not currently supported/enabled.
-
-    HTTP Mapping: 501 Not Implemented
-    Error Type: BAD_REQUEST
-    """
-    UNIMPLEMENTED
-
     """
     The client specified an invalid argument.
 
@@ -114,20 +191,32 @@ enum ErrorDetail {
     Error Type: BAD_REQUEST
     """
     INVALID_ARGUMENT
-
     """
-    The deadline expired before the operation could complete.
+    The provided cursor is not valid.
 
-    For operations that change the state of the system, this error
-    may be returned even if the operation has completed successfully.
-    For example, a successful response from a server could have been
-    delayed long enough for the deadline to expire.
+    The most common usage for this error is when a client is paginating
+    through a list that uses stateful cursors. In that case, the provided
+    cursor may be expired.
 
-    HTTP Mapping: 504 Gateway Timeout
-    Error Type: UNAVAILABLE
+    HTTP Mapping: 404 Not Found
+    Error Type: NOT_FOUND
     """
-    DEADLINE_EXCEEDED
+    INVALID_CURSOR
+    """
+    Unable to perform operation because a required resource is missing.
 
+    Example: Client is attempting to refresh a list, but the specified
+    list is expired. This requires an action by the client to get a new list.
+
+    If the user is simply trying GET a resource that is not found,
+    use the NOT_FOUND error type. FAILED_PRECONDITION.MISSING_RESOURCE
+    is to be used particularly when the user is performing an operation
+    that requires a particular resource to exist.
+
+    HTTP Mapping: 400 Bad Request or 500 Internal Server Error
+    Error Type: FAILED_PRECONDITION
+    """
+    MISSING_RESOURCE
     """
     Service Error.
 
@@ -144,32 +233,6 @@ enum ErrorDetail {
     Error Type: UNAVAILABLE
     """
     SERVICE_ERROR
-
-    """
-    Request throttled based on server CPU limits
-
-    HTTP Mapping: 503 Unavailable.
-    Error Type: UNAVAILABLE
-    """
-    THROTTLED_CPU
-
-    """
-    Request throttled based on server concurrency limits.
-
-    HTTP Mapping: 503 Unavailable
-    Error Type: UNAVAILABLE
-    """
-    THROTTLED_CONCURRENCY
-
-    """
-    The server detected that the client is exhibiting a behavior that
-    might be generating excessive load.
-
-    HTTP Mapping: 429 Too Many Requests or 420 Enhance Your Calm
-    Error Type: UNAVAILABLE
-    """
-    ENHANCE_YOUR_CALM
-
     """
     Request failed due to network errors.
 
@@ -177,99 +240,39 @@ enum ErrorDetail {
     Error Type: UNAVAILABLE
     """
     TCP_FAILURE
-
     """
-    Unable to perform operation because a required resource is missing.
+    Request throttled based on server concurrency limits.
 
-    Example: Client is attempting to refresh a list, but the specified
-    list is expired. This requires an action by the client to get a new list.
-
-    If the user is simply trying GET a resource that is not found,
-    use the NOT_FOUND error type. FAILED_PRECONDITION.MISSING_RESOURCE
-    is to be used particularly when the user is performing an operation
-    that requires a particular resource to exist.
-
-    HTTP Mapping: 400 Bad Request or 500 Internal Server Error
-    Error Type: FAILED_PRECONDITION
+    HTTP Mapping: 503 Unavailable
+    Error Type: UNAVAILABLE
     """
-    MISSING_RESOURCE
-}
+    THROTTLED_CONCURRENCY
+    """
+    Request throttled based on server CPU limits
 
-enum ErrorType {
+    HTTP Mapping: 503 Unavailable.
+    Error Type: UNAVAILABLE
+    """
+    THROTTLED_CPU
+    """
+    The operation is not implemented or is not currently supported/enabled.
+
+    HTTP Mapping: 501 Not Implemented
+    Error Type: BAD_REQUEST
+    """
+    UNIMPLEMENTED
     """
     Unknown error.
 
-    For example, this error may be returned when
-    an error code received from another address space belongs to
-    an error space that is not known in this address space.  Also
-    errors raised by APIs that do not return enough error information
-    may be converted to this error.
-
-    If a client sees an unknown errorType, it will be interpreted as UNKNOWN.
-    Unknown errors MUST NOT trigger any special behavior. These MAY be treated
-    by an implementation as being equivalent to INTERNAL.
-
-    When possible, a more specific error should be provided.
-
-    HTTP Mapping: 520 Unknown Error
-    """
-    UNKNOWN
-
-    """
-    Internal error.
-
-    An unexpected internal error was encountered. This means that some
-    invariants expected by the underlying system have been broken.
-    This error code is reserved for serious errors.
+    This error should only be returned when no other error detail applies.
+    If a client sees an unknown errorDetail, it will be interpreted as UNKNOWN.
 
     HTTP Mapping: 500 Internal Server Error
     """
-    INTERNAL
+    UNKNOWN
+}
 
-    """
-    The requested entity was not found.
-
-    This could apply to a resource that has never existed (e.g. bad resource id),
-    or a resource that no longer exists (e.g. cache expired.)
-
-    Note to server developers: if a request is denied for an entire class
-    of users, such as gradual feature rollout or undocumented allowlist,
-    `NOT_FOUND` may be used. If a request is denied for some users within
-    a class of users, such as user-based access control, `PERMISSION_DENIED`
-    must be used.
-
-    HTTP Mapping: 404 Not Found
-    """
-    NOT_FOUND
-
-    """
-    The request does not have valid authentication credentials.
-
-    This is intended to be returned only for routes that require
-    authentication.
-
-    HTTP Mapping: 401 Unauthorized
-    """
-    UNAUTHENTICATED
-
-    """
-    The caller does not have permission to execute the specified
-    operation.
-
-    `PERMISSION_DENIED` must not be used for rejections
-    caused by exhausting some resource or quota.
-    `PERMISSION_DENIED` must not be used if the caller
-    cannot be identified (use `UNAUTHENTICATED`
-    instead for those errors).
-
-    This error Type does not imply the
-    request is valid or the requested entity exists or satisfies
-    other pre-conditions.
-
-    HTTP Mapping: 403 Forbidden
-    """
-    PERMISSION_DENIED
-
+enum ErrorType {
     """
     Bad Request.
 
@@ -280,18 +283,6 @@ enum ErrorType {
     HTTP Mapping: 400 Bad Request
     """
     BAD_REQUEST
-
-    """
-    Currently Unavailable.
-
-    The service is currently unavailable.  This is most likely a
-    transient condition, which can be corrected by retrying with
-    a backoff.
-
-    HTTP Mapping: 503 Unavailable
-    """
-    UNAVAILABLE
-
     """
     The operation was rejected because the system is not in a state
     required for the operation's execution.  For example, the directory
@@ -311,159 +302,152 @@ enum ErrorType {
     HTTP Mapping: 400 Bad Request or 500 Internal Server Error
     """
     FAILED_PRECONDITION
+    """
+    Internal error.
+
+    An unexpected internal error was encountered. This means that some
+    invariants expected by the underlying system have been broken.
+    This error code is reserved for serious errors.
+
+    HTTP Mapping: 500 Internal Server Error
+    """
+    INTERNAL
+    """
+    The requested entity was not found.
+
+    This could apply to a resource that has never existed (e.g. bad resource id),
+    or a resource that no longer exists (e.g. cache expired.)
+
+    Note to server developers: if a request is denied for an entire class
+    of users, such as gradual feature rollout or undocumented allowlist,
+    `NOT_FOUND` may be used. If a request is denied for some users within
+    a class of users, such as user-based access control, `PERMISSION_DENIED`
+    must be used.
+
+    HTTP Mapping: 404 Not Found
+    """
+    NOT_FOUND
+    """
+    The caller does not have permission to execute the specified
+    operation.
+
+    `PERMISSION_DENIED` must not be used for rejections
+    caused by exhausting some resource or quota.
+    `PERMISSION_DENIED` must not be used if the caller
+    cannot be identified (use `UNAUTHENTICATED`
+    instead for those errors).
+
+    This error Type does not imply the
+    request is valid or the requested entity exists or satisfies
+    other pre-conditions.
+
+    HTTP Mapping: 403 Forbidden
+    """
+    PERMISSION_DENIED
+    """
+    The request does not have valid authentication credentials.
+
+    This is intended to be returned only for routes that require
+    authentication.
+
+    HTTP Mapping: 401 Unauthorized
+    """
+    UNAUTHENTICATED
+    """
+    Currently Unavailable.
+
+    The service is currently unavailable.  This is most likely a
+    transient condition, which can be corrected by retrying with
+    a backoff.
+
+    HTTP Mapping: 503 Unavailable
+    """
+    UNAVAILABLE
+    """
+    Unknown error.
+
+    For example, this error may be returned when
+    an error code received from another address space belongs to
+    an error space that is not known in this address space.  Also
+    errors raised by APIs that do not return enough error information
+    may be converted to this error.
+
+    If a client sees an unknown errorType, it will be interpreted as UNKNOWN.
+    Unknown errors MUST NOT trigger any special behavior. These MAY be treated
+    by an implementation as being equivalent to INTERNAL.
+
+    When possible, a more specific error should be provided.
+
+    HTTP Mapping: 520 Unknown Error
+    """
+    UNKNOWN
 }
 
-type IntellectualProperty {
-    id: Int!
-    description: String!
-    tasks: [Task!]
-    domain: DomainSimple!
-}
+"An arbitrary precision signed decimal"
+scalar BigDecimal
+
+"An ISO-4217 compliant Currency Scalar"
+scalar Currency
+
+scalar LocalDate
+
+"A universally unique identifier compliant UUID Scalar"
+scalar UUID
+
+scalar _FieldSet
 
 input IntellectualPropertyData {
     description: String!
 }
 
-"""
-
-"""
-scalar LocalDate
-
 input LoginParameters {
     login: String!
-    password: String!
     otp: String!
-}
-
-type MFAData {
-    mfaCode: String!
-    qrLink: String!
+    password: String!
 }
 
 input MFAParameters {
     login: String!
-    password: String!
     otp: String!
-}
-
-type MortgageCalculationInstallment {
-    paymentFrom: LocalDate!
-    paymentTo: LocalDate!
-    remainingCapitalAtTheBeginning: BigDecimal!
-    installment: BigDecimal!
-    repaidCapital: BigDecimal!
-    paidInterest: BigDecimal!
-    overpayment: BigDecimal!
+    password: String!
 }
 
 input MortgageCalculationParams {
     mortgageAmount: BigDecimal!
-    repaymentStart: LocalDate!
-    rate: BigDecimal!
-    wibor: BigDecimal!
     numberOfInstallments: Int!
     overpaymentMonthlyBudget: BigDecimal!
     overpaymentYearlyBudget: BigDecimal!
-    holidaysMonthAfterNumberOfInstallments: Int
-}
-
-type Mutation {
-    login(loginParameters: LoginParameters!): AuthenticationInfo!
-    register(registrationParameters: RegistrationParameters!): MFAData!
-    setupMFA(mfaParameters: MFAParameters!): Boolean!
-    addRevenueAndExpenseEntry(
-        input: RevenueAndExpenseEntryInput
-    ): RevenueAndExpenseEntry
-    addIPR(input: IntellectualPropertyData): IntellectualProperty
-    updateIPR(
-        intellectualPropertyId: Int!
-        input: IntellectualPropertyData
-    ): IntellectualProperty
-    deleteIPR(intellectualPropertyId: Int!): String!
-    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
-    updateTask(taskId: Int!, taskData: TaskData!): String!
-    deleteTask(taskId: Int!): String!
-    createTimeRecord(timeRecordData: TimeRecordData!): String!
-    updateTimeRecord(timeRecordId: Int!, timeRecordData: TimeRecordData!): String!
-    assignCategoryToTimeRecord(
-        timeRecordId: Int!
-        timeRecordCategoryId: Int
-    ): String!
-    deleteTimeRecord(timeRecordId: Int!): String!
-    createTimeRecordCategory(name: String!): TimeRecordCategory!
-    updateTimeRecordCategory(timeRecordId: Int!, name: String!): String!
-    deleteTimeRecordCategory(timeRecordId: Int!): String!
-}
-
-type Query {
-    accounts: [Account!]!
-    allIPRs: [IntellectualProperty!]!
-    nonIPTimeRecords: [TimeRecord!]!
-    allTimeRecordCategories: [TimeRecordCategory!]!
-    monthRevenueAndExpenseEntry(
-        year: Int!
-        month: Int!
-    ): [RevenueAndExpenseEntry!]
-    simulateMortgage(
-        mortgageCalculationParams: MortgageCalculationParams
-    ): [MortgageCalculationInstallment!]!
-    _service: _Service!
+    rate: BigDecimal!
+    repaymentStart: LocalDate!
+    wibor: BigDecimal!
 }
 
 input RegistrationParameters {
+    email: String!
     firstName: String!
     lastName: String!
     login: String!
-    email: String!
     password: String!
     repeatedPassword: String!
 }
 
-type RevenueAndExpenseEntry {
-    publicId: UUID!
-    domain: DomainSimple!
-    entryOrder: Int!
-    entryDate: LocalDate!
-    accountingDocumentNumber: String!
-    counterparty: String!
-    counterpartyAddress: String!
-    description: String!
-    providedGoodsAndServicesValue: BigDecimal!
-    otherIncome: BigDecimal!
-    totalIncome: BigDecimal!
-    purchasedGoodsAndMaterialsValue: BigDecimal!
-    additionalCostOfPurchase: BigDecimal!
-    remunerationInCashOrInKind: BigDecimal!
-    otherExpense: BigDecimal!
-    totalExpense: BigDecimal!
-    comments: String!
-}
-
 input RevenueAndExpenseEntryInput {
-    publicId: UUID
-    entryOrder: Int!
-    entryDate: LocalDate!
     accountingDocumentNumber: String!
+    additionalCostOfPurchase: BigDecimal!
+    comments: String!
     counterparty: String!
     counterpartyAddress: String!
     description: String!
-    providedGoodsAndServicesValue: BigDecimal!
-    otherIncome: BigDecimal!
-    totalIncome: BigDecimal!
-    purchasedGoodsAndMaterialsValue: BigDecimal!
-    additionalCostOfPurchase: BigDecimal!
-    remunerationInCashOrInKind: BigDecimal!
+    entryDate: LocalDate!
+    entryOrder: Int!
     otherExpense: BigDecimal!
+    otherIncome: BigDecimal!
+    providedGoodsAndServicesValue: BigDecimal!
+    publicId: UUID
+    purchasedGoodsAndMaterialsValue: BigDecimal!
+    remunerationInCashOrInKind: BigDecimal!
     totalExpense: BigDecimal!
-    comments: String!
-}
-
-type Task {
-    id: Int!
-    attachments: [String!]
-    coAuthors: String!
-    description: String!
-    timeRecords: [TimeRecord!]
+    totalIncome: BigDecimal!
 }
 
 input TaskData {
@@ -471,46 +455,10 @@ input TaskData {
     description: String!
 }
 
-type TimeRecord {
-    id: Int!
-    date: LocalDate!
-    numberOfHours: BigDecimal!
-    description: String
-    timeRecordCategory: TimeRecordCategory
-    domain: DomainSimple!
-}
-
-type TimeRecordCategory {
-    id: Int!
-    name: String!
-    domain: DomainSimple!
-}
-
 input TimeRecordData {
-    taskId: Int
-    date: LocalDate!
-    numberOfHours: BigDecimal!
-    description: String!
     assignmentAction: AssignmentAction!
-}
-
-"""
-A universally unique identifier compliant UUID Scalar
-"""
-scalar UUID
-
-type User {
-    name: String!
-    email: String!
-    defaultDomainId: Int!
-    domains: [DomainSimple!]!
-}
-
-"""
-
-"""
-scalar _FieldSet
-
-type _Service {
-    sdl: String!
+    date: LocalDate!
+    description: String!
+    numberOfHours: BigDecimal!
+    taskId: Int
 }
