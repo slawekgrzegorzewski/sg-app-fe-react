@@ -28,7 +28,6 @@ export function IntellectualPropertyReports() {
                         </li>
                     ))
         )}</ul>;
-        return <></>;
     } else {
         return <></>;
     }

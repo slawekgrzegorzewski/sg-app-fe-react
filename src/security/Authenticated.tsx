@@ -1,10 +1,9 @@
-import {ApolloClient, ApolloLink, ApolloProvider, concat, HttpLink, InMemoryCache} from "@apollo/client";
+import {ApolloClient, ApolloLink, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCurrentUser} from "../utils/users/use-current-user";
 import {useDomain} from "../utils/domains/use-domain";
-import {Kind, ValueNode} from "graphql/language";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
     const navigate = useNavigate();
@@ -22,6 +21,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         }));
         return forward(operation);
     })
+
     function logout() {
         deleteCurrentUser();
         setLoggedIn(false);

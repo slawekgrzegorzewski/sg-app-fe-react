@@ -1,6 +1,5 @@
 import {useQuery} from "@apollo/client";
 import {Accounts as GraphqlAccounts, AccountsQuery} from "../types";
-import {Decimal} from "decimal.js";
 
 export function Accounts() {
 
