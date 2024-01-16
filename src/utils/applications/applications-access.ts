@@ -10,6 +10,7 @@ function isOfApplicationId(keyInput: string): keyInput is ApplicationId {
 export const ApplicationPageIds: string[] = ['IPR', 'TIME_RECORD'] as string[];
 export type ApplicationPageId = typeof ApplicationPageIds[number];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function isOfApplicationPageId(keyInput: string): keyInput is ApplicationPageId {
     return ApplicationPageIds.includes(keyInput);
 }
