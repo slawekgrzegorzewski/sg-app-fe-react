@@ -10,16 +10,17 @@ export function IntellectualPropertyReports() {
         return maxDate(
             (ipr.tasks || [])
                 .flatMap(task => (task.timeRecords || [])
-                    .flatMap(timeRecord => timeRecord.date)));
+                    .flatMap(timeRecord => new Date(timeRecord.date))));
     }
+
     if (loading) {
         return <>Loading...</>
     } else if (error) {
         return <>Error...</>
     } else if (data) {
         return <ul>{(
-            data.allIPRs
-                .sort((ipr1, ipr2) => compareDates(extractIPRDate(ipr1), extractIPRDate(ipr2)))
+            [...data.allIPRs]
+                .sort((ipr1, ipr2) => compareDates(extractIPRDate(ipr1), extractIPRDate(ipr2)) * -1)
                 .map(ipr =>
                     (
                         <li key={ipr.id}>
@@ -27,6 +28,7 @@ export function IntellectualPropertyReports() {
                         </li>
                     ))
         )}</ul>;
+        return <></>;
     } else {
         return <></>;
     }

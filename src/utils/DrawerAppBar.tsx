@@ -57,7 +57,7 @@ export default function DrawerAppBar(props: Props) {
                     </IconButton>
                     {
                         Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
-                            <Button color="inherit" onClick={() => navigate(page.links[0])}>
+                            <Button color="inherit" onClick={() => navigate(page.links[0])} key={page.id}>
                                 {page.label}
                             </Button>))
                     }

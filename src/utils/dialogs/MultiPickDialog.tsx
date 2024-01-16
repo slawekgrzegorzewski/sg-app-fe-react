@@ -43,18 +43,19 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
     return (
         <Dialog onClose={() => onCancel?.()} open={open} fullScreen={fullScreen || false}>
             {options.map((option, i) => (
-                    <>
-                        <DialogTitle>{selectedOptions ? selectedOptions[i].value : 'Wybierz aplikację'}</DialogTitle>
-                        <List sx={{pt: 0}}>
+                    <div key={i}>
+                        <DialogTitle
+                            key={i}>{selectedOptions ? selectedOptions[i].value : 'Wybierz aplikację'}</DialogTitle>
+                        <List sx={{pt: 0}} key={i}>
                             {notSelectedOptions[i].map((option) => (
                                 <ListItem disableGutters key={option.id}>
-                                    <ListItemButton onClick={() => handleListItemClick(i, option.id)}>
-                                        <ListItemText primary={option.value}/>
+                                    <ListItemButton onClick={() => handleListItemClick(i, option.id)} key={option.id}>
+                                        <ListItemText primary={option.value} key={option.id}/>
                                     </ListItemButton>
                                 </ListItem>
                             ))}
                         </List>
-                    </>
+                    </div>
                 )
             )}
             <Stack direction="row">

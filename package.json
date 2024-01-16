@@ -29,6 +29,7 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
+    "@graphql-codegen/add": "^5.0.0",
     "@graphql-codegen/cli": "^3.3.1",
     "@graphql-codegen/typed-document-node": "^3.0.2",
     "@graphql-codegen/typescript": "^3.0.2",
@@ -40,7 +41,7 @@
     "webpack-cli": "^5.1.4"
   },
   "scripts": {
-    "codegen": "graphql-codegen --config codegen.yml",
+    "codegen": "graphql-codegen --config codegen.ts",
     "watch": "graphql-codegen -w",
     "start-dev": "env-cmd -f .env react-scripts start",
     "start-prod": "env-cmd -f .env.production react-scripts start",

@@ -4,6 +4,7 @@ import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useCurrentUser} from "../utils/users/use-current-user";
 import {useDomain} from "../utils/domains/use-domain";
+import {Kind, ValueNode} from "graphql/language";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
     const navigate = useNavigate();
@@ -21,7 +22,6 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         }));
         return forward(operation);
     })
-
     function logout() {
         deleteCurrentUser();
         setLoggedIn(false);
@@ -37,7 +37,11 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
 
     const apolloClient = new ApolloClient({
         cache: new InMemoryCache(),
-        link: logoutLink.concat(concat(authMiddleware, httpLink))
+        link: ApolloLink.from([
+            logoutLink,
+            authMiddleware,
+            httpLink
+        ])
     });
 
     if (loggedId) {

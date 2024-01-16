@@ -1,6 +1,4 @@
 export const compareDates = (d1: Date, d2: Date) => {
-    console.log(JSON.stringify(d1));
-    console.log(typeof d1);
     return d1.getDate() - d2.getDate();
 };
 
