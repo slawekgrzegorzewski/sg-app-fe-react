@@ -2,7 +2,15 @@ schema: schema.graphql
 documents: "**/*.graphql"
 generates:
     src/types.ts:
+        config:
+            scalars:
+#                LocalDate: graphql-scalars#LocalDateResolver.extensions.codegenScalarType
+                LocalDate: graphql-scalars#GraphQLLocalDate
+#                LocalDate: 'Date'
+                BigDecimal: decimal.js#Decimal
+#            strictScalars: true
         plugins:
             - typescript
             - typescript-operations
             - typescript-document-nodes
+            - typescript-resolvers

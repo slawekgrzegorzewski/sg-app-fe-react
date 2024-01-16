@@ -56,7 +56,7 @@ export default function DrawerAppBar(props: Props) {
                         <MenuIcon/>
                     </IconButton>
                     {
-                        Array.from(applications.get(currentApplicationId)?.pages.values() || []).map(page => (
+                        Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
                             <Button color="inherit" onClick={() => navigate(page.links[0])}>
                                 {page.label}
                             </Button>))
