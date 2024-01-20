@@ -64,3 +64,90 @@ query NonIpTimeRecords {
         }
     }
 }
+
+mutation CreateIntellectualPropertyReport (
+    $description: String!
+){
+    addIPR(input:{
+        description:$description
+    }){
+        id
+        description
+        tasks {
+            id
+            attachments
+            coAuthors
+            description
+            timeRecords {
+                id
+                date
+                numberOfHours
+                description
+                timeRecordCategory {
+                    id
+                    name
+                    domain {
+                        id
+                        name
+                    }
+                }
+                domain {
+                    id
+                    name
+                }
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateIntellectualPropertyReport (
+    $intellectualPropertyId: Int!,
+    $description: String!
+){
+    updateIPR(
+        intellectualPropertyId:$intellectualPropertyId,
+        input:{
+            description:$description
+        }){
+        id
+        description
+        tasks {
+            id
+            attachments
+            coAuthors
+            description
+            timeRecords {
+                id
+                date
+                numberOfHours
+                description
+                timeRecordCategory {
+                    id
+                    name
+                    domain {
+                        id
+                        name
+                    }
+                }
+                domain {
+                    id
+                    name
+                }
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation DeleteIntellectualPropertyReport (
+    $intellectualPropertyId: Int!
+){
+    deleteIPR(intellectualPropertyId: $intellectualPropertyId)
+}

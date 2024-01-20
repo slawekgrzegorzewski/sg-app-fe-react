@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import {createBrowserRouter, RouterProvider} from "react-router-dom";
+import {createBrowserRouter, Navigate, RouterProvider} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "react-query";
 import {Authenticated} from "./security/Authenticated";
 import {Login} from "./security/login/Login";
@@ -42,6 +42,10 @@ const theme = createTheme({
 });
 
 const router = createBrowserRouter([
+    {
+        path: '',
+        element: <Navigate to='/login'/>
+    },
     {
         path: "/login",
         element: <ApolloProvider client={apolloClient}>
