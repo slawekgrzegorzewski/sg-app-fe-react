@@ -30,10 +30,14 @@ export default function EditDialog<T>(props: EditDialogProps<T>) {
         }
     };
 
+    const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+       e.stopPropagation();
+    };
+
     return (
-        <Dialog onClose={handleClose} open={open} onClick={(e) => e.stopPropagation()}>
-            <DialogTitle>Dane własności intelektualnej</DialogTitle>
-            <DialogContent>
+        <Dialog onClose={handleClose} open={open}>
+            <DialogTitle onClick={handleClick}>Dane własności intelektualnej</DialogTitle>
+            <DialogContent onClick={handleClick}>
                 {
                     editorFields.map(editorField => {
                         switch (editorField.type) {
@@ -60,7 +64,8 @@ export default function EditDialog<T>(props: EditDialogProps<T>) {
                     })
                 }
                 <Stack direction={"row"} spacing={4} alignItems={"center"}>
-                    <Button variant="text" sx={{flexGrow: 1}} onClick={(e) => handleClose(e, 'confirm')}>Potwierdź</Button>
+                    <Button variant="text" sx={{flexGrow: 1}}
+                            onClick={(e) => handleClose(e, 'confirm')}>Potwierdź</Button>
                     <Button variant="text" sx={{flexGrow: 1}} onClick={(e) => handleClose(e, 'cancel')}>Anuluj</Button>
                 </Stack>
             </DialogContent>

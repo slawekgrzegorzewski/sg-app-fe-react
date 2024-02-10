@@ -19,7 +19,6 @@ import {createTheme, ThemeProvider} from "@mui/material";
 
 const queryClient = new QueryClient();
 
-
 const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
 
 const apolloClient = new ApolloClient({

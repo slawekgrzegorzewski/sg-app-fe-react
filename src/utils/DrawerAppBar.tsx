@@ -11,10 +11,11 @@ import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from "../application/CurrentUserDisplay";
 import ApplicationAndDomainPicker from "./ApplicationAndDomainPicker";
 import {useCurrentUser} from "./users/use-current-user";
-import {Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
+import {Backdrop, CircularProgress, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 import {useApplication} from "./applications/use-application";
 import {applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
+import {useState} from "react";
 
 interface Props {
     /**
@@ -25,6 +26,11 @@ interface Props {
     children: React.ReactNode;
 }
 
+export const ShowBackdropContext = React.createContext<{
+    showBackdrop: boolean,
+    setShowBackdrop: (value: (((prevState: boolean) => boolean) | boolean)) => void
+}>({showBackdrop: false, setShowBackdrop: () => false});
+
 export default function DrawerAppBar(props: Props) {
     const navigate = useApplicationNavigation();
     const {currentApplicationId} = useApplication();
@@ -33,6 +39,7 @@ export default function DrawerAppBar(props: Props) {
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const {deleteCurrentUser} = useCurrentUser();
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const [showInfiniteBackdrop, setShowInfiniteBackdrop] = useState(false);
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
@@ -44,6 +51,11 @@ export default function DrawerAppBar(props: Props) {
     const hideWhenXS = {display: {xs: 'none', sm: 'block'}};
     return (
         <Stack direction="column" sx={{width: '100%'}}>
+            <Backdrop
+                sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                open={showInfiniteBackdrop}>
+                <CircularProgress color="inherit"/>
+            </Backdrop>
             <AppBar position="sticky">
                 <Toolbar>
                     <IconButton
@@ -120,9 +132,10 @@ export default function DrawerAppBar(props: Props) {
                 )}
             </Drawer>
             <Offset>
-                {children}
+                <ShowBackdropContext.Provider value={{showBackdrop: showInfiniteBackdrop, setShowBackdrop: setShowInfiniteBackdrop}}>
+                    {children}
+                </ShowBackdropContext.Provider>
             </Offset>
         </Stack>
-    )
-        ;
+    );
 }

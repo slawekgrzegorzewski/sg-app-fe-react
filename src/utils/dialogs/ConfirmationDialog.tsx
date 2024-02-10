@@ -1,16 +1,16 @@
 import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import * as React from "react";
 
-export interface ConfirmationDialogProps {
-    companionObject: any,
+export interface ConfirmationDialogProps<T> {
+    companionObject: T,
     title: string,
     message: string,
     open: boolean;
-    onClose: (companionObject: any) => void;
-    onCancel: (companionObject: any) => void;
+    onClose: (companionObject: T) => void;
+    onCancel: (companionObject: T) => void;
 }
 
-export default function ConfirmationDialog(props: ConfirmationDialogProps) {
+export default function ConfirmationDialog<T>(props: ConfirmationDialogProps<T>) {
     const {title, message, open, onClose, onCancel, companionObject} = props;
     const handleClose = (e: React.MouseEvent<HTMLElement>, r: string) => {
         e.stopPropagation();
@@ -21,10 +21,14 @@ export default function ConfirmationDialog(props: ConfirmationDialogProps) {
         }
     };
 
+    const handleClickOnDialog = (e: React.MouseEvent<HTMLElement>) => {
+        e.stopPropagation();
+    };
+
     return (
-        <Dialog onClose={handleClose} open={open} onClick={(e) => e.stopPropagation()}>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogContent>
+        <Dialog onClose={handleClose} open={open}>
+            <DialogTitle onClick={handleClickOnDialog}>{title}</DialogTitle>
+            <DialogContent onClick={handleClickOnDialog}>
                 {message}
                 <Stack direction={"row"} spacing={4} alignItems={"center"}>
                     <Button variant="text" sx={{flexGrow: 1}}
