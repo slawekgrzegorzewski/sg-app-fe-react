@@ -43,7 +43,7 @@ const theme = createTheme({
 const router = createBrowserRouter([
     {
         path: '',
-        element: <Navigate to='/login'/>
+        element: <Navigate to={process.env.REACT_APP_BROWSER_DEFAULT_REDIRECT || '/login'}/>
     },
     {
         path: "/login",
@@ -73,7 +73,9 @@ const router = createBrowserRouter([
                 </ThemeProvider>
             </QueryClientProvider>
     }
-]);
+], {
+    basename: process.env.REACT_APP_BROWSER_HISTORY_BASENAME
+});
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(
