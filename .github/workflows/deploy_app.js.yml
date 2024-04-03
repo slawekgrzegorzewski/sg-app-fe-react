@@ -49,6 +49,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: 22
         script: |
+          mkdir -p   /home/slawek/Application/fe/react
           rm -rf /home/slawek/Application/fe/react/*
           tar -xf /home/slawek/Application/react.tar -C /home/slawek/Application/fe/react/
           rm /home/slawek/Application/react.tar
