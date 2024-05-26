@@ -11,7 +11,7 @@ import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from "../application/components/CurrentUserDisplay";
 import ApplicationAndDomainPicker from "./ApplicationAndDomainPicker";
 import {useCurrentUser} from "./users/use-current-user";
-import {Backdrop, CircularProgress, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
+import {Backdrop, CircularProgress, Link, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 import {useApplication} from "./applications/use-application";
 import {applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
@@ -105,6 +105,7 @@ export default function DrawerAppBar(props: Props) {
                             <Typography>Wyloguj</Typography>
                         </MenuItem>
                     </Menu>
+                    <Link href={process.env.REACT_APP_OLD_APP_URL} sx={{color: theme.palette.primary.contrastText, ...hideWhenXS}}>STARA APLIKACJA</Link>
                 </Toolbar>
             </AppBar>
             <Drawer
@@ -128,6 +129,8 @@ export default function DrawerAppBar(props: Props) {
                         <Divider/>
                         <ApplicationAndDomainPicker onClose={handleDrawerToggle}
                                                     sx={{color: theme.palette.primary.contrastText}}/>
+                        <Divider/>
+                        <Link href={process.env.REACT_APP_OLD_APP_URL} sx={{color: theme.palette.primary.contrastText}}>STARA APLIKACJA</Link>
                     </Box>
                 )}
             </Drawer>
