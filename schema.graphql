@@ -43,14 +43,14 @@ type MFAData {
     qrLink: String!
 }
 
-type MortgageCalculationInstallment {
-    installment: BigDecimal!
-    overpayment: BigDecimal!
-    paidInterest: BigDecimal!
+type LoanCalculationInstallment {
     paymentFrom: LocalDate!
-    paymentTo: LocalDate!
-    remainingCapitalAtTheBeginning: BigDecimal!
-    repaidCapital: BigDecimal!
+    paymentTo: LocalDate!,
+    remainingCapitalAtTheBeginning: BigDecimal!,
+    installment: BigDecimal!,
+    repaidCapital: BigDecimal!,
+    paidInterest: BigDecimal!,
+    overpayment: BigDecimal!
 }
 
 type Mutation {
@@ -71,6 +71,16 @@ type Mutation {
     updateTask(taskData: TaskData!, taskId: Int!): String!
     updateTimeRecord(timeRecordData: TimeRecordData!, timeRecordId: Int!): String!
     updateTimeRecordCategory(name: String!, timeRecordId: Int!): String!
+    createLoan(input: LoanCreationInput): Loan!
+    updateLoan(input: LoanUpdateInput): Loan!
+    deleteLoan(input: LoanDeleteInput): String!
+    createInstallment(input: InstallmentCreationInput!): Installment!
+    deleteInstallment(installmentPublicId: UUID!): String!
+    createConstantForNFirstInstallmentRateStrategyConfig(input: ConstantForNFirstInstallmentRateStrategyConfigCreationInput!): RateStrategyConfig!
+    deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
+    createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
+    deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
+
 }
 
 type Query {
@@ -80,7 +90,10 @@ type Query {
     allTimeRecordCategories: [TimeRecordCategory!]!
     monthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
     nonIPTimeRecords: [TimeRecord!]!
-    simulateMortgage(mortgageCalculationParams: MortgageCalculationParams): [MortgageCalculationInstallment!]!
+    simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
+    simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
+    loans: Loans!
+    singleLoan(input: LoanQuery): Loan!
 }
 
 type RevenueAndExpenseEntry {
@@ -412,14 +425,20 @@ input MFAParameters {
     password: String!
 }
 
-input MortgageCalculationParams {
-    mortgageAmount: BigDecimal!
-    numberOfInstallments: Int!
-    overpaymentMonthlyBudget: BigDecimal!
+input LoanCalculationParams {
+    loanAmount: BigDecimal!,
+    repaymentStart: LocalDate!,
+    rate: BigDecimal!,
+    wibor: BigDecimal!,
+    numberOfInstallments: Int!,
+    overpaymentMonthlyBudget: BigDecimal!,
     overpaymentYearlyBudget: BigDecimal!
-    rate: BigDecimal!
-    repaymentStart: LocalDate!
-    wibor: BigDecimal!
+}
+
+input LoanSimulationParams {
+    loanId: UUID!,
+    monthlyBudget: MonetaryAmountInput,
+    yearlyOverpayment: MonetaryAmountInput
 }
 
 input RegistrationParameters {
@@ -461,4 +480,113 @@ input TimeRecordData {
     description: String!
     numberOfHours: BigDecimal!
     taskId: Int
+}
+
+interface RateStrategyConfig {
+    publicId: UUID!,
+    name: String!
+}
+
+type ConstantForNFirstInstallmentRateStrategyConfig implements RateStrategyConfig {
+    publicId: UUID!,
+    name: String!
+    constantRate: BigDecimal!
+    variableRateMargin: BigDecimal!
+    becomesVariableRateAfterNInstallments: Int!
+}
+
+input ConstantForNFirstInstallmentRateStrategyConfigCreationInput {
+    name: String!
+    constantRate: BigDecimal!
+    variableRateMargin: BigDecimal!
+    becomesVariableRateAfterNInstallments: Int!
+}
+
+input RateStrategyConfigDeleteInput {
+    publicId: UUID!
+}
+
+interface RepaymentDayStrategyConfig {
+    publicId: UUID!,
+    name: String!
+}
+
+type NthDayOfMonthRepaymentDayStrategyConfig implements RepaymentDayStrategyConfig {
+    publicId: UUID!,
+    name: String!
+    dayOfMonth: Int!
+}
+
+input NthDayOfMonthRepaymentDayStrategyConfigInput {
+    name: String!
+    dayOfMonth: Int!
+}
+
+input RepaymentDayStrategyConfigDeleteInput {
+    publicId: UUID!
+}
+
+type Loans {
+    rateStrategyConfigs: [RateStrategyConfig!]!
+    repaymentDayStrategyConfigs: [RepaymentDayStrategyConfig!]!
+    loans: [Loan!]!
+}
+
+type MonetaryAmount {
+    amount: BigDecimal!
+    currency: Currency!
+}
+
+input MonetaryAmountInput {
+    amount: BigDecimal!
+    currency: Currency!
+}
+
+type Installment {
+    publicId: UUID!
+    paidAt: LocalDate!
+    repaidInterest: MonetaryAmount!
+    repaidAmount: MonetaryAmount!
+    overpayment: MonetaryAmount!
+}
+
+type Loan {
+    publicId: UUID!
+    name: String!
+    paymentDate: LocalDate!
+    numberOfInstallments: Int!
+    repaymentDayStrategyConfig: RepaymentDayStrategyConfig!
+    rateStrategyConfig: RateStrategyConfig!
+    paidAmount: MonetaryAmount!
+    installments: [Installment!]!
+}
+
+input LoanQuery {
+    publicId: UUID!
+}
+
+input LoanCreationInput {
+    name: String!
+    paymentDate: LocalDate!
+    numberOfInstallments: Int!
+    repaymentDayStrategyConfigId: UUID!
+    rateStrategyConfigId: UUID!
+    paidAmount: MonetaryAmountInput!
+}
+
+input LoanUpdateInput {
+    loanId: UUID!
+    name: String!
+}
+
+input LoanDeleteInput {
+    loanId: UUID!
+}
+
+input InstallmentCreationInput {
+    loanId: UUID!
+    paidAt: LocalDate!
+    repaidInterest: MonetaryAmountInput!
+    repaidAmount: MonetaryAmountInput!
+    overpayment: MonetaryAmountInput!
 }

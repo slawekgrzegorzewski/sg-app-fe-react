@@ -13,9 +13,10 @@ import {Accordion, AccordionDetails, AccordionSummary, Box, Stack} from "@mui/ma
 import {Delete, Edit, ExpandMore} from "@mui/icons-material";
 import * as React from "react";
 import {useState} from "react";
-import {EditButton} from "../utils/buttons/EditButton";
-import {EditorField} from "../utils/dialogs/EditDialog";
+import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
+import * as Yup from "yup";
+import Form, {EditorField} from "../utils/forms/Form";
 
 export type IntellectualPropertyDTO = {
     id: number;
@@ -30,12 +31,11 @@ const emptyIPRProvider: () => IntellectualPropertyDTO = () => {
     return {...notExistingIPR};
 }
 
-const iprEditorFields: EditorField<IntellectualPropertyDTO>[] = [
+const iprEditorFields: EditorField[] = [
     {
-        setter: (object: IntellectualPropertyDTO, value: string) => object.description = value,
-        getter: (object: IntellectualPropertyDTO) => object.description,
         label: 'Opis',
-        type: 'TEXTAREA'
+        type: 'TEXTAREA',
+        key: 'description'
     }
 ];
 
@@ -90,12 +90,18 @@ export function IntellectualPropertyReports() {
         return (
             <Box component="section" sx={{width: 1000, m: 'auto'}}>
                 <Stack direction="row">
-                    <EditButton
-                        object={emptyIPRProvider()}
-                        emptyObjectProvider={emptyIPRProvider}
-                        editorFields={iprEditorFields}
-                        onEdit={performEdit}
+                    <FormDialogButton
+                        dialogTitle='Dane własności intelektualnej'
                         buttonContent={<>stwórz własność intelektualną</>}
+                        onSave={(value) => performEdit(value)}
+                        onCancel={() => {
+                            return Promise.resolve();
+                        }}
+                        formProps={{
+                            initialValues: emptyIPRProvider(),
+                            fields: iprEditorFields,
+                            validationSchema: Yup.object({})
+                        }}
                     />
                 </Stack>
 
@@ -113,12 +119,18 @@ export function IntellectualPropertyReports() {
                                     <Stack direction="row" sx={{width: '100%'}}>
                                         {ipr.description}
                                         <Box sx={{flexGrow: 1}}/>
-                                        <EditButton
-                                            object={ipr}
-                                            emptyObjectProvider={emptyIPRProvider}
-                                            editorFields={iprEditorFields}
-                                            onEdit={performEdit}
+                                        <FormDialogButton
+                                            dialogTitle='Dane własności intelektualnej'
                                             buttonContent={<Edit/>}
+                                            onSave={(value) => performEdit(value)}
+                                            onCancel={() => {
+                                                return Promise.resolve();
+                                            }}
+                                            formProps={{
+                                                initialValues: ipr,
+                                                fields: iprEditorFields,
+                                                validationSchema: Yup.object({})
+                                            }}
                                         />
                                         {
                                             (ipr.tasks || []).length === 0 && (
@@ -126,7 +138,10 @@ export function IntellectualPropertyReports() {
                                                     confirmationMessage={'Na pewno usunąć ' + ipr!.id + ' - ' + ipr!.description + '?'}
                                                     buttonContent={<Delete/>}
                                                     object={ipr!.id}
-                                                    onDelete={performDelete}/>
+                                                    onDelete={performDelete}
+                                                    onCancel={() => {
+                                                        return Promise.resolve();
+                                                    }}/>
                                             )
                                         }
                                     </Stack>

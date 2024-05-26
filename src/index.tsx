@@ -13,9 +13,11 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
-import {Dispatcher} from "./application/Dispatcher";
+import {Dispatcher} from "./application/components/Dispatcher";
 import CssBaseline from "@mui/material/CssBaseline";
 import {createTheme, ThemeProvider} from "@mui/material";
+import {LocalizationProvider} from "@mui/x-date-pickers";
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 
 const queryClient = new QueryClient();
 
@@ -58,18 +60,20 @@ const router = createBrowserRouter([
         </ApolloProvider>
     },
     {
-        path: "/:applicationId/:domainId/:page?",
+        path: "/:applicationId/:domainId/:page?/:param1?",
         element:
             <QueryClientProvider client={queryClient}>
                 <ThemeProvider theme={theme}>
-                    <CssBaseline/>
-                    <Authenticated>
-                        <>
-                            <DrawerAppBar>
-                                <Dispatcher/>
-                            </DrawerAppBar>
-                        </>
-                    </Authenticated>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <CssBaseline/>
+                        <Authenticated>
+                            <>
+                                <DrawerAppBar>
+                                    <Dispatcher/>
+                                </DrawerAppBar>
+                            </>
+                        </Authenticated>
+                    </LocalizationProvider>
                 </ThemeProvider>
             </QueryClientProvider>
     }

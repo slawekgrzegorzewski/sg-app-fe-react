@@ -1,0 +1,368 @@
+query Loans {
+    loans {
+        rateStrategyConfigs {
+            __typename
+            publicId
+            name
+            ... on ConstantForNFirstInstallmentRateStrategyConfig {
+                constantRate
+                becomesVariableRateAfterNInstallments
+                variableRateMargin
+            }
+        }
+        repaymentDayStrategyConfigs {
+            __typename
+            publicId
+            name
+            ... on NthDayOfMonthRepaymentDayStrategyConfig {
+                dayOfMonth
+            }
+        }
+        loans {
+            publicId
+            name
+            paymentDate
+            numberOfInstallments
+            rateStrategyConfig {
+                __typename
+                publicId
+                name
+                ... on ConstantForNFirstInstallmentRateStrategyConfig {
+                    constantRate
+                    becomesVariableRateAfterNInstallments
+                    variableRateMargin
+                }
+            }
+            repaymentDayStrategyConfig {
+                __typename
+                publicId
+                name
+                ... on NthDayOfMonthRepaymentDayStrategyConfig {
+                    dayOfMonth
+                }
+            }
+            paidAmount {
+                amount
+                currency
+            }
+            installments {
+                publicId
+                paidAt
+                repaidInterest {
+                    amount
+                    currency
+                }
+                repaidAmount {
+                    amount
+                    currency
+                }
+                overpayment {
+                    amount
+                    currency
+                }
+            }
+        }
+    }
+}
+
+query SingleLoan($loanId: UUID!) {
+    singleLoan(input: {
+        publicId: $loanId
+    }) {
+        publicId
+        name
+        paymentDate
+        numberOfInstallments
+        rateStrategyConfig {
+            __typename
+            publicId
+            name
+            ... on ConstantForNFirstInstallmentRateStrategyConfig {
+                constantRate
+                becomesVariableRateAfterNInstallments
+                variableRateMargin
+            }
+        }
+        repaymentDayStrategyConfig {
+            __typename
+            publicId
+            name
+            ... on NthDayOfMonthRepaymentDayStrategyConfig {
+                dayOfMonth
+            }
+        }
+        paidAmount {
+            amount
+            currency
+        }
+        installments {
+            publicId
+            paidAt
+            repaidInterest {
+                amount
+                currency
+            }
+            repaidAmount {
+                amount
+                currency
+            }
+            overpayment {
+                amount
+                currency
+            }
+        }
+    }
+}
+
+mutation CreateLoan (
+    $name: String!,
+    $paymentDate: LocalDate!,
+    $numberOfInstallments: Int!,
+    $paidAmount: BigDecimal!,
+    $paidCurrency: Currency!,
+    $rateStrategyConfigId: UUID!,
+    $repaymentDayStrategyConfigId: UUID!
+) {
+    createLoan(input: {
+        name: $name,
+        paymentDate: $paymentDate,
+        numberOfInstallments: $numberOfInstallments,
+        paidAmount: {
+            amount: $paidAmount,
+            currency: $paidCurrency
+        }
+        rateStrategyConfigId: $rateStrategyConfigId,
+        repaymentDayStrategyConfigId: $repaymentDayStrategyConfigId
+    }){
+        publicId
+        paymentDate
+        name
+        numberOfInstallments
+        rateStrategyConfig {
+            __typename
+            publicId
+            name
+            ... on ConstantForNFirstInstallmentRateStrategyConfig {
+                constantRate
+                becomesVariableRateAfterNInstallments
+                variableRateMargin
+            }
+        }
+        repaymentDayStrategyConfig {
+            __typename
+            publicId
+            name
+            ... on NthDayOfMonthRepaymentDayStrategyConfig {
+                dayOfMonth
+            }
+        }
+        paidAmount {
+            amount
+            currency
+        }
+    }
+}
+
+mutation UpdateLoan (
+    $loanId: UUID!,
+    $name: String!
+) {
+    updateLoan(input: {
+        loanId: $loanId
+        name: $name
+    }){
+        publicId
+        paymentDate
+        name
+        numberOfInstallments
+        rateStrategyConfig {
+            __typename
+            publicId
+            name
+            ... on ConstantForNFirstInstallmentRateStrategyConfig {
+                constantRate
+                becomesVariableRateAfterNInstallments
+                variableRateMargin
+            }
+        }
+        repaymentDayStrategyConfig {
+            __typename
+            publicId
+            name
+            ... on NthDayOfMonthRepaymentDayStrategyConfig {
+                dayOfMonth
+            }
+        }
+        paidAmount {
+            amount
+            currency
+        }
+    }
+}
+
+mutation DeleteLoan (
+    $loanId: UUID!
+) {
+    deleteLoan(input: {
+        loanId: $loanId
+    })
+}
+
+mutation CreateInstallment (
+    $loanId: UUID!,
+    $paidAt: LocalDate!,
+    $repaidInterest: BigDecimal!,
+    $repaidAmount: BigDecimal!,
+    $overpayment: BigDecimal!,
+    $currency: Currency!,
+) {
+    createInstallment(
+        input: {
+            loanId: $loanId
+            paidAt: $paidAt
+            repaidInterest: {
+                amount: $repaidInterest,
+                currency: $currency
+            }
+            repaidAmount: {
+                amount: $repaidAmount,
+                currency: $currency
+            }
+            overpayment: {
+                amount: $overpayment,
+                currency: $currency
+            }
+        }
+    ) {
+        publicId
+        paidAt
+        repaidInterest {
+            amount
+            currency
+        }
+        repaidAmount {
+            amount
+            currency
+        }
+        overpayment {
+            amount
+            currency
+        }
+    }
+}
+
+mutation DeleteInstallment ($installmentPublicId: UUID!) {
+    deleteInstallment(
+        installmentPublicId: $installmentPublicId
+    )
+}
+
+mutation CreateNthDayOfMonthRepaymentDayStrategyConfig (
+    $name: String!,
+    $dayOfMonth: Int!
+) {
+    createNthDayOfMonthRepaymentDayStrategyConfig(
+        input: {
+            name: $name,
+            dayOfMonth: $dayOfMonth
+        }
+    ) {
+        publicId
+        name
+        ... on NthDayOfMonthRepaymentDayStrategyConfig {
+            dayOfMonth
+        }
+    }
+}
+
+mutation DeleteRateStrategyConfig ($publicId: UUID!) {
+    deleteRateStrategyConfig(
+        input: {
+            publicId: $publicId
+        }
+    )
+}
+
+mutation CreateConstantForNFirstInstallmentRateStrategyConfig (
+    $name: String!,
+    $constantRate:BigDecimal!,
+    $variableRateMargin:BigDecimal!,
+    $becomesVariableRateAfterNInstallments:Int!
+) {
+    createConstantForNFirstInstallmentRateStrategyConfig(
+        input: {
+            name:$name,
+            constantRate:$constantRate,
+            variableRateMargin:$variableRateMargin,
+            becomesVariableRateAfterNInstallments:$becomesVariableRateAfterNInstallments
+        }
+    ) {
+        publicId
+        name
+        ... on ConstantForNFirstInstallmentRateStrategyConfig {
+            constantRate
+            becomesVariableRateAfterNInstallments
+            variableRateMargin
+        }
+    }
+}
+
+mutation DeleteRepaymentDayStrategyConfig ($publicId: UUID!) {
+    deleteRepaymentDayStrategyConfig(
+        input: {
+            publicId: $publicId
+        }
+    )
+}
+
+query SimulateLoan (
+    $loanAmount: BigDecimal!
+    $repaymentStart: LocalDate!
+    $rate:BigDecimal!
+    $wibor:BigDecimal!
+    $numberOfInstallments:Int!
+    $overpaymentMonthlyBudget:BigDecimal!
+    $overpaymentYearlyBudget:BigDecimal!
+) {
+    simulateLoan(
+        loanCalculationParams: {
+            loanAmount:$loanAmount
+            repaymentStart:$repaymentStart
+            rate:$rate
+            wibor:$wibor
+            numberOfInstallments:$numberOfInstallments
+            overpaymentMonthlyBudget:$overpaymentMonthlyBudget
+            overpaymentYearlyBudget:$overpaymentYearlyBudget
+        }
+    ) {
+        installment
+        repaidCapital
+        paidInterest
+        overpayment
+        paymentFrom
+        paymentTo
+        remainingCapitalAtTheBeginning
+    }
+}
+
+query SimulateExistingLoan (
+    $loanId: UUID!,
+    $monthlyBudget: MonetaryAmountInput,
+    $yearlyOverpayment: MonetaryAmountInput
+) {
+    simulateExistingLoan(
+        loanSimulationParams: {
+            loanId:$loanId
+            monthlyBudget:$monthlyBudget
+            yearlyOverpayment:$yearlyOverpayment
+        }
+    ) {
+        installment
+        repaidCapital
+        paidInterest
+        overpayment
+        paymentFrom
+        paymentTo
+        remainingCapitalAtTheBeginning
+    }
+}

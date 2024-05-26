@@ -1,14 +1,13 @@
 import * as React from "react";
 import {useContext, useState} from "react";
-import {Button} from "@mui/material";
+import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import {ShowBackdropContext} from "../DrawerAppBar";
-import ConfirmationDialog from "../dialogs/ConfirmationDialog";
 
 export interface DeleteButtonProps<T> {
     object: T
     confirmationMessage: string,
-    onDelete?: ((object: T) => Promise<any>),
-    onCancel?: (() => Promise<void>),
+    onDelete: ((object: T) => Promise<any>),
+    onCancel: (() => Promise<void>),
     buttonContent?: React.ReactNode
 }
 
@@ -18,38 +17,40 @@ export function DeleteButton<T>(props: DeleteButtonProps<T>) {
     const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
 
-    const deleteClicked = (e: React.MouseEvent<HTMLElement>) => {
+    function openDialog(e: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>) {
         setConfirmationDialogOpen(true);
         e.stopPropagation();
     }
 
-    function cancelDelete() {
+    const onCloseDialog = (e: React.MouseEvent<HTMLElement>, r: string) => {
+        e.stopPropagation();
         setConfirmationDialogOpen(false);
-        if (onCancel) {
-            setShowBackdrop(true);
+        setShowBackdrop(true);
+        if (['backdropClick', 'escapeKeyDown', 'cancel'].includes(r)) {
             onCancel().finally(() => setShowBackdrop(false));
-        }
-    }
-
-    function performDelete(object: T) {
-        if (onDelete) {
-            setShowBackdrop(true);
+        } else {
             onDelete(object).finally(() => setShowBackdrop(false));
         }
-
-    }
-
+    };
     return <>
-        <Button variant={"text"} onClick={(e) => deleteClicked(e)}>
+        <Button variant={"text"} onClick={openDialog}>
             {buttonContent!}
         </Button>
-        <ConfirmationDialog
-            title={'Na pewno usunąć?'}
-            message={confirmationMessage}
-            open={confirmationDialogOpen}
-            onClose={performDelete}
-            onCancel={cancelDelete}
-            companionObject={object}
-        />
+        <Dialog onClose={onCloseDialog} open={confirmationDialogOpen}>
+            <DialogTitle onClick={e => e.stopPropagation()}>{'Na pewno usunąć?'}</DialogTitle>
+            <DialogContent onClick={e => e.stopPropagation()}>
+                {confirmationMessage}
+                <Stack direction={"row"} spacing={4} alignItems={"center"}>
+                    <Button variant="text" sx={{flexGrow: 1}}
+                            onClick={(e) => onCloseDialog(e, 'confirm')}>
+                        Potwierdź
+                    </Button>
+                    <Button variant="text" sx={{flexGrow: 1}}
+                            onClick={(e) => onCloseDialog(e, 'cancel')}>
+                        Anuluj
+                    </Button>
+                </Stack>
+            </DialogContent>
+        </Dialog>
     </>
 }

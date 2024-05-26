@@ -1,4 +1,4 @@
-import {CurrentUser, useCurrentUser} from "../utils/users/use-current-user";
+import {CurrentUser, useCurrentUser} from "../../utils/users/use-current-user";
 
 interface Props {
     mapperFunction: (user: CurrentUser) => string;

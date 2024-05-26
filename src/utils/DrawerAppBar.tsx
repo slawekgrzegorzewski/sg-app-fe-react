@@ -8,7 +8,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import {CurrentUserDisplay} from "../application/CurrentUserDisplay";
+import {CurrentUserDisplay} from "../application/components/CurrentUserDisplay";
 import ApplicationAndDomainPicker from "./ApplicationAndDomainPicker";
 import {useCurrentUser} from "./users/use-current-user";
 import {Backdrop, CircularProgress, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
@@ -32,7 +32,7 @@ export const ShowBackdropContext = React.createContext<{
 }>({showBackdrop: false, setShowBackdrop: () => false});
 
 export default function DrawerAppBar(props: Props) {
-    const navigate = useApplicationNavigation();
+    const {changePage} = useApplicationNavigation();
     const {currentApplicationId} = useApplication();
     const theme = useTheme();
     const {window, children} = props;
@@ -69,7 +69,7 @@ export default function DrawerAppBar(props: Props) {
                     </IconButton>
                     {
                         Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
-                            <Button color="inherit" onClick={() => navigate(page.links[0])} key={page.id}>
+                            <Button color="inherit" onClick={() => changePage(page.links[0])} key={page.id}>
                                 {page.label}
                             </Button>))
                     }
@@ -132,7 +132,8 @@ export default function DrawerAppBar(props: Props) {
                 )}
             </Drawer>
             <Offset>
-                <ShowBackdropContext.Provider value={{showBackdrop: showInfiniteBackdrop, setShowBackdrop: setShowInfiniteBackdrop}}>
+                <ShowBackdropContext.Provider
+                    value={{showBackdrop: showInfiniteBackdrop, setShowBackdrop: setShowInfiniteBackdrop}}>
                     {children}
                 </ShowBackdropContext.Provider>
             </Offset>

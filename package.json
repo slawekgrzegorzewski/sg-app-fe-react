@@ -9,6 +9,7 @@
     "@fontsource/roboto": "^5.0.8",
     "@mui/icons-material": "^5.14.3",
     "@mui/material": "^5.14.5",
+    "@mui/x-date-pickers": "^7.5.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -16,8 +17,11 @@
     "@types/node": "^16.18.31",
     "@types/react": "^18.2.6",
     "@types/react-dom": "^18.2.4",
+    "dayjs": "^1.11.11",
     "decimal.js": "^10.4.3",
     "env-cmd": "^10.1.0",
+    "formik": "^2.4.6",
+    "get-user-locale": "^2.3.2",
     "graphql": "^16.8.1",
     "graphql-scalars": "^1.22.4",
     "react": "^18.2.0",
@@ -26,7 +30,8 @@
     "react-router-dom": "^6.11.1",
     "react-scripts": "5.0.1",
     "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@graphql-codegen/add": "^5.0.0",
