@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {useMutation} from "@apollo/client";
-import {Login as GraphqlLogin, LoginMutation} from "../../types";
+import {PerformLogin, PerformLoginMutation} from "../../types";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
@@ -15,7 +15,7 @@ export function Login() {
         otp: ''
     });
 
-    const [loginGraphqlMutation, {called}] = useMutation<LoginMutation>(GraphqlLogin, {
+    const [loginGraphqlMutation, {called}] = useMutation<PerformLoginMutation>(PerformLogin, {
         variables: loginData
     });
 

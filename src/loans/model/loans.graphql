@@ -1,4 +1,4 @@
-query Loans {
+query GetLoans {
     loans {
         rateStrategyConfigs {
             __typename

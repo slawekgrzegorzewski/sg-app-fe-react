@@ -2,11 +2,11 @@ import {useMutation, useQuery} from "@apollo/client";
 import {
     AllIpRs,
     AllIpRsQuery,
-    CreateIntellectualPropertyReport as GraphqlCreateIPR,
+    CreateIntellectualPropertyReport,
     CreateIntellectualPropertyReportMutation,
-    DeleteIntellectualPropertyReport as GraphqlDeleteIPR,
+    DeleteIntellectualPropertyReport,
     DeleteIntellectualPropertyReportMutation,
-    UpdateIntellectualPropertyReport as GraphqlUpdateIPR,
+    UpdateIntellectualPropertyReport,
     UpdateIntellectualPropertyReportMutation
 } from "../types";
 import {Accordion, AccordionDetails, AccordionSummary, Box, Stack} from "@mui/material";
@@ -16,7 +16,7 @@ import {useState} from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
 import * as Yup from "yup";
-import Form, {EditorField} from "../utils/forms/Form";
+import {EditorField} from "../utils/forms/Form";
 
 export type IntellectualPropertyDTO = {
     id: number;
@@ -43,9 +43,9 @@ export function IntellectualPropertyReports() {
     const {loading, error, data, refetch} = useQuery<AllIpRsQuery>(AllIpRs);
     const [expandedTabId, setExpandedTabId] = useState<number>(-1);
 
-    const [createIntellectualPropertyReportMutation, createIntellectualPropertyReportMutationResult] = useMutation<CreateIntellectualPropertyReportMutation>(GraphqlCreateIPR);
-    const [updateIntellectualPropertyReportMutation, updateIntellectualPropertyReportMutationResult] = useMutation<UpdateIntellectualPropertyReportMutation>(GraphqlUpdateIPR);
-    const [deleteIntellectualPropertyReportMutation, deleteIntellectualPropertyReportMutationResult] = useMutation<DeleteIntellectualPropertyReportMutation>(GraphqlDeleteIPR);
+    const [createIntellectualPropertyReportMutation, createIntellectualPropertyReportMutationResult] = useMutation<CreateIntellectualPropertyReportMutation>(CreateIntellectualPropertyReport);
+    const [updateIntellectualPropertyReportMutation, updateIntellectualPropertyReportMutationResult] = useMutation<UpdateIntellectualPropertyReportMutation>(UpdateIntellectualPropertyReport);
+    const [deleteIntellectualPropertyReportMutation, deleteIntellectualPropertyReportMutationResult] = useMutation<DeleteIntellectualPropertyReportMutation>(DeleteIntellectualPropertyReport);
 
     const performEdit = async (iprDTO: IntellectualPropertyDTO): Promise<any> => {
         const createVariables = {variables: {description: iprDTO.description}};

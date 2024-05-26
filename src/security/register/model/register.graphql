@@ -1,4 +1,4 @@
-mutation Register (
+mutation PerformRegistration (
     $firstName:String!
     $lastName:String!
     $login:String!

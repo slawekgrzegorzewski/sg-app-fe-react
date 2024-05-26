@@ -2,9 +2,9 @@ import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {useMutation} from "@apollo/client";
 import {
-    Register as GraphqlRegister,
-    RegisterMutation,
-    SetupMfa as GraphqlSetupMfa,
+    PerformRegistration,
+    PerformRegistrationMutation,
+    SetupMfa,
     SetupMfaMutation
 } from "../../types";
 import {Button, Link, Paper, Stack, TextField} from "@mui/material";
@@ -31,11 +31,11 @@ export function Register() {
         mfaSecret: ''
     });
 
-    const [registerGraphqlMutation, registerResult] = useMutation<RegisterMutation>(GraphqlRegister, {
+    const [registerGraphqlMutation, registerResult] = useMutation<PerformRegistrationMutation>(PerformRegistration, {
         variables: registrationParams
     });
 
-    const [setupMFArGraphqlMutation, setupMFAResult] = useMutation<SetupMfaMutation>(GraphqlSetupMfa, {
+    const [setupMFArGraphqlMutation, setupMFAResult] = useMutation<SetupMfaMutation>(SetupMfa, {
         variables: setupMfaParams
     });
 

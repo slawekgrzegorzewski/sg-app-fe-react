@@ -1,12 +1,12 @@
 import {useMutation, useQuery} from "@apollo/client";
 import {
-    CreateInstallment as GraphqlCreateInstallment,
+    CreateInstallment,
     CreateInstallmentMutation,
-    DeleteLoan as GraphqlDeleteLoan,
+    DeleteLoan,
     DeleteLoanMutation,
-    SingleLoan as GraphqlSingleLoan,
+    SingleLoan,
     SingleLoanQuery,
-    UpdateLoan as GraphqlUpdateLoan,
+    UpdateLoan,
     UpdateLoanMutation,
 } from "../types";
 import {Box, Button, Stack} from "@mui/material";
@@ -28,14 +28,14 @@ import {LoanSimulation} from "./LoanSimulation";
 export function Loan() {
     const {changePageParams} = useApplicationNavigation();
     const {param1} = useParams();
-    const {loading, error, data, refetch} = useQuery<SingleLoanQuery>(GraphqlSingleLoan, {
+    const {loading, error, data, refetch} = useQuery<SingleLoanQuery>(SingleLoan, {
         variables: {
             loanId: param1
         }
     });
-    const [updateLoanMutation, updateLoanMutationResult] = useMutation<UpdateLoanMutation>(GraphqlUpdateLoan);
-    const [deleteLoanMutation, deleteLoanMutationResult] = useMutation<DeleteLoanMutation>(GraphqlDeleteLoan);
-    const [createInstallmentMutation, createInstallmentMutationResult] = useMutation<CreateInstallmentMutation>(GraphqlCreateInstallment);
+    const [updateLoanMutation, updateLoanMutationResult] = useMutation<UpdateLoanMutation>(UpdateLoan);
+    const [deleteLoanMutation, deleteLoanMutationResult] = useMutation<DeleteLoanMutation>(DeleteLoan);
+    const [createInstallmentMutation, createInstallmentMutationResult] = useMutation<CreateInstallmentMutation>(CreateInstallment);
 
     const [simulationParams, setSimulationParams] = useState<{
         monthlyBudget: Decimal;

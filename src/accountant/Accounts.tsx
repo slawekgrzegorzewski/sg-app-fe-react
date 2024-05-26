@@ -1,9 +1,9 @@
 import {useQuery} from "@apollo/client";
-import {Accounts as GraphqlAccounts, AccountsQuery} from "../types";
+import {GetAccounts, GetAccountsQuery} from "../types";
 
 export function Accounts() {
 
-    const {loading, error, data} = useQuery<AccountsQuery>(GraphqlAccounts);
+    const {loading, error, data} = useQuery<GetAccountsQuery>(GetAccounts);
 
     if (loading) {
         return <>Loading...</>

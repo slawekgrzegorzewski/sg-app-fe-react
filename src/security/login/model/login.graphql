@@ -1,4 +1,4 @@
-mutation Login(
+mutation PerformLogin(
     $login: String!
     $password:String!
     $otp:String!

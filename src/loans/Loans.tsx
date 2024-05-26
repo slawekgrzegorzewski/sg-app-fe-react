@@ -1,19 +1,19 @@
 import {useMutation, useQuery} from "@apollo/client";
 import {
-    CreateConstantForNFirstInstallmentRateStrategyConfig as GraphqlConstantForNFirstInstallmentRateStrategyConfig,
+    CreateConstantForNFirstInstallmentRateStrategyConfig,
     CreateConstantForNFirstInstallmentRateStrategyConfigMutation,
-    CreateLoan as GraphqlCreateLoan,
+    CreateLoan,
     CreateLoanMutation,
-    CreateNthDayOfMonthRepaymentDayStrategyConfig as GraphqlCreateNthDayOfMonthRepaymentDayStrategyConfig,
+    CreateNthDayOfMonthRepaymentDayStrategyConfig,
     CreateNthDayOfMonthRepaymentDayStrategyConfigMutation,
-    DeleteLoan as GraphqlDeleteLoan,
+    DeleteLoan,
     DeleteLoanMutation,
-    DeleteRateStrategyConfig as GraphqlDeleteRateStrategyConfig,
+    DeleteRateStrategyConfig,
     DeleteRateStrategyConfigMutation,
-    DeleteRepaymentDayStrategyConfig as GraphqlDeleteRepaymentDayStrategyConfig,
+    DeleteRepaymentDayStrategyConfig,
     DeleteRepaymentDayStrategyConfigMutation,
-    Loans as GraphqlLoans,
-    LoansQuery,
+    GetLoans,
+    GetLoansQuery,
 } from "../types";
 import {Box, Card, CardContent, CardHeader, Stack} from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
@@ -38,13 +38,13 @@ import Decimal from "decimal.js";
 export function Loans() {
 
     const {changePageParams} = useApplicationNavigation();
-    const {loading, error, data, refetch} = useQuery<LoansQuery>(GraphqlLoans);
-    const [createLoanMutation, createLoanMutationResult] = useMutation<CreateLoanMutation>(GraphqlCreateLoan);
-    const [deleteLoanMutation, deleteLoanMutationResult] = useMutation<DeleteLoanMutation>(GraphqlDeleteLoan);
-    const [createConstantForNFirstInstallmentRateStrategyConfigMutation, createConstantForNFirstInstallmentRateStrategyConfigResult] = useMutation<CreateConstantForNFirstInstallmentRateStrategyConfigMutation>(GraphqlConstantForNFirstInstallmentRateStrategyConfig);
-    const [deleteRateStrategyConfigMutation, deleteRateStrategyConfigResult] = useMutation<DeleteRateStrategyConfigMutation>(GraphqlDeleteRateStrategyConfig);
-    const [createNthDayOfMonthRepaymentDayStrategyConfigMutation, createNthDayOfMonthRepaymentDayStrategyConfigResult] = useMutation<CreateNthDayOfMonthRepaymentDayStrategyConfigMutation>(GraphqlCreateNthDayOfMonthRepaymentDayStrategyConfig);
-    const [deleteRepaymentDayStrategyConfigMutation, deleteRepaymentDayStrategyConfigResult] = useMutation<DeleteRepaymentDayStrategyConfigMutation>(GraphqlDeleteRepaymentDayStrategyConfig);
+    const {loading, error, data, refetch} = useQuery<GetLoansQuery>(GetLoans);
+    const [createLoanMutation, createLoanMutationResult] = useMutation<CreateLoanMutation>(CreateLoan);
+    const [deleteLoanMutation, deleteLoanMutationResult] = useMutation<DeleteLoanMutation>(DeleteLoan);
+    const [createConstantForNFirstInstallmentRateStrategyConfigMutation, createConstantForNFirstInstallmentRateStrategyConfigResult] = useMutation<CreateConstantForNFirstInstallmentRateStrategyConfigMutation>(CreateConstantForNFirstInstallmentRateStrategyConfig);
+    const [deleteRateStrategyConfigMutation, deleteRateStrategyConfigResult] = useMutation<DeleteRateStrategyConfigMutation>(DeleteRateStrategyConfig);
+    const [createNthDayOfMonthRepaymentDayStrategyConfigMutation, createNthDayOfMonthRepaymentDayStrategyConfigResult] = useMutation<CreateNthDayOfMonthRepaymentDayStrategyConfigMutation>(CreateNthDayOfMonthRepaymentDayStrategyConfig);
+    const [deleteRepaymentDayStrategyConfigMutation, deleteRepaymentDayStrategyConfigResult] = useMutation<DeleteRepaymentDayStrategyConfigMutation>(DeleteRepaymentDayStrategyConfig);
 
     const createLoan = async (loanDTO: LoanDTO): Promise<any> => {
         await createLoanMutation({variables: {...loanDTO}});
