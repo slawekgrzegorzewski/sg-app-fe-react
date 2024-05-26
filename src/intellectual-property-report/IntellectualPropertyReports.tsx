@@ -16,7 +16,7 @@ import {useState} from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
 import * as Yup from "yup";
-import {EditorField} from "../utils/forms/Form";
+import Form, {EditorField} from "../utils/forms/Form";
 
 export type IntellectualPropertyDTO = {
     id: number;

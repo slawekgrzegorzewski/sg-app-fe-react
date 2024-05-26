@@ -35,7 +35,7 @@ import {RateStrategyDisplay} from "./RateStrategyDisplay";
 import {RepaymentDayStrategyDisplay} from "./RepaymentDayStrategyDisplay";
 import Decimal from "decimal.js";
 
-export function LoansPage() {
+export function Loans() {
 
     const {changePageParams} = useApplicationNavigation();
     const {loading, error, data, refetch} = useQuery<LoansQuery>(GraphqlLoans);

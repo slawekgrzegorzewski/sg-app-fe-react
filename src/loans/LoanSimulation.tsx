@@ -18,7 +18,7 @@ LoanSimulation.defaultProps = {
 
 export function LoanSimulation({loan, monthlyBudget, yearlyBudget}: LoanSimulationProps) {
 
-    const {loading, error, data} = useQuery<SimulateExistingLoanQuery>(GraphqlSimulateExistingLoan, {
+    const {loading, error, data, refetch} = useQuery<SimulateExistingLoanQuery>(GraphqlSimulateExistingLoan, {
         variables: {
             loanId: loan.publicId,
             monthlyBudget: {amount: monthlyBudget, currency: loan.paidAmount.currency},

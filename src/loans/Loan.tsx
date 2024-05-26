@@ -25,7 +25,7 @@ import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
 import {LoanSimulation} from "./LoanSimulation";
 
-export function LoanPage() {
+export function Loan() {
     const {changePageParams} = useApplicationNavigation();
     const {param1} = useParams();
     const {loading, error, data, refetch} = useQuery<SingleLoanQuery>(GraphqlSingleLoan, {

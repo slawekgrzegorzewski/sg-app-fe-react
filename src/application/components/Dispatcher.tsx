@@ -4,9 +4,9 @@ import Typography from "@mui/material/Typography";
 import {Accounts} from "../../accountant/Accounts";
 import {IntellectualPropertyReports} from "../../intellectual-property-report/IntellectualPropertyReports";
 import {applications} from "../../utils/applications/applications-access";
-import {LoansPage} from "../../loans/LoansPage";
+import {Loans} from "../../loans/Loans";
 import React from "react";
-import {LoanPage} from "../../loans/LoanPage";
+import {Loan} from "../../loans/Loan";
 
 
 export function Dispatcher() {
@@ -25,8 +25,8 @@ export function Dispatcher() {
         }
         if (isRequestForPage('LOANS')) {
             if (param1)
-                return <LoanPage />;
-            return <LoansPage/>;
+                return <Loan />;
+            return <Loans/>;
         }
     } else if (applicationId === 'IPR') {
         if (!page || isRequestForPage('IPR')) {
