@@ -4,6 +4,8 @@ import {CurrencyAmountDisplay} from "../application/components/CurrencyAmountDis
 import dayjs, {Dayjs} from "dayjs";
 import {Installment as GrapqhlInstallment, LoanCalculationInstallment} from "../types";
 import {ComparatorBuilder} from "../application/utils/comparator-builder";
+import {Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow} from "@mui/material";
+import Box from "@mui/material/Box";
 
 export const mapInstallments = (leftToRepay: number, installments: GrapqhlInstallment[]) => {
     const compareByDate = ComparatorBuilder.comparingByDate<GrapqhlInstallment>(installment => new Date(installment.paidAt)).build();
@@ -62,42 +64,50 @@ export function InstallmentsTable({currency, installments, onClick}: Installment
     }
 
     return (
-        <table>
-            <thead>
-            <tr>
-                <th>data</th>
-                <th>rata</th>
-                <th>odsetki</th>
-                <th>kapitał</th>
-                <th>nadpłata</th>
-                <th>pozostały kapitał</th>
-            </tr>
-            </thead>
-            <tbody>
-            {(installments.map(installment =>
-                <tr>
-                    <td>{dayjs(installment.paidAt).format("YYYY-MM-DD")}</td>
-                    <td>{installment.repaidInterest > 0 ?
-                        <CurrencyAmountDisplay currency={currency}
-                                               amount={installment.repaidInterest + installment.repaidAmount}/> : '-'}</td>
-                    <td>{installment.repaidInterest > 0 ?
-                        <CurrencyAmountDisplay currency={currency} amount={installment.repaidInterest}/> : '-'}</td>
-                    <td>{installment.repaidAmount > 0 ?
-                        <CurrencyAmountDisplay currency={currency} amount={installment.repaidAmount}/> : '-'}</td>
-                    <td>{installment.overpayment > 0 ?
-                        <CurrencyAmountDisplay currency={currency} amount={installment.overpayment}/> : '-'}</td>
-                    <td><CurrencyAmountDisplay currency={currency} amount={installment.leftToRepayAfter}/></td>
-                </tr>
-            ))}
-            <tr>
-                <td>{sumRow(installment => installment.repaidInterest + installment.repaidAmount + installment.overpayment)}</td>
-                <td>{sumRow(installment => installment.repaidInterest + installment.repaidAmount)}</td>
-                <td>{sumRow(installment => installment.repaidInterest)}</td>
-                <td>{sumRow(installment => installment.repaidAmount)}</td>
-                <td>{sumRow(installment => installment.overpayment)}</td>
-                <td>-</td>
-            </tr>
-            </tbody>
-        </table>
+        <TableContainer component={Box}>
+            <Table size={'small'} stickyHeader>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>data</TableCell>
+                        <TableCell>rata</TableCell>
+                        <TableCell>odsetki</TableCell>
+                        <TableCell>kapitał</TableCell>
+                        <TableCell>nadpłata</TableCell>
+                        <TableCell>pozostały kapitał</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {(installments.map(installment =>
+                        <TableRow sx={{backgroundColor: installment.paidAt.get('month') % 2 === 0 ? '#dddddd' : 'white'}}>
+                            <TableCell>{dayjs(installment.paidAt).format("YYYY-MM-DD")}</TableCell>
+                            <TableCell>{installment.repaidInterest > 0 ?
+                                <CurrencyAmountDisplay currency={currency}
+                                                       amount={installment.repaidInterest + installment.repaidAmount}/> : '-'}</TableCell>
+                            <TableCell>{installment.repaidInterest > 0 ?
+                                <CurrencyAmountDisplay currency={currency}
+                                                       amount={installment.repaidInterest}/> : '-'}</TableCell>
+                            <TableCell>{installment.repaidAmount > 0 ?
+                                <CurrencyAmountDisplay currency={currency}
+                                                       amount={installment.repaidAmount}/> : '-'}</TableCell>
+                            <TableCell>{installment.overpayment > 0 ?
+                                <CurrencyAmountDisplay currency={currency}
+                                                       amount={installment.overpayment}/> : '-'}</TableCell>
+                            <TableCell><CurrencyAmountDisplay currency={currency}
+                                                              amount={installment.leftToRepayAfter}/></TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+                <TableFooter>
+                    <TableRow>
+                        <TableCell>-</TableCell>
+                        <TableCell>{sumRow(installment => installment.repaidInterest + installment.repaidAmount)}</TableCell>
+                        <TableCell>{sumRow(installment => installment.repaidInterest)}</TableCell>
+                        <TableCell>{sumRow(installment => installment.repaidAmount)}</TableCell>
+                        <TableCell>{sumRow(installment => installment.overpayment)}</TableCell>
+                        <TableCell>suma: {sumRow(installment => installment.repaidInterest + installment.repaidAmount + installment.overpayment)}</TableCell>
+                    </TableRow>
+                </TableFooter>
+            </Table>
+        </TableContainer>
     );
 }
