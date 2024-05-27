@@ -1,12 +1,11 @@
 import {ApolloClient, ApolloLink, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
+import {Navigate} from "react-router-dom";
 import {useCurrentUser} from "../utils/users/use-current-user";
 import {useDomain} from "../utils/domains/use-domain";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
-    const navigate = useNavigate();
     const {currentDomainId} = useDomain();
     const {user, deleteCurrentUser} = useCurrentUser();
     const [loggedId, setLoggedIn] = useState(user !== null);
@@ -51,7 +50,6 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
             </div>
         </ApolloProvider>;
     } else {
-        navigate("/login");
-        return <></>;
+        return <Navigate to={"/login"} />;
     }
 }
