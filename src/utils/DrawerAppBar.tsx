@@ -17,7 +17,7 @@ import {useApplication} from "./applications/use-application";
 import {applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
 import {useQuery} from "@apollo/client";
-import {AccountantSettings, AccountantSettingsQuery, Settings} from "../types";
+import {GetAccountantSettings, GetAccountantSettingsQuery, Settings} from "../types";
 
 interface Props {
     /**
@@ -48,7 +48,7 @@ export default function DrawerAppBar(props: Props) {
         setMobileOpen((prevState) => !prevState);
     };
 
-    const {data} = useQuery<AccountantSettingsQuery>(AccountantSettings);
+    const {data} = useQuery<GetAccountantSettingsQuery>(GetAccountantSettings);
 
     const container = window !== undefined ? () => window().document.body : undefined;
 

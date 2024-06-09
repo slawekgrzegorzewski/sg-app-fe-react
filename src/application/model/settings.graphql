@@ -1,4 +1,4 @@
-query AccountantSettings {
+query GetAccountantSettings {
     settings {
         accountantSettings {
             isCompany
