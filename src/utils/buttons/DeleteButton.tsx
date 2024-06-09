@@ -1,7 +1,6 @@
 import * as React from "react";
-import {useContext, useState} from "react";
+import {useState} from "react";
 import {Box} from "@mui/material";
-import {ShowBackdropContext} from "../DrawerAppBar";
 import ConfirmationDialog from "../dialogs/ConfirmationDialog";
 
 export interface DeleteButtonProps<T> {

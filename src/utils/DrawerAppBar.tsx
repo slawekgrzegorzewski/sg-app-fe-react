@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {useState} from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
@@ -15,9 +16,8 @@ import {Backdrop, CircularProgress, Link, Menu, MenuItem, Stack, styled, useThem
 import {useApplication} from "./applications/use-application";
 import {applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
-import {useState} from "react";
 import {useQuery} from "@apollo/client";
-import {Settings, SettingsQuery} from "../types";
+import {AccountantSettings, AccountantSettingsQuery, Settings} from "../types";
 
 interface Props {
     /**
@@ -48,7 +48,7 @@ export default function DrawerAppBar(props: Props) {
         setMobileOpen((prevState) => !prevState);
     };
 
-    const {loading, error, data} = useQuery<SettingsQuery>(Settings);
+    const {data} = useQuery<AccountantSettingsQuery>(AccountantSettings);
 
     const container = window !== undefined ? () => window().document.body : undefined;
 

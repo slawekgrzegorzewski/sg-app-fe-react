@@ -51,9 +51,9 @@ const SUPPLIER_FORM = (supplier?: GraphqlSupplier) => {
 export function SuppliersManagement() {
 
     const {loading, error, data, refetch} = useQuery<GetAllSuppliersQuery>(GetAllSuppliers);
-    const [createSupplierMutation, createCreateSupplierMutationResult] = useMutation<CreateSupplierMutation>(CreateSupplier);
-    const [updateSupplierMutation, updateSupplierMutationResult] = useMutation<UpdateSupplierMutation>(UpdateSupplier);
-    const [deleteSupplierMutation, deleteSupplierMutationResult] = useMutation<DeleteSupplierMutation>(DeleteSupplier);
+    const [createSupplierMutation] = useMutation<CreateSupplierMutation>(CreateSupplier);
+    const [updateSupplierMutation] = useMutation<UpdateSupplierMutation>(UpdateSupplier);
+    const [deleteSupplierMutation] = useMutation<DeleteSupplierMutation>(DeleteSupplier);
 
     const createSupplier = async ({name}: { name: String }): Promise<any> => {
         await createSupplierMutation({variables: {name: name}});

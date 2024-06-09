@@ -1,6 +1,6 @@
 import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import * as React from "react";
-import {useContext, useState} from "react";
+import {useContext} from "react";
 import {ShowBackdropContext} from "../DrawerAppBar";
 
 export interface ConfirmationDialogProps<T> {

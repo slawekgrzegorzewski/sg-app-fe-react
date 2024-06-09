@@ -51,9 +51,9 @@ const CLIENT_FORM = (client?: GraphqlClient) => {
 export function ClientsManagement() {
 
     const {loading, error, data, refetch} = useQuery<GetAllClientsQuery>(GetAllClients);
-    const [createClientMutation, createCreateClientMutationResult] = useMutation<CreateClientMutation>(CreateClient);
-    const [updateClientMutation, updateClientMutationResult] = useMutation<UpdateClientMutation>(UpdateClient);
-    const [deleteClientMutation, deleteClientMutationResult] = useMutation<DeleteClientMutation>(DeleteClient);
+    const [createClientMutation] = useMutation<CreateClientMutation>(CreateClient);
+    const [updateClientMutation] = useMutation<UpdateClientMutation>(UpdateClient);
+    const [deleteClientMutation] = useMutation<DeleteClientMutation>(DeleteClient);
 
     const createClient = async ({name}: { name: String }): Promise<any> => {
         await createClientMutation({variables: {name: name}});
