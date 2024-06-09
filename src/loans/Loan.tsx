@@ -24,6 +24,7 @@ import {InstallmentsTable, mapInstallments} from "./InstallmentsTable";
 import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
 import {LoanSimulation} from "./LoanSimulation";
+import IconButton from "@mui/material/IconButton";
 
 export function Loan() {
     const {changePageParams} = useApplicationNavigation();
@@ -94,7 +95,7 @@ export function Loan() {
                                     onCancel={() => {
                                         return Promise.resolve();
                                     }}
-                                    buttonContent={<>zarejestruj ratę</>}
+                                    buttonContent={<Button size={'small'} variant={'text'}>zarejestruj ratę</Button>}
                                     formProps={CREATE_INSTALLMENT_FORM_PROPS()}
                                 />
                                 <FormDialogButton
@@ -151,7 +152,11 @@ export function Loan() {
                             onCancel={() => {
                                 return Promise.resolve();
                             }}
-                            buttonContent={<Edit/>}
+                            buttonContent={
+                                <IconButton size={'small'}>
+                                    <Edit/>
+                                </IconButton>
+                            }
                             formProps={EDIT_LOAN_FORM_PROPS(loan.name)}
                         />
                         <DeleteButton

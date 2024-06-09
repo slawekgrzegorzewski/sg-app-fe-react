@@ -9,7 +9,7 @@ import {
     UpdateIntellectualPropertyReport,
     UpdateIntellectualPropertyReportMutation
 } from "../types";
-import {Accordion, AccordionDetails, AccordionSummary, Box, Stack} from "@mui/material";
+import {Accordion, AccordionDetails, AccordionSummary, Box, Button, Stack} from "@mui/material";
 import {Delete, Edit, ExpandMore} from "@mui/icons-material";
 import * as React from "react";
 import {useState} from "react";
@@ -17,6 +17,7 @@ import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
 import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
+import IconButton from "@mui/material/IconButton";
 
 export type IntellectualPropertyDTO = {
     id: number;
@@ -92,7 +93,11 @@ export function IntellectualPropertyReports() {
                 <Stack direction="row">
                     <FormDialogButton
                         dialogTitle='Dane własności intelektualnej'
-                        buttonContent={<>stwórz własność intelektualną</>}
+                        buttonContent={
+                            <Button variant={'text'} size={'small'}>
+                                stwórz własność intelektualną
+                            </Button>
+                        }
                         onSave={(value) => performEdit(value)}
                         onCancel={() => {
                             return Promise.resolve();
@@ -121,7 +126,11 @@ export function IntellectualPropertyReports() {
                                         <Box sx={{flexGrow: 1}}/>
                                         <FormDialogButton
                                             dialogTitle='Dane własności intelektualnej'
-                                            buttonContent={<Edit/>}
+                                            buttonContent={
+                                                <IconButton size={'small'}>
+                                                    <Edit/>
+                                                </IconButton>
+                                            }
                                             onSave={(value) => performEdit(value)}
                                             onCancel={() => {
                                                 return Promise.resolve();

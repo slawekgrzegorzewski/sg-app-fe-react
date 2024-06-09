@@ -7,6 +7,7 @@ import {applications} from "../../utils/applications/applications-access";
 import {Loans} from "../../loans/Loans";
 import React from "react";
 import {Loan} from "../../loans/Loan";
+import {AccountantSettings} from "../../accountant/AccountantSettings";
 
 
 export function Dispatcher() {
@@ -25,8 +26,11 @@ export function Dispatcher() {
         }
         if (isRequestForPage('LOANS')) {
             if (param1)
-                return <Loan />;
+                return <Loan/>;
             return <Loans/>;
+        }
+        if (isRequestForPage('SETTINGS')) {
+            return <AccountantSettings/>;
         }
     } else if (applicationId === 'IPR') {
         if (!page || isRequestForPage('IPR')) {

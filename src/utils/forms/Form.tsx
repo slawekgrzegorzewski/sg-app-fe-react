@@ -5,7 +5,7 @@ import {FormikHelpers} from "formik/dist/types";
 import {FormikValues} from "formik";
 import * as Yup from "yup";
 
-export type EditorFieldType = 'NUMBER' | 'DATEPICKER' | 'TEXT' | 'TEXTAREA' | 'SELECT';
+export type EditorFieldType = 'NUMBER' | 'DATEPICKER' | 'TEXT' | 'TEXTAREA' | 'SELECT' | 'HIDDEN';
 
 export type SelectOption = {
     key: string;
@@ -64,29 +64,32 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
             <Stack direction={"column"} spacing={4} alignItems={"center"}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
                     {
-                        fields.map(editorField => {
-                            return <TextField
-                                {...getFieldUniqueProps(editorField)}
-                                {...(editorField.additionalProps || {})}
-                                fullWidth
-                                variant="standard"
-                                id={editorField.key}
-                                name={editorField.key}
-                                key={editorField.key}
-                                label={editorField.label}
-                                value={formik.values[editorField.key]}
-                                onChange={formik.handleChange}
-                                onBlur={formik.handleBlur}
-                                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-                                helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-                            >
-                                {
-                                    editorField.selectOptions?.map(option => (
-                                        <MenuItem key={option.key} value={option.key}>{option.displayElement}</MenuItem>
-                                    ))
-                                }
-                            </TextField>
-                        })}
+                        fields
+                            .filter(field => field.type !== 'HIDDEN')
+                            .map(editorField => {
+                                return <TextField
+                                    {...getFieldUniqueProps(editorField)}
+                                    {...(editorField.additionalProps || {})}
+                                    fullWidth
+                                    variant="standard"
+                                    id={editorField.key}
+                                    name={editorField.key}
+                                    key={editorField.key}
+                                    label={editorField.label}
+                                    value={formik.values[editorField.key]}
+                                    onChange={formik.handleChange}
+                                    onBlur={formik.handleBlur}
+                                    error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                                    helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+                                >
+                                    {
+                                        editorField.selectOptions?.map(option => (
+                                            <MenuItem key={option.key}
+                                                      value={option.key}>{option.displayElement}</MenuItem>
+                                        ))
+                                    }
+                                </TextField>
+                            })}
                 </Stack>
                 <Stack direction={"row"} spacing={4} alignItems={"center"}>
                     <Button variant="text"

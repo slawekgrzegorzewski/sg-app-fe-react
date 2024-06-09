@@ -1,0 +1,303 @@
+query GetAllClients {
+    allClients {
+        publicId
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+query GetAllSuppliers {
+    allSuppliers {
+        publicId
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+query MonthFinancialDocuments($year: Int!, $month: Int!){
+    monthFinancialDocuments(yearMonthInput: { year: $year, month: $month }) {
+        publicId
+        name
+        otherParty {
+            publicId
+            name
+            domain {
+                id
+                name
+            }
+        }
+        amount {
+            amount
+            currency
+        }
+        createdAt
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation CreateClient($name: String!) {
+    createClient(clientCreationInput: { name: $name }) {
+        publicId
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateClient($publicId: UUID!, $name: String!) {
+    updateClient(clientUpdateInput: { publicId: $publicId, name: $name }) {
+        publicId
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation DeleteClient($clientPublicId: UUID!){
+    deleteClient(clientPublicId: $clientPublicId)
+}
+
+mutation CreateSupplier($name: String!) {
+    createSupplier(supplierCreationInput: { name: $name }) {
+        publicId
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateSupplier($publicId: UUID!, $name: String!) {
+    updateSupplier(supplierUpdateInput: { publicId: $publicId, name: $name }) {
+        publicId
+        name
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation DeleteSupplier($supplierPublicId: UUID!){
+    deleteSupplier(supplierPublicId: $supplierPublicId)
+}
+
+mutation createBill($createdAt: LocalDate!,
+    $otherPartyId: UUID!,
+    $billType: BillType!,
+    $name: String!,
+    $description: String! ,
+    $amount: BigDecimal!,
+    $currency: Currency!) {
+    createBill(
+        billCreationInput: {
+            createdAt: $createdAt
+            otherPartyId: $otherPartyId
+            type: $billType
+            name: $name
+            description: $description
+            amount: {
+                amount: $amount
+                currency: $currency
+            }
+        }
+    ) {
+        publicId
+        name
+        otherParty {
+            publicId
+            name
+            domain {
+                id
+                name
+            }
+        }
+        amount {
+            amount
+            currency
+        }
+        createdAt
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateBill($billPublicId: UUID!,
+    $createdAt: LocalDate!,
+    $otherPartyId: UUID!,
+    $billType: BillType!,
+    $name: String!,
+    $description: String! ,
+    $amount: BigDecimal!,
+    $currency: Currency!) {
+    updateBill(
+        billUpdateInput: {
+            billPublicId: $billPublicId,
+            createdAt: $createdAt
+            otherPartyId: $otherPartyId
+            type: $billType
+            name: $name
+            description: $description
+            amount: {
+                amount: $amount
+                currency: $currency
+            }
+        }
+    ) {
+        publicId
+        name
+        otherParty {
+            publicId
+            name
+            domain {
+                id
+                name
+            }
+        }
+        amount {
+            amount
+            currency
+        }
+        createdAt
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation CreateInvoice($createdAt: LocalDate!,
+    $dueTo: LocalDate!,
+    $otherPartyId: UUID!,
+    $invoiceType: InvoiceType!,
+    $name: String!,
+    $description: String! ,
+    $amount: BigDecimal!,
+    $vat: BigDecimal!,
+    $currency: Currency!) {
+    createInvoice(
+        invoiceCreationInput: {
+            createdAt: $createdAt
+            dueTo: $dueTo
+            otherPartyId: $otherPartyId
+            type: $invoiceType
+            name: $name
+            description: $description
+            amount: {
+                amount: $amount
+                currency: $currency
+            }
+            vat: {
+                amount: $vat
+                currency: $currency
+            }
+        }
+    ) {
+        publicId
+        name
+        otherParty {
+            publicId
+            name
+            domain {
+                id
+                name
+            }
+        }
+        amount {
+            amount
+            currency
+        }
+        vat {
+            amount
+            currency
+        }
+        createdAt
+        dueTo
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateInvoice($invoicePublicId: UUID!,
+    $createdAt: LocalDate!,
+    $dueTo: LocalDate!,
+    $otherPartyId: UUID!,
+    $invoiceType: InvoiceType!,
+    $name: String!,
+    $description: String! ,
+    $amount: BigDecimal!,
+    $vat: BigDecimal!,
+    $currency: Currency!){
+    updateInvoice(
+        invoiceUpdateInput: {
+            invoicePublicId: $invoicePublicId
+            createdAt: $createdAt
+            dueTo: $dueTo
+            otherPartyId: $otherPartyId
+            type: $invoiceType
+            name: $name
+            description: $description
+            amount: {
+                amount: $amount
+                currency: $currency
+            }
+            vat: {
+                amount: $vat
+                currency: $currency
+            }
+        }
+    ) {
+        publicId
+        name
+        otherParty {
+            publicId
+            name
+            domain {
+                id
+                name
+            }
+        }
+        amount {
+            amount
+            currency
+        }
+        vat {
+            amount
+            currency
+        }
+        createdAt
+        dueTo
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation deleteFinancialDocument($financialDocumentPublicId: UUID!){
+    deleteFinancialDocument(financialDocumentPublicId: $financialDocumentPublicId)
+}
+

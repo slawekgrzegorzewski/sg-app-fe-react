@@ -20,4 +20,4 @@ const config: CodegenConfig = {
     }
 }
 
-export default config
+export default config;

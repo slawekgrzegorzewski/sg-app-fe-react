@@ -1,7 +1,8 @@
 import * as React from "react";
 import {useContext, useState} from "react";
-import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
+import {Box} from "@mui/material";
 import {ShowBackdropContext} from "../DrawerAppBar";
+import ConfirmationDialog from "../dialogs/ConfirmationDialog";
 
 export interface DeleteButtonProps<T> {
     object: T
@@ -15,42 +16,29 @@ export function DeleteButton<T>(props: DeleteButtonProps<T>) {
     let {buttonContent, onDelete, onCancel, confirmationMessage, object} = props;
 
     const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
 
-    function openDialog(e: React.MouseEvent<HTMLAnchorElement> | React.MouseEvent<HTMLButtonElement>) {
+    function openDialog(e: React.MouseEvent<HTMLElement>) {
         setConfirmationDialogOpen(true);
         e.stopPropagation();
     }
 
-    const onCloseDialog = (e: React.MouseEvent<HTMLElement>, r: string) => {
-        e.stopPropagation();
-        setConfirmationDialogOpen(false);
-        setShowBackdrop(true);
-        if (['backdropClick', 'escapeKeyDown', 'cancel'].includes(r)) {
-            onCancel().finally(() => setShowBackdrop(false));
-        } else {
-            onDelete(object).finally(() => setShowBackdrop(false));
-        }
+    const doButtonAction = (action: () => Promise<void>): Promise<void> => {
+        return action().finally(() => setConfirmationDialogOpen(false));
     };
+
     return <>
-        <Button variant={"text"} onClick={openDialog}>
+        <Box onClick={openDialog}>
             {buttonContent!}
-        </Button>
-        <Dialog onClose={onCloseDialog} open={confirmationDialogOpen}>
-            <DialogTitle onClick={e => e.stopPropagation()}>{'Na pewno usunąć?'}</DialogTitle>
-            <DialogContent onClick={e => e.stopPropagation()}>
-                {confirmationMessage}
-                <Stack direction={"row"} spacing={4} alignItems={"center"}>
-                    <Button variant="text" sx={{flexGrow: 1}}
-                            onClick={(e) => onCloseDialog(e, 'confirm')}>
-                        Potwierdź
-                    </Button>
-                    <Button variant="text" sx={{flexGrow: 1}}
-                            onClick={(e) => onCloseDialog(e, 'cancel')}>
-                        Anuluj
-                    </Button>
-                </Stack>
-            </DialogContent>
-        </Dialog>
+        </Box>
+        <ConfirmationDialog companionObject={object}
+                            title={'Na pewno usunąć?'}
+                            message={confirmationMessage}
+                            open={confirmationDialogOpen}
+                            onConfirm={(companionObject: T) => {
+                                return doButtonAction(() => onDelete(companionObject));
+                            }}
+                            onCancel={(companionObject: T) => {
+                                return doButtonAction(() => onCancel());
+                            }}/>
     </>
 }

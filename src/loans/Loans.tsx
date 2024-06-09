@@ -15,7 +15,7 @@ import {
     GetLoans,
     GetLoansQuery,
 } from "../types";
-import {Box, Card, CardContent, CardHeader, Stack} from "@mui/material";
+import {Box, Button, Card, CardContent, CardHeader, Stack} from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
 import * as React from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
@@ -110,7 +110,7 @@ export function Loans() {
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
-                                buttonContent={<>stwórz pożyczkę</>}
+                                buttonContent={<Button size={'small'} variant={'text'}>stwórz pożyczkę</Button>}
                                 formProps={CREATE_LOAN_FORM_PROPS(['PLN'], data.loans.rateStrategyConfigs, data.loans.repaymentDayStrategyConfigs)}
                             />
                         </Stack>
@@ -147,7 +147,7 @@ export function Loans() {
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
-                                buttonContent={<>Stwórz nowy</>}
+                                buttonContent={<Button size={'small'} variant={'text'}>Stwórz nowy</Button>}
                                 formProps={CREATE_RATE_STRATEGY_CONFIG()}
                             />
 
@@ -188,7 +188,8 @@ export function Loans() {
                                         .map(config =>
                                             (
                                                 <Stack direction={"row"} key={config.publicId}>
-                                                    <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={config}/>
+                                                    <RepaymentDayStrategyDisplay
+                                                        repaymentDayStrategyConfig={config}/>
                                                     <DeleteButton
                                                         object={config.publicId}
                                                         confirmationMessage={'Na pewno usunąć?'}

@@ -67,11 +67,9 @@ const router = createBrowserRouter([
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <CssBaseline/>
                         <Authenticated>
-                            <>
-                                <DrawerAppBar>
-                                    <Dispatcher/>
-                                </DrawerAppBar>
-                            </>
+                            <DrawerAppBar>
+                                <Dispatcher/>
+                            </DrawerAppBar>
                         </Authenticated>
                     </LocalizationProvider>
                 </ThemeProvider>

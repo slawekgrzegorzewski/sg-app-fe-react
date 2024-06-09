@@ -1,8 +1,9 @@
 import * as React from "react";
 import {useContext, useState} from "react";
-import {Button, Dialog, DialogContent, DialogTitle} from "@mui/material";
+import {Box} from "@mui/material";
 import {ShowBackdropContext} from "../DrawerAppBar";
-import Form, {FormProps} from "../forms/Form";
+import {FormProps} from "../forms/Form";
+import {FormDialog} from "../dialogs/FormDialog";
 
 export interface FormDialogButtonProps<T> {
     dialogTitle: string;
@@ -29,36 +30,27 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
         e.stopPropagation();
     }
 
-    function cancelEdit() {
-        setEditDialogOpen(false);
-        setShowBackdrop(true);
-        onCancel().finally(() => setShowBackdrop(false));
-    }
-
     function performEdit(object: T) {
         setEditDialogOpen(false);
         setShowBackdrop(true);
-        onSave(object).finally(() => setShowBackdrop(false));
-
+        return onSave(object).finally(() => setShowBackdrop(false));
     }
 
-    const handleClick = (e: React.MouseEvent<HTMLElement>) => {
-        e.stopPropagation();
-    };
+    function cancelEdit() {
+        setEditDialogOpen(false);
+        setShowBackdrop(true);
+        return onCancel().finally(() => setShowBackdrop(false));
+    }
+
 
     return <>
-        <Button variant={"text"} onClick={(e) => editClicked(e)}>
+        <Box onClick={(e) => editClicked(e)}>
             {buttonContent!}
-        </Button>
-        <Dialog open={editDialogOpen}>
-            <DialogTitle onClick={handleClick}>{dialogTitle}</DialogTitle>
-            <DialogContent onClick={handleClick}>
-                <Form
+        </Box>
+        <FormDialog dialogTitle={<>{dialogTitle}</>}
+                    formProps={formProps}
                     onSave={performEdit}
                     onCancel={cancelEdit}
-                    {...formProps}
-                />
-            </DialogContent>
-        </Dialog>
+                    open={editDialogOpen}/>
     </>
 }
