@@ -14,15 +14,14 @@ import {EditorField} from "../utils/forms/Form";
 import * as React from "react";
 import {SimpleCrudList} from "../application/components/SImpleCrudList";
 import {ComparatorBuilder} from "../application/utils/comparator-builder";
+import {GraphqlSupplier} from "../graphql.entities";
 
-type GraphqlSupplier = {
-    __typename?: "Supplier";
-    publicId: any;
-    name: string;
-    domain: { __typename?: "DomainSimple"; id: number; name: string }
-};
+type SupplierDTO = {
+    publicId: string,
+    name: string
+}
 
-const SUPPLIER_FORM = (supplier?: GraphqlSupplier) => {
+const SUPPLIER_FORM = (supplier?: SupplierDTO) => {
     return {
         validationSchema: Yup.object({
             publicId: supplier ? Yup.string().required() : Yup.string(),
@@ -55,19 +54,19 @@ export function SuppliersManagement() {
     const [updateSupplierMutation] = useMutation<UpdateSupplierMutation>(UpdateSupplier);
     const [deleteSupplierMutation] = useMutation<DeleteSupplierMutation>(DeleteSupplier);
 
-    const createSupplier = async ({name}: { name: String }): Promise<any> => {
-        await createSupplierMutation({variables: {name: name}});
+    const createSupplier = async (supplier: SupplierDTO): Promise<any> => {
+        await createSupplierMutation({variables: {name: supplier.name}});
         return refetch();
     };
 
-    const updateSupplier = async (publicId: string, name: string): Promise<any> => {
-        await updateSupplierMutation({variables: {publicId: publicId, name: name}})
+    const updateSupplier = async (supplier: SupplierDTO): Promise<any> => {
+        await updateSupplierMutation({variables: {publicId: supplier.publicId, name: supplier.name}})
             .finally(() => refetch());
         return refetch();
     };
 
-    const deleteSupplier = async (publicId: string): Promise<any> => {
-        await deleteSupplierMutation({variables: {supplierPublicId: publicId}});
+    const deleteSupplier = async (supplier: SupplierDTO): Promise<any> => {
+        await deleteSupplierMutation({variables: {supplierPublicId: supplier.publicId}});
         return refetch();
     };
 
@@ -80,10 +79,14 @@ export function SuppliersManagement() {
             title={'ZARZĄDZAJ DOSTAWCAMI'}
             createTitle={'Dodaj dostawcę'}
             editTitle={'Edytuj dostawcę'}
-            list={[...data.allSuppliers].sort(ComparatorBuilder.comparing<GraphqlSupplier>(supplier => supplier.name).build())}
+            list={[...data.allSuppliers]
+                .sort(ComparatorBuilder.comparing<GraphqlSupplier>(supplier => supplier.name).build())
+                .map(supplier => {
+                    return {publicId: supplier.publicId, name: supplier.name} as SupplierDTO
+                })}
             onCreate={value => createSupplier(value)}
-            onUpdate={value => updateSupplier(value.publicId, value.name)}
-            onDelete={value => deleteSupplier(value.publicId)}
+            onUpdate={value => updateSupplier(value)}
+            onDelete={value => deleteSupplier(value)}
             formSupplier={value => value ? SUPPLIER_FORM(value) : SUPPLIER_FORM()}
             entityDisplay={value => <>{value.name}</>}
         />

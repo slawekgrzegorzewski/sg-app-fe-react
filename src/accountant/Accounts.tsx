@@ -21,7 +21,7 @@ export function Accounts() {
                 data.accounts
                     .map(account =>
                         (
-                            <li key={account.id}>
+                            <li key={account.publicId}>
                                 {account.name}
                             </li>
                         ))

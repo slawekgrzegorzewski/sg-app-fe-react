@@ -1,9 +1,15 @@
 query GetAccounts {
     accounts {
-        id
+        publicId
         name
-        currency
-        currentBalance
+        currentBalance {
+            amount
+            currency
+        }
+        creditLimit {
+            amount
+            currency
+        }
         balanceIndex
         visible
         bankAccount {
@@ -24,4 +30,124 @@ query GetAccounts {
             name
         }
     }
+}
+
+mutation CreateAccount(
+    $name: String!,
+    $balanceIndex: Int,
+    $bankAccountId: Int,
+    $visible: Boolean!,
+    $creditLimitAmount: BigDecimal!,
+    $creditLimitCurrency: Currency!,
+    $currentBalanceAmount: BigDecimal!,
+    $currentBalanceCurrency: Currency!
+) {
+    createAccount(accountCreationInput: {
+        name: $name
+        balanceIndex: $balanceIndex
+        bankAccountId: $bankAccountId
+        visible: $visible
+        creditLimit: {
+            amount: $creditLimitAmount
+            currency: $creditLimitCurrency
+        }
+        currentBalance: {
+            amount: $currentBalanceAmount
+            currency: $currentBalanceCurrency
+        }
+    }) {
+        publicId
+        name
+        currentBalance {
+            amount
+            currency
+        }
+        creditLimit {
+            amount
+            currency
+        }
+        balanceIndex
+        visible
+        bankAccount {
+            id
+            iban
+            currency
+            owner
+            product
+            bic
+            externalId
+            domain {
+                id
+                name
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateAccount(
+    $publicId: UUID!,
+    $name: String!,
+    $balanceIndex: Int,
+    $bankAccountId: Int,
+    $visible: Boolean!,
+    $creditLimitAmount: BigDecimal!,
+    $creditLimitCurrency: Currency!,
+    $currentBalanceAmount: BigDecimal!,
+    $currentBalanceCurrency: Currency!
+) {
+    updateAccount(accountUpdateInput: {
+        publicId: $publicId
+        name: $name
+        balanceIndex: $balanceIndex
+        bankAccountId: $bankAccountId
+        visible: $visible
+        creditLimit: {
+            amount: $creditLimitAmount
+            currency: $creditLimitCurrency
+        }
+        currentBalance: {
+            amount: $currentBalanceAmount
+            currency: $currentBalanceCurrency
+        }
+    }) {
+        publicId
+        name
+        currentBalance {
+            amount
+            currency
+        }
+        creditLimit {
+            amount
+            currency
+        }
+        balanceIndex
+        visible
+        bankAccount {
+            id
+            iban
+            currency
+            owner
+            product
+            bic
+            externalId
+            domain {
+                id
+                name
+            }
+        }
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation DeleteAccount(
+    $publicId: UUID!
+) {
+    deleteAccount(accountPublicId: $publicId)
 }

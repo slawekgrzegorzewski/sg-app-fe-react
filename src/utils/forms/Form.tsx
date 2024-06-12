@@ -1,11 +1,12 @@
-import {Button, MenuItem, Stack, TextField} from "@mui/material";
+import {Button, Checkbox, FormControlLabel, FormGroup, MenuItem, Stack, TextField} from "@mui/material";
 import * as React from "react";
 import {Formik} from "../../application/components/Formik";
 import {FormikHelpers} from "formik/dist/types";
 import {FormikValues} from "formik";
 import * as Yup from "yup";
+import {Visibility, VisibilityOff} from "@mui/icons-material";
 
-export type EditorFieldType = 'NUMBER' | 'DATEPICKER' | 'TEXT' | 'TEXTAREA' | 'SELECT' | 'HIDDEN';
+export type EditorFieldType = 'NUMBER' | 'DATEPICKER' | 'TEXT' | 'TEXTAREA' | 'SELECT' | 'HIDDEN' | 'CHECKBOX';
 
 export type SelectOption = {
     key: string;
@@ -58,7 +59,61 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
         }
     }
 
-    // @ts-ignore
+    function createTextField(editorField: EditorField, formik: any) {
+        return <TextField
+            {...getFieldUniqueProps(editorField)}
+            {...(editorField.additionalProps || {})}
+            fullWidth
+            variant="standard"
+            id={editorField.key}
+            name={editorField.key}
+            key={editorField.key}
+            label={editorField.label}
+            value={formik.values[editorField.key]}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+            helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+        >
+            {
+                editorField.selectOptions?.map(option => (
+                    <MenuItem key={option.key}
+                              value={option.key}>{option.displayElement}</MenuItem>
+                ))
+            }
+        </TextField>
+    }
+
+    function createCheckbox(editorField: EditorField, formik: any) {
+        return <FormGroup>
+            <FormControlLabel label={editorField.label}
+                              id={editorField.key}
+                              name={editorField.key}
+                              key={editorField.key}
+                              control={
+                                  <Checkbox
+                                      {...(editorField.additionalProps || {})}
+                                      checked={formik.values[editorField.key]}
+                                      onChange={formik.handleChange}
+                                      onBlur={formik.handleBlur}
+                                      error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                                      helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+                                      size={'small'}
+                                      icon={<VisibilityOff />}
+                                      checkedIcon={<Visibility />}
+                                  >
+                                      {
+                                          editorField.selectOptions?.map(option => (
+                                              <MenuItem key={option.key}
+                                                        value={option.key}>{option.displayElement}</MenuItem>
+                                          ))
+                                      }
+                                  </Checkbox>}
+            />
+        </FormGroup>;
+    }
+
+// @ts-ignore
     const form = formik => (
         <form onSubmit={formik.handleSubmit}>
             <Stack direction={"column"} spacing={4} alignItems={"center"}>
@@ -67,28 +122,9 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
                         fields
                             .filter(field => field.type !== 'HIDDEN')
                             .map(editorField => {
-                                return <TextField
-                                    {...getFieldUniqueProps(editorField)}
-                                    {...(editorField.additionalProps || {})}
-                                    fullWidth
-                                    variant="standard"
-                                    id={editorField.key}
-                                    name={editorField.key}
-                                    key={editorField.key}
-                                    label={editorField.label}
-                                    value={formik.values[editorField.key]}
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-                                    helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-                                >
-                                    {
-                                        editorField.selectOptions?.map(option => (
-                                            <MenuItem key={option.key}
-                                                      value={option.key}>{option.displayElement}</MenuItem>
-                                        ))
-                                    }
-                                </TextField>
+                                if (editorField.type === "CHECKBOX")
+                                    return createCheckbox(editorField, formik);
+                                return createTextField(editorField, formik);
                             })}
                 </Stack>
                 <Stack direction={"row"} spacing={4} alignItems={"center"}>

@@ -1,14 +1,33 @@
 type Account {
-    balanceIndex: Int
-    bankAccount: BankAccount
-    creditLimit: BigDecimal!
-    currency: Currency!
-    currentBalance: BigDecimal!
-    domain: DomainSimple
-    id: Int!
-    name: String!
-    visible: Boolean!
+    publicId:UUID!,
+    name:String!,
+    currentBalance:MonetaryAmount!,
+    creditLimit:MonetaryAmount!,
+    balanceIndex:Int,
+    visible:Boolean!,
+    bankAccount:BankAccount,
+    domain:DomainSimple,
 }
+
+input AccountCreationInput {
+    name:String!,
+    currentBalance:MonetaryAmountInput!,
+    creditLimit:MonetaryAmountInput!,
+    balanceIndex:Int,
+    visible:Boolean!,
+    bankAccountId:Int
+}
+
+input AccountUpdateInput {
+    publicId:UUID!,
+    name:String!,
+    currentBalance:MonetaryAmountInput!,
+    creditLimit:MonetaryAmountInput!,
+    balanceIndex:Int,
+    visible:Boolean!,
+    bankAccountId:Int
+}
+
 
 type AuthenticationInfo {
     jwt: String!
@@ -80,6 +99,9 @@ type Mutation {
     deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
     createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
     deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
+    createAccount(accountCreationInput: AccountCreationInput!): Account!
+    updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
+    deleteAccount(accountPublicId: UUID!): String!
     createClient(clientCreationInput: ClientCreationInput!): Client!
     updateClient(clientUpdateInput: ClientUpdateInput!): Client!
     deleteClient(clientPublicId:UUID!): String!
@@ -91,7 +113,6 @@ type Mutation {
     createInvoice(invoiceCreationInput: InvoiceCreationInput!): Invoice!
     updateInvoice(invoiceUpdateInput: InvoiceUpdateInput!): Invoice!
     deleteFinancialDocument(financialDocumentPublicId: UUID!): String!
-
 }
 
 type Query {

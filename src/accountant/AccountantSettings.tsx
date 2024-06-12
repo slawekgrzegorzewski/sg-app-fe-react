@@ -4,6 +4,7 @@ import Grid from "@mui/material/Unstable_Grid2";
 import {SuppliersManagement} from "./SuppliersManagement";
 import {Box} from "@mui/material";
 import {ClientsManagement} from "./ClientsManagement";
+import {AccountsManagement} from "./AccountsManagement";
 
 export function AccountantSettings() {
     const settings = useContext(SettingsContext);
@@ -21,7 +22,7 @@ export function AccountantSettings() {
                 }
             </Grid>
             <Grid container xs={6} direction={'column'} sx={{width: '300px'}}>
-
+                <AccountsManagement/>
             </Grid>
         </Grid>
     </>);
