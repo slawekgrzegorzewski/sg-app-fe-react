@@ -18,7 +18,7 @@ export function Accounts() {
     } else if (data) {
         return <>
             <ul>{(
-                data.accounts
+                data.accounts.accounts
                     .map(account =>
                         (
                             <li key={account.publicId}>

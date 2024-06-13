@@ -1,3 +1,13 @@
+type CurrencyInfo {
+    code: String!
+    description: String!
+}
+
+type AccountsResponse {
+    supportedCurrencies: [CurrencyInfo!]!
+    accounts:[Account!]!
+}
+
 type Account {
     publicId:UUID!,
     name:String!,
@@ -11,7 +21,6 @@ type Account {
 
 input AccountCreationInput {
     name:String!,
-    currentBalance:MonetaryAmountInput!,
     creditLimit:MonetaryAmountInput!,
     balanceIndex:Int,
     visible:Boolean!,
@@ -21,7 +30,6 @@ input AccountCreationInput {
 input AccountUpdateInput {
     publicId:UUID!,
     name:String!,
-    currentBalance:MonetaryAmountInput!,
     creditLimit:MonetaryAmountInput!,
     balanceIndex:Int,
     visible:Boolean!,
@@ -117,7 +125,7 @@ type Mutation {
 
 type Query {
     _service: _Service!
-    accounts: [Account!]!
+    accounts: AccountsResponse!
     allIPRs: [IntellectualProperty!]!
     allTimeRecordCategories: [TimeRecordCategory!]!
     monthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]

@@ -36,7 +36,8 @@ const iprEditorFields: EditorField[] = [
     {
         label: 'Opis',
         type: 'TEXTAREA',
-        key: 'description'
+        key: 'description',
+        editable: true
     }
 ];
 

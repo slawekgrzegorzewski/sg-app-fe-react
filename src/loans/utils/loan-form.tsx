@@ -41,7 +41,8 @@ export const EDIT_LOAN_FORM_PROPS = (name: string) => {
                 {
                     label: 'Nazwa',
                     type: 'TEXT',
-                    key: 'name'
+                    key: 'name',
+                    editable: true
                 } as EditorField
             ]
     }
@@ -91,22 +92,26 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
                 {
                     label: 'Nazwa',
                     type: 'TEXT',
-                    key: 'name'
+                    key: 'name',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Data wypłaty',
                     type: 'DATEPICKER',
-                    key: 'paymentDate'
+                    key: 'paymentDate',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Liczba rat',
                     type: 'NUMBER',
-                    key: 'numberOfInstallments'
+                    key: 'numberOfInstallments',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Wypłacona kwota',
                     type: 'NUMBER',
-                    key: 'paidAmount'
+                    key: 'paidAmount',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Waluta',
@@ -115,7 +120,8 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
                     selectOptions: currencies.map(currency => ({
                         key: currency,
                         displayElement: (<>{currency}</>)
-                    }))
+                    })),
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Strategia naliczania odsetek',
@@ -124,7 +130,8 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
                     selectOptions: rateStrategyConfigs.map(config => ({
                         key: config.publicId,
                         displayElement: (<RateStrategyDisplay rateStrategyConfig={config}/>)
-                    }))
+                    })),
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Strategia wyboru dnia spłaty',
@@ -134,7 +141,8 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
                         key: config.publicId,
                         displayElement: (
                             <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={config}/>)
-                    }))
+                    })),
+                    editable: true
                 } as EditorField
             ]
     }
@@ -173,22 +181,26 @@ export const CREATE_INSTALLMENT_FORM_PROPS = () => {
                 {
                     label: 'Data spłaty',
                     type: 'DATEPICKER',
-                    key: 'paidAt'
+                    key: 'paidAt',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Spłacone odsetki',
                     type: 'NUMBER',
-                    key: 'repaidInterest'
+                    key: 'repaidInterest',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Spłacony kapitał',
                     type: 'NUMBER',
-                    key: 'repaidAmount'
+                    key: 'repaidAmount',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Nadpłata',
                     type: 'NUMBER',
-                    key: 'overpayment'
+                    key: 'overpayment',
+                    editable: true
                 } as EditorField,
             ]
     }
@@ -228,22 +240,26 @@ export const CREATE_RATE_STRATEGY_CONFIG = () => {
                 {
                     label: 'Nazwa',
                     type: 'TEXT',
-                    key: 'name'
+                    key: 'name',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Stałe oprocentowanie',
                     type: 'NUMBER',
-                    key: 'constantRate'
+                    key: 'constantRate',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Liczba miesięcy kiedy stałe oprocentowanie obowiązuje',
                     type: 'NUMBER',
-                    key: 'becomesVariableRateAfterNInstallments'
+                    key: 'becomesVariableRateAfterNInstallments',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Marża po stałym oprocentowaniu',
                     type: 'NUMBER',
-                    key: 'variableRateMargin'
+                    key: 'variableRateMargin',
+                    editable: true
                 } as EditorField,
             ]
     }
@@ -273,12 +289,14 @@ export const CREATE_REPAYMENT_DAY_STRATEGY_CONFIG = () => {
                 {
                     label: 'Nazwa',
                     type: 'TEXT',
-                    key: 'name'
+                    key: 'name',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Dzień spłaty',
                     type: 'NUMBER',
-                    key: 'dayOfMonth'
+                    key: 'dayOfMonth',
+                    editable: true
                 } as EditorField,
             ]
     }

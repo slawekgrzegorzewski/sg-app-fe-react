@@ -36,12 +36,14 @@ const SUPPLIER_FORM = (supplier?: SupplierDTO) => {
                 {
                     label: 'PublicId',
                     type: 'HIDDEN',
-                    key: 'publicId'
+                    key: 'publicId',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Nazwa',
                     type: 'TEXT',
-                    key: 'name'
+                    key: 'name',
+                    editable: true
                 } as EditorField,
             ]
     };
@@ -84,6 +86,7 @@ export function SuppliersManagement() {
                 .map(supplier => {
                     return {publicId: supplier.publicId, name: supplier.name} as SupplierDTO
                 })}
+            idExtractor={supplier => supplier.publicId}
             onCreate={value => createSupplier(value)}
             onUpdate={value => updateSupplier(value)}
             onDelete={value => deleteSupplier(value)}

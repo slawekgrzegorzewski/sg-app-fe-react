@@ -1,33 +1,39 @@
 query GetAccounts {
     accounts {
-        publicId
-        name
-        currentBalance {
-            amount
-            currency
+        supportedCurrencies {
+            code
+            description
         }
-        creditLimit {
-            amount
-            currency
-        }
-        balanceIndex
-        visible
-        bankAccount {
-            id
-            iban
-            currency
-            owner
-            product
-            bic
-            externalId
+        accounts {
+            publicId
+            name
+            currentBalance {
+                amount
+                currency
+            }
+            creditLimit {
+                amount
+                currency
+            }
+            balanceIndex
+            visible
+            bankAccount {
+                id
+                iban
+                currency
+                owner
+                product
+                bic
+                externalId
+                domain {
+                    id
+                    name
+                }
+            }
             domain {
                 id
                 name
             }
-        }
-        domain {
-            id
-            name
         }
     }
 }
@@ -38,9 +44,7 @@ mutation CreateAccount(
     $bankAccountId: Int,
     $visible: Boolean!,
     $creditLimitAmount: BigDecimal!,
-    $creditLimitCurrency: Currency!,
-    $currentBalanceAmount: BigDecimal!,
-    $currentBalanceCurrency: Currency!
+    $creditLimitCurrency: Currency!
 ) {
     createAccount(accountCreationInput: {
         name: $name
@@ -50,10 +54,6 @@ mutation CreateAccount(
         creditLimit: {
             amount: $creditLimitAmount
             currency: $creditLimitCurrency
-        }
-        currentBalance: {
-            amount: $currentBalanceAmount
-            currency: $currentBalanceCurrency
         }
     }) {
         publicId
@@ -95,9 +95,7 @@ mutation UpdateAccount(
     $bankAccountId: Int,
     $visible: Boolean!,
     $creditLimitAmount: BigDecimal!,
-    $creditLimitCurrency: Currency!,
-    $currentBalanceAmount: BigDecimal!,
-    $currentBalanceCurrency: Currency!
+    $creditLimitCurrency: Currency!
 ) {
     updateAccount(accountUpdateInput: {
         publicId: $publicId
@@ -108,10 +106,6 @@ mutation UpdateAccount(
         creditLimit: {
             amount: $creditLimitAmount
             currency: $creditLimitCurrency
-        }
-        currentBalance: {
-            amount: $currentBalanceAmount
-            currency: $currentBalanceCurrency
         }
     }) {
         publicId

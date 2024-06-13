@@ -16,6 +16,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
                 ...headers,
                 domainId: currentDomainId,
                 authorization: 'Bearer ' + (user?.jwtToken || ''),
+                locale: navigator.language
             }
         }));
         return forward(operation);

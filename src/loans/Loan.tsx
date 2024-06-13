@@ -129,12 +129,14 @@ export function Loan() {
                                                 {
                                                     label: 'Miesięczny budżet',
                                                     type: 'NUMBER',
-                                                    key: 'monthlyBudget'
+                                                    key: 'monthlyBudget',
+                                                    editable: true
                                                 } as EditorField,
                                                 {
                                                     label: 'Roczny budżet',
                                                     type: 'NUMBER',
-                                                    key: 'yearlyBudget'
+                                                    key: 'yearlyBudget',
+                                                    editable: true
                                                 } as EditorField,
                                             ]
                                     }}

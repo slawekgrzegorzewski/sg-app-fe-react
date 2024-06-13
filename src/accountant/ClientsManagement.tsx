@@ -36,12 +36,14 @@ const CLIENT_FORM = (client?: ClientDTO) => {
                 {
                     label: 'PublicId',
                     type: 'HIDDEN',
-                    key: 'publicId'
+                    key: 'publicId',
+                    editable: true
                 } as EditorField,
                 {
                     label: 'Nazwa',
                     type: 'TEXT',
-                    key: 'name'
+                    key: 'name',
+                    editable: true
                 } as EditorField,
             ]
     };
@@ -84,6 +86,7 @@ export function ClientsManagement() {
                 .map(client => {
                     return {publicId: client.publicId, name: client.name} as ClientDTO
                 })}
+            idExtractor={client => client.publicId}
             onCreate={value => createClient(value)}
             onUpdate={value => updateClient(value)}
             onDelete={value => deleteClient(value)}

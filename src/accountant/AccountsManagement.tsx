@@ -23,7 +23,6 @@ type AccountDTO = {
     visible: boolean,
     currency: string,
     creditLimitAmount: Decimal,
-    currentBalanceAmount: Decimal,
 }
 
 const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
@@ -37,8 +36,7 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
                         new RegExp(currencies.map(currency => "^" + currency + "$").join("|")),
                         "Waluta spoza dozwolonej listy")
                     .required('Wymagana'),
-                creditLimitAmount: Yup.number().required(),
-                currentBalanceAmount: Yup.number().required()
+                creditLimitAmount: Yup.number().required()
             }),
             initialValues: {
                 publicId: account?.publicId || '',
@@ -46,43 +44,42 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
                 visible: account?.visible || false,
                 currency: account?.currency || '',
                 creditLimitAmount: account?.creditLimitAmount || 0,
-                currentBalanceAmount: account?.currentBalanceAmount || 0
             } as AccountDTO,
             fields:
                 [
                     {
                         label: 'PublicId',
                         type: 'HIDDEN',
-                        key: 'publicId'
+                        key: 'publicId',
+                        editable: true
                     } as EditorField,
                     {
                         label: 'Nazwa',
                         type: 'TEXT',
-                        key: 'name'
+                        key: 'name',
+                        editable: true
                     } as EditorField,
                     {
                         label: 'Widoczne',
                         type: 'CHECKBOX',
-                        key: 'visible'
+                        key: 'visible',
+                        editable: true
                     } as EditorField,
                     {
                         label: 'Waluta',
-                        type: 'SELECT',
+                        type: 'AUTOCOMPLETE',
                         selectOptions: currencies.map(currency => ({
                             key: currency,
                             displayElement: (<>{currency}</>)
                         })),
-                        key: 'currency'
-                    } as EditorField,
-                    {
-                        label: 'Stan',
-                        type: 'NUMBER',
-                        key: 'currentBalanceAmount'
+                        key: 'currency',
+                        editable: !account
                     } as EditorField,
                     {
                         label: 'Limit kredytowy',
                         type: 'NUMBER',
-                        key: 'creditLimitAmount'
+                        key: 'creditLimitAmount',
+                        editable: true
                     } as EditorField
                 ]
         };
@@ -104,9 +101,7 @@ export function AccountsManagement() {
                 bankAccountId: null,
                 visible: account.visible,
                 creditLimitAmount: account.creditLimitAmount,
-                creditLimitCurrency: account.currency,
-                currentBalanceAmount: account.currentBalanceAmount,
-                currentBalanceCurrency: account.currency
+                creditLimitCurrency: account.currency
             }
         });
         return refetch();
@@ -122,9 +117,7 @@ export function AccountsManagement() {
                 bankAccountId: null,
                 visible: account.visible,
                 creditLimitAmount: account.creditLimitAmount,
-                creditLimitCurrency: account.currency,
-                currentBalanceAmount: account.currentBalanceAmount,
-                currentBalanceCurrency: account.currency
+                creditLimitCurrency: account.currency
             }
         })
             .finally(() => refetch());
@@ -141,12 +134,13 @@ export function AccountsManagement() {
     } else if (error) {
         return <>Error...</>
     } else if (data) {
+        const currencies = data.accounts.supportedCurrencies.map(currency => currency.code).sort();
         return <SimpleCrudList
             title={'ZARZĄDZAJ KONTAMI'}
             editTitle={'Edytuj konto'}
             createTitle={'Dodaj konto'}
             list={
-                [...data.accounts]
+                [...data.accounts.accounts]
                     .sort(ComparatorBuilder.comparing<GraphqlAccount>(account => account.name).thenComparing(account => account.currentBalance.currency).build())
                     .map(account => {
                         return {
@@ -154,15 +148,15 @@ export function AccountsManagement() {
                             name: account.name,
                             visible: account.visible,
                             currency: account.currentBalance.currency,
-                            currentBalanceAmount: new Decimal(account.currentBalance.amount),
                             creditLimitAmount: new Decimal(account.creditLimit.amount),
                         } as AccountDTO
                     })
             }
+            idExtractor={account => account.publicId}
             onCreate={account => createAccount(account)}
             onUpdate={account => updateAccount(account)}
             onDelete={account => deleteAccount(account.publicId)}
-            formSupplier={account => account ? ACCOUNT_FORM(['PLN'], account) : ACCOUNT_FORM(['PLN'])}
+            formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
             entityDisplay={account => <>{account.name} ({account.currency})</>}
         />
     } else {

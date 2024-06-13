@@ -1,4 +1,14 @@
-import {Button, Checkbox, FormControlLabel, FormGroup, MenuItem, Stack, TextField} from "@mui/material";
+import {
+    Autocomplete,
+    Button,
+    Checkbox,
+    FormControl,
+    FormControlLabel,
+    FormHelperText,
+    MenuItem,
+    Stack,
+    TextField
+} from "@mui/material";
 import * as React from "react";
 import {Formik} from "../../application/components/Formik";
 import {FormikHelpers} from "formik/dist/types";
@@ -6,7 +16,15 @@ import {FormikValues} from "formik";
 import * as Yup from "yup";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
 
-export type EditorFieldType = 'NUMBER' | 'DATEPICKER' | 'TEXT' | 'TEXTAREA' | 'SELECT' | 'HIDDEN' | 'CHECKBOX';
+export type EditorFieldType =
+    'NUMBER'
+    | 'DATEPICKER'
+    | 'TEXT'
+    | 'TEXTAREA'
+    | 'SELECT'
+    | 'HIDDEN'
+    | 'CHECKBOX'
+    | 'AUTOCOMPLETE';
 
 export type SelectOption = {
     key: string;
@@ -19,6 +37,7 @@ export type EditorField = {
     type: EditorFieldType;
     additionalProps?: any;
     selectOptions?: SelectOption[];
+    editable: boolean
 }
 
 export type FormProps<T> = {
@@ -35,23 +54,28 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
         switch (editorField.type) {
             case "TEXT":
                 return {
+                    disabled: !editorField.editable,
                     type: "text"
                 };
             case 'TEXTAREA':
                 return {
+                    disabled: !editorField.editable,
                     type: "text",
                     multiline: true
                 };
             case 'DATEPICKER':
                 return {
+                    disabled: !editorField.editable,
                     type: "date"
                 };
             case 'NUMBER':
                 return {
+                    disabled: !editorField.editable,
                     type: "number"
                 };
             case 'SELECT':
                 return {
+                    disabled: !editorField.editable,
                     select: true
                 };
             default:
@@ -84,33 +108,55 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
         </TextField>
     }
 
+    function createAutocomplete(editorField: EditorField, formik: any) {
+        return <Autocomplete
+            fullWidth
+            disabled={!editorField.editable}
+            id={editorField.key}
+            key={editorField.key}
+            value={formik.values[editorField.key]}
+            onBlur={formik.handleBlur}
+            onChange={(e, newValue) => {
+                formik.setFieldValue(editorField.key, newValue, true)
+            }}
+            options={[
+                ...(editorField.selectOptions!.map(c => {
+                    return c.key;
+                }))
+            ]}
+            renderInput={(params) => <TextField
+                {...params}
+                variant="standard"
+                label={editorField.label}
+                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+            />}
+        />
+    }
+
     function createCheckbox(editorField: EditorField, formik: any) {
-        return <FormGroup>
+        return <FormControl key={editorField.key}>
+            <FormHelperText
+                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+            >
+                {formik.touched[editorField.key] && formik.errors[editorField.key]}
+            </FormHelperText>
             <FormControlLabel label={editorField.label}
                               id={editorField.key}
                               name={editorField.key}
                               key={editorField.key}
-                              control={
-                                  <Checkbox
-                                      {...(editorField.additionalProps || {})}
-                                      checked={formik.values[editorField.key]}
-                                      onChange={formik.handleChange}
-                                      onBlur={formik.handleBlur}
-                                      error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-                                      helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-                                      size={'small'}
-                                      icon={<VisibilityOff />}
-                                      checkedIcon={<Visibility />}
-                                  >
-                                      {
-                                          editorField.selectOptions?.map(option => (
-                                              <MenuItem key={option.key}
-                                                        value={option.key}>{option.displayElement}</MenuItem>
-                                          ))
-                                      }
-                                  </Checkbox>}
+                              onChange={formik.handleChange}
+                              onBlur={formik.handleBlur}
+                              {...(editorField.additionalProps || {})}
+                              control={<Checkbox
+                                  disabled={!editorField.editable}
+                                  checked={formik.values[editorField.key]}
+                                  size={'small'}
+                                  icon={<VisibilityOff/>}
+                                  checkedIcon={<Visibility/>}
+                              />}
             />
-        </FormGroup>;
+        </FormControl>;
     }
 
 // @ts-ignore
@@ -124,6 +170,8 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
                             .map(editorField => {
                                 if (editorField.type === "CHECKBOX")
                                     return createCheckbox(editorField, formik);
+                                if (editorField.type === "AUTOCOMPLETE")
+                                    return createAutocomplete(editorField, formik);
                                 return createTextField(editorField, formik);
                             })}
                 </Stack>

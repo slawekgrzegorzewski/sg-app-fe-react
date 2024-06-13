@@ -19,6 +19,8 @@ export interface SimpleCrudListProps<T> {
 
     list: T[],
 
+    idExtractor: (t: T) => string,
+
     onCreate(t: T): Promise<void>,
 
     onUpdate(t: T): Promise<void>,
@@ -31,6 +33,7 @@ export interface SimpleCrudListProps<T> {
 }
 
 export function SimpleCrudList<T>({
+                                      idExtractor,
                                       title,
                                       createTitle,
                                       editTitle,
@@ -93,7 +96,8 @@ export function SimpleCrudList<T>({
             <Stack direction={"column"}>
                 {(
                     list.map(entity =>
-                        <EntityRowBox onClick={(e) => selectEntity(entity)} alignSelf={'stretch'}>
+                        <EntityRowBox key={idExtractor(entity)} onClick={(e) => selectEntity(entity)}
+                                      alignSelf={'stretch'}>
                             {entityDisplay(entity)}
                         </EntityRowBox>)
                 )}
