@@ -38,7 +38,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{ secrets.SSH_PASSWORD }}
-        port: 22
+        port: 25
         source: "react.tar"
         target: "/home/slawek"
     - name: unpack and deploy application files
