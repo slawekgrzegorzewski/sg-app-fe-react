@@ -47,7 +47,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{ secrets.SSH_PASSWORD }}
-        port: 22
+        port: 25
         script: |
           mkdir -p /home/slawek/Cluster/permanent_data/sg-application-gateway/react
           rm -rf /home/slawek/Cluster/permanent_data/sg-application-gateway/react/*
