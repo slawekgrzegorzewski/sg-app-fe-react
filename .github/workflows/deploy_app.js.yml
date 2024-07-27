@@ -40,7 +40,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: 22
         source: "react.tar"
-        target: "/home/slawek/Application"
+        target: "/home/slawek"
     - name: unpack and deploy application files
       uses: appleboy/ssh-action@master
       with:
@@ -49,7 +49,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: 22
         script: |
-          mkdir -p   /home/slawek/Application/fe/react
-          rm -rf /home/slawek/Application/fe/react/*
-          tar -xf /home/slawek/Application/react.tar -C /home/slawek/Application/fe/react/
-          rm /home/slawek/Application/react.tar
+          mkdir -p /home/slawek/Cluster/permanent_data/sg-application-gateway/react
+          rm -rf /home/slawek/Cluster/permanent_data/sg-application-gateway/react/*
+          tar -xf /home/slawek/react.tar -C /home/slawek/Cluster/permanent_data/sg-application-gateway/react/
+          rm /home/slawek/react.tar
