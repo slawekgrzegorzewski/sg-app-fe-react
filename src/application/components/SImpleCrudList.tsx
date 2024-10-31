@@ -81,7 +81,7 @@ export function SimpleCrudList<T>({
             <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
                 <TitleBox>{title}</TitleBox>
                 <FormDialogButton
-                    dialogTitle={createTitle}
+                    title={createTitle}
                     onSave={(t) => onCreate(t)}
                     onCancel={() => {
                         return Promise.resolve();

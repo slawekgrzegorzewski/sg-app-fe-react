@@ -151,3 +151,31 @@ mutation DeleteIntellectualPropertyReport (
 ){
     deleteIPR(intellectualPropertyId: $intellectualPropertyId)
 }
+
+mutation CreateTask (
+    $intellectualPropertyId: Int!
+    $coAuthors: String!
+    $description: String!
+){
+  createTask(
+    intellectualPropertyId: $intellectualPropertyId
+    taskData: { coAuthors: $coAuthors, description: $description }
+  )
+}
+
+mutation UpdateTask(
+    $taskId: Int!
+    $coAuthors: String!
+    $description: String!
+){
+  updateTask(
+    taskId: $taskId
+    taskData: { coAuthors: $coAuthors, description: $description }
+  )
+}
+
+mutation DeleteTask(
+    $taskId: Int!
+) {
+  deleteTask(taskId: $taskId)
+}

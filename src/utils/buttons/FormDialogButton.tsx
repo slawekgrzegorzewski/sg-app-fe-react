@@ -6,7 +6,7 @@ import {FormProps} from "../forms/Form";
 import {FormDialog} from "../dialogs/FormDialog";
 
 export interface FormDialogButtonProps<T> {
-    dialogTitle: string;
+    title: string;
     onSave: ((object: T) => Promise<void>),
     onCancel: (() => Promise<void>),
     buttonContent?: React.ReactNode,
@@ -15,7 +15,7 @@ export interface FormDialogButtonProps<T> {
 
 export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     let {
-        dialogTitle,
+        title,
         buttonContent,
         onSave,
         onCancel,
@@ -47,7 +47,7 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
         <Box onClick={(e) => editClicked(e)}>
             {buttonContent!}
         </Box>
-        <FormDialog dialogTitle={<>{dialogTitle}</>}
+        <FormDialog dialogTitle={<>{title}</>}
                     formProps={formProps}
                     onSave={performEdit}
                     onCancel={cancelEdit}
