@@ -1,34 +1,40 @@
-query AllIPRs {
-    allIPRs {
-        id
-        description
-        tasks {
+query IntellectualPropertiesRecords($yearMonthFilter: YearMonth, $onlyReportsWithoutAttachments: Boolean!, $onlyReportsHavingTasksWithNoAttachments: Boolean!) {
+    intellectualPropertiesRecords(input: {yearMonthFilter: $yearMonthFilter, onlyReportsWithoutAttachments: $onlyReportsWithoutAttachments, onlyReportsHavingTasksWithNoAttachments: $onlyReportsHavingTasksWithNoAttachments}) {
+        reports {
             id
-            attachments
-            coAuthors
             description
-            timeRecords {
+            tasks {
                 id
-                date
-                numberOfHours
+                attachments
+                coAuthors
                 description
-                timeRecordCategory {
+                timeRecords {
                     id
-                    name
+                    date
+                    numberOfHours
+                    description
+                    timeRecordCategory {
+                        id
+                        name
+                        domain {
+                            id
+                            name
+                        }
+                    }
                     domain {
                         id
                         name
                     }
                 }
-                domain {
-                    id
-                    name
-                }
+            }
+            domain {
+                id
+                name
             }
         }
-        domain {
-            id
-            name
+        stats {
+            firstTimeRecord
+            lastTimeRecord
         }
     }
 }
@@ -150,4 +156,46 @@ mutation DeleteIntellectualPropertyReport (
     $intellectualPropertyId: Int!
 ){
     deleteIPR(intellectualPropertyId: $intellectualPropertyId)
+}
+
+mutation CreateTask (
+    $intellectualPropertyId: Int!
+    $coAuthors: String!
+    $description: String!
+){
+    createTask(
+        intellectualPropertyId: $intellectualPropertyId
+        taskData: { coAuthors: $coAuthors, description: $description }
+    )
+}
+
+mutation UpdateTask(
+    $taskId: Int!
+    $coAuthors: String!
+    $description: String!
+){
+    updateTask(
+        taskId: $taskId
+        taskData: { coAuthors: $coAuthors, description: $description }
+    )
+}
+
+mutation DeleteTask(
+    $taskId: Int!
+) {
+    deleteTask(taskId: $taskId)
+}
+
+mutation UploadTaskAttachment($file: Upload!, $taskId: Int!) {
+    uploadTaskAttachment(input: {
+        file: $file,
+        taskId: $taskId
+    })
+}
+
+mutation DeleteTaskAttachment($fileName: String!, $taskId: Int!) {
+    deleteTaskAttachment(input: {
+        fileName: $fileName,
+        taskId: $taskId
+    })
 }

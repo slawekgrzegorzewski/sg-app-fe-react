@@ -88,7 +88,7 @@ export function Loan() {
                             <LoanDetails loan={loan} short={false}/>
                             <Stack direction={'row'}>
                                 <FormDialogButton
-                                    dialogTitle='Dane raty'
+                                    title='Dane raty'
                                     onSave={value => {
                                         return createInstallment(loan.publicId, loan.paidAmount.currency, value.paidAt, value.repaidInterest, value.repaidAmount, value.overpayment);
                                     }}
@@ -99,7 +99,7 @@ export function Loan() {
                                     formProps={CREATE_INSTALLMENT_FORM_PROPS()}
                                 />
                                 <FormDialogButton
-                                    dialogTitle='Parametry symulacji'
+                                    title='Parametry symulacji'
                                     onSave={value => {
                                         setSimulationParams({
                                             monthlyBudget: value.monthlyBudget,
@@ -147,7 +147,7 @@ export function Loan() {
                             {simulationParams && <LoanSimulation loan={loan} {...simulationParams}/>}
                         </Stack>
                         <FormDialogButton
-                            dialogTitle='Dane pożyczki'
+                            title='Dane pożyczki'
                             onSave={value => {
                                 return updateLoan(loan.publicId, value.name);
                             }}

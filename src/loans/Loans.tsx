@@ -105,7 +105,7 @@ export function Loans() {
                     <Box component="section" sx={{width: 1000, m: 'auto'}}>
                         <Stack direction="row">
                             <FormDialogButton
-                                dialogTitle='Dane pożyczki'
+                                title='Dane pożyczki'
                                 onSave={createLoan}
                                 onCancel={() => {
                                     return Promise.resolve();
@@ -142,7 +142,7 @@ export function Loans() {
                         <CardHeader title={'Sposoby naliczania odsetek'}/>
                         <CardContent>
                             <FormDialogButton
-                                dialogTitle='Tworzenie'
+                                title='Tworzenie'
                                 onSave={createConstantForNFirstInstallmentRateStrategyConfig}
                                 onCancel={() => {
                                     return Promise.resolve();
@@ -175,7 +175,7 @@ export function Loans() {
                         <CardHeader title={'Sposoby obliczania dnia spłaty'}/>
                         <CardContent>
                             <FormDialogButton
-                                dialogTitle='Tworzenie'
+                                title='Tworzenie'
                                 onSave={createNthDayOfMonthRepaymentDayStrategyConfig}
                                 onCancel={() => {
                                     return Promise.resolve();

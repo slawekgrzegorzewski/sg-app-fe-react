@@ -1,22 +1,24 @@
-import {ApolloClient, ApolloLink, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
+import {ApolloClient, ApolloLink, ApolloProvider, InMemoryCache} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 import React, {useState} from "react";
 import {Navigate} from "react-router-dom";
 import {useCurrentUser} from "../utils/users/use-current-user";
 import {useDomain} from "../utils/domains/use-domain";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
     const {currentDomainId} = useDomain();
     const {user, deleteCurrentUser} = useCurrentUser();
     const [loggedId, setLoggedIn] = useState(user !== null);
-    const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
+    const httpLink = createUploadLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
     const authMiddleware = new ApolloLink((operation, forward) => {
         operation.setContext(({headers = {}}) => ({
             headers: {
                 ...headers,
                 domainId: currentDomainId,
                 authorization: 'Bearer ' + (user?.jwtToken || ''),
-                locale: navigator.language
+                locale: navigator.language,
+                'Apollo-Require-Preflight': 'true'
             }
         }));
         return forward(operation);
@@ -30,7 +32,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
     const logoutLink = onError((response) => {
         if (response.graphQLErrors
             && response.graphQLErrors.length > 0
-            && response.graphQLErrors[0].extensions.errorType === 'UNAUTHENTICATED') {
+            && response.graphQLErrors[0].extensions?.errorType === 'UNAUTHENTICATED') {
             logout();
         }
     })
@@ -51,6 +53,6 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
             </div>
         </ApolloProvider>;
     } else {
-        return <Navigate to={"/login"} />;
+        return <Navigate to={"/login"}/>;
     }
 }

@@ -1,0 +1,1 @@
+export type GQLDomain = { __typename?: "DomainSimple"; id: number; name: string }
