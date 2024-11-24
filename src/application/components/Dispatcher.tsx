@@ -2,7 +2,7 @@ import {useParams} from "react-router-dom";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import Typography from "@mui/material/Typography";
 import {Accounts} from "../../accountant/Accounts";
-import {IntellectualPropertyReports} from "../../intellectual-property-report/IntellectualPropertyReports";
+import {IntellectualPropertiesMainPage} from "../../intellectual-property-report/IntellectualPropertiesMainPage";
 import {applications} from "../../utils/applications/applications-access";
 import {Loans} from "../../loans/Loans";
 import React from "react";
@@ -34,7 +34,7 @@ export function Dispatcher() {
         }
     } else if (applicationId === 'IPR') {
         if (!page || isRequestForPage('IPR')) {
-            return (<IntellectualPropertyReports/>);
+            return (<IntellectualPropertiesMainPage/>);
         }
         if (isRequestForPage('TIME_RECORD')) {
             return (<>a</>);

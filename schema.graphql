@@ -65,6 +65,22 @@ type IntellectualProperty {
     tasks: [Task!]
 }
 
+input IntellectualPropertiesRecordsQueryInput {
+    yearMonthFilter: YearMonth
+    onlyReportsWithoutAttachments: Boolean! = false
+    onlyReportsHavingTasksWithNoAttachments: Boolean! = false
+}
+
+type IntellectualPropertiesRecordsResponse {
+    reports: [IntellectualProperty!]!
+    stats:  IntellectualPropertiesRecordsStats!
+}
+
+type IntellectualPropertiesRecordsStats {
+    firstTimeRecord: LocalDate!
+    lastTimeRecord: LocalDate!
+}
+
 type MFAData {
     mfaCode: String!
     qrLink: String!
@@ -89,6 +105,8 @@ type Mutation {
     createTimeRecordCategory(name: String!): TimeRecordCategory!
     deleteIPR(intellectualPropertyId: Int!): String!
     deleteTask(taskId: Int!): String!
+    uploadTaskAttachment(input: TaskAttachmentUploadData!): Boolean
+    deleteTaskAttachment(input: TaskAttachmentDeleteData!): Boolean
     deleteTimeRecord(timeRecordId: Int!): String!
     deleteTimeRecordCategory(timeRecordId: Int!): String!
     login(loginParameters: LoginParameters!): AuthenticationInfo!
@@ -126,7 +144,7 @@ type Mutation {
 type Query {
     _service: _Service!
     accounts: AccountsResponse!
-    allIPRs: [IntellectualProperty!]!
+    intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput): IntellectualPropertiesRecordsResponse
     allTimeRecordCategories: [TimeRecordCategory!]!
     monthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
     nonIPTimeRecords: [TimeRecord!]!
@@ -447,11 +465,14 @@ scalar BigDecimal
 scalar Currency
 
 scalar LocalDate
+scalar YearMonth
 
 "A universally unique identifier compliant UUID Scalar"
 scalar UUID
 
 scalar _FieldSet
+
+scalar Upload
 
 input IntellectualPropertyData {
     description: String!
@@ -516,6 +537,16 @@ input RevenueAndExpenseEntryInput {
 input TaskData {
     coAuthors: String!
     description: String!
+}
+
+input TaskAttachmentUploadData {
+    file: Upload!,
+    taskId: Int!
+}
+
+input TaskAttachmentDeleteData {
+    fileName: String!,
+    taskId: Int!
 }
 
 input TimeRecordData {
