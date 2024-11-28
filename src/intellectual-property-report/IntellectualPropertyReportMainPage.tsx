@@ -2,8 +2,8 @@ import {useMutation, useQuery} from "@apollo/client";
 import {
     AssignCategoryToTimeRecord,
     AssignCategoryToTimeRecordMutation,
-    IntellectualPropertiesReport,
-    IntellectualPropertiesReportQuery
+    GetIntellectualPropertiesReport,
+    GetIntellectualPropertiesReportQuery
 } from "../types";
 import * as React from "react";
 import {useRef, useState} from "react";
@@ -32,7 +32,7 @@ export function IntellectualPropertyReportMainPage() {
         error,
         data,
         refetch
-    } = useQuery<IntellectualPropertiesReportQuery>(IntellectualPropertiesReport, {
+    } = useQuery<GetIntellectualPropertiesReportQuery>(GetIntellectualPropertiesReport, {
         variables: {
             year: yearFilter
         }

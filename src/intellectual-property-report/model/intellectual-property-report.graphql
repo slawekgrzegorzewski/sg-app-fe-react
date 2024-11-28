@@ -1,4 +1,4 @@
-query IntellectualPropertiesReport($year: Year!){
+query GetIntellectualPropertiesReport($year: Year!){
     intellectualPropertiesReport(input: {year: $year}){
         availableYears
         timeRecordCategories {
