@@ -11,6 +11,7 @@ export interface FormDialogButtonProps<T> {
     onCancel: (() => Promise<void>),
     buttonContent?: React.ReactNode,
     formProps: Omit<FormProps<T>, "onSave" | "onCancel">;
+    dialogOptions?: any;
 }
 
 export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
@@ -19,7 +20,8 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
         buttonContent,
         onSave,
         onCancel,
-        formProps
+        formProps,
+        dialogOptions
     } = props;
 
     const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -51,6 +53,7 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
                     formProps={formProps}
                     onSave={performEdit}
                     onCancel={cancelEdit}
-                    open={editDialogOpen}/>
+                    open={editDialogOpen}
+                    dialogOptions={dialogOptions}/>
     </>
 }

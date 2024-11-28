@@ -15,6 +15,8 @@ import {FormikHelpers} from "formik/dist/types";
 import {FormikValues} from "formik";
 import * as Yup from "yup";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
+import AutocompleteAsync from "./AutocompleteAsync";
+import {DocumentNode} from "graphql/language";
 
 export type EditorFieldType =
     'NUMBER'
@@ -24,21 +26,65 @@ export type EditorFieldType =
     | 'SELECT'
     | 'HIDDEN'
     | 'CHECKBOX'
-    | 'AUTOCOMPLETE';
+    | 'AUTOCOMPLETE'
+    | 'AUTOCOMPLETE_ASYNC';
 
 export type SelectOption = {
     key: string;
     displayElement: React.JSX.Element;
 }
 
-export type EditorField = {
+function isEditorFieldKind(object: object, type: string) {
+    return !!object && 'type' in object && typeof object.type === 'string' && object.type === type;
+}
+
+function isCheckboxEditorField(object: object): boolean {
+    return isEditorFieldKind(object, 'CHECKBOX');
+}
+
+function isSelectEditorField(object: object): object is SelectEditorField {
+    return isEditorFieldKind(object, 'SELECT');
+}
+
+function isAutocompleteEditorField(object: object): object is AutocompleteEditorField {
+    return isEditorFieldKind(object, 'AUTOCOMPLETE');
+}
+
+function isAutocompleteAsyncEditorField(object: object): object is AutocompleteAsyncEditorField {
+    return isEditorFieldKind(object, 'AUTOCOMPLETE_ASYNC');
+}
+
+export type RegularEditorField = {
     key: string;
     label: string;
-    type: EditorFieldType;
+    type: Omit<EditorFieldType, 'SELECT | AUTOCOMPLETE' | 'AUTOCOMPLETE_ASYNC'>;
     additionalProps?: any;
-    selectOptions?: SelectOption[];
-    editable: boolean
-}
+    editable: boolean | ((object: any) => boolean);
+};
+
+export type SelectEditorField = Omit<RegularEditorField, 'type'> & {
+    type: 'SELECT';
+    selectOptions: SelectOption[];
+};
+
+export type AutocompleteEditorField = Omit<RegularEditorField, 'type'> & {
+    type: 'AUTOCOMPLETE';
+    options: any[];
+    getOptionLabel: (option: any) => string;
+    isOptionEqualToValue: (option: any, value: any) => boolean;
+};
+
+export type AutocompleteAsyncEditorField = Omit<AutocompleteEditorField, 'type' | 'options'> & {
+    type: 'AUTOCOMPLETE_ASYNC';
+    query: DocumentNode,
+    queryToOptionsMapper: (data: any) => any,
+};
+
+export type EditorField =
+    RegularEditorField
+    | SelectEditorField
+    | AutocompleteEditorField
+    | AutocompleteAsyncEditorField;
 
 export type FormProps<T> = {
     fields: EditorField[];
@@ -100,7 +146,7 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
             helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
         >
             {
-                editorField.selectOptions?.map(option => (
+                isSelectEditorField(editorField) && editorField.selectOptions.map(option => (
                     <MenuItem key={option.key}
                               value={option.key}>{option.displayElement}</MenuItem>
                 ))
@@ -108,7 +154,7 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
         </TextField>
     }
 
-    function createAutocomplete(editorField: EditorField, formik: any) {
+    function createAutocomplete(editorField: AutocompleteEditorField, formik: any) {
         return <Autocomplete
             fullWidth
             disabled={!editorField.editable}
@@ -119,11 +165,9 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
             onChange={(e, newValue) => {
                 formik.setFieldValue(editorField.key, newValue, true)
             }}
-            options={[
-                ...(editorField.selectOptions!.map(c => {
-                    return c.key;
-                }))
-            ]}
+            getOptionLabel={option => editorField.getOptionLabel(option)}
+            isOptionEqualToValue={editorField.isOptionEqualToValue}
+            options={editorField.options}
             renderInput={(params) => <TextField
                 {...params}
                 variant="standard"
@@ -159,23 +203,27 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
         </FormControl>;
     }
 
-// @ts-ignore
-    const form = formik => (
+    const form = (formik: any) => (
         <form onSubmit={formik.handleSubmit}>
             <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    {
-                        fields
-                            .filter(field => field.type !== 'HIDDEN')
-                            .map(editorField => {
-                                if (editorField.type === "CHECKBOX")
-                                    return createCheckbox(editorField, formik);
-                                if (editorField.type === "AUTOCOMPLETE")
-                                    return createAutocomplete(editorField, formik);
+                {
+                    fields
+                        .filter(field => field.type !== 'HIDDEN')
+                        .map(editorField => {
+                            if (isCheckboxEditorField(editorField)) {
+                                return createCheckbox(editorField, formik);
+                            } else if (isAutocompleteEditorField(editorField)) {
+                                return createAutocomplete(editorField, formik);
+                            } else if (isAutocompleteAsyncEditorField(editorField)) {
+                                return AutocompleteAsync({
+                                    formik: formik,
+                                    editorField: editorField
+                                });
+                            } else {
                                 return createTextField(editorField, formik);
-                            })}
-                </Stack>
-                <Stack direction={"row"} spacing={4} alignItems={"center"}>
+                            }
+                        })}
+                <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
                     <Button variant="text"
                             type="submit"
                             sx={{flexGrow: 1}}

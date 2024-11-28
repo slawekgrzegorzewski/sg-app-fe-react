@@ -45,7 +45,9 @@ export const applications = new Map<ApplicationId, Application>([
         name: "Raporty własności intelektualnej",
         pages: new Map<ApplicationPageId, ApplicationPage>([
             ['IPR', {id: 'IPR', links: ['iprs', '', 'home'], label: 'Raporty IP'} as ApplicationPage],
-            ['TIME_RECORD', {id: 'TIME_RECORD', links: ['timerecord'], label: 'Raporty czasu'} as ApplicationPage]
+            ['TIME_RECORD', {id: 'TIME_RECORD', links: ['timerecord'], label: 'Raporty czasu'} as ApplicationPage],
+            ['IP_REPORTS', {id: 'IP_REPORTS', links: ['ipreports'], label: 'Raporty roczne'} as ApplicationPage],
+            ['IP_SETTING', {id: 'IP_SETTING', links: ['ipsettings'], label: 'Ustawienia'} as ApplicationPage]
         ])
     } as Application],
 ]);

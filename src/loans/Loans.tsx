@@ -16,7 +16,7 @@ import {
     GetLoansQuery,
 } from "../types";
 import {Box, Button, Card, CardContent, CardHeader, Stack} from "@mui/material";
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import * as React from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
@@ -98,10 +98,10 @@ export function Loans() {
     } else if (data) {
         return (
             <Grid container spacing={2}>
-                <Grid xs={4}>
+                <Grid spacing={{xs: 4}}>
                     coś tu
                 </Grid>
-                <Grid xs={4}>
+                <Grid spacing={{xs: 4}}>
                     <Box component="section" sx={{width: 1000, m: 'auto'}}>
                         <Stack direction="row">
                             <FormDialogButton
@@ -137,7 +137,7 @@ export function Loans() {
                             </Stack>
                         }</Box>
                 </Grid>
-                <Grid xs={4}>
+                <Grid spacing={{xs: 4}}>
                     <Card variant="outlined">
                         <CardHeader title={'Sposoby naliczania odsetek'}/>
                         <CardContent>

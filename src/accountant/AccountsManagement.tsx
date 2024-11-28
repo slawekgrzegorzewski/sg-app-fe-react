@@ -11,7 +11,7 @@ import {
 } from "../types";
 import * as React from "react";
 import * as Yup from "yup";
-import {EditorField} from "../utils/forms/Form";
+import {AutocompleteEditorField, EditorField} from "../utils/forms/Form";
 import {SimpleCrudList} from "../application/components/SImpleCrudList";
 import {ComparatorBuilder} from "../application/utils/comparator-builder";
 import {GraphqlAccount} from "../graphql.entities";
@@ -68,13 +68,12 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
                     {
                         label: 'Waluta',
                         type: 'AUTOCOMPLETE',
-                        selectOptions: currencies.map(currency => ({
-                            key: currency,
-                            displayElement: (<>{currency}</>)
-                        })),
+                        options: currencies,
+                        getOptionLabel: (option: any) => option,
+                        isOptionEqualToValue: (option: any, value: any) => option === value,
                         key: 'currency',
                         editable: !account
-                    } as EditorField,
+                    } as AutocompleteEditorField,
                     {
                         label: 'Limit kredytowy',
                         type: 'NUMBER',

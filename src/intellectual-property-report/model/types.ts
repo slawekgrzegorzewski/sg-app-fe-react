@@ -18,6 +18,7 @@ export type TaskDTO = {
 }
 
 export type TimeRecordDTO = {
+    taskId: number;
     id: number;
     date: Date;
     description: string;
@@ -25,7 +26,16 @@ export type TimeRecordDTO = {
     timeRecordCategory: TimeRecordCategoryDTO | null
 }
 
+export type TimeRecordEditorObject = {
+    task: { id: number; description: string };
+    id: number;
+    date: Date;
+    description: string;
+    numberOfHours: number;
+}
+
 export type TimeRecordCategoryDTO = {
+    timeRecordId: number;
     id: number;
     name: string;
 }
@@ -53,6 +63,40 @@ export const emptyTaskProvider: (intellectualPropertyId: number) => TaskDTO = (i
     let newTask = {...notExistingTask};
     newTask.intellectualPropertyId = intellectualPropertyId;
     return newTask;
+}
+
+export const notExistingTimeRecordCategory: TimeRecordCategoryDTO = {
+    timeRecordId: NON_EXISTING_ID,
+    id: NON_EXISTING_ID,
+    name: ''
+};
+
+export const emptyTimeRecordCategoryProvider: (timeRecordId: number) => TimeRecordCategoryDTO = (timeRecordId: number) => {
+    let newTimeRecordCategory = {...notExistingTimeRecordCategory};
+    newTimeRecordCategory.timeRecordId = timeRecordId;
+    return newTimeRecordCategory;
+}
+
+export const notExistingNonIPTimeRecord: TimeRecordDTO = {
+    taskId: NON_EXISTING_ID,
+    id: NON_EXISTING_ID,
+    date: new Date(),
+    description: '',
+    numberOfHours: 0,
+    timeRecordCategory: emptyTimeRecordCategoryProvider(NON_EXISTING_ID)
+};
+
+export const emptyTimeRecordEditorProvider: () => TimeRecordEditorObject = () => {
+    return {
+        task: {
+            id: NON_EXISTING_ID,
+            description: ''
+        },
+        id: NON_EXISTING_ID,
+        date: new Date(),
+        description: '',
+        numberOfHours: 0
+    };
 }
 
 export type GQLIntellectualProperty = {
@@ -104,24 +148,26 @@ export function mapTask(intellectualPropertyId: number, task: GQLTask): TaskDTO 
         description: task.description,
         coAuthors: task.coAuthors,
         attachments: task.attachments || [],
-        timeRecords: (task.timeRecords || []).map(timeRecord => mapTimeRecord(timeRecord))
+        timeRecords: (task.timeRecords || []).map(timeRecord => mapTimeRecord(task.id, timeRecord))
     }
 }
 
-export function mapTimeRecord(timeRecord: GQLTimeRecord): TimeRecordDTO {
+export function mapTimeRecord(taskId: number, timeRecord: GQLTimeRecord): TimeRecordDTO {
     return {
+        taskId: taskId,
         id: timeRecord.id,
         date: new Date(timeRecord.date),
         description: timeRecord.description || '',
         numberOfHours: timeRecord.numberOfHours,
         timeRecordCategory: timeRecord.timeRecordCategory
-            ? mapTimeRecordCategory(timeRecord.timeRecordCategory!)
+            ? mapTimeRecordCategory(timeRecord.id, timeRecord.timeRecordCategory!)
             : null
     };
 }
 
-export function mapTimeRecordCategory(timeRecordCategory: GQLTimeRecordCategory): TimeRecordCategoryDTO {
+export function mapTimeRecordCategory(timeRecordId: number, timeRecordCategory: GQLTimeRecordCategory): TimeRecordCategoryDTO {
     return {
+        timeRecordId: timeRecordId,
         id: timeRecordCategory.id,
         name: timeRecordCategory.name
     };

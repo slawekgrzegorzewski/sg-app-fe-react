@@ -22,6 +22,7 @@ import {
 } from "@mui/material";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import * as Yup from "yup";
+import dayjs from "dayjs";
 
 type IntellectualPropertiesFilter = {
     yearMonthFilter: string;
@@ -32,7 +33,7 @@ type IntellectualPropertiesFilter = {
 export function IntellectualPropertiesMainPage() {
     const noYearMonthFilterLabel = 'wszystkie';
     const intellectualPropertiesFilter: IntellectualPropertiesFilter = {
-        yearMonthFilter: noYearMonthFilterLabel,
+        yearMonthFilter: dayjs().format("YYYY-MM"),
         onlyReportsWithoutAttachments: false,
         onlyReportsHavingTasksWithNoAttachments: false
     }
@@ -55,7 +56,6 @@ export function IntellectualPropertiesMainPage() {
             onlyReportsWithoutAttachments: ipFilter.onlyReportsWithoutAttachments,
             onlyReportsHavingTasksWithNoAttachments: ipFilter.onlyReportsHavingTasksWithNoAttachments
         },
-
     });
 
     createIntellectualPropertyReportMutationResult.called && createIntellectualPropertyReportMutationResult.reset();
@@ -69,9 +69,9 @@ export function IntellectualPropertiesMainPage() {
         if (data.intellectualPropertiesRecords?.stats.firstTimeRecord) {
             const fromDate = new Date(data.intellectualPropertiesRecords!.stats.firstTimeRecord);
             const now = new Date();
-            while (fromDate.getFullYear() !== now.getFullYear() || fromDate.getMonth() !== now.getMonth()) {
+            while (fromDate.getTime() < now.getTime()) {
+                yearMonthFilters.push(dayjs(fromDate).format("YYYY-MM"));
                 fromDate.setMonth(fromDate.getMonth() + 1);
-                yearMonthFilters.push(fromDate.getFullYear() + '-' + (fromDate.getMonth() + 1).toString().padStart(2, '0'));
             }
         }
         return (
@@ -109,6 +109,7 @@ export function IntellectualPropertiesMainPage() {
                             <MenuItem value={noYearMonthFilterLabel}>{noYearMonthFilterLabel}</MenuItem>
                             {yearMonthFilters.map((yearMonthFilter) => (
                                 <MenuItem key={yearMonthFilter} value={yearMonthFilter}>{yearMonthFilter}</MenuItem>))}
+                            <MenuItem value={noYearMonthFilterLabel}>{noYearMonthFilterLabel}</MenuItem>
                         </Select>
                     </FormControl>
                     <FormGroup>

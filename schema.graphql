@@ -71,14 +71,66 @@ input IntellectualPropertiesRecordsQueryInput {
     onlyReportsHavingTasksWithNoAttachments: Boolean! = false
 }
 
-type IntellectualPropertiesRecordsResponse {
-    reports: [IntellectualProperty!]!
-    stats:  IntellectualPropertiesRecordsStats!
+input TasksQueryInput {
+    description: String! = ""
 }
 
-type IntellectualPropertiesRecordsStats {
+input TimeRecordsQueryInput {
+    yearMonthFilter: YearMonth
+}
+
+input IntellectualPropertyReportQuery {
+    year: Year!
+}
+
+type IntellectualPropertiesRecordsResponse {
+    reports: [IntellectualProperty!]!
+    stats: TimeRecordsStats!
+}
+
+type TimeRecordsReport {
+    description: String!
+    ipHours: BigDecimal!
+    nonIPHours: BigDecimal!
+}
+
+type IntellectualPropertyMonthReport {
+    yearMonth: YearMonth!
+    ipHours: BigDecimal!
+    nonIPHours: BigDecimal!
+    ipPercentage: BigDecimal!
+    timeRecordReports: [TimeRecordsReport!]!
+    nonCategorizedTimeRecords: [TimeRecord!]!
+}
+
+type IntellectualPropertiesReport {
+    year: Year!
+    ipHours: BigDecimal!
+    nonIPHours: BigDecimal!
+    ipPercentage: BigDecimal!
+    countOfDifferentIPs: Int!
+    monthReports: [IntellectualPropertyMonthReport!]!
+}
+
+type IntellectualPropertyReportResponse {
+    report: IntellectualPropertiesReport!
+    timeRecordCategories: [TimeRecordCategory!]!
+    availableYears: [Year!]
+}
+
+type TimeRecordsStats {
     firstTimeRecord: LocalDate!
     lastTimeRecord: LocalDate!
+}
+
+type TasksResponse {
+    tasks: [Task!]!
+}
+
+type TimeRecordsResponse {
+    taskWithSelectedTimeRecords: [Task!]!
+    nonIPTimeRecords: [TimeRecord!]!
+    stats: TimeRecordsStats!
 }
 
 type MFAData {
@@ -97,25 +149,30 @@ type LoanCalculationInstallment {
 }
 
 type Mutation {
-    addIPR(input: IntellectualPropertyData): IntellectualProperty
     addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput): RevenueAndExpenseEntry
-    assignCategoryToTimeRecord(timeRecordCategoryId: Int, timeRecordId: Int!): String!
-    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
-    createTimeRecord(timeRecordData: TimeRecordData!): String!
-    createTimeRecordCategory(name: String!): TimeRecordCategory!
+
+    addIPR(input: IntellectualPropertyData): IntellectualProperty
+    updateIPR(input: IntellectualPropertyData, intellectualPropertyId: Int!): IntellectualProperty
     deleteIPR(intellectualPropertyId: Int!): String!
+
+    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
+    updateTask(taskData: TaskData!, taskId: Int!): String!
     deleteTask(taskId: Int!): String!
     uploadTaskAttachment(input: TaskAttachmentUploadData!): Boolean
     deleteTaskAttachment(input: TaskAttachmentDeleteData!): Boolean
+
+    createTimeRecord(timeRecordData: TimeRecordData!): String!
+    updateTimeRecord(timeRecordData: TimeRecordData!, timeRecordId: Int!): String!
     deleteTimeRecord(timeRecordId: Int!): String!
+    assignCategoryToTimeRecord(timeRecordCategoryId: Int, timeRecordId: Int!): String!
+
+    createTimeRecordCategory(name: String!): TimeRecordCategory!
     deleteTimeRecordCategory(timeRecordId: Int!): String!
+    updateTimeRecordCategory(name: String!, timeRecordId: Int!): String!
+
     login(loginParameters: LoginParameters!): AuthenticationInfo!
     register(registrationParameters: RegistrationParameters!): MFAData!
     setupMFA(mfaParameters: MFAParameters!): Boolean!
-    updateIPR(input: IntellectualPropertyData, intellectualPropertyId: Int!): IntellectualProperty
-    updateTask(taskData: TaskData!, taskId: Int!): String!
-    updateTimeRecord(timeRecordData: TimeRecordData!, timeRecordId: Int!): String!
-    updateTimeRecordCategory(name: String!, timeRecordId: Int!): String!
     createLoan(input: LoanCreationInput): Loan!
     updateLoan(input: LoanUpdateInput): Loan!
     deleteLoan(input: LoanDeleteInput): String!
@@ -144,10 +201,12 @@ type Mutation {
 type Query {
     _service: _Service!
     accounts: AccountsResponse!
+    intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
     intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput): IntellectualPropertiesRecordsResponse
     allTimeRecordCategories: [TimeRecordCategory!]!
     monthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
-    nonIPTimeRecords: [TimeRecord!]!
+    tasks(input: TasksQueryInput!): TasksResponse!
+    timeRecords(input: TimeRecordsQueryInput!): TimeRecordsResponse!
     simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
     simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
     loans: Loans!
@@ -466,6 +525,7 @@ scalar Currency
 
 scalar LocalDate
 scalar YearMonth
+scalar Year
 
 "A universally unique identifier compliant UUID Scalar"
 scalar UUID

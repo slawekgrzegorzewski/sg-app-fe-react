@@ -6,6 +6,7 @@ import Form, {FormProps} from "../forms/Form";
 
 export interface FormDialogProps<T> {
     dialogTitle: React.JSX.Element;
+    dialogOptions?: any;
     open: boolean;
     onSave: ((object: T) => Promise<void>),
     onCancel: (() => Promise<void>),
@@ -20,7 +21,8 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
         onSave,
         onCancel,
         formProps,
-        children
+        children,
+        dialogOptions
     } = props;
 
     const {setShowBackdrop} = useContext(ShowBackdropContext);
@@ -41,7 +43,7 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
         e.stopPropagation();
     };
 
-    return <Dialog open={open}>
+    return <Dialog open={open} {...dialogOptions} maxWidth={"lg"} fullWidth={false}>
         <DialogTitle onClick={handleClick}>{dialogTitle}</DialogTitle>
         <DialogContent onClick={handleClick}>
             <>

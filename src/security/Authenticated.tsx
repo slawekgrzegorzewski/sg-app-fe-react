@@ -1,4 +1,4 @@
-import {ApolloClient, ApolloLink, ApolloProvider, InMemoryCache} from "@apollo/client";
+import {ApolloClient, ApolloLink, ApolloProvider, defaultDataIdFromObject, InMemoryCache} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 import React, {useState} from "react";
 import {Navigate} from "react-router-dom";
@@ -38,7 +38,25 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
     })
 
     const apolloClient = new ApolloClient({
-        cache: new InMemoryCache(),
+        cache: new InMemoryCache({
+            dataIdFromObject: object => {
+                switch (object.__typename) {
+                    case 'Task':
+                        const timeRecords = object.timeRecords as any[];
+                        const timeRecordsLength = (timeRecords && timeRecords.length) || 0;
+                        if (timeRecordsLength > 0) {
+                            const datesPart = timeRecords
+                                .map(tr => tr.__ref)
+                                .sort()
+                                .join(":");
+                            return `Task:${object.id}:${timeRecordsLength}:${datesPart}`;
+                        }
+                        return `Task:${object.id}:${timeRecordsLength}`;
+                    default:
+                        return defaultDataIdFromObject(object);
+                }
+            }
+        }),
         link: ApolloLink.from([
             logoutLink,
             authMiddleware,

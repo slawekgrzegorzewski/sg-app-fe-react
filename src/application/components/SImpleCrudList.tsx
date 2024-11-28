@@ -30,6 +30,8 @@ export interface SimpleCrudListProps<T> {
     formSupplier: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
 
     entityDisplay(t: T): React.JSX.Element,
+
+    dialogOptions?: any;
 }
 
 export function SimpleCrudList<T>({
@@ -42,7 +44,8 @@ export function SimpleCrudList<T>({
                                       onDelete,
                                       onUpdate,
                                       formSupplier,
-                                      entityDisplay
+                                      entityDisplay,
+                                      dialogOptions
                                   }: SimpleCrudListProps<T>) {
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteConfirmationDialog, setShowDeleteConfirmationDialog] = useState(false);
@@ -113,7 +116,8 @@ export function SimpleCrudList<T>({
                                 setShowEditDialog(false);
                                 return Promise.resolve();
                             }}
-                            formProps={formSupplier(selectedEntity)}/>
+                            formProps={formSupplier(selectedEntity)}
+                            dialogOptions={dialogOptions}/>
                 <ConfirmationDialog companionObject={selectedEntity}
                                     title={'Na pewno usunąć?'}
                                     message={'Na pewno usunąć?'}

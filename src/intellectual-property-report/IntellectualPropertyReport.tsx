@@ -52,13 +52,13 @@ export function IntellectualPropertyReport(properties: {
                    onChange={() => onExpandCallback(ipr.id)}
                    disableGutters
         >
-            <AccordionSummary expandIcon={<ExpandMore/>} sx={{fontWeight: 'bolder'}}>
+            <AccordionSummary expandIcon={<ExpandMore fontSize='inherit'/>} sx={{fontWeight: 'bolder'}}>
                 <Stack direction="row" sx={{width: '100%'}}>
                     {ipr.description}
                     <Box sx={{flexGrow: 1}}/>
                     <FormDialogButton
                         title={dialogOptions.title}
-                        buttonContent={<IconButton size="small"><Edit/></IconButton>}
+                        buttonContent={<IconButton size="small"><Edit fontSize='inherit'/></IconButton>}
                         onSave={(value) => performEdit(value)}
                         onCancel={() => {
                             return Promise.resolve();
@@ -73,7 +73,7 @@ export function IntellectualPropertyReport(properties: {
                         (ipr.tasks || []).length === 0 && (
                             <DeleteButton
                                 confirmationMessage={'Na pewno usunąć ' + ipr!.id + ' - ' + ipr!.description + '?'}
-                                buttonContent={<IconButton size="small"><Delete/></IconButton>}
+                                buttonContent={<IconButton size="small"><Delete fontSize='inherit'/></IconButton>}
                                 object={ipr!.id}
                                 onDelete={performDelete}
                                 onCancel={() => {

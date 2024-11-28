@@ -129,7 +129,7 @@ export function Task(properties: {
                         title={dialogOptions.title}
                         buttonContent={
                             <IconButton size={'small'}>
-                                <Edit/>
+                                <Edit fontSize='inherit'/>
                             </IconButton>
                         }
                         onSave={(value) => updateTask(value)}
@@ -146,7 +146,7 @@ export function Task(properties: {
                         (task.timeRecords || []).length === 0 && (
                             <DeleteButton
                                 confirmationMessage={'Na pewno usunąć ' + task!.id + ' - ' + task!.description + '?'}
-                                buttonContent={<IconButton size={'small'}><Delete/></IconButton>}
+                                buttonContent={<IconButton size={'small'}><Delete fontSize='inherit'/></IconButton>}
                                 object={task!.id}
                                 onDelete={deleteTask}
                                 onCancel={() => {
@@ -172,12 +172,13 @@ export function Task(properties: {
                                 <div>Zarejestrowany czas:</div>
                                 <div>{dayjs(minDate).format("YYYY-MM-DD")} - {dayjs(maxDate).format("YYYY-MM-DD")} - {hours} godzin</div>
                                 <ShowInformationButton title={'Szczegóły zadania'} onClose={() => Promise.resolve()}
-                                                       buttonContent={<IconButton size={'small'}><Loupe/></IconButton>}>
+                                                       buttonContent={<IconButton size={'small'}><Loupe fontSize='inherit'/></IconButton>}>
                                     <Stack direction="column">
                                         <b>{task.description}</b>
                                         {
                                             task.timeRecords.map(timeRecord => (
-                                                <Box key={timeRecord.id}>{dayjs(timeRecord.date).format("YYYY-MM-DD")}: {timeRecord.numberOfHours} godzin</Box>))
+                                                <Box
+                                                    key={timeRecord.id}>{dayjs(timeRecord.date).format("YYYY-MM-DD")}: {timeRecord.numberOfHours} godzin</Box>))
                                         }
                                     </Stack>
                                 </ShowInformationButton>
@@ -192,7 +193,7 @@ export function Task(properties: {
                         <IconButton
                             component="label"
                             size="small">
-                            <Upload/>
+                            <Upload fontSize='inherit'/>
                             <VisuallyHiddenInput
                                 type="file"
                                 onChange={(event) => onSubmitScriptMultipart(event.target.files, task.id)}
@@ -207,14 +208,15 @@ export function Task(properties: {
                                 <Stack direction="row">
                                     <DeleteButton
                                         confirmationMessage={'Na pewno usunąć \'' + attachmentName + '\'?'}
-                                        buttonContent={<IconButton size={'small'}><Delete/></IconButton>}
+                                        buttonContent={<IconButton size={'small'}><Delete
+                                            fontSize='inherit'/></IconButton>}
                                         object={{fileName: attachmentName, taskId: task.id}}
                                         onDelete={deleteTaskAttachment}
                                         onCancel={() => {
                                             return Promise.resolve();
                                         }}/>
                                     <IconButton onClick={() => downloadAttachment(attachmentName)} size="small">
-                                        <Download/>
+                                        <Download fontSize='inherit'/>
                                     </IconButton>
                                 </Stack>
                             </Stack>))

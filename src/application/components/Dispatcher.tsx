@@ -8,6 +8,13 @@ import {Loans} from "../../loans/Loans";
 import React from "react";
 import {Loan} from "../../loans/Loan";
 import {AccountantSettings} from "../../accountant/AccountantSettings";
+import {TimeRecordsMainPage} from "../../intellectual-property-report/TimeRecordsMainPage";
+import {
+    IntellectualPropertyReportMainPage
+} from "../../intellectual-property-report/IntellectualPropertyReportMainPage";
+import {
+    IntellectualPropertySettingsMainPage
+} from "../../intellectual-property-report/IntellectualPropertySettingsMainPage";
 
 
 export function Dispatcher() {
@@ -37,7 +44,13 @@ export function Dispatcher() {
             return (<IntellectualPropertiesMainPage/>);
         }
         if (isRequestForPage('TIME_RECORD')) {
-            return (<>a</>);
+            return (<TimeRecordsMainPage/>);
+        }
+        if (isRequestForPage('IP_REPORTS')) {
+            return (<IntellectualPropertyReportMainPage/>);
+        }
+        if (isRequestForPage('IP_SETTING')) {
+            return (<IntellectualPropertySettingsMainPage/>);
         }
     }
     return (

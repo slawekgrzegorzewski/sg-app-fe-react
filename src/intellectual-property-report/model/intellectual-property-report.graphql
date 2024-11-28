@@ -1,3 +1,37 @@
+query IntellectualPropertiesReport($year: Year!){
+    intellectualPropertiesReport(input: {year: $year}){
+        availableYears
+        timeRecordCategories {
+            id
+            name
+        }
+        report {
+            year
+            countOfDifferentIPs
+            ipHours
+            nonIPHours
+            ipPercentage
+            monthReports {
+                yearMonth
+                nonIPHours
+                ipPercentage
+                ipHours
+                timeRecordReports {
+                    ipHours
+                    nonIPHours
+                    description
+                }
+                nonCategorizedTimeRecords {
+                    id
+                    numberOfHours
+                    description
+                }
+            }
+        }
+    }
+}
+
+
 query IntellectualPropertiesRecords($yearMonthFilter: YearMonth, $onlyReportsWithoutAttachments: Boolean!, $onlyReportsHavingTasksWithNoAttachments: Boolean!) {
     intellectualPropertiesRecords(input: {yearMonthFilter: $yearMonthFilter, onlyReportsWithoutAttachments: $onlyReportsWithoutAttachments, onlyReportsHavingTasksWithNoAttachments: $onlyReportsHavingTasksWithNoAttachments}) {
         reports {
@@ -50,23 +84,62 @@ query AllTimeRecordCategories {
     }
 }
 
-query NonIpTimeRecords {
-    nonIPTimeRecords {
-        id
-        date
-        numberOfHours
-        description
-        timeRecordCategory {
+query SearchTasks($descriptionLike: String!){
+    tasks(input: {description: $descriptionLike}){
+        tasks {
             id
-            name
+            description
+        }
+    }
+}
+
+query TimeRecords($yearMonthFilter: YearMonth) {
+    timeRecords(input: {yearMonthFilter: $yearMonthFilter}) {
+        taskWithSelectedTimeRecords{
+            id
+            attachments
+            coAuthors
+            description
+            timeRecords {
+                id
+                date
+                numberOfHours
+                description
+                timeRecordCategory {
+                    id
+                    name
+                    domain {
+                        id
+                        name
+                    }
+                }
+                domain {
+                    id
+                    name
+                }
+            }
+        }
+        nonIPTimeRecords{
+            id
+            date
+            numberOfHours
+            description
+            timeRecordCategory {
+                id
+                name
+                domain {
+                    id
+                    name
+                }
+            }
             domain {
                 id
                 name
             }
         }
-        domain {
-            id
-            name
+        stats {
+            firstTimeRecord
+            lastTimeRecord
         }
     }
 }
@@ -198,4 +271,58 @@ mutation DeleteTaskAttachment($fileName: String!, $taskId: Int!) {
         fileName: $fileName,
         taskId: $taskId
     })
+}
+
+mutation CreateTimeRecord($assignmentAction: AssignmentAction!,
+    $date: LocalDate!,
+    $description: String!,
+    $numberOfHours: BigDecimal!,
+    $taskId: Int) {
+    createTimeRecord(timeRecordData: {
+        assignmentAction: $assignmentAction,
+        date: $date,
+        description: $description,
+        numberOfHours: $numberOfHours,
+        taskId: $taskId
+    })
+}
+
+mutation UpdateTimeRecord($assignmentAction: AssignmentAction!,
+    $date: LocalDate!,
+    $description: String!,
+    $numberOfHours: BigDecimal!,
+    $taskId: Int,
+    $timeRecordId: Int!) {
+    updateTimeRecord(
+        timeRecordData: {
+            assignmentAction: $assignmentAction,
+            date: $date,
+            description: $description,
+            numberOfHours: $numberOfHours,
+            taskId: $taskId
+        },
+        timeRecordId: $timeRecordId)
+}
+
+mutation DeleteTimeRecord($timeRecordId: Int!) {
+    deleteTimeRecord(timeRecordId: $timeRecordId)
+}
+
+mutation AssignCategoryToTimeRecord($timeRecordCategoryId: Int, $timeRecordId: Int!){
+    assignCategoryToTimeRecord(timeRecordCategoryId: $timeRecordCategoryId, timeRecordId: $timeRecordId)
+}
+
+mutation CreateTimeRecordCategory($name: String!){
+    createTimeRecordCategory(name: $name){
+        id
+        name
+    }
+}
+
+mutation DeleteTimeRecordCategory($timeRecordCategoryId: Int!){
+    deleteTimeRecordCategory(timeRecordId: $timeRecordCategoryId)
+}
+
+mutation UpdateTimeRecordCategory($timeRecordCategoryId: Int!, $name: String!){
+    updateTimeRecordCategory(name: $name, timeRecordId: $timeRecordCategoryId)
 }

@@ -52,7 +52,7 @@ export function IntellectualPropertiesList(properties: {
                             onExpandCallback={changeTab}
                             refetchDataCallback={refetchDataCallback}
                             dialogOptions={{
-                                title: 'Dane własności intelektualnej',
+                                title: IPR_DIALOG_TITLE,
                                 editorFields: IPR_EDITOR_FIELDS
                             }}
                         />
