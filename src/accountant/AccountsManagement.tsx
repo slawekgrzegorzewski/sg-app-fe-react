@@ -3,9 +3,7 @@ import {
     CreateAccount,
     CreateAccountMutation,
     DeleteAccount,
-    DeleteAccountMutation,
-    GetAccounts,
-    GetAccountsQuery,
+    DeleteAccountMutation, GetFinanceManagement, GetFinanceManagementQuery,
     UpdateAccount,
     UpdateAccountMutation
 } from "../types";
@@ -87,7 +85,7 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
 
 export function AccountsManagement() {
 
-    const {loading, error, data, refetch} = useQuery<GetAccountsQuery>(GetAccounts);
+    const {loading, error, data, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
     const [createAccountMutation] = useMutation<CreateAccountMutation>(CreateAccount);
     const [updateAccountMutation] = useMutation<UpdateAccountMutation>(UpdateAccount);
     const [deleteAccountMutation] = useMutation<DeleteAccountMutation>(DeleteAccount);
@@ -133,20 +131,20 @@ export function AccountsManagement() {
     } else if (error) {
         return <>Error...</>
     } else if (data) {
-        const currencies = data.accounts.supportedCurrencies.map(currency => currency.code).sort();
+        const currencies = data.financeManagement.supportedCurrencies.map(currency => currency.code).sort();
         return <SimpleCrudList
             title={'ZARZĄDZAJ KONTAMI'}
             editTitle={'Edytuj konto'}
             createTitle={'Dodaj konto'}
             list={
-                [...data.accounts.accounts]
+                [...data.financeManagement.accounts]
                     .sort(ComparatorBuilder.comparing<GraphqlAccount>(account => account.name).thenComparing(account => account.currentBalance.currency).build())
                     .map(account => {
                         return {
                             publicId: account.publicId,
                             name: account.name,
                             visible: account.visible,
-                            currency: account.currentBalance.currency,
+                            currency: account.currentBalance.currency.code,
                             creditLimitAmount: new Decimal(account.creditLimit.amount),
                         } as AccountDTO
                     })

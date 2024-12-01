@@ -1,5 +1,5 @@
-query GetAccounts {
-    accounts {
+query GetFinanceManagement {
+    financeManagement {
         supportedCurrencies {
             code
             description
@@ -9,18 +9,27 @@ query GetAccounts {
             name
             currentBalance {
                 amount
-                currency
+                currency {
+                    code
+                    description
+                }
             }
             creditLimit {
                 amount
-                currency
+                currency {
+                    code
+                    description
+                }
             }
             balanceIndex
             visible
             bankAccount {
                 id
                 iban
-                currency
+                currency {
+                    code
+                    description
+                }
                 owner
                 product
                 bic
@@ -60,18 +69,27 @@ mutation CreateAccount(
         name
         currentBalance {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         creditLimit {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         balanceIndex
         visible
         bankAccount {
             id
             iban
-            currency
+            currency {
+                code
+                description
+            }
             owner
             product
             bic
@@ -112,18 +130,27 @@ mutation UpdateAccount(
         name
         currentBalance {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         creditLimit {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         balanceIndex
         visible
         bankAccount {
             id
             iban
-            currency
+            currency {
+                code
+                description
+            }
             owner
             product
             bic

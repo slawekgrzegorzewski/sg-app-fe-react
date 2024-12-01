@@ -1,9 +1,9 @@
 type CurrencyInfo {
-    code: String!
+    code: Currency!
     description: String!
 }
 
-type AccountsResponse {
+type FinanceManagement {
     supportedCurrencies: [CurrencyInfo!]!
     accounts:[Account!]!
 }
@@ -44,7 +44,7 @@ type AuthenticationInfo {
 
 type BankAccount {
     bic: String
-    currency: Currency!
+    currency: CurrencyInfo!
     domain: DomainSimple!
     externalId: String!
     iban: String!
@@ -200,21 +200,24 @@ type Mutation {
 
 type Query {
     _service: _Service!
-    accounts: AccountsResponse!
+    settings: Settings!
+    financeManagement: FinanceManagement!
+
+    loans: Loans!
+    singleLoan(input: LoanQuery): Loan!
+    simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
+    simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
+
     intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
     intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput): IntellectualPropertiesRecordsResponse
     allTimeRecordCategories: [TimeRecordCategory!]!
-    monthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
     tasks(input: TasksQueryInput!): TasksResponse!
     timeRecords(input: TimeRecordsQueryInput!): TimeRecordsResponse!
-    simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
-    simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
-    loans: Loans!
-    singleLoan(input: LoanQuery): Loan!
+
+    onthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
     allClients: [Client!]!
     allSuppliers: [Supplier!]!
     monthFinancialDocuments(yearMonthInput: YearMonthInput!): [FinancialDocument!]!
-    settings: Settings!
 }
 
 type RevenueAndExpenseEntry {
@@ -669,7 +672,7 @@ type Loans {
 
 type MonetaryAmount {
     amount: BigDecimal!
-    currency: Currency!
+    currency: CurrencyInfo!
 }
 
 input MonetaryAmountInput {
@@ -894,10 +897,10 @@ type DebitInvoice implements Invoice & FinancialDocument {
     domain:DomainSimple!
 }
 
-type AccountantSettings {
-    isCompany:Boolean!
-}
-
 type Settings {
     accountantSettings: AccountantSettings!
+}
+
+type AccountantSettings {
+    isCompany:Boolean!
 }

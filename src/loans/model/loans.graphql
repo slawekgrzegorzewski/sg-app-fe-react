@@ -43,22 +43,34 @@ query GetLoans {
             }
             paidAmount {
                 amount
-                currency
+                currency {
+                    code
+                    description
+                }
             }
             installments {
                 publicId
                 paidAt
                 repaidInterest {
                     amount
-                    currency
+                    currency {
+                        code
+                        description
+                    }
                 }
                 repaidAmount {
                     amount
-                    currency
+                    currency {
+                        code
+                        description
+                    }
                 }
                 overpayment {
                     amount
-                    currency
+                    currency {
+                        code
+                        description
+                    }
                 }
             }
         }
@@ -93,22 +105,34 @@ query SingleLoan($loanId: UUID!) {
         }
         paidAmount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         installments {
             publicId
             paidAt
             repaidInterest {
                 amount
-                currency
+                currency {
+                    code
+                    description
+                }
             }
             repaidAmount {
                 amount
-                currency
+                currency {
+                    code
+                    description
+                }
             }
             overpayment {
                 amount
-                currency
+                currency {
+                    code
+                    description
+                }
             }
         }
     }
@@ -158,7 +182,10 @@ mutation CreateLoan (
         }
         paidAmount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
     }
 }
@@ -195,7 +222,10 @@ mutation UpdateLoan (
         }
         paidAmount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
     }
 }
@@ -238,15 +268,24 @@ mutation CreateInstallment (
         paidAt
         repaidInterest {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         repaidAmount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         overpayment {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
     }
 }

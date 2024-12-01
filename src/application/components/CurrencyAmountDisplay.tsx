@@ -6,7 +6,7 @@ export function CurrencyAmountDisplay({amount, currency}: MonetaryAmount) {
 
     return (<>{amount.toLocaleString(getUserLocale(), {
             style: "currency",
-            currency: currency
+            currency: currency.code
         })}</>
     );
 }

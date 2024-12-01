@@ -50,6 +50,7 @@ export function Loans() {
         await createLoanMutation({variables: {...loanDTO}});
         return refetch();
     };
+
     const deleteLoan = async (loanId: string): Promise<any> => {
         await deleteLoanMutation({variables: {loanId: loanId}});
         return refetch();

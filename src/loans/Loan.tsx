@@ -76,7 +76,6 @@ export function Loan() {
         return <>Error...</>
     } else if (data) {
         const loan = data!.singleLoan!;
-        console.log(JSON.stringify(loan));
         return (
             <Box component="section" sx={{width: 1000, m: 'auto'}}>
                 {
@@ -90,7 +89,7 @@ export function Loan() {
                                 <FormDialogButton
                                     title='Dane raty'
                                     onSave={value => {
-                                        return createInstallment(loan.publicId, loan.paidAmount.currency, value.paidAt, value.repaidInterest, value.repaidAmount, value.overpayment);
+                                        return createInstallment(loan.publicId, loan.paidAmount.currency.code, value.paidAt, value.repaidInterest, value.repaidAmount, value.overpayment);
                                     }}
                                     onCancel={() => {
                                         return Promise.resolve();
@@ -110,7 +109,7 @@ export function Loan() {
                                     onCancel={() => {
                                         return Promise.resolve();
                                     }}
-                                    buttonContent={<>Symuluj spłatę</>}
+                                    buttonContent={<Button size={'small'} variant={'text'}>Symuluj spłatę</Button>}
                                     formProps={{
                                         validationSchema: Yup.object({
                                             monthlyBudget: Yup.number()

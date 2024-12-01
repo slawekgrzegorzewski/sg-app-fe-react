@@ -76,7 +76,6 @@ export function OrdinalDisplay({value}: OrdinalDisplayProps) {
         }
 
         const value1 = Math.floor(value / 10) * 10;
-        console.log(value1);
         return (value < 20) ? convertBase(value) : convertTenths(value1) + " " + convertBase(value % 10);
     }
 

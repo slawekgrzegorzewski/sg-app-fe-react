@@ -2,7 +2,7 @@ import * as React from "react";
 import {MouseEventHandler} from "react";
 import {CurrencyAmountDisplay} from "../application/components/CurrencyAmountDisplay";
 import dayjs, {Dayjs} from "dayjs";
-import {Installment as GrapqhlInstallment, LoanCalculationInstallment} from "../types";
+import {CurrencyInfo, Installment as GrapqhlInstallment, LoanCalculationInstallment} from "../types";
 import {ComparatorBuilder} from "../application/utils/comparator-builder";
 import {Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow} from "@mui/material";
 import Box from "@mui/material/Box";
@@ -43,7 +43,7 @@ export type Installment = {
 }
 
 export type InstallmentsTableProps = {
-    currency: string
+    currency: CurrencyInfo
     installments: Installment[]
     onClick: MouseEventHandler<any>
 }
@@ -78,7 +78,8 @@ export function InstallmentsTable({currency, installments, onClick}: Installment
                 </TableHead>
                 <TableBody>
                     {(installments.map(installment =>
-                        <TableRow sx={{backgroundColor: installment.paidAt.get('month') % 2 === 0 ? '#dddddd' : 'white'}}>
+                        <TableRow
+                            sx={{backgroundColor: installment.paidAt.get('month') % 2 === 0 ? '#dddddd' : 'white'}}>
                             <TableCell>{dayjs(installment.paidAt).format("YYYY-MM-DD")}</TableCell>
                             <TableCell>{installment.repaidInterest > 0 ?
                                 <CurrencyAmountDisplay currency={currency}

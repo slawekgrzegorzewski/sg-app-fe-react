@@ -34,7 +34,10 @@ query MonthFinancialDocuments($year: Int!, $month: Int!){
         }
         amount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         createdAt
         description
@@ -129,7 +132,10 @@ mutation createBill($createdAt: LocalDate!,
         }
         amount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         createdAt
         description
@@ -174,7 +180,10 @@ mutation UpdateBill($billPublicId: UUID!,
         }
         amount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         createdAt
         description
@@ -224,11 +233,17 @@ mutation CreateInvoice($createdAt: LocalDate!,
         }
         amount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         vat {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         createdAt
         dueTo
@@ -281,11 +296,17 @@ mutation UpdateInvoice($invoicePublicId: UUID!,
         }
         amount {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         vat {
             amount
-            currency
+            currency {
+                code
+                description
+            }
         }
         createdAt
         dueTo

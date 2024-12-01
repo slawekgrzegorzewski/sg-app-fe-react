@@ -1,4 +1,4 @@
-import {GQLDomain} from "../../application/model/types";
+import {GQLDomainSimple} from "../../application/model/types";
 
 export const NON_EXISTING_ID = -1;
 
@@ -123,14 +123,14 @@ export type GQLTimeRecord = {
     numberOfHours: any;
     description?: string | null;
     timeRecordCategory?: GQLTimeRecordCategory | null;
-    domain: GQLDomain
+    domain: GQLDomainSimple
 };
 
 export type GQLTimeRecordCategory = {
     __typename?: "TimeRecordCategory";
     id: number;
     name: string;
-    domain: GQLDomain
+    domain: GQLDomainSimple
 };
 
 export function mapIntellectualProperty(ipr: GQLIntellectualProperty): IntellectualPropertyDTO {

@@ -21,8 +21,8 @@ export function LoanSimulation({loan, monthlyBudget, yearlyBudget}: LoanSimulati
     const {loading, error, data} = useQuery<SimulateExistingLoanQuery>(SimulateExistingLoan, {
         variables: {
             loanId: loan.publicId,
-            monthlyBudget: {amount: monthlyBudget, currency: loan.paidAmount.currency},
-            yearlyOverpayment: {amount: yearlyBudget, currency: loan.paidAmount.currency}
+            monthlyBudget: {amount: monthlyBudget, currency: loan.paidAmount.currency.code},
+            yearlyOverpayment: {amount: yearlyBudget, currency: loan.paidAmount.currency.code}
         }
     });
 
