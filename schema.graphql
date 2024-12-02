@@ -10,6 +10,7 @@ type FinanceManagement {
 
 type Account {
     publicId:UUID!,
+    order:Int!,
     name:String!,
     currentBalance:MonetaryAmount!,
     creditLimit:MonetaryAmount!,

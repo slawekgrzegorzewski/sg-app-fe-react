@@ -12,7 +12,7 @@ import {
 import * as React from "react";
 import {Stack} from "@mui/material";
 import {SimpleCrudList} from "../application/components/SImpleCrudList";
-import {ComparatorBuilder} from "../application/utils/comparator-builder";
+import {ComparatorBuilder} from "../utils/comparator-builder";
 import {mapTimeRecordCategory, NON_EXISTING_ID, TimeRecordCategoryDTO} from "./model/types";
 import * as Yup from "yup";
 import {RegularEditorField} from "../utils/forms/Form";

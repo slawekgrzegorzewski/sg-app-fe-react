@@ -11,7 +11,7 @@ import * as React from "react";
 import * as Yup from "yup";
 import {AutocompleteEditorField, EditorField} from "../utils/forms/Form";
 import {SimpleCrudList} from "../application/components/SImpleCrudList";
-import {ComparatorBuilder} from "../application/utils/comparator-builder";
+import {ComparatorBuilder} from "../utils/comparator-builder";
 import {GraphqlAccount} from "../graphql.entities";
 import Decimal from "decimal.js";
 
