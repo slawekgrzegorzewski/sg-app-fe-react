@@ -10,6 +10,7 @@ type FinanceManagement {
 
 type Account {
     publicId:UUID!,
+    order: Int!,
     name:String!,
     currentBalance:MonetaryAmount!,
     creditLimit:MonetaryAmount!,
@@ -36,6 +37,15 @@ input AccountUpdateInput {
     bankAccountId:Int
 }
 
+input AccountReorderInput {
+    accountPublicId:UUID!,
+    putBetween: AccountPutBetweenInput!
+}
+
+input AccountPutBetweenInput {
+    beforeAccountPublicId:UUID,
+    afterAccountPublicId:UUID,
+}
 
 type AuthenticationInfo {
     jwt: String!
@@ -185,6 +195,7 @@ type Mutation {
     createAccount(accountCreationInput: AccountCreationInput!): Account!
     updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
     deleteAccount(accountPublicId: UUID!): String!
+    reorderAccount(accountReorderInput: AccountReorderInput!): String!
     createClient(clientCreationInput: ClientCreationInput!): Client!
     updateClient(clientUpdateInput: ClientUpdateInput!): Client!
     deleteClient(clientPublicId:UUID!): String!

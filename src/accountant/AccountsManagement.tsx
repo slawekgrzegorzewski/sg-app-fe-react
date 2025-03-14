@@ -3,7 +3,11 @@ import {
     CreateAccount,
     CreateAccountMutation,
     DeleteAccount,
-    DeleteAccountMutation, GetFinanceManagement, GetFinanceManagementQuery,
+    DeleteAccountMutation,
+    GetFinanceManagement,
+    GetFinanceManagementQuery,
+    ReorderAccount,
+    ReorderAccountMutation,
     UpdateAccount,
     UpdateAccountMutation
 } from "../types";
@@ -21,6 +25,7 @@ type AccountDTO = {
     visible: boolean,
     currency: string,
     creditLimitAmount: Decimal,
+    order: number
 }
 
 const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
@@ -89,6 +94,7 @@ export function AccountsManagement() {
     const [createAccountMutation] = useMutation<CreateAccountMutation>(CreateAccount);
     const [updateAccountMutation] = useMutation<UpdateAccountMutation>(UpdateAccount);
     const [deleteAccountMutation] = useMutation<DeleteAccountMutation>(DeleteAccount);
+    const [reorderAccountMutation] = useMutation<ReorderAccountMutation>(ReorderAccount);
 
     const createAccount = async (account: AccountDTO): Promise<any> => {
         await createAccountMutation({
@@ -126,6 +132,17 @@ export function AccountsManagement() {
         return refetch();
     };
 
+    const reorderAccount = async (publicId: string, beforeAccountPublicId: string | null, afterAccountPublicId: string | null): Promise<any> => {
+        await reorderAccountMutation({
+            variables: {
+                accountPublicId: publicId,
+                accountBeforePublicId: beforeAccountPublicId,
+                accountAfterPublicId: afterAccountPublicId
+            }
+        }).finally(() => refetch());
+        return refetch();
+    };
+
     if (loading) {
         return <>Loading...</>
     } else if (error) {
@@ -138,7 +155,7 @@ export function AccountsManagement() {
             createTitle={'Dodaj konto'}
             list={
                 [...data.financeManagement.accounts]
-                    .sort(ComparatorBuilder.comparing<GraphqlAccount>(account => account.name).thenComparing(account => account.currentBalance.currency).build())
+                    .sort(ComparatorBuilder.comparing<GraphqlAccount>(account => account.order).build())
                     .map(account => {
                         return {
                             publicId: account.publicId,
@@ -146,6 +163,7 @@ export function AccountsManagement() {
                             visible: account.visible,
                             currency: account.currentBalance.currency.code,
                             creditLimitAmount: new Decimal(account.creditLimit.amount),
+                            order: account.order
                         } as AccountDTO
                     })
             }
@@ -154,7 +172,11 @@ export function AccountsManagement() {
             onUpdate={account => updateAccount(account)}
             onDelete={account => deleteAccount(account.publicId)}
             formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
-            entityDisplay={account => <>{account.name} ({account.currency})</>}
+            entityDisplay={account => <>
+               {account.name} ({account.currency})
+            </>}
+            enableDndReorder={true}
+            onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
         />
     } else {
         return <></>;

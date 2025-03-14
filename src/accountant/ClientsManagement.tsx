@@ -92,6 +92,7 @@ export function ClientsManagement() {
             onDelete={value => deleteClient(value)}
             formSupplier={value => value ? CLIENT_FORM(value) : CLIENT_FORM()}
             entityDisplay={value => <>{value.name}</>}
+            enableDndReorder={false}
         />
     } else {
         return <></>;

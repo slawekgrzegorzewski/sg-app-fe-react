@@ -10,6 +10,7 @@ import {Account, BankAccount} from "../../types";
 
 export type GQLAccount = {
     publicId: string;
+    order: number;
     name: string;
     currentBalance: GQLMonetaryAmount;
     creditLimit: GQLMonetaryAmount;
@@ -22,6 +23,7 @@ export type GQLAccount = {
 export const mapAccount = (account: Account) => {
     return {
         publicId: account.publicId,
+        order: account.order,
         name: account.name,
         currentBalance: mapMonetaryAmount(account.currentBalance),
         creditLimit: mapMonetaryAmount(account.creditLimit),

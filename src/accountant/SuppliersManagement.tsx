@@ -92,6 +92,7 @@ export function SuppliersManagement() {
             onDelete={value => deleteSupplier(value)}
             formSupplier={value => value ? SUPPLIER_FORM(value) : SUPPLIER_FORM()}
             entityDisplay={value => <>{value.name}</>}
+            enableDndReorder={false}
         />
     } else {
         return <></>;

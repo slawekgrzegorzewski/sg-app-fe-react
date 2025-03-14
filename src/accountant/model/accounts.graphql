@@ -6,6 +6,7 @@ query GetFinanceManagement {
         }
         accounts {
             publicId
+            order
             name
             currentBalance {
                 amount
@@ -66,6 +67,7 @@ mutation CreateAccount(
         }
     }) {
         publicId
+        order
         name
         currentBalance {
             amount
@@ -127,6 +129,7 @@ mutation UpdateAccount(
         }
     }) {
         publicId
+        order
         name
         currentBalance {
             amount
@@ -171,4 +174,19 @@ mutation DeleteAccount(
     $publicId: UUID!
 ) {
     deleteAccount(accountPublicId: $publicId)
+}
+
+mutation ReorderAccount(
+    $accountPublicId: UUID!,
+    $accountBeforePublicId: UUID,
+    $accountAfterPublicId: UUID
+
+) {
+    reorderAccount(accountReorderInput: {
+        accountPublicId: $accountPublicId
+        putBetween: {
+            beforeAccountPublicId: $accountBeforePublicId
+            afterAccountPublicId: $accountAfterPublicId
+        }
+    })
 }

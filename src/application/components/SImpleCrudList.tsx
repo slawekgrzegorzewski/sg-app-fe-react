@@ -1,6 +1,6 @@
 import {FormDialogButton} from "../../utils/buttons/FormDialogButton";
 import * as React from "react";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import {Add, Delete} from "@mui/icons-material";
@@ -9,6 +9,8 @@ import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import IconButton from "@mui/material/IconButton";
 import {FormProps} from "../../utils/forms/Form";
+import {ReorderEvent, SimpleCrudListRow} from "./SImpleCrudListRow";
+import {monitorForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 
 export interface SimpleCrudListProps<T> {
     title: string,
@@ -27,11 +29,15 @@ export interface SimpleCrudListProps<T> {
 
     onDelete(t: T): Promise<void>,
 
+    onReorder?(event: ReorderEvent): Promise<void>,
+
     formSupplier: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
 
     entityDisplay(t: T): React.JSX.Element,
 
     dialogOptions?: any;
+
+    enableDndReorder: boolean;
 }
 
 export function SimpleCrudList<T>({
@@ -45,7 +51,9 @@ export function SimpleCrudList<T>({
                                       onUpdate,
                                       formSupplier,
                                       entityDisplay,
-                                      dialogOptions
+                                      dialogOptions,
+                                      onReorder,
+                                      enableDndReorder
                                   }: SimpleCrudListProps<T>) {
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteConfirmationDialog, setShowDeleteConfirmationDialog] = useState(false);
@@ -59,7 +67,7 @@ export function SimpleCrudList<T>({
     const editDialogTitleElement = <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
         <Box>{editTitle}</Box>
         <IconButton color="primary" size={'small'}
-                    onClick={e => {
+                    onClick={() => {
                         setShowEditDialog(false);
                         setShowDeleteConfirmationDialog(true);
                     }}>
@@ -72,16 +80,44 @@ export function SimpleCrudList<T>({
         fontSize: theme.typography.pxToRem(18)
     }));
 
-    const EntityRowBox = styled(Box)(({theme}) => ({
-        '&:hover': {
-            color: '#ffffff',
-            backgroundColor: theme.palette.primary.main,
-        }
-    }));
+    useEffect(() => {
+        return monitorForElements({
+            onDrop({source, location}) {
+                if (!location.current.dropTargets || location.current.dropTargets.length === 0 || !source.data) return;
+                const id = source.data.id;
+                const {aboveId, belowId} = location.current.dropTargets[0].data;
+                console.log(
+                    'Put ' + JSON.stringify(list.find(a => idExtractor(a) === id))
+                    + ' between ' + JSON.stringify(list.find(a => idExtractor(a) === aboveId))
+                    + ' and ' + JSON.stringify(list.find(a => idExtractor(a) === belowId))
+                );
+            }
+        });
+    }, [list]);
+
+    const dndLabel = window.crypto.randomUUID();
+    const elements = [];
+
+    for (let i = 0; i < list.length - 1; i++) {
+        elements.push(<SimpleCrudListRow entity={list[i]}
+                                         idExtractor={idExtractor}
+                                         key={idExtractor(list[i])}
+                                         entityDisplay={entityDisplay}
+                                         selectEntityListener={(entity: T) => selectEntity(entity)}
+                                         reorderProps={enableDndReorder
+                                             ? {
+                                                 aboveId: i === 0 ? null : idExtractor(list[i - 1]),
+                                                 belowId: i === list.length - 1 ? null : idExtractor(list[i + 1]),
+                                                 dndLabel: dndLabel,
+                                                 onReorder: onReorder
+                                             }
+                                             : undefined}
+        />);
+    }
 
     return <>
         <Stack direction={'column'}>
-            <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
+            {<Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
                 <TitleBox>{title}</TitleBox>
                 <FormDialogButton
                     title={createTitle}
@@ -94,16 +130,12 @@ export function SimpleCrudList<T>({
                             <Add/>
                         </IconButton>}
                     formProps={formSupplier()}/>
-            </Stack>
+            </Stack>}
 
             <Stack direction={"column"}>
-                {(
-                    list.map(entity =>
-                        <EntityRowBox key={idExtractor(entity)} onClick={(e) => selectEntity(entity)}
-                                      alignSelf={'stretch'}>
-                            {entityDisplay(entity)}
-                        </EntityRowBox>)
-                )}
+                {
+                    elements
+                }
             </Stack>
         </Stack>
 
@@ -126,7 +158,7 @@ export function SimpleCrudList<T>({
                                         setShowDeleteConfirmationDialog(false);
                                         return onDelete(entity);
                                     }}
-                                    onCancel={(entity: T) => {
+                                    onCancel={() => {
                                         setShowDeleteConfirmationDialog(false);
                                         return Promise.resolve();
                                     }}/>

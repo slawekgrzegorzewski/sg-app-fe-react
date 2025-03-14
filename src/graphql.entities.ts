@@ -13,6 +13,7 @@ export type GraphqlMonetaryAmount = {
 export type GraphqlAccount = {
     __typename?: 'Account',
     publicId: any,
+    order: number,
     name: string,
     balanceIndex?: number | null,
     visible: boolean,

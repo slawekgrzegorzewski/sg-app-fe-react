@@ -116,6 +116,7 @@ export function IntellectualPropertySettingsMainPage() {
                 onDelete={timeRecordCategory => deleteTimeRecordCategory(timeRecordCategory)}
                 formSupplier={timeRecordCategory => TIME_RECORD_CATEGORY_FORM(timeRecordCategory || null)}
                 entityDisplay={timeRecordCategory => <>{timeRecordCategory.name}</>}
+                enableDndReorder={false}
             />
         </Stack>
     } else {
