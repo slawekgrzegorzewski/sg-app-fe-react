@@ -129,7 +129,7 @@ export function SimpleCrudListRow<T>({
                     }
                 }));
         },
-        [entity]
+        [entity, idExtractor, reorderProps, setShowBackdrop]
     )
     ;
 

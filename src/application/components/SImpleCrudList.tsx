@@ -93,7 +93,7 @@ export function SimpleCrudList<T>({
                 );
             }
         });
-    }, [list]);
+    }, [idExtractor, list]);
 
     const dndLabel = window.crypto.randomUUID();
     const elements = [];
