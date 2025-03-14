@@ -37,15 +37,6 @@ input AccountUpdateInput {
     bankAccountId:Int
 }
 
-input AccountReorderInput {
-    accountPublicId:UUID!,
-    putBetween: AccountPutBetweenInput!
-}
-
-input AccountPutBetweenInput {
-    beforeAccountPublicId:UUID,
-    afterAccountPublicId:UUID,
-}
 
 type AuthenticationInfo {
     jwt: String!

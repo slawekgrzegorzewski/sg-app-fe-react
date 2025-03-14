@@ -39,7 +39,7 @@ const theme = createTheme({
         secondary: {
             main: "#494c7d"
         }
-    }
+    },
 });
 
 const router = createBrowserRouter([

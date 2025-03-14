@@ -3,7 +3,7 @@ import {MouseEventHandler} from "react";
 import {CurrencyAmountDisplay} from "../application/components/CurrencyAmountDisplay";
 import dayjs, {Dayjs} from "dayjs";
 import {CurrencyInfo, Installment as GrapqhlInstallment, LoanCalculationInstallment} from "../types";
-import {ComparatorBuilder} from "../application/utils/comparator-builder";
+import {ComparatorBuilder} from "../utils/comparator-builder";
 import {Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow} from "@mui/material";
 import Box from "@mui/material/Box";
 
