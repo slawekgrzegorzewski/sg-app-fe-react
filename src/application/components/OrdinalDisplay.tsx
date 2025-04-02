@@ -7,8 +7,9 @@ export type OrdinalDisplayProps = {
 
 export function OrdinalDisplay({value}: OrdinalDisplayProps) {
     const userLocale = getUserLocale();
-    if (userLocale !== 'pl-PL')
-        throw Error(userLocale + 'is not supported');
+    if (userLocale !== 'pl-PL' && userLocale !== 'pl') {
+        throw Error(userLocale + ' is not supported');
+    }
 
     function convertPL(value: number) {
         function convertBase(value: number) {
