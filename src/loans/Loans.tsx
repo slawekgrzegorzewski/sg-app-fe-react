@@ -99,10 +99,7 @@ export function Loans() {
     } else if (data) {
         return (
             <Grid container spacing={2}>
-                <Grid spacing={{xs: 4}}>
-                    coś tu
-                </Grid>
-                <Grid spacing={{xs: 4}}>
+                <Grid>
                     <Box component="section" sx={{width: 1000, m: 'auto'}}>
                         <Stack direction="row">
                             <FormDialogButton
@@ -138,7 +135,7 @@ export function Loans() {
                             </Stack>
                         }</Box>
                 </Grid>
-                <Grid spacing={{xs: 4}}>
+                <Grid>
                     <Card variant="outlined">
                         <CardHeader title={'Sposoby naliczania odsetek'}/>
                         <CardContent>
@@ -152,7 +149,7 @@ export function Loans() {
                                 formProps={CREATE_RATE_STRATEGY_CONFIG()}
                             />
 
-                            <Stack direction={"column"} spacing={{xs: 1}}>
+                            <Stack direction={"column"}>
                                 {(data.loans.rateStrategyConfigs
                                         .map(config =>
                                             (
@@ -184,7 +181,7 @@ export function Loans() {
                                 buttonContent={<>Stwórz nowy</>}
                                 formProps={CREATE_REPAYMENT_DAY_STRATEGY_CONFIG()}
                             />
-                            <Stack direction={"column"} spacing={{xs: 1}}>
+                            <Stack direction={"column"}>
                                 {(data.loans.repaymentDayStrategyConfigs
                                         .map(config =>
                                             (

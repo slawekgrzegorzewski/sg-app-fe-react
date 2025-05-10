@@ -1,6 +1,6 @@
 import {FormDialogButton} from "../../utils/buttons/FormDialogButton";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import {Add, Delete} from "@mui/icons-material";
@@ -9,8 +9,7 @@ import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import IconButton from "@mui/material/IconButton";
 import {FormProps} from "../../utils/forms/Form";
-import {ReorderEvent, SimpleCrudListRow} from "./SImpleCrudListRow";
-import {monitorForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
+import {ReorderEvent, SimpleCrudListRow} from "./SimpleCrudListRow";
 
 export interface SimpleCrudListProps<T> {
     title: string,
@@ -33,7 +32,9 @@ export interface SimpleCrudListProps<T> {
 
     formSupplier: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
 
-    entityDisplay(t: T): React.JSX.Element,
+    entityDisplay(t: T, index: number): React.JSX.Element,
+
+    rowStyle?(t: T, index: number): React.CSSProperties,
 
     dialogOptions?: any;
 
@@ -51,6 +52,7 @@ export function SimpleCrudList<T>({
                                       onUpdate,
                                       formSupplier,
                                       entityDisplay,
+                                      rowStyle,
                                       dialogOptions,
                                       onReorder,
                                       enableDndReorder
@@ -80,35 +82,21 @@ export function SimpleCrudList<T>({
         fontSize: theme.typography.pxToRem(18)
     }));
 
-    useEffect(() => {
-        return monitorForElements({
-            onDrop({source, location}) {
-                if (!location.current.dropTargets || location.current.dropTargets.length === 0 || !source.data) return;
-                const id = source.data.id;
-                const {aboveId, belowId} = location.current.dropTargets[0].data;
-                console.log(
-                    'Put ' + JSON.stringify(list.find(a => idExtractor(a) === id))
-                    + ' between ' + JSON.stringify(list.find(a => idExtractor(a) === aboveId))
-                    + ' and ' + JSON.stringify(list.find(a => idExtractor(a) === belowId))
-                );
-            }
-        });
-    }, [idExtractor, list]);
-
-    const dndLabel = window.crypto.randomUUID();
     const elements = [];
 
-    for (let i = 0; i < list.length - 1; i++) {
-        elements.push(<SimpleCrudListRow entity={list[i]}
+    for (let i = 0; i < list.length; i++) {
+        elements.push(<SimpleCrudListRow index={i}
+                                         entity={list[i]}
                                          idExtractor={idExtractor}
                                          key={idExtractor(list[i])}
                                          entityDisplay={entityDisplay}
+                                         rowStyle={rowStyle}
                                          selectEntityListener={(entity: T) => selectEntity(entity)}
                                          reorderProps={enableDndReorder
                                              ? {
                                                  aboveId: i === 0 ? null : idExtractor(list[i - 1]),
                                                  belowId: i === list.length - 1 ? null : idExtractor(list[i + 1]),
-                                                 dndLabel: dndLabel,
+                                                 dndLabel: Math.random().toString(),
                                                  onReorder: onReorder
                                              }
                                              : undefined}

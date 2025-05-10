@@ -11,7 +11,7 @@ import {
 } from "../types";
 import * as React from "react";
 import {Stack} from "@mui/material";
-import {SimpleCrudList} from "../application/components/SImpleCrudList";
+import {SimpleCrudList} from "../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {mapTimeRecordCategory, NON_EXISTING_ID, TimeRecordCategoryDTO} from "./model/types";
 import * as Yup from "yup";

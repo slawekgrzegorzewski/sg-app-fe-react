@@ -1,16 +1,18 @@
 import * as React from "react";
 import {useContext, useEffect, useRef, useState} from "react";
-import Box from "@mui/material/Box";
-import {Stack, styled, useTheme} from "@mui/material";
+import {Stack, useTheme} from "@mui/material";
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {ShowBackdropContext} from "../../utils/DrawerAppBar";
 
 export interface SimpleCrudListRowProps<T> {
+    index: number;
     entity: T,
     idExtractor: (t: T) => string,
 
-    entityDisplay(t: T): React.JSX.Element,
+    entityDisplay(t: T, index: number): React.JSX.Element,
+
+    rowStyle?(t: T, index: number): React.CSSProperties,
 
     selectEntityListener(t: T): void,
 
@@ -43,9 +45,11 @@ const init: DraggingInfo = {
 };
 
 export function SimpleCrudListRow<T>({
+                                         index,
                                          entity,
                                          idExtractor,
                                          entityDisplay,
+                                         rowStyle,
                                          selectEntityListener,
                                          reorderProps
                                      }: SimpleCrudListRowProps<T>) {
@@ -80,8 +84,8 @@ export function SimpleCrudListRow<T>({
                 }),
                 dropTargetForElements({
                     element: el,
-                    canDrop: ({source}) => {
-                        return source.element !== el && reorderProps.dndLabel === source.data.dndLabel;
+                    canDrop: () => {
+                        return true;
                     },
                     getData: () => ({aboveId: reorderProps.aboveId, belowId: reorderProps.belowId}),
                     getIsSticky() {
@@ -115,13 +119,23 @@ export function SimpleCrudListRow<T>({
                     onDragLeave: () => {
                         setDraggingInfo(init);
                     },
-                    onDrop: (e) => {
+                    onDrop: ({source}) => {
+                        if (source.element === el) {
+                            console.log("a");
+                            setDraggingInfo(init);
+                            return;
+                        }
+                        if (reorderProps.dndLabel === source.data.dndLabel) {
+                            console.log("b");
+                            setDraggingInfo(init);
+                            return;
+                        }
                         const defaultOnReorder = () => Promise.resolve();
                         setShowBackdrop(true);
                         (reorderProps.onReorder || defaultOnReorder)({
-                            id: e.source.data.id as string,
-                            aboveId: e.source.data.mouseDirection === 'up' ? reorderProps.aboveId : entityId,
-                            belowId: e.source.data.mouseDirection === 'down' ? reorderProps.belowId : entityId
+                            id: source.data.id as string,
+                            aboveId: source.data.mouseDirection === 'up' ? reorderProps.aboveId : entityId,
+                            belowId: source.data.mouseDirection === 'down' ? reorderProps.belowId : entityId
                         }).finally(() => {
                             setShowBackdrop(false);
                             setDraggingInfo(init);
@@ -130,29 +144,23 @@ export function SimpleCrudListRow<T>({
                 }));
         },
         [entity, idExtractor, reorderProps, setShowBackdrop]
-    )
-    ;
+    );
 
-    const EntityRowBox = styled(Box)(({theme}) => ({
-        '&:hover': {
-            color: theme.palette.primary.contrastText,
-            backgroundColor: theme.palette.primary.main,
-        }
-    }));
-
-    if (draggingInfo.mouseDirection !== 'unknown')
-        return <Stack direction={'row'} key={idExtractor(entity)}
-                      style={draggingInfo.mouseDirection === 'up' ? {borderTop: '2px solid ' + theme.palette.primary.main} : {borderBottom: '2px solid ' + theme.palette.primary.main}}>
-            <Box onClick={() => selectEntityListener(entity)}
-                 alignSelf={'stretch'}>
-                {entityDisplay(entity)}
-            </Box>
-        </Stack>;
-    else
-        return <Stack direction={'row'} ref={ref} key={idExtractor(entity)}>
-            <EntityRowBox onClick={() => selectEntityListener(entity)}
-                          alignSelf={'stretch'}>
-                {entityDisplay(entity)}
-            </EntityRowBox>
-        </Stack>;
+    return <Stack direction={'row'} ref={ref} key={idExtractor(entity)}
+                  onClick={() => selectEntityListener(entity)}
+                  alignSelf={'stretch'}
+                  sx={{
+                      '&:hover': {
+                          color: theme.palette.primary.contrastText,
+                          backgroundColor: theme.palette.primary.main,
+                      },
+                      ...(draggingInfo.mouseDirection === 'up'
+                          ? {borderTop: '2px solid ' + theme.palette.primary.main}
+                          : draggingInfo.mouseDirection === 'down'
+                              ? {borderBottom: '2px solid ' + theme.palette.primary.main}
+                              : {}),
+                      ...(rowStyle?.(entity, index) || {}),
+                  }}>
+        {entityDisplay(entity, index)}
+    </Stack>;
 }
