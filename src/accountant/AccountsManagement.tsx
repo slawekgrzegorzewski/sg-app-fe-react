@@ -14,15 +14,19 @@ import {
 import * as React from "react";
 import * as Yup from "yup";
 import {AutocompleteEditorField, EditorField} from "../utils/forms/Form";
-import {SimpleCrudList} from "../application/components/SImpleCrudList";
+import {SimpleCrudList} from "../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {GraphqlAccount} from "../graphql.entities";
 import Decimal from "decimal.js";
+import Box from "@mui/material/Box";
+import {formatCurrency} from "../utils/functions";
+import {useTheme} from "@mui/material";
 
 type AccountDTO = {
     publicId: string,
     name: string,
     visible: boolean,
+    currentBalance: Decimal,
     currency: string,
     creditLimitAmount: Decimal,
     order: number
@@ -95,7 +99,6 @@ export function AccountsManagement() {
     const [updateAccountMutation] = useMutation<UpdateAccountMutation>(UpdateAccount);
     const [deleteAccountMutation] = useMutation<DeleteAccountMutation>(DeleteAccount);
     const [reorderAccountMutation] = useMutation<ReorderAccountMutation>(ReorderAccount);
-
     const createAccount = async (account: AccountDTO): Promise<any> => {
         await createAccountMutation({
             variables: {
@@ -109,7 +112,7 @@ export function AccountsManagement() {
         });
         return refetch();
     };
-
+    const theme = useTheme();
 
     const updateAccount = async (account: AccountDTO): Promise<any> => {
         await updateAccountMutation({
@@ -161,6 +164,7 @@ export function AccountsManagement() {
                             publicId: account.publicId,
                             name: account.name,
                             visible: account.visible,
+                            currentBalance: new Decimal(account.currentBalance.amount),
                             currency: account.currentBalance.currency.code,
                             creditLimitAmount: new Decimal(account.creditLimit.amount),
                             order: account.order
@@ -172,9 +176,13 @@ export function AccountsManagement() {
             onUpdate={account => updateAccount(account)}
             onDelete={account => deleteAccount(account.publicId)}
             formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
-            entityDisplay={account => <>
-               {account.name} ({account.currency})
-            </>}
+            entityDisplay={(account, index) => {
+
+                return <Box dir={'column'}>
+                    <div>{account.name} ({formatCurrency(account.currency, account.currentBalance)})</div>
+                </Box>;
+            }}
+            rowStyle={(entity, index) => (index % 2 === 1 ? {backgroundColor: theme.palette.grey['300']} : {})}
             enableDndReorder={true}
             onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
         />

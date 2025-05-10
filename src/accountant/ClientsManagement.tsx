@@ -12,7 +12,7 @@ import {
 import * as React from "react";
 import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
-import {SimpleCrudList} from "../application/components/SImpleCrudList";
+import {SimpleCrudList} from "../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {GraphqlClient} from "../graphql.entities";
 
