@@ -21,9 +21,9 @@ import {EditorField} from "../utils/forms/Form";
 import {SxProps} from "@mui/system/styleFunctionSx";
 import dayjs from "dayjs";
 import {styled} from "@mui/system";
-import {useDomain} from "../utils/domains/use-domain";
 import {useCurrentUser} from "../utils/users/use-current-user";
 import {ShowInformationButton} from "../utils/buttons/ShowInformationButton";
+import {useParams} from "react-router-dom";
 
 const sidePadding = {
     paddingLeft: '5px', paddingRight: '5px'
@@ -48,7 +48,7 @@ export function Task(properties: {
     sx?: SxProps<Theme>
 }) {
     const {task, refetchDataCallback, dialogOptions, sx} = properties;
-    const {currentDomainId} = useDomain();
+    const {domainId} = useParams();
     const {user} = useCurrentUser();
     const [updateTaskMutation, updateTaskMutationResult] = useMutation<UpdateTaskMutation>(UpdateTask);
     const [deleteTaskMutation, deleteTaskMutationResult] = useMutation<DeleteTaskMutation>(DeleteTask);
@@ -64,7 +64,7 @@ export function Task(properties: {
 
 
     const downloadAttachment = (attachmentName: string) => {
-        fetch(process.env.REACT_APP_BACKEND_URL + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + currentDomainId + '&authorization=' + user!.jwtToken, {
+        fetch(process.env.REACT_APP_BACKEND_URL + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + domainId! + '&authorization=' + user!.jwtToken, {
             method: 'GET'
         })
             .then((response) => response.blob())

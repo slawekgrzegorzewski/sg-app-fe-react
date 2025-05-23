@@ -4,10 +4,11 @@ import {PerformLogin, PerformLoginMutation} from "../../types";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
+import {Navigate} from "react-router-dom";
 
 export function Login() {
 
-    const {setCurrentUser} = useCurrentUser();
+    const {user, setCurrentUser} = useCurrentUser();
 
     const [loginData, setLoginData] = useState({
         login: '',
@@ -41,6 +42,9 @@ export function Login() {
             && stringNotEmpty(loginData.otp);
     }
 
+    if (user) {
+        return <Navigate to={'/'}></Navigate>;
+    }
     if (called) {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
             <Skeleton variant="rectangular" width={400} height={400}/>

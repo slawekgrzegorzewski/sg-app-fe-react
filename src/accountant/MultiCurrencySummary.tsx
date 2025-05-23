@@ -19,21 +19,22 @@ export function MultiCurrencySummary<T>({data, amountExtractor, currencyExtracto
         return collector;
     }, new Map<string, Decimal>());
 
-    return <>
-        <Stack direction="column" alignItems={'flex-end'}
-               sx={{'&:hover': {backgroundColor: theme.palette.grey['300']}}}>
-            {Array.from(accountBalancePerCurrency.entries()).map(([currency, balance], index) => {
-                return <Stack direction={'row'}>
-                    {
-                        [index === 0 ?
-                            <Box sx={{paddingRight: '20px', color: theme.palette.grey['600']}}>Suma:</Box> : <></>,
-                            <Box>{
-                                formatCurrency(currency, balance)
-                            }
-                            </Box>]
-                    }
-                </Stack>;
-            })}
-        </Stack>
-    </>;
+    return <Stack direction="column" alignItems={'flex-end'}
+                  sx={{'&:hover': {backgroundColor: theme.palette.grey['300']}}}>
+        {Array.from(accountBalancePerCurrency.entries()).map(([currency, balance], index) => {
+            return <Stack direction={'row'} key={'container' + index}>
+                {
+                    [index === 0 ?
+                        <Box key={'leftColumn' + index} sx={{paddingRight: '20px', color: theme.palette.grey['600']}}>
+                            Suma:
+                        </Box>
+                        : null,
+                        <Box key={'rightColumn' + index}>{
+                            formatCurrency(currency, balance)
+                        }
+                        </Box>]
+                }
+            </Stack>;
+        })}
+    </Stack>;
 }

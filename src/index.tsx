@@ -60,7 +60,7 @@ const router = createBrowserRouter([
         </ApolloProvider>
     },
     {
-        path: "/:applicationId/:domainId/:page?/:param1?",
+        path: "/:applicationId/:domainId?/:page?/:param1?",
         element:
             <QueryClientProvider client={queryClient}>
                 <ThemeProvider theme={theme}>

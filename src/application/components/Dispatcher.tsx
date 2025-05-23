@@ -15,19 +15,21 @@ import {
 import {
     IntellectualPropertySettingsMainPage
 } from "../../intellectual-property-report/IntellectualPropertySettingsMainPage";
+import {useApplicationAndDomain} from "../../utils/use-application-and-domain";
 
 
 export function Dispatcher() {
 
-    const {applicationId, domainId, page, param1} = useParams();
+    let {page, param1} = useParams();
     const {user} = useCurrentUser();
-    const application = applications.get(applicationId!);
+    const {currentApplicationId, currentDomainId} = useApplicationAndDomain();
+    const application = applications.get(currentApplicationId!)!;
 
     function isRequestForPage(pageId: string) {
         return (application?.pages.get(pageId)?.links || []).includes(page!);
     }
 
-    if (applicationId === 'ACCOUNTANT') {
+    if (application.id === 'ACCOUNTANT') {
         if (!page || isRequestForPage('ACCOUNTANT')) {
             return (<Accounts/>);
         }
@@ -39,7 +41,7 @@ export function Dispatcher() {
         if (isRequestForPage('SETTINGS')) {
             return <AccountantSettings/>;
         }
-    } else if (applicationId === 'IPR') {
+    } else if (application.id === 'IPR') {
         if (!page || isRequestForPage('IPR')) {
             return (<IntellectualPropertiesMainPage/>);
         }
@@ -55,7 +57,7 @@ export function Dispatcher() {
     }
     return (
         <Typography>
-            {applicationId} home {user!.user.domains.find(domain => domain.id === Number(domainId))?.name || ""}
+            {application.id} home {user!.user.domains.find(domain => domain.id === currentDomainId)?.name || ""}
         </Typography>
     );
 }

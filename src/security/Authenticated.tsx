@@ -1,21 +1,31 @@
 import {ApolloClient, ApolloLink, ApolloProvider, defaultDataIdFromObject, InMemoryCache} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
-import React, {useState} from "react";
-import {Navigate} from "react-router-dom";
+import React from "react";
+import {Navigate, useParams} from "react-router-dom";
 import {useCurrentUser} from "../utils/users/use-current-user";
-import {useDomain} from "../utils/domains/use-domain";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
+import type {ServerParseError} from "@apollo/client/link/http";
+import type {ServerError} from "@apollo/client/link/utils";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
-    const {currentDomainId} = useDomain();
     const {user, deleteCurrentUser} = useCurrentUser();
-    const [loggedId, setLoggedIn] = useState(user !== null);
+    const {applicationId, domainId} = useParams();
+
+    if (!user) {
+        return <Navigate to={"/login"}/>;
+    }
+
+    if (!domainId) {
+        return <Navigate to={`/${applicationId}/${user!.user.defaultDomainId}`}></Navigate>
+    }
+
+
     const httpLink = createUploadLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
     const authMiddleware = new ApolloLink((operation, forward) => {
         operation.setContext(({headers = {}}) => ({
             headers: {
                 ...headers,
-                domainId: currentDomainId,
+                domainId: domainId,
                 authorization: 'Bearer ' + (user?.jwtToken || ''),
                 locale: navigator.language,
                 'Apollo-Require-Preflight': 'true'
@@ -24,16 +34,17 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         return forward(operation);
     })
 
-    function logout() {
-        deleteCurrentUser();
-        setLoggedIn(false);
-    }
-
-    const logoutLink = onError((response) => {
+    const errorHandlerLink = onError((response) => {
         if (response.graphQLErrors
             && response.graphQLErrors.length > 0
             && response.graphQLErrors[0].extensions?.errorType === 'UNAUTHENTICATED') {
-            logout();
+            deleteCurrentUser();
+        }
+        if (response.networkError) {
+            const statusCode = (response.networkError as ServerParseError).statusCode || (response.networkError as ServerError).statusCode
+            if (statusCode && statusCode === 401) {
+                deleteCurrentUser();
+            }
         }
     })
 
@@ -58,19 +69,15 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
             }
         }),
         link: ApolloLink.from([
-            logoutLink,
+            errorHandlerLink,
             authMiddleware,
             httpLink
         ])
     });
 
-    if (loggedId) {
-        return <ApolloProvider client={apolloClient}>
-            <div style={{display: 'flex'}}>
-                {children}
-            </div>
-        </ApolloProvider>;
-    } else {
-        return <Navigate to={"/login"}/>;
-    }
+    return <ApolloProvider client={apolloClient}>
+        <div style={{display: 'flex'}}>
+            {children}
+        </div>
+    </ApolloProvider>;
 }
