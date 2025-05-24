@@ -6,7 +6,7 @@ import {
     mapDomainSimple,
     mapMonetaryAmount
 } from "../../application/model/types";
-import {Account, BankAccount} from "../../types";
+import {Account, BankAccount, BillingCategory} from "../../types";
 
 export type GQLAccount = {
     publicId: string;
@@ -56,4 +56,20 @@ export const mapBankAccount = (bankAccount: BankAccount) => {
         owner: bankAccount.owner,
         product: bankAccount.product
     } as GQLBankAccount;
+}
+
+export type GQLBillingCategory = {
+    publicId: string;
+    name: string;
+    description: string;
+    domain: GQLDomainSimple;
+}
+
+export const mapBillingCategory = (billingCategory: BillingCategory) => {
+    return {
+        publicId: billingCategory.publicId,
+        name: billingCategory.name,
+        description: billingCategory.description,
+        domain: billingCategory.domain ? mapDomainSimple(billingCategory.domain) : null
+    } as GQLBillingCategory;
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import Decimal from "decimal.js";
 import {Box, Stack, useTheme} from "@mui/material";
-import {formatCurrency} from "../utils/functions";
+import {formatCurrency} from "../../utils/functions";
 
 type MultiCurrencySummaryProps<T> = {
     data: T[];

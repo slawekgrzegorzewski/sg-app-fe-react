@@ -3,7 +3,7 @@ import {GetFinanceManagement, GetFinanceManagementQuery} from "../types";
 import React from "react";
 import {GQLAccount, mapAccount} from "./model/types";
 import {Box, Stack, useTheme} from "@mui/material";
-import {MultiCurrencySummary} from "./MultiCurrencySummary";
+import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
 import {formatMonetaryAmount} from "../utils/functions";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 

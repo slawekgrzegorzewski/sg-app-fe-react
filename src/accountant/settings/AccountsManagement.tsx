@@ -1,26 +1,25 @@
-import {useMutation, useQuery} from "@apollo/client";
+import {useMutation} from "@apollo/client";
 import {
     CreateAccount,
     CreateAccountMutation,
     DeleteAccount,
     DeleteAccountMutation,
-    GetFinanceManagement,
-    GetFinanceManagementQuery,
     ReorderAccount,
     ReorderAccountMutation,
     UpdateAccount,
     UpdateAccountMutation
-} from "../types";
+} from "../../types";
 import * as React from "react";
 import * as Yup from "yup";
-import {AutocompleteEditorField, EditorField} from "../utils/forms/Form";
-import {SimpleCrudList} from "../application/components/SimpleCrudList";
-import {ComparatorBuilder} from "../utils/comparator-builder";
-import {GraphqlAccount} from "../graphql.entities";
+import {AutocompleteEditorField, EditorField} from "../../utils/forms/Form";
+import {SimpleCrudList} from "../../application/components/SimpleCrudList";
+import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Decimal from "decimal.js";
 import Box from "@mui/material/Box";
-import {formatCurrency} from "../utils/functions";
+import {formatCurrency} from "../../utils/functions";
 import {useTheme} from "@mui/material";
+import {GQLAccount} from "../model/types";
+import {GQLCurrencyInfo} from "../../application/model/types";
 
 type AccountDTO = {
     publicId: string,
@@ -92,15 +91,21 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
     }
 ;
 
-export function AccountsManagement() {
+export interface AccountsManagementProps {
+    accounts: GQLAccount[],
+    supportedCurrencies: GQLCurrencyInfo[],
+    refetch: () => void
+}
 
-    const {loading, error, data, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
+export function AccountsManagement({accounts, supportedCurrencies, refetch}: AccountsManagementProps) {
+
     const [createAccountMutation] = useMutation<CreateAccountMutation>(CreateAccount);
     const [updateAccountMutation] = useMutation<UpdateAccountMutation>(UpdateAccount);
     const [deleteAccountMutation] = useMutation<DeleteAccountMutation>(DeleteAccount);
     const [reorderAccountMutation] = useMutation<ReorderAccountMutation>(ReorderAccount);
+
     const createAccount = async (account: AccountDTO): Promise<any> => {
-        await createAccountMutation({
+        return await createAccountMutation({
             variables: {
                 name: account.name,
                 balanceIndex: null,
@@ -109,13 +114,13 @@ export function AccountsManagement() {
                 creditLimitAmount: account.creditLimitAmount,
                 creditLimitCurrency: account.currency
             }
-        });
-        return refetch();
+        })
+            .finally(() => refetch());
     };
     const theme = useTheme();
 
     const updateAccount = async (account: AccountDTO): Promise<any> => {
-        await updateAccountMutation({
+        return await updateAccountMutation({
             variables: {
                 publicId: account.publicId,
                 name: account.name,
@@ -127,66 +132,57 @@ export function AccountsManagement() {
             }
         })
             .finally(() => refetch());
-        return refetch();
     };
 
     const deleteAccount = async (publicId: string): Promise<any> => {
-        await deleteAccountMutation({variables: {publicId: publicId}});
-        return refetch();
+        return await deleteAccountMutation({variables: {publicId: publicId}})
+            .finally(() => refetch());
     };
 
     const reorderAccount = async (publicId: string, beforeAccountPublicId: string | null, afterAccountPublicId: string | null): Promise<any> => {
-        await reorderAccountMutation({
+        return await reorderAccountMutation({
             variables: {
                 accountPublicId: publicId,
                 accountBeforePublicId: beforeAccountPublicId,
                 accountAfterPublicId: afterAccountPublicId
             }
-        }).finally(() => refetch());
-        return refetch();
+        })
+            .finally(() => refetch());
     };
 
-    if (loading) {
-        return <>Loading...</>
-    } else if (error) {
-        return <>Error...</>
-    } else if (data) {
-        const currencies = data.financeManagement.supportedCurrencies.map(currency => currency.code).sort();
-        return <SimpleCrudList
-            title={'ZARZĄDZAJ KONTAMI'}
-            editTitle={'Edytuj konto'}
-            createTitle={'Dodaj konto'}
-            list={
-                [...data.financeManagement.accounts]
-                    .sort(ComparatorBuilder.comparing<GraphqlAccount>(account => account.order).build())
-                    .map(account => {
-                        return {
-                            publicId: account.publicId,
-                            name: account.name,
-                            visible: account.visible,
-                            currentBalance: new Decimal(account.currentBalance.amount),
-                            currency: account.currentBalance.currency.code,
-                            creditLimitAmount: new Decimal(account.creditLimit.amount),
-                            order: account.order
-                        } as AccountDTO
-                    })
-            }
-            idExtractor={account => account.publicId}
-            onCreate={account => createAccount(account)}
-            onUpdate={account => updateAccount(account)}
-            onDelete={account => deleteAccount(account.publicId)}
-            formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
-            entityDisplay={(account, index) => {
+    const currencies = supportedCurrencies.map(currency => currency.code).sort();
+    return <SimpleCrudList
+        title={'ZARZĄDZAJ KONTAMI'}
+        editTitle={'Edytuj konto'}
+        createTitle={'Dodaj konto'}
+        list={
+            accounts
+                .sort(ComparatorBuilder.comparing<GQLAccount>(account => account.order).build())
+                .map(account => {
+                    return {
+                        publicId: account.publicId,
+                        name: account.name,
+                        visible: account.visible,
+                        currentBalance: new Decimal(account.currentBalance.amount),
+                        currency: account.currentBalance.currency.code,
+                        creditLimitAmount: new Decimal(account.creditLimit.amount),
+                        order: account.order
+                    } as AccountDTO
+                })
+        }
+        idExtractor={account => account.publicId}
+        onCreate={account => createAccount(account)}
+        onUpdate={account => updateAccount(account)}
+        onDelete={account => deleteAccount(account.publicId)}
+        formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
+        entityDisplay={(account, index) => {
 
-                return <Box dir={'column'}>
-                    <div>{account.name} ({formatCurrency(account.currency, account.currentBalance)})</div>
-                </Box>;
-            }}
-            rowStyle={(entity, index) => (index % 2 === 1 ? {backgroundColor: theme.palette.grey['300']} : {})}
-            enableDndReorder={true}
-            onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
-        />
-    } else {
-        return <></>;
-    }
+            return <Box dir={'column'}>
+                <div>{account.name} ({formatCurrency(account.currency, account.currentBalance)})</div>
+            </Box>;
+        }}
+        rowStyle={(entity, index) => (index % 2 === 1 ? {backgroundColor: theme.palette.grey['300']} : {})}
+        enableDndReorder={true}
+        onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
+    />
 }

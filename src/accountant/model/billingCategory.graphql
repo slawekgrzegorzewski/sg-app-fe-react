@@ -1,0 +1,43 @@
+mutation CreateBillingCategory(
+    $name: String!,
+    $description: String!
+) {
+    createBillingCategory(billingCategoryCreationInput: {
+        name: $name
+        description: $description
+    }) {
+        publicId
+        name
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdateBillingCategory(
+    $publicId: UUID!,
+    $name: String!,
+    $description: String!
+) {
+    updateBillingCategory(billingCategoryUpdateInput: {
+        publicId: $publicId
+        name: $name
+        description: $description
+    }) {
+        publicId
+        name
+        description
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation DeleteBillingCategory(
+    $publicId: UUID!
+) {
+    deleteBillingCategory(billingCategoryPublicId: $publicId)
+}

@@ -6,6 +6,7 @@ type CurrencyInfo {
 type FinanceManagement {
     supportedCurrencies: [CurrencyInfo!]!
     accounts:[Account!]!
+    billingCategories:[BillingCategory!]!
 }
 
 type Account {
@@ -46,6 +47,25 @@ input AccountPutBetweenInput {
     beforeAccountPublicId:UUID,
     afterAccountPublicId:UUID,
 }
+
+type BillingCategory {
+    publicId: UUID!
+    name: String!
+    description: String!
+    domain:DomainSimple!
+}
+
+input BillingCategoryCreationInput {
+    name: String!
+    description: String!
+}
+
+input BillingCategoryUpdateInput {
+    publicId: UUID!
+    name: String
+    description: String
+}
+
 
 type AuthenticationInfo {
     jwt: String!
@@ -183,6 +203,7 @@ type Mutation {
     login(loginParameters: LoginParameters!): AuthenticationInfo!
     register(registrationParameters: RegistrationParameters!): MFAData!
     setupMFA(mfaParameters: MFAParameters!): Boolean!
+
     createLoan(input: LoanCreationInput): Loan!
     updateLoan(input: LoanUpdateInput): Loan!
     deleteLoan(input: LoanDeleteInput): String!
@@ -192,10 +213,15 @@ type Mutation {
     deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
     createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
     deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
+
     createAccount(accountCreationInput: AccountCreationInput!): Account!
     updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
     deleteAccount(accountPublicId: UUID!): String!
     reorderAccount(accountReorderInput: AccountReorderInput!): String!
+    createBillingCategory(billingCategoryCreationInput: BillingCategoryCreationInput!): BillingCategory!
+    updateBillingCategory(billingCategoryUpdateInput: BillingCategoryUpdateInput!): BillingCategory!
+    deleteBillingCategory(billingCategoryPublicId: UUID!): String!
+
     createClient(clientCreationInput: ClientCreationInput!): Client!
     updateClient(clientUpdateInput: ClientUpdateInput!): Client!
     deleteClient(clientPublicId:UUID!): String!

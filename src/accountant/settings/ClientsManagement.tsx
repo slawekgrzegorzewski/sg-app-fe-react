@@ -8,13 +8,13 @@ import {
     GetAllClientsQuery,
     UpdateClient,
     UpdateClientMutation
-} from "../types";
+} from "../../types";
 import * as React from "react";
 import * as Yup from "yup";
-import {EditorField} from "../utils/forms/Form";
-import {SimpleCrudList} from "../application/components/SimpleCrudList";
-import {ComparatorBuilder} from "../utils/comparator-builder";
-import {GraphqlClient} from "../graphql.entities";
+import {EditorField} from "../../utils/forms/Form";
+import {SimpleCrudList} from "../../application/components/SimpleCrudList";
+import {ComparatorBuilder} from "../../utils/comparator-builder";
+import {GraphqlClient} from "../../graphql.entities";
 
 type ClientDTO = {
     publicId: string,

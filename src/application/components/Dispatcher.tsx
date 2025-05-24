@@ -7,7 +7,7 @@ import {applications} from "../../utils/applications/applications-access";
 import {Loans} from "../../loans/Loans";
 import React from "react";
 import {Loan} from "../../loans/Loan";
-import {AccountantSettings} from "../../accountant/AccountantSettings";
+import {AccountantSettings} from "../../accountant/settings/AccountantSettings";
 import {TimeRecordsMainPage} from "../../intellectual-property-report/TimeRecordsMainPage";
 import {
     IntellectualPropertyReportMainPage

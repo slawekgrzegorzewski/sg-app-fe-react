@@ -45,6 +45,15 @@ query GetFinanceManagement {
                 name
             }
         }
+        billingCategories {
+            publicId
+            name
+            description
+            domain {
+                id
+                name
+            }
+        }
     }
 }
 
