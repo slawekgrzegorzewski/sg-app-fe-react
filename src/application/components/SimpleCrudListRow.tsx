@@ -1,9 +1,10 @@
 import * as React from "react";
 import {useContext, useEffect, useRef, useState} from "react";
-import {Stack, useTheme} from "@mui/material";
+import {Stack, Theme, useTheme} from "@mui/material";
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {ShowBackdropContext} from "../../utils/DrawerAppBar";
+import {SxProps} from "@mui/system";
 
 export interface SimpleCrudListRowProps<T> {
     index: number;
@@ -11,6 +12,8 @@ export interface SimpleCrudListRowProps<T> {
     idExtractor: (t: T) => string,
 
     entityDisplay(t: T, index: number): React.JSX.Element,
+
+    rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
 
     rowStyle?(t: T, index: number): React.CSSProperties,
 
@@ -44,10 +47,14 @@ const init: DraggingInfo = {
     previousVerticalLocation: 0
 };
 
+const ROW_CONTAINER_DEFAULT_PROVIDER: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element = (sx: SxProps<Theme>, additionalProperties: any) =>
+    <Stack direction={'row'} alignSelf={'stretch'} sx={sx} {...additionalProperties}></Stack>;
+
 export function SimpleCrudListRow<T>({
                                          index,
                                          entity,
                                          idExtractor,
+                                         rowContainerProvider,
                                          entityDisplay,
                                          rowStyle,
                                          selectEntityListener,
@@ -145,22 +152,23 @@ export function SimpleCrudListRow<T>({
         },
         [entity, idExtractor, reorderProps, setShowBackdrop]
     );
-
-    return <Stack direction={'row'} ref={ref} key={idExtractor(entity)}
-                  onClick={() => selectEntityListener(entity)}
-                  alignSelf={'stretch'}
-                  sx={{
-                      '&:hover': {
-                          color: theme.palette.primary.contrastText,
-                          backgroundColor: theme.palette.primary.main,
-                      },
-                      ...(draggingInfo.mouseDirection === 'up'
-                          ? {borderTop: '2px solid ' + theme.palette.primary.main}
-                          : draggingInfo.mouseDirection === 'down'
-                              ? {borderBottom: '2px solid ' + theme.palette.primary.main}
-                              : {}),
-                      ...(rowStyle?.(entity, index) || {}),
-                  }}>
-        {entityDisplay(entity, index)}
-    </Stack>;
+    return (rowContainerProvider || ROW_CONTAINER_DEFAULT_PROVIDER)(
+        {
+            '&:hover': {
+                color: theme.palette.primary.contrastText,
+                backgroundColor: theme.palette.primary.main,
+            },
+            ...(draggingInfo.mouseDirection === 'up'
+                ? {borderTop: '2px solid ' + theme.palette.primary.main}
+                : draggingInfo.mouseDirection === 'down'
+                    ? {borderBottom: '2px solid ' + theme.palette.primary.main}
+                    : {}),
+            ...(rowStyle?.(entity, index) || {}),
+        },
+        {
+            children: entityDisplay(entity, index),
+            ref: ref,
+            key: idExtractor(entity),
+            onClick: () => selectEntityListener(entity)
+        });
 }

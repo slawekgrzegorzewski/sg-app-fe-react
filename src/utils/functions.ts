@@ -21,3 +21,8 @@ export const formatCurrency = (currency: string, amount: Decimal) => {
         currency: currency
     }).format(amount.toNumber())
 }
+
+export const formatBalance = (currency: string, amount: Decimal) => {
+    const formatted = formatCurrency(currency, amount);
+    return amount.toNumber() < 0 ? `(${formatted})` : `${formatted}`;
+}

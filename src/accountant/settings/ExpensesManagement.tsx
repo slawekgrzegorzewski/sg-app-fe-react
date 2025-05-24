@@ -13,8 +13,9 @@ import {EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Box from "@mui/material/Box";
-import {useTheme} from "@mui/material";
+import {Card, Theme, useTheme} from "@mui/material";
 import {GQLBillingCategory} from "../model/types";
+import {SxProps} from "@mui/system";
 
 const BILLING_CATEGORY_FORM = (billingCategory?: GQLBillingCategory) => {
         return {
@@ -105,12 +106,18 @@ export function ExpensesManagement({billingCategories, refetch}: ExpensesManagem
         onUpdate={billingCategory => updateBillingCategory(billingCategory)}
         onDelete={billingCategory => deleteBillingCategory(billingCategory.publicId)}
         formSupplier={billingCategory => billingCategory ? BILLING_CATEGORY_FORM(billingCategory) : BILLING_CATEGORY_FORM()}
+        rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
+            return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
+        }}
         entityDisplay={(billingCategory, index) => {
-            return <Box dir={'column'}>
-                <div>{billingCategory.name + ' - ' + billingCategory.description}</div>
+            return <Box dir={'column'} key={billingCategory.publicId} sx={{paddingLeft: '15px'}}>
+                <div>{billingCategory.name}</div>
+                <div style={{
+                    color: theme.palette.text.disabled,
+                    paddingLeft: '15px'
+                }}>{billingCategory.description}</div>
             </Box>;
         }}
-        rowStyle={(entity, index) => (index % 2 === 1 ? {backgroundColor: theme.palette.grey['300']} : {})}
         enableDndReorder={false}
     />
 }

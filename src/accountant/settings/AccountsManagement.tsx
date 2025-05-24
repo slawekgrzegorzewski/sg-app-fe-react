@@ -16,10 +16,11 @@ import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Decimal from "decimal.js";
 import Box from "@mui/material/Box";
-import {formatCurrency} from "../../utils/functions";
-import {useTheme} from "@mui/material";
+import {formatBalance} from "../../utils/functions";
+import {Card, Theme, useTheme} from "@mui/material";
 import {GQLAccount} from "../model/types";
 import {GQLCurrencyInfo} from "../../application/model/types";
+import {SxProps} from "@mui/system";
 
 type AccountDTO = {
     publicId: string,
@@ -175,13 +176,34 @@ export function AccountsManagement({accounts, supportedCurrencies, refetch}: Acc
         onUpdate={account => updateAccount(account)}
         onDelete={account => deleteAccount(account.publicId)}
         formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
+        rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
+            return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
+        }}
         entityDisplay={(account, index) => {
-
-            return <Box dir={'column'}>
-                <div>{account.name} ({formatCurrency(account.currency, account.currentBalance)})</div>
+            return <Box dir={'column'} key={account.publicId} sx={{paddingLeft: '15px'}}>
+                <div>{account.name}</div>
+                <div style={{
+                    color: account.currentBalance.toNumber() < 0 ? theme.palette.error.main : theme.palette.text.disabled,
+                    paddingLeft: '15px'
+                }}>
+                    Stan konta: {formatBalance(account.currency, account.currentBalance)}
+                </div>
+                {account.creditLimitAmount.toNumber() > 0 && (
+                    <div style={{
+                        color: theme.palette.text.disabled,
+                        paddingLeft: '15px'
+                    }}>
+                        Limit kredytowy: {formatBalance(account.currency, account.creditLimitAmount)}
+                    </div>)}
+                {!account.visible && (
+                    <div style={{
+                        color: theme.palette.warning.main,
+                        paddingLeft: '15px'
+                    }}>
+                        Ukryte z interfejsu
+                    </div>)}
             </Box>;
         }}
-        rowStyle={(entity, index) => (index % 2 === 1 ? {backgroundColor: theme.palette.grey['300']} : {})}
         enableDndReorder={true}
         onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
     />

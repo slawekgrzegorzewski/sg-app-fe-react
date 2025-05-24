@@ -48,7 +48,7 @@ export function AccountantSettings() {
                     setAndStoreActiveTabIndex(newValue)
                 }}>
                 {
-                    tabs.map((tab, index) => (<Tab label={tab}/>))
+                    tabs.map((tab, index) => (<Tab label={tab} key={tab}/>))
                 }
             </Tabs>
             <Grid container>

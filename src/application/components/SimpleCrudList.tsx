@@ -4,22 +4,19 @@ import {useState} from "react";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import {Add, Delete} from "@mui/icons-material";
-import {styled} from "@mui/material";
+import {styled, Theme} from "@mui/material";
 import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import IconButton from "@mui/material/IconButton";
 import {FormProps} from "../../utils/forms/Form";
 import {ReorderEvent, SimpleCrudListRow} from "./SimpleCrudListRow";
+import {SxProps} from "@mui/system";
 
 export interface SimpleCrudListProps<T> {
     title: string,
-
     createTitle: string,
-
     editTitle: string,
-
     list: T[],
-
     idExtractor: (t: T) => string,
 
     onCreate(t: T): Promise<void>,
@@ -31,13 +28,13 @@ export interface SimpleCrudListProps<T> {
     onReorder?(event: ReorderEvent): Promise<void>,
 
     formSupplier: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
+    rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
 
     entityDisplay(t: T, index: number): React.JSX.Element,
 
     rowStyle?(t: T, index: number): React.CSSProperties,
 
     dialogOptions?: any;
-
     enableDndReorder: boolean;
 }
 
@@ -52,6 +49,7 @@ export function SimpleCrudList<T>({
                                       onUpdate,
                                       formSupplier,
                                       entityDisplay,
+                                      rowContainerProvider,
                                       rowStyle,
                                       dialogOptions,
                                       onReorder,
@@ -89,6 +87,7 @@ export function SimpleCrudList<T>({
                                          entity={list[i]}
                                          idExtractor={idExtractor}
                                          key={idExtractor(list[i])}
+                                         rowContainerProvider={rowContainerProvider}
                                          entityDisplay={entityDisplay}
                                          rowStyle={rowStyle}
                                          selectEntityListener={(entity: T) => selectEntity(entity)}
