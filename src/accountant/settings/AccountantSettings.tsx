@@ -4,18 +4,20 @@ import {SuppliersManagement} from "./SuppliersManagement";
 import Grid from "@mui/material/Grid2";
 import {ClientsManagement} from "./ClientsManagement";
 import {AccountsManagement} from "./AccountsManagement";
-import {Box, Tab, Tabs} from "@mui/material";
-import {ExpensesManagement} from "./ExpensesManagement";
+import {Tab, Tabs} from "@mui/material";
+import {BillingCategoriesManagement} from "./BillingCategoriesManagement";
 import {useQuery} from "@apollo/client";
-import {GetFinanceManagement, GetFinanceManagementQuery} from "../../types";
+import {GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} from "../../types";
 import {mapAccount, mapBillingCategory} from "../model/types";
 import {mapCurrencyInfo} from "../../application/model/types";
+import {PiggyBankDTO, PiggyBanksManagement} from "./PiggyBanksManagement";
+import Decimal from "decimal.js";
 
 export function AccountantSettings() {
     const ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY = 'accountantSettingsActiveTab';
-    const ACCOUNTS_TAB_LABEL = 'Konta';
-    const EXPENSES_MANAGEMENT_TAB_LABEL = 'Zarządzanie wydatkami';
-    const COMPANY_MANAGEMENT_TAB_LABEL = 'Firma';
+    const ACCOUNTS_TAB_LABEL = 'konta';
+    const EXPENSES_MANAGEMENT_TAB_LABEL = 'wydatki';
+    const COMPANY_MANAGEMENT_TAB_LABEL = 'firma';
     const settings = useContext(SettingsContext);
     const tabs = settings.accountantSettings.isCompany
         ? [COMPANY_MANAGEMENT_TAB_LABEL, ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL]
@@ -36,6 +38,18 @@ export function AccountantSettings() {
     const {loading, error, data, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
 
 
+    function mapPiggyBank(piggyBank: PiggyBank) {
+        return {
+            publicId: piggyBank.publicId,
+            name: piggyBank.name,
+            balance: new Decimal(piggyBank.balance.amount),
+            monthlyTopUp: new Decimal(piggyBank.monthlyTopUp.amount),
+            description: piggyBank.description,
+            currency: piggyBank.monthlyTopUp.currency.code,
+            savings: piggyBank.savings,
+        } as PiggyBankDTO;
+    }
+
     if (loading) {
         return <>Loading...</>
     } else if (error) {
@@ -53,24 +67,32 @@ export function AccountantSettings() {
             </Tabs>
             <Grid container>
                 {
-                    tabs[activeTabIndex] === COMPANY_MANAGEMENT_TAB_LABEL && <Box>
-                        <Grid size={12}><ClientsManagement></ClientsManagement></Grid>
-                        <Grid size={12}><SuppliersManagement></SuppliersManagement></Grid>
-                    </Box>
+                    tabs[activeTabIndex] === COMPANY_MANAGEMENT_TAB_LABEL && <>
+                        <Grid size={6}><ClientsManagement></ClientsManagement></Grid>
+                        <Grid size={6}><SuppliersManagement></SuppliersManagement></Grid>
+                    </>
                 }
                 {
-                    tabs[activeTabIndex] === ACCOUNTS_TAB_LABEL && <Grid size={{xs: 12, sm: 4}}>
+                    tabs[activeTabIndex] === ACCOUNTS_TAB_LABEL && <>
                         <AccountsManagement accounts={[...data.financeManagement.accounts].map(mapAccount)}
                                             supportedCurrencies={[...data.financeManagement.supportedCurrencies].map(mapCurrencyInfo)}
                                             refetch={refetch}/>
-                    </Grid>
+                    </>
                 }
                 {
-                    tabs[activeTabIndex] === EXPENSES_MANAGEMENT_TAB_LABEL && <Grid size={{xs: 12, sm: 4}}>
-                        <ExpensesManagement
-                            billingCategories={[...data.financeManagement.billingCategories].map(mapBillingCategory)}
-                            refetch={refetch}/>
-                    </Grid>
+                    tabs[activeTabIndex] === EXPENSES_MANAGEMENT_TAB_LABEL && <>
+                        <Grid size={{sm: 12, md: 6}}>
+                            <BillingCategoriesManagement
+                                billingCategories={[...data.financeManagement.billingCategories].map(mapBillingCategory)}
+                                refetch={refetch}/>
+                        </Grid>
+                        <Grid size={{sm: 12, md: 6}}>
+                            <PiggyBanksManagement
+                                piggyBanks={[...data.financeManagement.piggyBanks].map(mapPiggyBank)}
+                                supportedCurrencies={[...data.financeManagement.supportedCurrencies].map(currency => currency.code)}
+                                refetch={refetch}/>
+                        </Grid>
+                    </>
                 }
             </Grid>
         </>);

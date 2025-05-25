@@ -14,7 +14,6 @@ import {Formik} from "../../application/components/Formik";
 import {FormikHelpers} from "formik/dist/types";
 import {FormikValues} from "formik";
 import * as Yup from "yup";
-import {Visibility, VisibilityOff} from "@mui/icons-material";
 import AutocompleteAsync from "./AutocompleteAsync";
 import {DocumentNode} from "graphql/language";
 
@@ -38,7 +37,7 @@ function isEditorFieldKind(object: object, type: string) {
     return !!object && 'type' in object && typeof object.type === 'string' && object.type === type;
 }
 
-function isCheckboxEditorField(object: object): boolean {
+function isCheckboxEditorField(object: object): object is BooleanEditorField {
     return isEditorFieldKind(object, 'CHECKBOX');
 }
 
@@ -60,6 +59,12 @@ export type RegularEditorField = {
     type: Omit<EditorFieldType, 'SELECT | AUTOCOMPLETE' | 'AUTOCOMPLETE_ASYNC'>;
     additionalProps?: any;
     editable: boolean | ((object: any) => boolean);
+};
+
+export type BooleanEditorField = Omit<RegularEditorField, 'type'> & {
+    type: 'CHECKBOX';
+    icon?: React.ReactNode;
+    checkedIcon?: React.ReactNode;
 };
 
 export type SelectEditorField = Omit<RegularEditorField, 'type'> & {
@@ -90,11 +95,19 @@ export type FormProps<T> = {
     fields: EditorField[];
     initialValues: T;
     validationSchema: Yup.ObjectSchema<any>;
+    previewOfChange?(t: T): React.JSX.Element;
     onSave: (value: T) => void;
     onCancel: () => void
 }
 
-export default function Form<T>({fields, initialValues, validationSchema, onSave, onCancel}: FormProps<T>) {
+export default function Form<T>({
+                                    fields,
+                                    initialValues,
+                                    validationSchema,
+                                    previewOfChange,
+                                    onSave,
+                                    onCancel
+                                }: FormProps<T>) {
 
     function getFieldUniqueProps(editorField: EditorField) {
         switch (editorField.type) {
@@ -178,7 +191,7 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
         />
     }
 
-    function createCheckbox(editorField: EditorField, formik: any) {
+    function createCheckbox(editorField: BooleanEditorField, formik: any) {
         return <FormControl key={editorField.key}>
             <FormHelperText
                 error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
@@ -196,49 +209,54 @@ export default function Form<T>({fields, initialValues, validationSchema, onSave
                                   disabled={!editorField.editable}
                                   checked={formik.values[editorField.key]}
                                   size={'small'}
-                                  icon={<VisibilityOff/>}
-                                  checkedIcon={<Visibility/>}
+                                  icon={editorField.icon}
+                                  checkedIcon={editorField.checkedIcon}
                               />}
             />
         </FormControl>;
     }
 
-    const form = (formik: any) => (
-        <form onSubmit={formik.handleSubmit}>
-            <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                {
-                    fields
-                        .filter(field => field.type !== 'HIDDEN')
-                        .map(editorField => {
-                            if (isCheckboxEditorField(editorField)) {
-                                return createCheckbox(editorField, formik);
-                            } else if (isAutocompleteEditorField(editorField)) {
-                                return createAutocomplete(editorField, formik);
-                            } else if (isAutocompleteAsyncEditorField(editorField)) {
-                                return AutocompleteAsync({
-                                    formik: formik,
-                                    editorField: editorField
-                                });
-                            } else {
-                                return createTextField(editorField, formik);
-                            }
-                        })}
-                <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
-                    <Button variant="text"
-                            type="submit"
-                            sx={{flexGrow: 1}}
-                            onClick={e => e.stopPropagation()}
-                    >Potwierdź</Button>
-                    <Button
-                        variant="text" sx={{flexGrow: 1}}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onCancel();
-                        }}>Anuluj</Button>
+    const form = (formik: any) => {
+        return (
+            <form onSubmit={formik.handleSubmit}>
+                <Stack direction={"column"} spacing={4} alignItems={"center"}>
+                    {
+                        fields
+                            .filter(field => field.type !== 'HIDDEN')
+                            .map(editorField => {
+                                if (isCheckboxEditorField(editorField)) {
+                                    return createCheckbox(editorField, formik);
+                                } else if (isAutocompleteEditorField(editorField)) {
+                                    return createAutocomplete(editorField, formik);
+                                } else if (isAutocompleteAsyncEditorField(editorField)) {
+                                    return AutocompleteAsync({
+                                        formik: formik,
+                                        editorField: editorField
+                                    });
+                                } else {
+                                    return createTextField(editorField, formik);
+                                }
+                            })}
+                    {
+                        previewOfChange?.(formik.values)
+                    }
+                    <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
+                        <Button variant="text"
+                                type="submit"
+                                sx={{flexGrow: 1}}
+                                onClick={e => e.stopPropagation()}
+                        >Potwierdź</Button>
+                        <Button
+                            variant="text" sx={{flexGrow: 1}}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onCancel();
+                            }}>Anuluj</Button>
+                    </Stack>
                 </Stack>
-            </Stack>
-        </form>
-    );
+            </form>
+        );
+    }
 
     return <Formik
         initialValues={initialValues}

@@ -36,6 +36,7 @@ export interface SimpleCrudListProps<T> {
 
     dialogOptions?: any;
     enableDndReorder: boolean;
+    selectEntityListener?(t: T): void,
 }
 
 export function SimpleCrudList<T>({
@@ -53,7 +54,8 @@ export function SimpleCrudList<T>({
                                       rowStyle,
                                       dialogOptions,
                                       onReorder,
-                                      enableDndReorder
+                                      enableDndReorder,
+                                      selectEntityListener
                                   }: SimpleCrudListProps<T>) {
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteConfirmationDialog, setShowDeleteConfirmationDialog] = useState(false);
@@ -62,6 +64,7 @@ export function SimpleCrudList<T>({
     function selectEntity(t: T) {
         setSelectedEntity(t);
         setShowEditDialog(true);
+        selectEntityListener?.(t);
     }
 
     const editDialogTitleElement = <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>

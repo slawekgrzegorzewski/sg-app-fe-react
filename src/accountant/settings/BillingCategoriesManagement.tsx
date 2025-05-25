@@ -54,12 +54,12 @@ const BILLING_CATEGORY_FORM = (billingCategory?: GQLBillingCategory) => {
     }
 ;
 
-export interface ExpensesManagementProps {
+export interface BillingCategoriesManagementProps {
     billingCategories: GQLBillingCategory[],
     refetch: () => void
 }
 
-export function ExpensesManagement({billingCategories, refetch}: ExpensesManagementProps) {
+export function BillingCategoriesManagement({billingCategories, refetch}: BillingCategoriesManagementProps) {
 
     const [createBillingCategoryMutation] = useMutation<CreateBillingCategoryMutation>(CreateBillingCategory);
     const [updateBillingCategoryMutation] = useMutation<UpdateBillingCategoryMutation>(UpdateBillingCategory);
@@ -94,9 +94,9 @@ export function ExpensesManagement({billingCategories, refetch}: ExpensesManagem
     };
 
     return <SimpleCrudList
-        title={'ZARZĄDZAJ KATEGORIAMI'}
-        editTitle={'Edytuj kategorię'}
-        createTitle={'Dodaj kategorię'}
+        title={'KATEGORIE'}
+        editTitle={'Edytuj'}
+        createTitle={'Dodaj'}
         list={
             billingCategories
                 .sort(ComparatorBuilder.comparing<GQLBillingCategory>(billingCategory => billingCategory.name).build())

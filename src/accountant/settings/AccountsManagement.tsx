@@ -11,7 +11,7 @@ import {
 } from "../../types";
 import * as React from "react";
 import * as Yup from "yup";
-import {AutocompleteEditorField, EditorField} from "../../utils/forms/Form";
+import {AutocompleteEditorField, BooleanEditorField, EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Decimal from "decimal.js";
@@ -21,6 +21,7 @@ import {Card, Theme, useTheme} from "@mui/material";
 import {GQLAccount} from "../model/types";
 import {GQLCurrencyInfo} from "../../application/model/types";
 import {SxProps} from "@mui/system";
+import {Visibility, VisibilityOff} from "@mui/icons-material";
 
 type AccountDTO = {
     publicId: string,
@@ -70,8 +71,10 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
                         label: 'Widoczne',
                         type: 'CHECKBOX',
                         key: 'visible',
-                        editable: true
-                    } as EditorField,
+                        editable: true,
+                        icon: <VisibilityOff/>,
+                        checkedIcon: <Visibility/>,
+                    } as BooleanEditorField,
                     {
                         label: 'Waluta',
                         type: 'AUTOCOMPLETE',
@@ -153,9 +156,9 @@ export function AccountsManagement({accounts, supportedCurrencies, refetch}: Acc
 
     const currencies = supportedCurrencies.map(currency => currency.code).sort();
     return <SimpleCrudList
-        title={'ZARZĄDZAJ KONTAMI'}
-        editTitle={'Edytuj konto'}
-        createTitle={'Dodaj konto'}
+        title={'KONTA'}
+        editTitle={'Edytuj'}
+        createTitle={'Dodaj'}
         list={
             accounts
                 .sort(ComparatorBuilder.comparing<GQLAccount>(account => account.order).build())

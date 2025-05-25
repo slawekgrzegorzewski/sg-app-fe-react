@@ -54,6 +54,30 @@ query GetFinanceManagement {
                 name
             }
         }
+        piggyBanks {
+            publicId
+            name
+            description
+            balance {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            monthlyTopUp {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            savings
+            domain {
+                id
+                name
+            }
+        }
     }
 }
 

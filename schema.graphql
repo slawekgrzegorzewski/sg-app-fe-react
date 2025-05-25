@@ -7,6 +7,7 @@ type FinanceManagement {
     supportedCurrencies: [CurrencyInfo!]!
     accounts:[Account!]!
     billingCategories:[BillingCategory!]!
+    piggyBanks:[PiggyBank!]!
 }
 
 type Account {
@@ -66,6 +67,32 @@ input BillingCategoryUpdateInput {
     description: String
 }
 
+
+type PiggyBank {
+    publicId: UUID!
+    name: String!
+    description: String!
+    balance: MonetaryAmount!
+    monthlyTopUp: MonetaryAmount!
+    savings: Boolean!
+    domain:DomainSimple!
+}
+
+input PiggyBankCreationInput {
+    name: String!
+    description: String!
+    monthlyTopUp: MonetaryAmountInput!
+    savings: Boolean!
+}
+
+input PiggyBankUpdateInput {
+    publicId: UUID!
+    name: String
+    description: String
+    balance: MonetaryAmountInput
+    monthlyTopUp: MonetaryAmountInput
+    savings: Boolean
+}
 
 type AuthenticationInfo {
     jwt: String!
@@ -221,6 +248,9 @@ type Mutation {
     createBillingCategory(billingCategoryCreationInput: BillingCategoryCreationInput!): BillingCategory!
     updateBillingCategory(billingCategoryUpdateInput: BillingCategoryUpdateInput!): BillingCategory!
     deleteBillingCategory(billingCategoryPublicId: UUID!): String!
+    createPiggyBank(piggyBankCreationInput: PiggyBankCreationInput!): PiggyBank!
+    updatePiggyBank(piggyBankUpdateInput: PiggyBankUpdateInput!): PiggyBank!
+    deletePiggyBank(piggyBankPublicId: UUID!): String!
 
     createClient(clientCreationInput: ClientCreationInput!): Client!
     updateClient(clientUpdateInput: ClientUpdateInput!): Client!

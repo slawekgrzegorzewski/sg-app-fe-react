@@ -1,0 +1,94 @@
+mutation CreatePiggyBank(
+    $name: String!,
+    $description: String!,
+    $monthlyTopUp: BigDecimal!,
+    $currency: Currency!,
+    $savings: Boolean!
+) {
+    createPiggyBank(piggyBankCreationInput: {
+        name: $name
+        description: $description
+        monthlyTopUp: {
+            amount: $monthlyTopUp
+            currency: $currency
+        }
+        savings: $savings
+    }) {
+        publicId
+        name
+        description
+        balance {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        monthlyTopUp {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        savings
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation UpdatePiggyBank(
+    $publicId: UUID!,
+    $name: String!,
+    $description: String!,
+    $balance: BigDecimal!,
+    $monthlyTopUp: BigDecimal!,
+    $currency: Currency!,
+    $savings: Boolean!
+) {
+    updatePiggyBank(piggyBankUpdateInput: {
+        publicId: $publicId
+        name: $name
+        description: $description
+        balance: {
+            amount: $balance
+            currency: $currency
+        }
+        monthlyTopUp: {
+            amount: $monthlyTopUp
+            currency: $currency
+        }
+        savings: $savings
+    }) {
+        publicId
+        name
+        description
+        balance {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        monthlyTopUp {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        savings
+        domain {
+            id
+            name
+        }
+    }
+}
+
+mutation DeletePiggyBank(
+    $publicId: UUID!
+) {
+    deletePiggyBank(piggyBankPublicId: $publicId)
+}
