@@ -19,7 +19,7 @@ const FORM = {
     fields:
         [
             {
-                label: 'Kwoat',
+                label: 'Kwota',
                 type: 'NUMBER',
                 key: 'balance',
                 editable: true
