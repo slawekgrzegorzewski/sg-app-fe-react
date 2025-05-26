@@ -96,6 +96,8 @@ export type FormProps<T> = {
     initialValues: T;
     validationSchema: Yup.ObjectSchema<any>;
     previewOfChange?(t: T): React.JSX.Element;
+    autoSubmit?: boolean;
+    showControlButtons?: boolean;
     onSave: (value: T) => void;
     onCancel: () => void
 }
@@ -105,10 +107,14 @@ export default function Form<T>({
                                     initialValues,
                                     validationSchema,
                                     previewOfChange,
+                                    autoSubmit,
+                                    showControlButtons,
                                     onSave,
                                     onCancel
                                 }: FormProps<T>) {
-
+    if (showControlButtons === undefined) {
+        showControlButtons = true;
+    }
     function getFieldUniqueProps(editorField: EditorField) {
         switch (editorField.type) {
             case "TEXT":
@@ -153,7 +159,12 @@ export default function Form<T>({
             key={editorField.key}
             label={editorField.label}
             value={formik.values[editorField.key]}
-            onChange={formik.handleChange}
+            onChange={(e) => {
+                formik.handleChange(e);
+                if (autoSubmit) {
+                    formik.submitForm();
+                }
+            }}
             onBlur={formik.handleBlur}
             error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
             helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
@@ -177,6 +188,9 @@ export default function Form<T>({
             onBlur={formik.handleBlur}
             onChange={(e, newValue) => {
                 formik.setFieldValue(editorField.key, newValue, true)
+                if (autoSubmit) {
+                    formik.submitForm();
+                }
             }}
             getOptionLabel={option => editorField.getOptionLabel(option)}
             isOptionEqualToValue={editorField.isOptionEqualToValue}
@@ -202,7 +216,12 @@ export default function Form<T>({
                               id={editorField.key}
                               name={editorField.key}
                               key={editorField.key}
-                              onChange={formik.handleChange}
+                              onChange={(e) => {
+                                  formik.handleChange(e);
+                                  if (autoSubmit) {
+                                      formik.submitForm();
+                                  }
+                              }}
                               onBlur={formik.handleBlur}
                               {...(editorField.additionalProps || {})}
                               control={<Checkbox
@@ -240,19 +259,21 @@ export default function Form<T>({
                     {
                         previewOfChange?.(formik.values)
                     }
-                    <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
-                        <Button variant="text"
-                                type="submit"
-                                sx={{flexGrow: 1}}
-                                onClick={e => e.stopPropagation()}
-                        >Potwierdź</Button>
-                        <Button
-                            variant="text" sx={{flexGrow: 1}}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onCancel();
-                            }}>Anuluj</Button>
-                    </Stack>
+                    {(showControlButtons) &&
+                        <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
+                            <Button variant="text"
+                                    type="submit"
+                                    sx={{flexGrow: 1}}
+                                    onClick={e => e.stopPropagation()}
+                            >Potwierdź</Button>
+                            <Button
+                                variant="text" sx={{flexGrow: 1}}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCancel();
+                                }}>Anuluj</Button>
+                        </Stack>
+                    }
                 </Stack>
             </form>
         );

@@ -1,7 +1,13 @@
-query GetSettings {
+query GetAccountantSettings {
     settings {
         accountantSettings {
             isCompany
         }
     }
+}
+
+mutation UpdateAccountantSettings(
+    $isCompany: Boolean!
+){
+    updateAccountantSettings(accountantSettingsUpdateInput: {isCompany: $isCompany})
 }

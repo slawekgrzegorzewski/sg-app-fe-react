@@ -5,10 +5,11 @@ import {useLazyQuery} from "@apollo/client";
 
 export type AutocompleteAsyncProps = {
     formik: any,
+    autoSubmit?: boolean,
     editorField: AutocompleteAsyncEditorField
 }
 
-export default function AutocompleteAsync({formik, editorField}: AutocompleteAsyncProps) {
+export default function AutocompleteAsync({formik, autoSubmit, editorField}: AutocompleteAsyncProps) {
 
     const [options, setOptions] = React.useState<{ open: boolean, filter: string, loaded: boolean, options: any[] }>({
         open: false,
@@ -77,6 +78,9 @@ export default function AutocompleteAsync({formik, editorField}: AutocompleteAsy
         onBlur={formik.handleBlur}
         onChange={(e, newValue) => {
             formik.setFieldValue(editorField.key, newValue, true)
+            if (autoSubmit) {
+                formik.submitForm();
+            }
         }}
         getOptionLabel={option => editorField.getOptionLabel!(option)}
         isOptionEqualToValue={editorField.isOptionEqualToValue!}

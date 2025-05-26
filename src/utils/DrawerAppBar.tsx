@@ -17,7 +17,7 @@ import {useApplication} from "./applications/use-application";
 import {applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
 import {useQuery} from "@apollo/client";
-import {GetSettings, GetSettingsQuery, Settings} from "../types";
+import {GetAccountantSettings, GetAccountantSettingsQuery} from "../types";
 
 interface Props {
     /**
@@ -28,7 +28,16 @@ interface Props {
     children: React.ReactNode;
 }
 
-export const SettingsContext = React.createContext<Settings>({accountantSettings: {isCompany: false}});
+type SettingsContextType = {
+    accountantSettings: { isCompany: boolean },
+    refreshSettings: () => void
+}
+
+export const SettingsContext = React.createContext<SettingsContextType>({
+    accountantSettings: {isCompany: false},
+    refreshSettings: () => {
+    }
+});
 
 export const ShowBackdropContext = React.createContext<{
     showBackdrop: boolean,
@@ -48,7 +57,7 @@ export default function DrawerAppBar(props: Props) {
         setMobileOpen((prevState) => !prevState);
     };
 
-    const {data} = useQuery<GetSettingsQuery>(GetSettings);
+    const {data, refetch} = useQuery<GetAccountantSettingsQuery>(GetAccountantSettings);
 
     const container = window !== undefined ? () => window().document.body : undefined;
 
@@ -57,7 +66,7 @@ export default function DrawerAppBar(props: Props) {
     const hideWhenXS = {display: {xs: 'none', sm: 'block'}};
     if (!data) return (<></>);
     return (
-        <SettingsContext.Provider value={data.settings}>
+        <SettingsContext.Provider value={{...data.settings, refreshSettings: refetch}}>
             <Stack direction="column" sx={{width: '100%'}}>
                 <Backdrop
                     sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}

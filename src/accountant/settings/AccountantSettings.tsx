@@ -7,11 +7,19 @@ import {AccountsManagement} from "./AccountsManagement";
 import {Tab, Tabs} from "@mui/material";
 import {BillingCategoriesManagement} from "./BillingCategoriesManagement";
 import {useQuery} from "@apollo/client";
-import {GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} from "../../types";
+import {
+    GetAccountantSettings,
+    GetAccountantSettingsQuery,
+    GetFinanceManagement,
+    GetFinanceManagementQuery,
+    PiggyBank
+} from "../../types";
 import {mapAccount, mapBillingCategory} from "../model/types";
 import {mapCurrencyInfo} from "../../application/model/types";
 import {PiggyBankDTO, PiggyBanksManagement} from "./PiggyBanksManagement";
 import Decimal from "decimal.js";
+import {AccountantSettingsManagement} from "./AccountantSettingsManagement";
+import Box from "@mui/material/Box";
 
 export function AccountantSettings() {
     const ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY = 'accountantSettingsActiveTab';
@@ -22,21 +30,31 @@ export function AccountantSettings() {
     const tabs = settings.accountantSettings.isCompany
         ? [COMPANY_MANAGEMENT_TAB_LABEL, ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL]
         : [ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL]
-    const getActiveTabIndex = () => {
-        let indexFromLocalStorage = Number(window.localStorage.getItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY) || '0');
-        if (indexFromLocalStorage >= tabs.length) {
-            indexFromLocalStorage = 0;
+    const getActiveTab = () => {
+        let tabFromLocalStorage = window.localStorage.getItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY) || '';
+        if (!tabs.includes(tabFromLocalStorage)) {
+            tabFromLocalStorage = ACCOUNTS_TAB_LABEL;
         }
-        return indexFromLocalStorage;
+        return tabFromLocalStorage;
     }
-    const setAndStoreActiveTabIndex = (index: number) => {
-        window.localStorage.setItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY, index.toString());
-        setActiveTabIndex(index);
+    const setAndStoreActiveTab = (tab: string) => {
+        window.localStorage.setItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY, tab.toString());
+        setActiveTabIndex(tab);
     }
-    const [activeTabIndex, setActiveTabIndex] = React.useState(getActiveTabIndex());
+    const [activeTabIndex, setActiveTabIndex] = React.useState(getActiveTab());
 
-    const {loading, error, data, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
-
+    const {
+        loading: settingsLoading,
+        error: settingsError,
+        data: settingsData,
+        refetch: settingsRefetch
+    } = useQuery<GetAccountantSettingsQuery>(GetAccountantSettings);
+    const {
+        loading: financeManagementLoading,
+        error: financeManagementError,
+        data: financeManagementData,
+        refetch: financeManagementRefetch
+    } = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
 
     function mapPiggyBank(piggyBank: PiggyBank) {
         return {
@@ -50,47 +68,55 @@ export function AccountantSettings() {
         } as PiggyBankDTO;
     }
 
-    if (loading) {
+    if (financeManagementLoading || settingsLoading) {
         return <>Loading...</>
-    } else if (error) {
+    } else if (financeManagementError || settingsError) {
         return <>Error...</>
-    } else if (data) {
+    } else if (financeManagementData && settingsData) {
         return (<>
             <Tabs
                 value={activeTabIndex}
-                onChange={(event: React.SyntheticEvent, newValue: number) => {
-                    setAndStoreActiveTabIndex(newValue)
+                onChange={(event: React.SyntheticEvent, newValue: string) => {
+                    setAndStoreActiveTab(newValue)
                 }}>
                 {
-                    tabs.map((tab, index) => (<Tab label={tab} key={tab}/>))
+                    tabs.map((tab, index) => (<Tab label={tab} key={tab} value={tab}/>))
                 }
             </Tabs>
             <Grid container>
                 {
-                    tabs[activeTabIndex] === COMPANY_MANAGEMENT_TAB_LABEL && <>
+                    activeTabIndex === COMPANY_MANAGEMENT_TAB_LABEL && <>
                         <Grid size={6}><ClientsManagement></ClientsManagement></Grid>
                         <Grid size={6}><SuppliersManagement></SuppliersManagement></Grid>
                     </>
                 }
                 {
-                    tabs[activeTabIndex] === ACCOUNTS_TAB_LABEL && <>
-                        <AccountsManagement accounts={[...data.financeManagement.accounts].map(mapAccount)}
-                                            supportedCurrencies={[...data.financeManagement.supportedCurrencies].map(mapCurrencyInfo)}
-                                            refetch={refetch}/>
+                    activeTabIndex === ACCOUNTS_TAB_LABEL && <>
+                        <AccountsManagement accounts={[...financeManagementData.financeManagement.accounts].map(mapAccount)}
+                                            supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies].map(mapCurrencyInfo)}
+                                            refetch={financeManagementRefetch}/>
                     </>
                 }
                 {
-                    tabs[activeTabIndex] === EXPENSES_MANAGEMENT_TAB_LABEL && <>
+                    activeTabIndex === EXPENSES_MANAGEMENT_TAB_LABEL && <>
+                        <Grid size={12}>
+                            <Box sx={{width: '120px'}}>
+                                <AccountantSettingsManagement
+                                    accountantSettings={{isCompany: settingsData.settings.accountantSettings.isCompany}}
+                                    refetch={settingsRefetch}
+                                />
+                            </Box>
+                        </Grid>
                         <Grid size={{sm: 12, md: 6}}>
                             <BillingCategoriesManagement
-                                billingCategories={[...data.financeManagement.billingCategories].map(mapBillingCategory)}
-                                refetch={refetch}/>
+                                billingCategories={[...financeManagementData.financeManagement.billingCategories].map(mapBillingCategory)}
+                                refetch={financeManagementRefetch}/>
                         </Grid>
                         <Grid size={{sm: 12, md: 6}}>
                             <PiggyBanksManagement
-                                piggyBanks={[...data.financeManagement.piggyBanks].map(mapPiggyBank)}
-                                supportedCurrencies={[...data.financeManagement.supportedCurrencies].map(currency => currency.code)}
-                                refetch={refetch}/>
+                                piggyBanks={[...financeManagementData.financeManagement.piggyBanks].map(mapPiggyBank)}
+                                supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies].map(currency => currency.code)}
+                                refetch={financeManagementRefetch}/>
                         </Grid>
                     </>
                 }

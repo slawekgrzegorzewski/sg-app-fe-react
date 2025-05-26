@@ -241,6 +241,7 @@ type Mutation {
     createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
     deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
 
+    updateAccountantSettings(accountantSettingsUpdateInput: AccountantSettingsUpdateInput!): String!
     createAccount(accountCreationInput: AccountCreationInput!): Account!
     updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
     deleteAccount(accountPublicId: UUID!): String!
@@ -969,5 +970,9 @@ type Settings {
 }
 
 type AccountantSettings {
+    isCompany:Boolean!
+}
+
+input AccountantSettingsUpdateInput {
     isCompany:Boolean!
 }
