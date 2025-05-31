@@ -18,8 +18,7 @@ import Decimal from "decimal.js";
 import Box from "@mui/material/Box";
 import {formatBalance} from "../../utils/functions";
 import {Card, Theme, useTheme} from "@mui/material";
-import {GQLAccount} from "../model/types";
-import {GQLCurrencyInfo} from "../../application/model/types";
+import {GQLAccount, GQLCurrencyInfo} from "../model/types";
 import {SxProps} from "@mui/system";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
 

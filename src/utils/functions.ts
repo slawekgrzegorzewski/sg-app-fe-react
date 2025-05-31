@@ -1,5 +1,5 @@
 import Decimal from "decimal.js";
-import {GQLMonetaryAmount} from "../application/model/types";
+import {GQLMonetaryAmount} from "../accountant/model/types";
 
 export const compareDates = (d1: Date, d2: Date) => {
     return d1.getDate() - d2.getDate();

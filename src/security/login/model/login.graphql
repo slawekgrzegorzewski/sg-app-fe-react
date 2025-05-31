@@ -11,12 +11,13 @@ mutation PerformLogin(
     }){
         jwt,
         user {
+            login
             name,
             email,
             roles,
-            defaultDomainId,
+            defaultDomainPublicId,
             domains {
-                id,
+                publicId,
                 name
             }
         }

@@ -5,7 +5,7 @@ import {ApplicationId} from "./applications-access";
 export function useApplication() {
     const navigate = useNavigate();
     const {user} = useCurrentUser();
-    const {applicationId, domainId} = useParams();
+    const {applicationId, domainPublicId} = useParams();
 
     return {
         currentApplicationId: (applicationId as ApplicationId),
@@ -14,7 +14,7 @@ export function useApplication() {
                 return;
             if (!user!.applications.find(app => app.id === newApplicationId))
                 throw Error("Application not assigned to the user");
-            navigate('/' + newApplicationId + '/' + domainId!);
+            navigate('/' + newApplicationId + '/' + domainPublicId!);
         }
     };
 

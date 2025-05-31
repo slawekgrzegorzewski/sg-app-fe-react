@@ -51,18 +51,18 @@ query IntellectualPropertiesRecords($yearMonthFilter: YearMonth, $onlyReportsWit
                         id
                         name
                         domain {
-                            id
+                            publicId
                             name
                         }
                     }
                     domain {
-                        id
+                        publicId
                         name
                     }
                 }
             }
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -78,7 +78,7 @@ query AllTimeRecordCategories {
         id
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -109,12 +109,12 @@ query TimeRecords($yearMonthFilter: YearMonth) {
                     id
                     name
                     domain {
-                        id
+                        publicId
                         name
                     }
                 }
                 domain {
-                    id
+                    publicId
                     name
                 }
             }
@@ -128,12 +128,12 @@ query TimeRecords($yearMonthFilter: YearMonth) {
                 id
                 name
                 domain {
-                    id
+                    publicId
                     name
                 }
             }
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -166,18 +166,18 @@ mutation CreateIntellectualPropertyReport (
                     id
                     name
                     domain {
-                        id
+                        publicId
                         name
                     }
                 }
                 domain {
-                    id
+                    publicId
                     name
                 }
             }
         }
         domain {
-            id
+            publicId
             name
         }
     }
@@ -208,18 +208,18 @@ mutation UpdateIntellectualPropertyReport (
                     id
                     name
                     domain {
-                        id
+                        publicId
                         name
                     }
                 }
                 domain {
-                    id
+                    publicId
                     name
                 }
             }
         }
         domain {
-            id
+            publicId
             name
         }
     }

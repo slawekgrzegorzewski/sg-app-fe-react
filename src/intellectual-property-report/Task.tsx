@@ -48,7 +48,7 @@ export function Task(properties: {
     sx?: SxProps<Theme>
 }) {
     const {task, refetchDataCallback, dialogOptions, sx} = properties;
-    const {domainId} = useParams();
+    const {domainPublicId} = useParams();
     const {user} = useCurrentUser();
     const [updateTaskMutation, updateTaskMutationResult] = useMutation<UpdateTaskMutation>(UpdateTask);
     const [deleteTaskMutation, deleteTaskMutationResult] = useMutation<DeleteTaskMutation>(DeleteTask);
@@ -64,7 +64,7 @@ export function Task(properties: {
 
 
     const downloadAttachment = (attachmentName: string) => {
-        fetch(process.env.REACT_APP_BACKEND_URL + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + domainId! + '&authorization=' + user!.jwtToken, {
+        fetch(process.env.REACT_APP_BACKEND_URL + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + domainPublicId! + '&authorization=' + user!.jwtToken, {
             method: 'GET'
         })
             .then((response) => response.blob())

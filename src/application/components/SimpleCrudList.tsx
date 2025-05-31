@@ -23,7 +23,7 @@ export interface SimpleCrudListProps<T> {
 
     onUpdate(t: T): Promise<void>,
 
-    onDelete(t: T): Promise<void>,
+    onDelete?(t: T): Promise<void>,
 
     onReorder?(event: ReorderEvent): Promise<void>,
 
@@ -36,6 +36,7 @@ export interface SimpleCrudListProps<T> {
 
     dialogOptions?: any;
     enableDndReorder: boolean;
+
     selectEntityListener?(t: T): void,
 }
 
@@ -69,13 +70,14 @@ export function SimpleCrudList<T>({
 
     const editDialogTitleElement = <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
         <Box>{editTitle}</Box>
-        <IconButton color="primary" size={'small'}
-                    onClick={() => {
-                        setShowEditDialog(false);
-                        setShowDeleteConfirmationDialog(true);
-                    }}>
+        {onDelete && <IconButton color="primary" size={'small'}
+                                 onClick={() => {
+                                     setShowEditDialog(false);
+                                     setShowDeleteConfirmationDialog(true);
+                                 }}>
             <Delete/>
         </IconButton>
+        }
     </Stack>;
 
     const TitleBox = styled(Box)(({theme}) => ({
@@ -130,29 +132,29 @@ export function SimpleCrudList<T>({
         </Stack>
 
         {
-            selectedEntity && <>
-                <FormDialog dialogTitle={editDialogTitleElement}
-                            open={showEditDialog}
-                            onSave={value => onUpdate(value)}
-                            onCancel={() => {
-                                setShowEditDialog(false);
-                                return Promise.resolve();
-                            }}
-                            formProps={formSupplier(selectedEntity)}
-                            dialogOptions={dialogOptions}/>
-                <ConfirmationDialog companionObject={selectedEntity}
-                                    title={'Na pewno usunąć?'}
-                                    message={'Na pewno usunąć?'}
-                                    open={showDeleteConfirmationDialog}
-                                    onConfirm={(entity: T) => {
-                                        setShowDeleteConfirmationDialog(false);
-                                        return onDelete(entity);
-                                    }}
-                                    onCancel={() => {
-                                        setShowDeleteConfirmationDialog(false);
-                                        return Promise.resolve();
-                                    }}/>
-            </>
+            selectedEntity && <FormDialog dialogTitle={editDialogTitleElement}
+                                          open={showEditDialog}
+                                          onSave={value => onUpdate(value)}
+                                          onCancel={() => {
+                                              setShowEditDialog(false);
+                                              return Promise.resolve();
+                                          }}
+                                          formProps={formSupplier(selectedEntity)}
+                                          dialogOptions={dialogOptions}/>
+        }
+        {
+            selectedEntity && onDelete && <ConfirmationDialog companionObject={selectedEntity}
+                                                              title={'Na pewno usunąć?'}
+                                                              message={'Na pewno usunąć?'}
+                                                              open={showDeleteConfirmationDialog}
+                                                              onConfirm={(entity: T) => {
+                                                                  setShowDeleteConfirmationDialog(false);
+                                                                  return onDelete(entity);
+                                                              }}
+                                                              onCancel={() => {
+                                                                  setShowDeleteConfirmationDialog(false);
+                                                                  return Promise.resolve();
+                                                              }}/>
         }
     </>;
 }

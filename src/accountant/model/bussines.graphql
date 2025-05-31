@@ -3,7 +3,7 @@ query GetAllClients {
         publicId
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -14,7 +14,7 @@ query GetAllSuppliers {
         publicId
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -28,7 +28,7 @@ query MonthFinancialDocuments($year: Int!, $month: Int!){
             publicId
             name
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -42,7 +42,7 @@ query MonthFinancialDocuments($year: Int!, $month: Int!){
         createdAt
         description
         domain {
-            id
+            publicId
             name
         }
     }
@@ -53,7 +53,7 @@ mutation CreateClient($name: String!) {
         publicId
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -64,7 +64,7 @@ mutation UpdateClient($publicId: UUID!, $name: String!) {
         publicId
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -79,7 +79,7 @@ mutation CreateSupplier($name: String!) {
         publicId
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -90,7 +90,7 @@ mutation UpdateSupplier($publicId: UUID!, $name: String!) {
         publicId
         name
         domain {
-            id
+            publicId
             name
         }
     }
@@ -126,7 +126,7 @@ mutation createBill($createdAt: LocalDate!,
             publicId
             name
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -140,7 +140,7 @@ mutation createBill($createdAt: LocalDate!,
         createdAt
         description
         domain {
-            id
+            publicId
             name
         }
     }
@@ -174,7 +174,7 @@ mutation UpdateBill($billPublicId: UUID!,
             publicId
             name
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -188,7 +188,7 @@ mutation UpdateBill($billPublicId: UUID!,
         createdAt
         description
         domain {
-            id
+            publicId
             name
         }
     }
@@ -227,7 +227,7 @@ mutation CreateInvoice($createdAt: LocalDate!,
             publicId
             name
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -249,7 +249,7 @@ mutation CreateInvoice($createdAt: LocalDate!,
         dueTo
         description
         domain {
-            id
+            publicId
             name
         }
     }
@@ -290,7 +290,7 @@ mutation UpdateInvoice($invoicePublicId: UUID!,
             publicId
             name
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -312,7 +312,7 @@ mutation UpdateInvoice($invoicePublicId: UUID!,
         dueTo
         description
         domain {
-            id
+            publicId
             name
         }
     }

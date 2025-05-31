@@ -9,23 +9,22 @@ import type {ServerError} from "@apollo/client/link/utils";
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
     const {user, deleteCurrentUser} = useCurrentUser();
-    const {applicationId, domainId} = useParams();
+    const {applicationId, domainPublicId} = useParams();
 
     if (!user) {
         return <Navigate to={"/login"}/>;
     }
 
-    if (!domainId) {
-        return <Navigate to={`/${applicationId}/${user!.user.defaultDomainId}`}></Navigate>
+    if (!domainPublicId) {
+        return <Navigate to={`/${applicationId}/${user!.user.defaultDomainPublicId}`}></Navigate>
     }
-
 
     const httpLink = createUploadLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
     const authMiddleware = new ApolloLink((operation, forward) => {
         operation.setContext(({headers = {}}) => ({
             headers: {
                 ...headers,
-                domainId: domainId,
+                domainId: domainPublicId,
                 authorization: 'Bearer ' + (user?.jwtToken || ''),
                 locale: navigator.language,
                 'Apollo-Require-Preflight': 'true'

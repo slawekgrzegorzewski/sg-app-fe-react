@@ -6,20 +6,20 @@ import {useCurrentUser} from "./users/use-current-user";
 export function useApplicationAndDomain() {
     const navigate = useNavigate();
     const {user} = useCurrentUser();
-    const {applicationId, domainId} = useParams();
+    const {applicationId, domainPublicId} = useParams();
 
     return {
         currentApplicationId: (applicationId as ApplicationId),
-        currentDomainId: Number(domainId),
-        changeCurrentSettings: (newApplicationId: ApplicationId, newDomainId: number) => {
-            if (applicationId! === newApplicationId && Number(domainId!) === newDomainId) {
+        currentDomainPublicId: domainPublicId,
+        changeCurrentSettings: (newApplicationId: ApplicationId, currentDomainPublicId: string) => {
+            if (applicationId! === newApplicationId && domainPublicId! === currentDomainPublicId) {
                 return;
             }
             if (!user!.applications.find((app: Application) => app.id === newApplicationId))
                 throw Error("Application not assigned to the user");
-            if (!user!.user.domains.find((domain: DomainSimple) => domain.id === newDomainId))
+            if (!user!.user.domains.find((domain: DomainSimple) => domain.publicId === currentDomainPublicId))
                 throw Error("Domain not assigned to the user");
-            navigate('/' + newApplicationId + '/' + newDomainId!);
+            navigate('/' + newApplicationId + '/' + currentDomainPublicId!);
         }
     };
 

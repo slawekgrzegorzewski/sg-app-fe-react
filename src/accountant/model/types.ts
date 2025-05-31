@@ -1,12 +1,6 @@
-import {
-    GQLCurrencyInfo,
-    GQLDomainSimple,
-    GQLMonetaryAmount,
-    mapCurrencyInfo,
-    mapDomainSimple,
-    mapMonetaryAmount
-} from "../../application/model/types";
-import {Account, BankAccount, BillingCategory} from "../../types";
+import {GQLDomainSimple, mapDomainSimple} from "../../application/model/types";
+import {Account, BankAccount, BillingCategory, CurrencyInfo, MonetaryAmount} from "../../types";
+import Decimal from "decimal.js";
 
 export type GQLAccount = {
     publicId: string;
@@ -72,4 +66,28 @@ export const mapBillingCategory = (billingCategory: BillingCategory) => {
         description: billingCategory.description,
         domain: billingCategory.domain ? mapDomainSimple(billingCategory.domain) : null
     } as GQLBillingCategory;
+}
+
+export type GQLCurrencyInfo = {
+    code: string;
+    description: string;
+}
+
+export const mapCurrencyInfo = (currencyInfo: CurrencyInfo) => {
+    return {
+        code: currencyInfo.code,
+        description: currencyInfo.description,
+    } as GQLCurrencyInfo;
+}
+
+export type GQLMonetaryAmount = {
+    amount: Decimal;
+    currency: GQLCurrencyInfo;
+}
+
+export const mapMonetaryAmount = (monetaryAmount: MonetaryAmount) => {
+    return {
+        amount: new Decimal(monetaryAmount.amount),
+        currency: mapCurrencyInfo(monetaryAmount.currency),
+    } as GQLMonetaryAmount;
 }

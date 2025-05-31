@@ -1,6 +1,6 @@
 export type GraphqlDomain = {
     __typename?: 'DomainSimple',
-    id: number,
+    publicId: string,
     name: string
 }
 

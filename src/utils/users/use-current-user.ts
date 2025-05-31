@@ -14,7 +14,15 @@ export function useCurrentUser() {
     const navigate = useNavigate();
     const getCurrentUser = (): CurrentUser | null => {
         const currentUserInLS = localStorage.getItem("currentUser");
-        return currentUserInLS ? JSON.parse(currentUserInLS!) : null;
+        const currentUser = currentUserInLS ? JSON.parse(currentUserInLS!) : null;
+        if(currentUser) {
+            if(currentUser.user.hasOwnProperty("defaultDomainId")) {
+                localStorage.removeItem("currentUser");
+                navigate('/login');
+                return null;
+            }
+        }
+        return currentUser;
     };
 
     const [currentUser, setCurrentUser] = useState(getCurrentUser());
@@ -22,7 +30,7 @@ export function useCurrentUser() {
     const storeCurrentUser = (currentUser: CurrentUser) => {
         localStorage.setItem("currentUser", JSON.stringify(currentUser));
         setCurrentUser(currentUser);
-        navigate('/' + currentUser!.applications[0].id + '/' + currentUser!.user.defaultDomainId);
+        navigate('/' + currentUser!.applications[0].id + '/' + currentUser!.user.defaultDomainPublicId);
     }
 
     const deleteCurrentUser = () => {

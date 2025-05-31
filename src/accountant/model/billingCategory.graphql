@@ -10,7 +10,7 @@ mutation CreateBillingCategory(
         name
         description
         domain {
-            id
+            publicId
             name
         }
     }
@@ -30,7 +30,7 @@ mutation UpdateBillingCategory(
         name
         description
         domain {
-            id
+            publicId
             name
         }
     }

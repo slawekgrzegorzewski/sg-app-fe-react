@@ -1,5 +1,4 @@
 import React, {useContext} from "react";
-import {SettingsContext} from "../../utils/DrawerAppBar";
 import {SuppliersManagement} from "./SuppliersManagement";
 import Grid from "@mui/material/Grid2";
 import {ClientsManagement} from "./ClientsManagement";
@@ -14,22 +13,24 @@ import {
     GetFinanceManagementQuery,
     PiggyBank
 } from "../../types";
-import {mapAccount, mapBillingCategory} from "../model/types";
-import {mapCurrencyInfo} from "../../application/model/types";
+import {mapAccount, mapBillingCategory, mapCurrencyInfo} from "../model/types";
 import {PiggyBankDTO, PiggyBanksManagement} from "./PiggyBanksManagement";
 import Decimal from "decimal.js";
 import {AccountantSettingsManagement} from "./AccountantSettingsManagement";
 import Box from "@mui/material/Box";
+import {DomainsManagement} from "./DomainsManagement";
+import {AccountantSettingsContext} from "../../application/components/dispatchers/AccountantDispatcher";
 
 export function AccountantSettings() {
     const ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY = 'accountantSettingsActiveTab';
     const ACCOUNTS_TAB_LABEL = 'konta';
     const EXPENSES_MANAGEMENT_TAB_LABEL = 'wydatki';
     const COMPANY_MANAGEMENT_TAB_LABEL = 'firma';
-    const settings = useContext(SettingsContext);
-    const tabs = settings.accountantSettings.isCompany
-        ? [COMPANY_MANAGEMENT_TAB_LABEL, ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL]
-        : [ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL]
+    const DOMAIN_MANAGEMENT_TAB_LABEL = 'domeny';
+    const accountantSettingsContext = useContext(AccountantSettingsContext);
+    const tabs = accountantSettingsContext.accountantSettings.isCompany
+        ? [COMPANY_MANAGEMENT_TAB_LABEL, ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL, DOMAIN_MANAGEMENT_TAB_LABEL]
+        : [ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL, DOMAIN_MANAGEMENT_TAB_LABEL]
     const getActiveTab = () => {
         let tabFromLocalStorage = window.localStorage.getItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY) || '';
         if (!tabs.includes(tabFromLocalStorage)) {
@@ -73,6 +74,8 @@ export function AccountantSettings() {
     } else if (financeManagementError || settingsError) {
         return <>Error...</>
     } else if (financeManagementData && settingsData) {
+        const columnSizing = {xs: 12, sm: 8, md: 6, lg: 6, xl: 4};
+        const columnSizing2 = {xs: 12, sm: 8, md: 6, lg: 5, xl: 4};
         return (<>
             <Tabs
                 value={activeTabIndex}
@@ -83,42 +86,47 @@ export function AccountantSettings() {
                     tabs.map((tab, index) => (<Tab label={tab} key={tab} value={tab}/>))
                 }
             </Tabs>
-            <Grid container>
+            <Grid container dir={'row'} justifyContent={'space-evenly'}>
                 {
                     activeTabIndex === COMPANY_MANAGEMENT_TAB_LABEL && <>
-                        <Grid size={6}><ClientsManagement></ClientsManagement></Grid>
-                        <Grid size={6}><SuppliersManagement></SuppliersManagement></Grid>
+                        <Grid size={columnSizing}><ClientsManagement></ClientsManagement></Grid>
+                        <Grid size={columnSizing}><SuppliersManagement></SuppliersManagement></Grid>
                     </>
                 }
                 {
-                    activeTabIndex === ACCOUNTS_TAB_LABEL && <>
+                    activeTabIndex === ACCOUNTS_TAB_LABEL && <Grid size={columnSizing}>
                         <AccountsManagement accounts={[...financeManagementData.financeManagement.accounts].map(mapAccount)}
                                             supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies].map(mapCurrencyInfo)}
                                             refetch={financeManagementRefetch}/>
-                    </>
+                    </Grid>
                 }
                 {
                     activeTabIndex === EXPENSES_MANAGEMENT_TAB_LABEL && <>
                         <Grid size={12}>
                             <Box sx={{width: '120px'}}>
                                 <AccountantSettingsManagement
-                                    accountantSettings={{isCompany: settingsData.settings.accountantSettings.isCompany}}
+                                    accountantSettings={{isCompany: accountantSettingsContext.accountantSettings.isCompany}}
                                     refetch={settingsRefetch}
                                 />
                             </Box>
                         </Grid>
-                        <Grid size={{sm: 12, md: 6}}>
+                        <Grid size={columnSizing2}>
                             <BillingCategoriesManagement
                                 billingCategories={[...financeManagementData.financeManagement.billingCategories].map(mapBillingCategory)}
                                 refetch={financeManagementRefetch}/>
                         </Grid>
-                        <Grid size={{sm: 12, md: 6}}>
+                        <Grid size={columnSizing2}>
                             <PiggyBanksManagement
                                 piggyBanks={[...financeManagementData.financeManagement.piggyBanks].map(mapPiggyBank)}
                                 supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies].map(currency => currency.code)}
                                 refetch={financeManagementRefetch}/>
                         </Grid>
                     </>
+                }
+                {
+                    activeTabIndex === DOMAIN_MANAGEMENT_TAB_LABEL && <Grid size={columnSizing}>
+                        <DomainsManagement />
+                    </Grid>
                 }
             </Grid>
         </>);

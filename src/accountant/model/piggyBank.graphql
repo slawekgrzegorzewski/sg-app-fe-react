@@ -33,7 +33,7 @@ mutation CreatePiggyBank(
         }
         savings
         domain {
-            id
+            publicId
             name
         }
     }
@@ -81,7 +81,7 @@ mutation UpdatePiggyBank(
         }
         savings
         domain {
-            id
+            publicId
             name
         }
     }

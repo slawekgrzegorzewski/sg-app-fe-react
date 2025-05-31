@@ -36,12 +36,12 @@ query GetFinanceManagement {
                 bic
                 externalId
                 domain {
-                    id
+                    publicId
                     name
                 }
             }
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -50,7 +50,7 @@ query GetFinanceManagement {
             name
             description
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -74,7 +74,7 @@ query GetFinanceManagement {
             }
             savings
             domain {
-                id
+                publicId
                 name
             }
         }
@@ -130,12 +130,12 @@ mutation CreateAccount(
             bic
             externalId
             domain {
-                id
+                publicId
                 name
             }
         }
         domain {
-            id
+            publicId
             name
         }
     }
@@ -192,12 +192,12 @@ mutation UpdateAccount(
             bic
             externalId
             domain {
-                id
+                publicId
                 name
             }
         }
         domain {
-            id
+            publicId
             name
         }
     }

@@ -101,7 +101,7 @@ export const emptyTimeRecordEditorProvider: () => TimeRecordEditorObject = () =>
 
 export type GQLIntellectualProperty = {
     __typename?: "IntellectualProperty";
-    domain: { __typename?: "DomainSimple"; id: number; name: string };
+    domain: { __typename?: "DomainSimple"; publicId: number; name: string };
     description: string;
     id: number;
     tasks?: Array<GQLTask> | null

@@ -1,32 +1,35 @@
 import {Stack, Theme} from "@mui/material";
 import {useCurrentUser} from "./users/use-current-user";
 import * as React from "react";
-import {useState} from "react";
+import {useContext, useState} from "react";
 import {SxProps} from "@mui/system";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import {ApplicationId} from "./applications/applications-access";
 import MultiPickDialog from "./dialogs/MultiPickDialog";
 import {useApplicationAndDomain} from "./use-application-and-domain";
+import {DomainsContext} from "./DrawerAppBar";
 
 export default function ApplicationAndDomainPicker(properties: {
     sx?: SxProps<Theme>;
     fullScreen?: boolean;
     onClose?: () => void;
 }) {
-    const {currentApplicationId, currentDomainId, changeCurrentSettings} = useApplicationAndDomain();
+    const {currentApplicationId, currentDomainPublicId, changeCurrentSettings} = useApplicationAndDomain();
     const {user} = useCurrentUser();
     const [dialogOpen, setDialogOpen] = useState(false);
 
+    const {domains} = useContext(DomainsContext);
+
     const application = user!.applications.find(application => application.id === currentApplicationId!)!;
-    const domain = user!.user.domains.find(domain => domain.id === currentDomainId)!;
+    const domain = domains
+        .filter(domain => domain.name !== '')
+        .find(domain => domain.publicId === currentDomainPublicId)!;
 
     function changeSettings(selected: string[]) {
         const applicationId = selected[0] as ApplicationId;
-        const domainId = Number(selected[1]);
-        console.log(applicationId);
-        console.log(domainId);
-        changeCurrentSettings(applicationId, domainId);
+        const domainPublicId = selected[1];
+        changeCurrentSettings(applicationId, domainPublicId);
         setDialogOpen(false);
         properties.onClose?.();
     }
@@ -42,7 +45,7 @@ export default function ApplicationAndDomainPicker(properties: {
         }} color="inherit">
             <Stack direction="column">
                 <Typography sx={{textAlign: 'left'}}>Aplikacja: {application.name}</Typography>
-                <Typography sx={{textAlign: 'left'}}>Domena: {domain.name}</Typography>
+                {domain && <Typography sx={{textAlign: 'left'}}>Domena: {domain.name}</Typography>}
             </Stack>
         </Button>
         <MultiPickDialog
@@ -53,14 +56,15 @@ export default function ApplicationAndDomainPicker(properties: {
                         value: application.name
                     };
                 }),
-                user!.user.domains.map((application) => {
-                    return {
-                        id: application.id.toString(),
-                        value: application.name
-                    }
-                })
+                domains
+                    .map((domain) => {
+                        return {
+                            id: domain.publicId,
+                            value: domain.name
+                        }
+                    })
             ]}
-            selectedValue={[currentApplicationId, currentDomainId.toString()]}
+            selectedValue={[currentApplicationId, currentDomainPublicId!]}
             open={dialogOpen}
             onClose={changeSettings}
             onCancel={cancel}

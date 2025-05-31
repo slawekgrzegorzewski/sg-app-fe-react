@@ -1,0 +1,46 @@
+mutation CreateDomain($name: String!) {
+    createDomain(domainCreationInput: {name: $name}) {
+        publicId
+        name
+    }
+}
+
+mutation UpdateDomain($domainPublicId: UUID!, $name: String!) {
+    updateDomain(domainUpdateInput: {publicId: $domainPublicId, name: $name}) {
+        publicId
+        name
+    }
+}
+
+mutation InviteUserToDomain($domainPublicId: UUID!, $invitedUserLogin: String!) {
+    inviteUserToDomain(domainInvitationInput: {publicId: $domainPublicId, invitedUserLogin: $invitedUserLogin})
+}
+
+mutation AcceptInvitationToDomain($domainPublicId: UUID!) {
+    acceptInvitationToDomain(domainInvitationResponseInput: {publicId: $domainPublicId})
+}
+
+mutation RejectInvitationToDomain($domainPublicId: UUID!) {
+    rejectInvitationToDomain(domainInvitationResponseInput: {publicId: $domainPublicId})
+}
+
+mutation SetUserDomainAccessLevel($domainPublicId: UUID!, $userLogin: String!, $domainAccessLevel: SetDomainAccessLevel!) {
+    setUserDomainAccessLevel(domainSetAccessLevelInput: {publicId: $domainPublicId, userLogin: $userLogin, domainAccessLevel: $domainAccessLevel})
+}
+
+query DomainsData {
+    domainInvitations {
+        publicId
+        name
+    }
+    settings {
+        domains {
+            publicId
+            name
+            users {
+                login
+                domainAccessLevel
+            }
+        }
+    }
+}

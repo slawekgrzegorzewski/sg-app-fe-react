@@ -13,7 +13,7 @@ import '@fontsource/roboto/500.css';
 import '@fontsource/roboto/700.css';
 import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
-import {Dispatcher} from "./application/components/Dispatcher";
+import {Dispatcher} from "./application/components/dispatchers/Dispatcher";
 import CssBaseline from "@mui/material/CssBaseline";
 import {createTheme, ThemeProvider} from "@mui/material";
 import {LocalizationProvider} from "@mui/x-date-pickers";
@@ -60,7 +60,7 @@ const router = createBrowserRouter([
         </ApolloProvider>
     },
     {
-        path: "/:applicationId/:domainId?/:page?/:param1?",
+        path: "/:applicationId/:domainPublicId?/:page?/:param1?",
         element:
             <QueryClientProvider client={queryClient}>
                 <ThemeProvider theme={theme}>

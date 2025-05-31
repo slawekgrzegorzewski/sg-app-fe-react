@@ -10,11 +10,6 @@ function isOfApplicationId(keyInput: string): keyInput is ApplicationId {
 export const ApplicationPageIds: string[] = ['IPR', 'TIME_RECORD'] as string[];
 export type ApplicationPageId = typeof ApplicationPageIds[number];
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function isOfApplicationPageId(keyInput: string): keyInput is ApplicationPageId {
-    return ApplicationPageIds.includes(keyInput);
-}
-
 export type Application = {
     id: ApplicationId,
     name: string,
@@ -27,7 +22,16 @@ export type ApplicationPage = {
     label: string
 }
 
+const defaultApplication = {
+    id: "HOME",
+    name: "Strona domowa",
+    pages: new Map<ApplicationPageId, ApplicationPage>([
+        ['HOME', {id: 'HOME', links: ['', '/', 'home'], label: 'Strona domowa'} as ApplicationPage]
+    ])
+} as Application;
+
 export const applications = new Map<ApplicationId, Application>([
+    ["HOME", defaultApplication],
     ["ACCOUNTANT", {
         id: "ACCOUNTANT",
         name: "Księgowość",
@@ -51,12 +55,15 @@ export const applications = new Map<ApplicationId, Application>([
         ])
     } as Application],
 ]);
+
 export default function getUserApplications(user: User): Application[] {
-    return [...(new Set<string>(user.roles.map(role => role.split("_")[0])))]
+    const userApplicationIds = [...(new Set<string>(user.roles.map(role => role.split("_")[0])))]
         .filter(applicationId => isOfApplicationId(applicationId))
         .map(applicationId => applicationId as ApplicationId)
-        .filter(a => applications.get(a) !== undefined)
-        .map(applicationKey => getOrThrow(applications, applicationKey, "Application not known: " + applicationKey));
+        .filter(a => applications.get(a) !== undefined);
+    return userApplicationIds.length === 0
+        ? [defaultApplication]
+        : userApplicationIds.map(applicationKey => getOrThrow(applications, applicationKey, "Application not known: " + applicationKey));
 }
 
 function getOrThrow<K, V>(fromMap: Map<K, V>, key: K, errorMessage: string): V {

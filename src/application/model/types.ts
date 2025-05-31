@@ -1,35 +1,32 @@
-import Decimal from "decimal.js";
-import {CurrencyInfo, DomainSimple, MonetaryAmount} from "../../types";
+import {Domain, DomainAccessLevel, DomainSimple, DomainUser} from "../../types";
 
-export type GQLDomainSimple = { id: number; name: string }
+export type GQLDomainSimple = { publicId: string; name: string }
+
+export type GQLDomain = { publicId: string; name: string, users: GQLDomainUser[] }
+
+export type GQLDomainUser = {
+    login: string;
+    domainAccessLevel: DomainAccessLevel;
+}
+
+export const mapDomainUser = (user: DomainUser) => {
+    return {
+        login: user.login,
+        domainAccessLevel: user.domainAccessLevel,
+    } as GQLDomainUser;
+}
+
+export const mapDomain = (domain: Domain) => {
+    return {
+        publicId: domain.publicId,
+        name: domain.name,
+        users: domain.users.map(mapDomainUser),
+    } as GQLDomain;
+}
 
 export const mapDomainSimple = (domainSimple: DomainSimple) => {
     return {
-        id: domainSimple.id,
+        publicId: domainSimple.publicId,
         name: domainSimple.name,
     } as GQLDomainSimple;
-}
-
-export type GQLCurrencyInfo = {
-    code: string;
-    description: string;
-}
-
-export const mapCurrencyInfo = (currencyInfo: CurrencyInfo) => {
-    return {
-        code: currencyInfo.code,
-        description: currencyInfo.description,
-    } as GQLCurrencyInfo;
-}
-
-export type GQLMonetaryAmount = {
-    amount: Decimal;
-    currency: GQLCurrencyInfo;
-}
-
-export const mapMonetaryAmount = (monetaryAmount: MonetaryAmount) => {
-    return {
-        amount: new Decimal(monetaryAmount.amount),
-        currency: mapCurrencyInfo(monetaryAmount.currency),
-    } as GQLMonetaryAmount;
 }

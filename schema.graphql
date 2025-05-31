@@ -1,125 +1,97 @@
-type CurrencyInfo {
-    code: Currency!
-    description: String!
+scalar BigDecimal
+scalar Currency
+scalar LocalDate
+scalar Upload
+scalar UUID
+scalar YearMonth
+scalar Year
+
+type Query {
+    settings: Settings!
+    financeManagement: FinanceManagement!
+    domainInvitations: [DomainSimple!]!
+
+    intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
+    intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput!): IntellectualPropertiesRecordsResponse
+    allTimeRecordCategories: [TimeRecordCategory!]!
+    tasks(input: TasksQueryInput!): TasksResponse!
+    timeRecords(input: TimeRecordsQueryInput!): TimeRecordsResponse!
+
+    loans: Loans!
+    simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
+    simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
+    singleLoan(input: LoanQuery): Loan!
+
+    monthLedger(ledgerQuery: LedgerQuery): [RevenueAndExpenseEntry!]!
+    allClients: [Client!]!
+    allSuppliers: [Supplier!]!
+    monthFinancialDocuments(yearMonthInput: YearMonthInput!): [FinancialDocument!]!
 }
 
-type FinanceManagement {
-    supportedCurrencies: [CurrencyInfo!]!
-    accounts:[Account!]!
-    billingCategories:[BillingCategory!]!
-    piggyBanks:[PiggyBank!]!
-}
+type Mutation{
+    login(loginParameters:LoginParameters!): AuthenticationInfo!
+    register(registrationParameters:RegistrationParameters!): MFAData!
+    setupMFA(mfaParameters:MFAParameters!): Boolean!
 
-type Account {
-    publicId:UUID!,
-    order: Int!,
-    name:String!,
-    currentBalance:MonetaryAmount!,
-    creditLimit:MonetaryAmount!,
-    balanceIndex:Int,
-    visible:Boolean!,
-    bankAccount:BankAccount,
-    domain:DomainSimple,
-}
+    createDomain(domainCreationInput: DomainCreationInput!): DomainSimple!
+    updateDomain(domainUpdateInput: DomainUpdateInput!): DomainSimple!
+    inviteUserToDomain(domainInvitationInput: DomainInvitationInput!): String!
+    acceptInvitationToDomain(domainInvitationResponseInput: DomainInvitationResponseInput!): String!
+    rejectInvitationToDomain(domainInvitationResponseInput: DomainInvitationResponseInput!): String!
+    setUserDomainAccessLevel(domainSetAccessLevelInput: DomainSetAccessLevelInput!): String!
 
-input AccountCreationInput {
-    name:String!,
-    creditLimit:MonetaryAmountInput!,
-    balanceIndex:Int,
-    visible:Boolean!,
-    bankAccountId:Int
-}
+    updateAccountantSettings(accountantSettingsUpdateInput: AccountantSettingsUpdateInput!): String!
+    createAccount(accountCreationInput: AccountCreationInput!): Account!
+    updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
+    deleteAccount(accountPublicId: UUID!): String!
+    reorderAccount(accountReorderInput: AccountReorderInput!): String!
+    createBillingCategory(billingCategoryCreationInput: BillingCategoryCreationInput!): BillingCategory!
+    updateBillingCategory(billingCategoryUpdateInput: BillingCategoryUpdateInput!): BillingCategory!
+    deleteBillingCategory(billingCategoryPublicId: UUID!): String!
+    createPiggyBank(piggyBankCreationInput: PiggyBankCreationInput!): PiggyBank!
+    updatePiggyBank(piggyBankUpdateInput: PiggyBankUpdateInput!): PiggyBank!
+    deletePiggyBank(piggyBankPublicId: UUID!): String!
 
-input AccountUpdateInput {
-    publicId:UUID!,
-    name:String!,
-    creditLimit:MonetaryAmountInput!,
-    balanceIndex:Int,
-    visible:Boolean!,
-    bankAccountId:Int
-}
+    addIPR(input: IntellectualPropertyData): IntellectualProperty
+    updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
+    deleteIPR(intellectualPropertyId: Int!): String!
+    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
+    updateTask(taskId: Int!, taskData: TaskData!): String!
+    deleteTask(taskId: Int!): String!
+    uploadTaskAttachment(input: TaskAttachmentUploadData!): Boolean
+    deleteTaskAttachment(input: TaskAttachmentDeleteData!): Boolean
+    createTimeRecord(timeRecordData: TimeRecordData!): String!
+    updateTimeRecord(timeRecordId: Int!, timeRecordData: TimeRecordData!): String!
+    assignCategoryToTimeRecord(timeRecordId: Int!, timeRecordCategoryId: Int): String!
+    deleteTimeRecord(timeRecordId: Int!): String!
+    createTimeRecordCategory(name: String!): TimeRecordCategory!
+    updateTimeRecordCategory(timeRecordId: Int!, name: String!): String!
+    deleteTimeRecordCategory(timeRecordId:Int!): String!
 
-input AccountReorderInput {
-    accountPublicId:UUID!,
-    putBetween: AccountPutBetweenInput!
-}
+    triggerTranslatedPJMVersesCheck: String!
 
-input AccountPutBetweenInput {
-    beforeAccountPublicId:UUID,
-    afterAccountPublicId:UUID,
-}
+    createLoan(input: LoanCreationInput): Loan!
+    updateLoan(input: LoanUpdateInput): Loan!
+    deleteLoan(input: LoanDeleteInput): String!
+    createInstallment(input: InstallmentCreationInput!): Installment!
+    deleteInstallment(installmentPublicId: UUID!): String!
+    createConstantForNFirstInstallmentRateStrategyConfig(input: ConstantForNFirstInstallmentRateStrategyConfigCreationInput!): RateStrategyConfig!
+    deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
+    createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
+    deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
 
-type BillingCategory {
-    publicId: UUID!
-    name: String!
-    description: String!
-    domain:DomainSimple!
-}
-
-input BillingCategoryCreationInput {
-    name: String!
-    description: String!
-}
-
-input BillingCategoryUpdateInput {
-    publicId: UUID!
-    name: String
-    description: String
-}
-
-
-type PiggyBank {
-    publicId: UUID!
-    name: String!
-    description: String!
-    balance: MonetaryAmount!
-    monthlyTopUp: MonetaryAmount!
-    savings: Boolean!
-    domain:DomainSimple!
-}
-
-input PiggyBankCreationInput {
-    name: String!
-    description: String!
-    monthlyTopUp: MonetaryAmountInput!
-    savings: Boolean!
-}
-
-input PiggyBankUpdateInput {
-    publicId: UUID!
-    name: String
-    description: String
-    balance: MonetaryAmountInput
-    monthlyTopUp: MonetaryAmountInput
-    savings: Boolean
-}
-
-type AuthenticationInfo {
-    jwt: String!
-    user: User!
-}
-
-type BankAccount {
-    bic: String
-    currency: CurrencyInfo!
-    domain: DomainSimple!
-    externalId: String!
-    iban: String!
-    id: Int!
-    owner: String!
-    product: String
-}
-
-type DomainSimple {
-    id: Int!
-    name: String!
-}
-
-type IntellectualProperty {
-    description: String!
-    domain: DomainSimple!
-    id: Int!
-    tasks: [Task!]
+    addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput):RevenueAndExpenseEntry
+    createClient(clientCreationInput: ClientCreationInput!): Client!
+    updateClient(clientUpdateInput: ClientUpdateInput!): Client!
+    deleteClient(clientPublicId:UUID!): String!
+    createSupplier(supplierCreationInput: SupplierCreationInput!): Supplier!
+    updateSupplier(supplierUpdateInput: SupplierUpdateInput!): Supplier!
+    deleteSupplier(supplierPublicId:UUID!): String!
+    createBill(billCreationInput: BillCreationInput!): FinancialDocument!
+    updateBill(billUpdateInput: BillUpdateInput!): FinancialDocument!
+    createInvoice(invoiceCreationInput: InvoiceCreationInput!): Invoice!
+    updateInvoice(invoiceUpdateInput: InvoiceUpdateInput!): Invoice!
+    deleteFinancialDocument(financialDocumentPublicId: UUID!): String!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
@@ -190,435 +162,25 @@ type TimeRecordsResponse {
     stats: TimeRecordsStats!
 }
 
-type MFAData {
-    mfaCode: String!
-    qrLink: String!
+input LoginParameters{
+    login:String!
+    password: String!
+    otp:String!
 }
 
-type LoanCalculationInstallment {
-    paymentFrom: LocalDate!
-    paymentTo: LocalDate!,
-    remainingCapitalAtTheBeginning: BigDecimal!,
-    installment: BigDecimal!,
-    repaidCapital: BigDecimal!,
-    paidInterest: BigDecimal!,
-    overpayment: BigDecimal!
-}
-
-type Mutation {
-    addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput): RevenueAndExpenseEntry
-
-    addIPR(input: IntellectualPropertyData): IntellectualProperty
-    updateIPR(input: IntellectualPropertyData, intellectualPropertyId: Int!): IntellectualProperty
-    deleteIPR(intellectualPropertyId: Int!): String!
-
-    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
-    updateTask(taskData: TaskData!, taskId: Int!): String!
-    deleteTask(taskId: Int!): String!
-    uploadTaskAttachment(input: TaskAttachmentUploadData!): Boolean
-    deleteTaskAttachment(input: TaskAttachmentDeleteData!): Boolean
-
-    createTimeRecord(timeRecordData: TimeRecordData!): String!
-    updateTimeRecord(timeRecordData: TimeRecordData!, timeRecordId: Int!): String!
-    deleteTimeRecord(timeRecordId: Int!): String!
-    assignCategoryToTimeRecord(timeRecordCategoryId: Int, timeRecordId: Int!): String!
-
-    createTimeRecordCategory(name: String!): TimeRecordCategory!
-    deleteTimeRecordCategory(timeRecordId: Int!): String!
-    updateTimeRecordCategory(name: String!, timeRecordId: Int!): String!
-
-    login(loginParameters: LoginParameters!): AuthenticationInfo!
-    register(registrationParameters: RegistrationParameters!): MFAData!
-    setupMFA(mfaParameters: MFAParameters!): Boolean!
-
-    createLoan(input: LoanCreationInput): Loan!
-    updateLoan(input: LoanUpdateInput): Loan!
-    deleteLoan(input: LoanDeleteInput): String!
-    createInstallment(input: InstallmentCreationInput!): Installment!
-    deleteInstallment(installmentPublicId: UUID!): String!
-    createConstantForNFirstInstallmentRateStrategyConfig(input: ConstantForNFirstInstallmentRateStrategyConfigCreationInput!): RateStrategyConfig!
-    deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
-    createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
-    deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
-
-    updateAccountantSettings(accountantSettingsUpdateInput: AccountantSettingsUpdateInput!): String!
-    createAccount(accountCreationInput: AccountCreationInput!): Account!
-    updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
-    deleteAccount(accountPublicId: UUID!): String!
-    reorderAccount(accountReorderInput: AccountReorderInput!): String!
-    createBillingCategory(billingCategoryCreationInput: BillingCategoryCreationInput!): BillingCategory!
-    updateBillingCategory(billingCategoryUpdateInput: BillingCategoryUpdateInput!): BillingCategory!
-    deleteBillingCategory(billingCategoryPublicId: UUID!): String!
-    createPiggyBank(piggyBankCreationInput: PiggyBankCreationInput!): PiggyBank!
-    updatePiggyBank(piggyBankUpdateInput: PiggyBankUpdateInput!): PiggyBank!
-    deletePiggyBank(piggyBankPublicId: UUID!): String!
-
-    createClient(clientCreationInput: ClientCreationInput!): Client!
-    updateClient(clientUpdateInput: ClientUpdateInput!): Client!
-    deleteClient(clientPublicId:UUID!): String!
-    createSupplier(supplierCreationInput: SupplierCreationInput!): Supplier!
-    updateSupplier(supplierUpdateInput: SupplierUpdateInput!): Supplier!
-    deleteSupplier(supplierPublicId:UUID!): String!
-    createBill(billCreationInput: BillCreationInput!): FinancialDocument!
-    updateBill(billUpdateInput: BillUpdateInput!): FinancialDocument!
-    createInvoice(invoiceCreationInput: InvoiceCreationInput!): Invoice!
-    updateInvoice(invoiceUpdateInput: InvoiceUpdateInput!): Invoice!
-    deleteFinancialDocument(financialDocumentPublicId: UUID!): String!
-}
-
-type Query {
-    _service: _Service!
-    settings: Settings!
-    financeManagement: FinanceManagement!
-
-    loans: Loans!
-    singleLoan(input: LoanQuery): Loan!
-    simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
-    simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
-
-    intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
-    intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput): IntellectualPropertiesRecordsResponse
-    allTimeRecordCategories: [TimeRecordCategory!]!
-    tasks(input: TasksQueryInput!): TasksResponse!
-    timeRecords(input: TimeRecordsQueryInput!): TimeRecordsResponse!
-
-    onthRevenueAndExpenseEntry(month: Int!, year: Int!): [RevenueAndExpenseEntry!]
-    allClients: [Client!]!
-    allSuppliers: [Supplier!]!
-    monthFinancialDocuments(yearMonthInput: YearMonthInput!): [FinancialDocument!]!
-}
-
-type RevenueAndExpenseEntry {
-    accountingDocumentNumber: String!
-    additionalCostOfPurchase: BigDecimal!
-    comments: String!
-    counterparty: String!
-    counterpartyAddress: String!
-    description: String!
-    domain: DomainSimple!
-    entryDate: LocalDate!
-    entryOrder: Int!
-    otherExpense: BigDecimal!
-    otherIncome: BigDecimal!
-    providedGoodsAndServicesValue: BigDecimal!
-    publicId: UUID!
-    purchasedGoodsAndMaterialsValue: BigDecimal!
-    remunerationInCashOrInKind: BigDecimal!
-    totalExpense: BigDecimal!
-    totalIncome: BigDecimal!
-}
-
-type Task {
-    attachments: [String!]
-    coAuthors: String!
-    description: String!
-    id: Int!
-    timeRecords: [TimeRecord!]
-}
-
-type TimeRecord {
-    date: LocalDate!
-    description: String
-    domain: DomainSimple!
-    id: Int!
-    numberOfHours: BigDecimal!
-    timeRecordCategory: TimeRecordCategory
-}
-
-type TimeRecordCategory {
-    domain: DomainSimple!
-    id: Int!
-    name: String!
-}
-
-type User {
-    defaultDomainId: Int!
-    domains: [DomainSimple!]!
+input RegistrationParameters{
+    firstName:String!
+    lastName:String!
+    login:String!
     email: String!
-    name: String!
-    roles: [String!]!
-}
-
-type _Service {
-    sdl: String!
-}
-
-enum AssignmentAction {
-    ASSIGN
-    NOP
-    UNASSIGN
-}
-
-enum ErrorDetail {
-    """
-    The deadline expired before the operation could complete.
-
-    For operations that change the state of the system, this error
-    may be returned even if the operation has completed successfully.
-    For example, a successful response from a server could have been
-    delayed long enough for the deadline to expire.
-
-    HTTP Mapping: 504 Gateway Timeout
-    Error Type: UNAVAILABLE
-    """
-    DEADLINE_EXCEEDED
-    """
-    The server detected that the client is exhibiting a behavior that
-    might be generating excessive load.
-
-    HTTP Mapping: 429 Too Many Requests or 420 Enhance Your Calm
-    Error Type: UNAVAILABLE
-    """
-    ENHANCE_YOUR_CALM
-    """
-    The requested field is not found in the schema.
-
-    This differs from `NOT_FOUND` in that `NOT_FOUND` should be used when a
-    query is valid, but is unable to return a result (if, for example, a
-    specific video id doesn't exist). `FIELD_NOT_FOUND` is intended to be
-    returned by the server to signify that the requested field is not known to exist.
-    This may be returned in lieu of failing the entire query.
-    See also `PERMISSION_DENIED` for cases where the
-    requested field is invalid only for the given user or class of users.
-
-    HTTP Mapping: 404 Not Found
-    Error Type: BAD_REQUEST
-    """
-    FIELD_NOT_FOUND
-    """
-    The client specified an invalid argument.
-
-    Note that this differs from `FAILED_PRECONDITION`.
-    `INVALID_ARGUMENT` indicates arguments that are problematic
-    regardless of the state of the system (e.g., a malformed file name).
-
-    HTTP Mapping: 400 Bad Request
-    Error Type: BAD_REQUEST
-    """
-    INVALID_ARGUMENT
-    """
-    The provided cursor is not valid.
-
-    The most common usage for this error is when a client is paginating
-    through a list that uses stateful cursors. In that case, the provided
-    cursor may be expired.
-
-    HTTP Mapping: 404 Not Found
-    Error Type: NOT_FOUND
-    """
-    INVALID_CURSOR
-    """
-    Unable to perform operation because a required resource is missing.
-
-    Example: Client is attempting to refresh a list, but the specified
-    list is expired. This requires an action by the client to get a new list.
-
-    If the user is simply trying GET a resource that is not found,
-    use the NOT_FOUND error type. FAILED_PRECONDITION.MISSING_RESOURCE
-    is to be used particularly when the user is performing an operation
-    that requires a particular resource to exist.
-
-    HTTP Mapping: 400 Bad Request or 500 Internal Server Error
-    Error Type: FAILED_PRECONDITION
-    """
-    MISSING_RESOURCE
-    """
-    Service Error.
-
-    There is a problem with an upstream service.
-
-    This may be returned if a gateway receives an unknown error from a service
-    or if a service is unreachable.
-    If a request times out which waiting on a response from a service,
-    `DEADLINE_EXCEEDED` may be returned instead.
-    If a service returns a more specific error Type, the specific error Type may
-    be returned instead.
-
-    HTTP Mapping: 502 Bad Gateway
-    Error Type: UNAVAILABLE
-    """
-    SERVICE_ERROR
-    """
-    Request failed due to network errors.
-
-    HTTP Mapping: 503 Unavailable
-    Error Type: UNAVAILABLE
-    """
-    TCP_FAILURE
-    """
-    Request throttled based on server concurrency limits.
-
-    HTTP Mapping: 503 Unavailable
-    Error Type: UNAVAILABLE
-    """
-    THROTTLED_CONCURRENCY
-    """
-    Request throttled based on server CPU limits
-
-    HTTP Mapping: 503 Unavailable.
-    Error Type: UNAVAILABLE
-    """
-    THROTTLED_CPU
-    """
-    The operation is not implemented or is not currently supported/enabled.
-
-    HTTP Mapping: 501 Not Implemented
-    Error Type: BAD_REQUEST
-    """
-    UNIMPLEMENTED
-    """
-    Unknown error.
-
-    This error should only be returned when no other error detail applies.
-    If a client sees an unknown errorDetail, it will be interpreted as UNKNOWN.
-
-    HTTP Mapping: 500 Internal Server Error
-    """
-    UNKNOWN
-}
-
-enum ErrorType {
-    """
-    Bad Request.
-
-    There is a problem with the request.
-    Retrying the same request is not likely to succeed.
-    An example would be a query or argument that cannot be deserialized.
-
-    HTTP Mapping: 400 Bad Request
-    """
-    BAD_REQUEST
-    """
-    The operation was rejected because the system is not in a state
-    required for the operation's execution.  For example, the directory
-    to be deleted is non-empty, an rmdir operation is applied to
-    a non-directory, etc.
-
-    Service implementers can use the following guidelines to decide
-    between `FAILED_PRECONDITION` and `UNAVAILABLE`:
-
-    - Use `UNAVAILABLE` if the client can retry just the failing call.
-    - Use `FAILED_PRECONDITION` if the client should not retry until
-    the system state has been explicitly fixed.  E.g., if an "rmdir"
-    fails because the directory is non-empty, `FAILED_PRECONDITION`
-    should be returned since the client should not retry unless
-    the files are deleted from the directory.
-
-    HTTP Mapping: 400 Bad Request or 500 Internal Server Error
-    """
-    FAILED_PRECONDITION
-    """
-    Internal error.
-
-    An unexpected internal error was encountered. This means that some
-    invariants expected by the underlying system have been broken.
-    This error code is reserved for serious errors.
-
-    HTTP Mapping: 500 Internal Server Error
-    """
-    INTERNAL
-    """
-    The requested entity was not found.
-
-    This could apply to a resource that has never existed (e.g. bad resource id),
-    or a resource that no longer exists (e.g. cache expired.)
-
-    Note to server developers: if a request is denied for an entire class
-    of users, such as gradual feature rollout or undocumented allowlist,
-    `NOT_FOUND` may be used. If a request is denied for some users within
-    a class of users, such as user-based access control, `PERMISSION_DENIED`
-    must be used.
-
-    HTTP Mapping: 404 Not Found
-    """
-    NOT_FOUND
-    """
-    The caller does not have permission to execute the specified
-    operation.
-
-    `PERMISSION_DENIED` must not be used for rejections
-    caused by exhausting some resource or quota.
-    `PERMISSION_DENIED` must not be used if the caller
-    cannot be identified (use `UNAUTHENTICATED`
-    instead for those errors).
-
-    This error Type does not imply the
-    request is valid or the requested entity exists or satisfies
-    other pre-conditions.
-
-    HTTP Mapping: 403 Forbidden
-    """
-    PERMISSION_DENIED
-    """
-    The request does not have valid authentication credentials.
-
-    This is intended to be returned only for routes that require
-    authentication.
-
-    HTTP Mapping: 401 Unauthorized
-    """
-    UNAUTHENTICATED
-    """
-    Currently Unavailable.
-
-    The service is currently unavailable.  This is most likely a
-    transient condition, which can be corrected by retrying with
-    a backoff.
-
-    HTTP Mapping: 503 Unavailable
-    """
-    UNAVAILABLE
-    """
-    Unknown error.
-
-    For example, this error may be returned when
-    an error code received from another address space belongs to
-    an error space that is not known in this address space.  Also
-    errors raised by APIs that do not return enough error information
-    may be converted to this error.
-
-    If a client sees an unknown errorType, it will be interpreted as UNKNOWN.
-    Unknown errors MUST NOT trigger any special behavior. These MAY be treated
-    by an implementation as being equivalent to INTERNAL.
-
-    When possible, a more specific error should be provided.
-
-    HTTP Mapping: 520 Unknown Error
-    """
-    UNKNOWN
-}
-
-"An arbitrary precision signed decimal"
-scalar BigDecimal
-
-"An ISO-4217 compliant Currency Scalar"
-scalar Currency
-
-scalar LocalDate
-scalar YearMonth
-scalar Year
-
-"A universally unique identifier compliant UUID Scalar"
-scalar UUID
-
-scalar _FieldSet
-
-scalar Upload
-
-input IntellectualPropertyData {
-    description: String!
-}
-
-input LoginParameters {
-    login: String!
-    otp: String!
     password: String!
+    repeatedPassword: String!
 }
 
-input MFAParameters {
+input MFAParameters{
     login: String!
-    otp: String!
     password: String!
+    otp: String!
 }
 
 input LoanCalculationParams {
@@ -637,36 +199,22 @@ input LoanSimulationParams {
     yearlyOverpayment: MonetaryAmountInput
 }
 
-input RegistrationParameters {
-    email: String!
-    firstName: String!
-    lastName: String!
-    login: String!
-    password: String!
-    repeatedPassword: String!
+type LoanCalculationInstallment {
+    paymentFrom: LocalDate!
+    paymentTo: LocalDate!,
+    remainingCapitalAtTheBeginning: BigDecimal!,
+    installment: BigDecimal!,
+    repaidCapital: BigDecimal!,
+    paidInterest: BigDecimal!,
+    overpayment: BigDecimal!
 }
 
-input RevenueAndExpenseEntryInput {
-    accountingDocumentNumber: String!
-    additionalCostOfPurchase: BigDecimal!
-    comments: String!
-    counterparty: String!
-    counterpartyAddress: String!
+input IntellectualPropertyData{
     description: String!
-    entryDate: LocalDate!
-    entryOrder: Int!
-    otherExpense: BigDecimal!
-    otherIncome: BigDecimal!
-    providedGoodsAndServicesValue: BigDecimal!
-    publicId: UUID
-    purchasedGoodsAndMaterialsValue: BigDecimal!
-    remunerationInCashOrInKind: BigDecimal!
-    totalExpense: BigDecimal!
-    totalIncome: BigDecimal!
 }
 
-input TaskData {
-    coAuthors: String!
+input TaskData{
+    coAuthors: String!,
     description: String!
 }
 
@@ -680,12 +228,258 @@ input TaskAttachmentDeleteData {
     taskId: Int!
 }
 
+enum AssignmentAction {
+    NOP, ASSIGN, UNASSIGN
+}
+
 input TimeRecordData {
+    taskId: Int,
+    date: LocalDate!,
+    numberOfHours: BigDecimal!,
+    description: String!,
     assignmentAction: AssignmentAction!
-    date: LocalDate!
+}
+
+type User {
+    login: String!
+    name: String!,
+    email: String!,
+    roles: [String!]!
+    defaultDomainPublicId: UUID!,
+    domains: [DomainSimple!]!
+}
+
+type AuthenticationInfo {
+    jwt: String!
+    user: User!
+}
+
+type MFAData {
+    mfaCode: String!
+    qrLink: String!
+}
+
+type DomainSimple {
+    publicId: UUID!,
+    name: String!
+}
+
+type Domain {
+    publicId: UUID!,
+    name: String!
+    users: [DomainUser!]!
+}
+
+input DomainCreationInput {
+    name: String!
+}
+
+input DomainUpdateInput {
+    publicId: UUID!,
+    name: String!
+}
+
+input DomainInvitationInput {
+    publicId: UUID!,
+    invitedUserLogin: String!
+}
+
+input DomainInvitationResponseInput {
+    publicId: UUID!
+}
+
+input DomainSetAccessLevelInput {
+    publicId: UUID!
+    userLogin: String!
+    domainAccessLevel: SetDomainAccessLevel!
+}
+
+type DomainUser {
+    login: String!
+    domainAccessLevel: DomainAccessLevel!
+}
+
+enum SetDomainAccessLevel {
+    ADMIN, MEMBER, REMOVE
+}
+
+enum DomainAccessLevel {
+    ADMIN, MEMBER
+}
+
+type IntellectualProperty {
+    id: Int!,
+    description: String!,
+    tasks: [Task!],
+    domain: DomainSimple!
+}
+
+type Task {
+    id: Int!,
+    attachments: [String!],
+    coAuthors: String!,
+    description: String!,
+    timeRecords: [TimeRecord!]
+}
+
+type TimeRecord {
+    id: Int!,
+    date: LocalDate!,
+    numberOfHours: BigDecimal!,
+    description: String,
+    timeRecordCategory: TimeRecordCategory,
+    domain: DomainSimple!
+}
+
+type TimeRecordCategory {
+    id: Int!,
+    name: String!,
+    domain: DomainSimple!
+}
+
+type RevenueAndExpenseEntry {
+    publicId: UUID!,
+    domain: DomainSimple!,
+    entryOrder: Int!,
+    entryDate: LocalDate!,
+    accountingDocumentNumber: String!,
+    counterparty: String!,
+    counterpartyAddress: String!,
+    description: String!,
+    providedGoodsAndServicesValue: BigDecimal!,
+    otherIncome: BigDecimal!,
+    totalIncome: BigDecimal!,
+    purchasedGoodsAndMaterialsValue: BigDecimal!,
+    additionalCostOfPurchase: BigDecimal!,
+    remunerationInCashOrInKind: BigDecimal!,
+    otherExpense: BigDecimal!,
+    totalExpense: BigDecimal!,
+    comments: String!
+}
+
+input RevenueAndExpenseEntryInput {
+    publicId: UUID,
+    entryOrder: Int!,
+    entryDate: LocalDate!,
+    accountingDocumentNumber: String!,
+    counterparty: String!,
+    counterpartyAddress: String!,
+    description: String!,
+    providedGoodsAndServicesValue: BigDecimal!,
+    otherIncome: BigDecimal!,
+    totalIncome: BigDecimal!,
+    purchasedGoodsAndMaterialsValue: BigDecimal!,
+    additionalCostOfPurchase: BigDecimal!,
+    remunerationInCashOrInKind: BigDecimal!,
+    otherExpense: BigDecimal!,
+    totalExpense: BigDecimal!,
+    comments: String!
+}
+
+type CurrencyInfo {
+    code: Currency!
     description: String!
-    numberOfHours: BigDecimal!
-    taskId: Int
+}
+
+type FinanceManagement {
+    supportedCurrencies: [CurrencyInfo!]!
+    accounts:[Account!]!
+    billingCategories:[BillingCategory!]!
+    piggyBanks:[PiggyBank!]!
+}
+
+type Account {
+    publicId:UUID!,
+    order:Int!,
+    name:String!,
+    currentBalance:MonetaryAmount!,
+    creditLimit:MonetaryAmount!,
+    balanceIndex:Int,
+    visible:Boolean!,
+    bankAccount:BankAccount,
+    domain:DomainSimple,
+}
+
+input AccountCreationInput {
+    name:String!,
+    creditLimit:MonetaryAmountInput!,
+    balanceIndex:Int,
+    visible:Boolean!,
+    bankAccountId:Int
+}
+
+input AccountUpdateInput {
+    publicId:UUID!,
+    name:String!,
+    creditLimit:MonetaryAmountInput!,
+    balanceIndex:Int,
+    visible:Boolean!,
+    bankAccountId:Int
+}
+
+input AccountReorderInput {
+    accountPublicId:UUID!,
+    putBetween: AccountPutBetweenInput!
+}
+
+input AccountPutBetweenInput {
+    beforeAccountPublicId:UUID,
+    afterAccountPublicId:UUID,
+}
+
+type BillingCategory {
+    publicId: UUID!
+    name: String!
+    description: String!
+    domain:DomainSimple!
+}
+
+input BillingCategoryCreationInput {
+    name: String!
+    description: String!
+}
+
+input BillingCategoryUpdateInput {
+    publicId: UUID!
+    name: String
+    description: String
+}
+
+type PiggyBank {
+    publicId: UUID!
+    name: String!
+    description: String!
+    balance: MonetaryAmount!
+    monthlyTopUp: MonetaryAmount!
+    savings: Boolean!
+    domain:DomainSimple!
+}
+
+input PiggyBankCreationInput {
+    name: String!
+    description: String!
+    monthlyTopUp: MonetaryAmountInput!
+    savings: Boolean!
+}
+
+input PiggyBankUpdateInput {
+    publicId: UUID!
+    name: String
+    description: String
+    balance: MonetaryAmountInput
+    monthlyTopUp: MonetaryAmountInput
+    savings: Boolean
+}
+
+type BankAccount {
+    id: Int!,
+    iban: String!,
+    currency: CurrencyInfo!,
+    owner: String!,
+    product: String,
+    bic: String,
+    externalId: String!,
+    domain: DomainSimple!,
 }
 
 interface RateStrategyConfig {
@@ -797,11 +591,14 @@ input InstallmentCreationInput {
     overpayment: MonetaryAmountInput!
 }
 
+input LedgerQuery {
+    yearMonth: YearMonthInput!
+}
+
 input YearMonthInput {
     year: Int!
     month: Int!
 }
-
 
 interface OtherParty {
     publicId: UUID!
@@ -967,6 +764,7 @@ type DebitInvoice implements Invoice & FinancialDocument {
 
 type Settings {
     accountantSettings: AccountantSettings!
+    domains: [Domain!]!
 }
 
 type AccountantSettings {
