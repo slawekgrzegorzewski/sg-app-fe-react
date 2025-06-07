@@ -60,7 +60,6 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         operation.setContext(({headers = {}}) => ({
             headers: {
                 ...headers,
-                domainId: domainPublicId,
                 authorization: 'Bearer ' + JSON.parse(localStorage.getItem(CURRENT_USER_KEY)!).jwtToken,
                 locale: navigator.language,
                 'Apollo-Require-Preflight': 'true'
