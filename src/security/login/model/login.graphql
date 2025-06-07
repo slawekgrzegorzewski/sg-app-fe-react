@@ -15,11 +15,30 @@ mutation PerformLogin(
             name,
             email,
             roles,
-            defaultDomainPublicId,
+            domainPublicId,
             domains {
                 publicId,
                 name
             }
+        }
+    }
+}
+
+mutation SwitchDomain (
+    $domainPublicId: UUID!
+) {
+    switchDomain(switchDomainParameters: {domainPublicId: $domainPublicId}) {
+        jwt
+        user {
+            login
+            name
+            email
+            domainPublicId
+            domains {
+                name
+                publicId
+            }
+            roles
         }
     }
 }

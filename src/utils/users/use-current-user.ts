@@ -30,7 +30,7 @@ export function useCurrentUser() {
     const storeCurrentUser = (currentUser: CurrentUser) => {
         localStorage.setItem("currentUser", JSON.stringify(currentUser));
         setCurrentUser(currentUser);
-        navigate('/' + currentUser!.applications[0].id + '/' + currentUser!.user.defaultDomainPublicId);
+        navigate('/' + currentUser!.applications[0].id + '/' + currentUser!.user.domainPublicId);
     }
 
     const deleteCurrentUser = () => {

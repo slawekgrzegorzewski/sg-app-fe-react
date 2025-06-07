@@ -1,4 +1,11 @@
-import {ApolloClient, ApolloLink, ApolloProvider, defaultDataIdFromObject, InMemoryCache} from "@apollo/client";
+import {
+    ApolloClient,
+    ApolloLink,
+    ApolloProvider,
+    defaultDataIdFromObject,
+    InMemoryCache,
+    useMutation
+} from "@apollo/client";
 import {onError} from "@apollo/client/link/error";
 import React from "react";
 import {Navigate, useParams} from "react-router-dom";
@@ -6,6 +13,35 @@ import {useCurrentUser} from "../utils/users/use-current-user";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import type {ServerParseError} from "@apollo/client/link/http";
 import type {ServerError} from "@apollo/client/link/utils";
+import {SwitchDomain, SwitchDomainMutation} from "../types";
+import getUserApplications, {Application} from "../utils/applications/applications-access";
+
+function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
+    const [switchDomainMutation] = useMutation<SwitchDomainMutation>(SwitchDomain);
+    const {user, setCurrentUser} = useCurrentUser();
+    const {domainPublicId} = useParams();
+
+    const switchDomain = async (domainPublicId: string) => {
+        await switchDomainMutation({
+            variables: {
+                domainPublicId: domainPublicId!
+            }
+        }).then(value => {
+            const {jwt, user} = value.data!.switchDomain!;
+            const applications: Application[] = getUserApplications(user);
+            setCurrentUser({
+                jwtToken: jwt,
+                user: user,
+                applications: applications
+            });
+        });
+    };
+
+    if (domainPublicId !== user!.user.domainPublicId) {
+        switchDomain(domainPublicId!);
+    }
+    return <>{children}</>;
+}
 
 export function Authenticated({children}: { children: React.JSX.Element }) {
     const {user, deleteCurrentUser} = useCurrentUser();
@@ -16,7 +52,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
     }
 
     if (!domainPublicId) {
-        return <Navigate to={`/${applicationId}/${user!.user.defaultDomainPublicId}`}></Navigate>
+        return <Navigate to={`/${applicationId}/${user!.user.domainPublicId}`}></Navigate>
     }
 
     const httpLink = createUploadLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
@@ -75,8 +111,6 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
     });
 
     return <ApolloProvider client={apolloClient}>
-        <div style={{display: 'flex'}}>
-            {children}
-        </div>
+        <AssureCorrectDomainJWT children={children}/>
     </ApolloProvider>;
 }

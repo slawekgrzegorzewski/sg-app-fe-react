@@ -30,6 +30,7 @@ type Query {
 
 type Mutation{
     login(loginParameters:LoginParameters!): AuthenticationInfo!
+    switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!
     register(registrationParameters:RegistrationParameters!): MFAData!
     setupMFA(mfaParameters:MFAParameters!): Boolean!
 
@@ -166,6 +167,11 @@ input LoginParameters{
     login:String!
     password: String!
     otp:String!
+    domainPublicId: UUID
+}
+
+input SwitchDomainParameters {
+    domainPublicId: UUID
 }
 
 input RegistrationParameters{
@@ -245,7 +251,7 @@ type User {
     name: String!,
     email: String!,
     roles: [String!]!
-    defaultDomainPublicId: UUID!,
+    domainPublicId: UUID!,
     domains: [DomainSimple!]!
 }
 
