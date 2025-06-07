@@ -5,7 +5,7 @@ import {EditorField} from "../utils/forms/Form";
 import {IntellectualPropertyDTO, NON_EXISTING_ID} from "./model/types";
 import {IntellectualPropertyReport} from "./IntellectualPropertyReport";
 
-const EXPANDED_INTELLECTUAL_PROPERTY_ID_LOCAL_STORAGE_KEY = "IPR_accordion_expandedId";
+const EXPANDED_INTELLECTUAL_PROPERTY_ID_LOCAL_STORAGE_KEY = "newApp_IPR_accordion_expandedId";
 
 export const IPR_DIALOG_TITLE = 'Dane własności intelektualnej';
 export const IPR_EDITOR_FIELDS: EditorField[] = [

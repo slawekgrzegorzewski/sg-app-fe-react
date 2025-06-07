@@ -9,7 +9,7 @@ import {
 import {onError} from "@apollo/client/link/error";
 import React from "react";
 import {Navigate, useParams} from "react-router-dom";
-import {useCurrentUser} from "../utils/users/use-current-user";
+import {CURRENT_USER_KEY, useCurrentUser} from "../utils/users/use-current-user";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import type {ServerParseError} from "@apollo/client/link/http";
 import type {ServerError} from "@apollo/client/link/utils";
@@ -20,7 +20,6 @@ function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
     const [switchDomainMutation] = useMutation<SwitchDomainMutation>(SwitchDomain);
     const {user, setCurrentUser} = useCurrentUser();
     const {domainPublicId} = useParams();
-
     const switchDomain = async (domainPublicId: string) => {
         await switchDomainMutation({
             variables: {
@@ -39,6 +38,7 @@ function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
 
     if (domainPublicId !== user!.user.domainPublicId) {
         switchDomain(domainPublicId!);
+        return <></>;
     }
     return <>{children}</>;
 }
@@ -61,7 +61,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
             headers: {
                 ...headers,
                 domainId: domainPublicId,
-                authorization: 'Bearer ' + (user?.jwtToken || ''),
+                authorization: 'Bearer ' + JSON.parse(localStorage.getItem(CURRENT_USER_KEY)!).jwtToken,
                 locale: navigator.language,
                 'Apollo-Require-Preflight': 'true'
             }

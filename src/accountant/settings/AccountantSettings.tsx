@@ -22,7 +22,7 @@ import {DomainsManagement} from "./DomainsManagement";
 import {AccountantSettingsContext} from "../../application/components/dispatchers/AccountantDispatcher";
 
 export function AccountantSettings() {
-    const ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY = 'accountantSettingsActiveTab';
+    const ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY = 'newApp_accountantSettingsActiveTab';
     const ACCOUNTS_TAB_LABEL = 'konta';
     const EXPENSES_MANAGEMENT_TAB_LABEL = 'wydatki';
     const COMPANY_MANAGEMENT_TAB_LABEL = 'firma';

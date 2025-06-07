@@ -9,15 +9,17 @@ export type CurrentUser = {
     applications: Application[]
 }
 
+export const CURRENT_USER_KEY = "newApp_currentUser";
+
 export function useCurrentUser() {
 
     const navigate = useNavigate();
     const getCurrentUser = (): CurrentUser | null => {
-        const currentUserInLS = localStorage.getItem("currentUser");
+        const currentUserInLS = localStorage.getItem(CURRENT_USER_KEY);
         const currentUser = currentUserInLS ? JSON.parse(currentUserInLS!) : null;
         if(currentUser) {
             if(currentUser.user.hasOwnProperty("defaultDomainId")) {
-                localStorage.removeItem("currentUser");
+                localStorage.removeItem(CURRENT_USER_KEY);
                 navigate('/login');
                 return null;
             }
@@ -28,13 +30,13 @@ export function useCurrentUser() {
     const [currentUser, setCurrentUser] = useState(getCurrentUser());
 
     const storeCurrentUser = (currentUser: CurrentUser) => {
-        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
         setCurrentUser(currentUser);
         navigate('/' + currentUser!.applications[0].id + '/' + currentUser!.user.domainPublicId);
     }
 
     const deleteCurrentUser = () => {
-        localStorage.removeItem("currentUser");
+        localStorage.removeItem(CURRENT_USER_KEY);
         setCurrentUser(null);
         navigate('/login');
     }
