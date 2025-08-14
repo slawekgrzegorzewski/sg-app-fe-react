@@ -25,20 +25,8 @@ query GetFinanceManagement {
             balanceIndex
             visible
             bankAccount {
-                id
+                publicId
                 iban
-                currency {
-                    code
-                    description
-                }
-                owner
-                product
-                bic
-                externalId
-                domain {
-                    publicId
-                    name
-                }
             }
             domain {
                 publicId
@@ -84,7 +72,7 @@ query GetFinanceManagement {
 mutation CreateAccount(
     $name: String!,
     $balanceIndex: Int,
-    $bankAccountId: Int,
+    $bankAccountPublicId: UUID,
     $visible: Boolean!,
     $creditLimitAmount: BigDecimal!,
     $creditLimitCurrency: Currency!
@@ -92,7 +80,7 @@ mutation CreateAccount(
     createAccount(accountCreationInput: {
         name: $name
         balanceIndex: $balanceIndex
-        bankAccountId: $bankAccountId
+        bankAccountPublicId: $bankAccountPublicId
         visible: $visible
         creditLimit: {
             amount: $creditLimitAmount
@@ -119,20 +107,8 @@ mutation CreateAccount(
         balanceIndex
         visible
         bankAccount {
-            id
+            publicId
             iban
-            currency {
-                code
-                description
-            }
-            owner
-            product
-            bic
-            externalId
-            domain {
-                publicId
-                name
-            }
         }
         domain {
             publicId
@@ -145,7 +121,7 @@ mutation UpdateAccount(
     $publicId: UUID!,
     $name: String!,
     $balanceIndex: Int,
-    $bankAccountId: Int,
+    $bankAccountPublicId: UUID,
     $visible: Boolean!,
     $creditLimitAmount: BigDecimal!,
     $creditLimitCurrency: Currency!
@@ -154,7 +130,7 @@ mutation UpdateAccount(
         publicId: $publicId
         name: $name
         balanceIndex: $balanceIndex
-        bankAccountId: $bankAccountId
+        bankAccountPublicId:$bankAccountPublicId
         visible: $visible
         creditLimit: {
             amount: $creditLimitAmount
@@ -181,20 +157,8 @@ mutation UpdateAccount(
         balanceIndex
         visible
         bankAccount {
-            id
+            publicId
             iban
-            currency {
-                code
-                description
-            }
-            owner
-            product
-            bic
-            externalId
-            domain {
-                publicId
-                name
-            }
         }
         domain {
             publicId

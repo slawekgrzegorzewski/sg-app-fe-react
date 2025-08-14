@@ -29,26 +29,14 @@ export const mapAccount = (account: Account) => {
 }
 
 export type GQLBankAccount = {
-    bic: string;
-    currency: GQLCurrencyInfo;
-    domain: GQLDomainSimple;
-    externalId: string;
+    publicId: string;
     iban: string;
-    id: number;
-    owner: string;
-    product: string;
 }
 
 export const mapBankAccount = (bankAccount: BankAccount) => {
     return {
-        bic: bankAccount.bic,
-        currency: mapCurrencyInfo(bankAccount.currency),
-        domain: mapDomainSimple(bankAccount.domain),
-        externalId: bankAccount.externalId,
-        iban: bankAccount.iban,
-        id: bankAccount.id,
-        owner: bankAccount.owner,
-        product: bankAccount.product
+        publicId: bankAccount.publicId,
+        iban: bankAccount.iban
     } as GQLBankAccount;
 }
 

@@ -411,7 +411,7 @@ input AccountCreationInput {
     creditLimit:MonetaryAmountInput!,
     balanceIndex:Int,
     visible:Boolean!,
-    bankAccountId:Int
+    bankAccountPublicId:UUID
 }
 
 input AccountUpdateInput {
@@ -420,7 +420,7 @@ input AccountUpdateInput {
     creditLimit:MonetaryAmountInput!,
     balanceIndex:Int,
     visible:Boolean!,
-    bankAccountId:Int
+    bankAccountPublicId:UUID
 }
 
 input AccountReorderInput {
@@ -478,14 +478,8 @@ input PiggyBankUpdateInput {
 }
 
 type BankAccount {
-    id: Int!,
-    iban: String!,
-    currency: CurrencyInfo!,
-    owner: String!,
-    product: String,
-    bic: String,
-    externalId: String!,
-    domain: DomainSimple!,
+    publicId: UUID!,
+    iban: String!
 }
 
 interface RateStrategyConfig {
