@@ -1,0 +1,34 @@
+query GetBankPermissions {
+    bankPermissions {
+        granted {
+            publicId
+            createdAt
+            givenAt
+            withdrawnAt
+            bankAccounts{
+                publicId
+                iban
+            }
+            institutionId
+            reference
+            ssn
+            confirmationLink
+            requisitionId
+        }
+        toProcess {
+            publicId
+            createdAt
+            givenAt
+            withdrawnAt
+            bankAccounts{
+                publicId
+                iban
+            }
+            institutionId
+            reference
+            ssn
+            confirmationLink
+            requisitionId
+        }
+    }
+}
