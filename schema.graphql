@@ -1,6 +1,8 @@
 scalar BigDecimal
 scalar Currency
 scalar LocalDate
+scalar LocalDateTime
+scalar URL
 scalar Upload
 scalar UUID
 scalar YearMonth
@@ -10,6 +12,7 @@ type Query {
     settings: Settings!
     financeManagement: FinanceManagement!
     domainInvitations: [DomainSimple!]!
+    bankPermissions: BankPermissions!
 
     intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
     intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput!): IntellectualPropertiesRecordsResponse
@@ -773,4 +776,22 @@ type AccountantSettings {
 
 input AccountantSettingsUpdateInput {
     isCompany:Boolean!
+}
+
+type BankPermissions {
+    granted: [BankPermission!]!
+    toProcess: [BankPermission!]!
+}
+
+type BankPermission{
+    publicId: UUID!
+    createdAt:LocalDateTime!
+    givenAt:LocalDateTime!
+    withdrawnAt: LocalDateTime
+    bankAccounts: [BankAccount!]!
+    institutionId: String!
+    reference: String
+    ssn: String
+    confirmationLink: URL
+    requisitionId: UUID!
 }

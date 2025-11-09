@@ -14,20 +14,20 @@ import {SxProps} from "@mui/system";
 
 export interface SimpleCrudListProps<T> {
     title: string,
-    createTitle: string,
-    editTitle: string,
     list: T[],
     idExtractor: (t: T) => string,
 
-    onCreate(t: T): Promise<void>,
+    createTitle?: string,
+    onCreate?(t: T): Promise<void>,
 
-    onUpdate(t: T): Promise<void>,
+    editTitle?: string,
+    onUpdate?(t: T): Promise<void>,
 
     onDelete?(t: T): Promise<void>,
 
     onReorder?(event: ReorderEvent): Promise<void>,
 
-    formSupplier: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
+    formSupplier?: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
     rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
 
     entityDisplay(t: T, index: number): React.JSX.Element,
@@ -109,9 +109,9 @@ export function SimpleCrudList<T>({
 
     return <>
         <Stack direction={'column'}>
-            {<Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
+            <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
                 <TitleBox>{title}</TitleBox>
-                <FormDialogButton
+                {createTitle && onCreate && formSupplier && <FormDialogButton
                     title={createTitle}
                     onSave={(t) => onCreate(t)}
                     onCancel={() => {
@@ -122,7 +122,8 @@ export function SimpleCrudList<T>({
                             <Add/>
                         </IconButton>}
                     formProps={formSupplier()}/>
-            </Stack>}
+                }
+            </Stack>
 
             <Stack direction={"column"}>
                 {
@@ -132,7 +133,7 @@ export function SimpleCrudList<T>({
         </Stack>
 
         {
-            selectedEntity && <FormDialog dialogTitle={editDialogTitleElement}
+            selectedEntity && onUpdate && editTitle && formSupplier && <FormDialog dialogTitle={editDialogTitleElement}
                                           open={showEditDialog}
                                           onSave={value => onUpdate(value)}
                                           onCancel={() => {

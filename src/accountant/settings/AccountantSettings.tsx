@@ -20,6 +20,7 @@ import {AccountantSettingsManagement} from "./AccountantSettingsManagement";
 import Box from "@mui/material/Box";
 import {DomainsManagement} from "./DomainsManagement";
 import {AccountantSettingsContext} from "../../application/components/dispatchers/AccountantDispatcher";
+import {BanksManagement} from "./BanksManagement";
 
 export function AccountantSettings() {
     const ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY = 'newApp_accountantSettingsActiveTab';
@@ -27,10 +28,11 @@ export function AccountantSettings() {
     const EXPENSES_MANAGEMENT_TAB_LABEL = 'wydatki';
     const COMPANY_MANAGEMENT_TAB_LABEL = 'firma';
     const DOMAIN_MANAGEMENT_TAB_LABEL = 'domeny';
+    const BANKS_MANAGEMENT_TAB_LABEL = 'banki';
     const accountantSettingsContext = useContext(AccountantSettingsContext);
     const tabs = accountantSettingsContext.accountantSettings.isCompany
-        ? [COMPANY_MANAGEMENT_TAB_LABEL, ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL, DOMAIN_MANAGEMENT_TAB_LABEL]
-        : [ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL, DOMAIN_MANAGEMENT_TAB_LABEL]
+        ? [COMPANY_MANAGEMENT_TAB_LABEL, ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL, DOMAIN_MANAGEMENT_TAB_LABEL, BANKS_MANAGEMENT_TAB_LABEL]
+        : [ACCOUNTS_TAB_LABEL, EXPENSES_MANAGEMENT_TAB_LABEL, DOMAIN_MANAGEMENT_TAB_LABEL, BANKS_MANAGEMENT_TAB_LABEL]
     const getActiveTab = () => {
         let tabFromLocalStorage = window.localStorage.getItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY) || '';
         if (!tabs.includes(tabFromLocalStorage)) {
@@ -125,7 +127,12 @@ export function AccountantSettings() {
                 }
                 {
                     activeTabIndex === DOMAIN_MANAGEMENT_TAB_LABEL && <Grid size={columnSizing}>
-                        <DomainsManagement />
+                        <DomainsManagement/>
+                    </Grid>
+                }
+                {
+                    activeTabIndex === BANKS_MANAGEMENT_TAB_LABEL && <Grid size={columnSizing}>
+                        <BanksManagement/>
                     </Grid>
                 }
             </Grid>

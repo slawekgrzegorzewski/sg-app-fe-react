@@ -1,5 +1,13 @@
 import {GQLDomainSimple, mapDomainSimple} from "../../application/model/types";
-import {Account, BankAccount, BillingCategory, CurrencyInfo, MonetaryAmount} from "../../types";
+import {
+    Account,
+    BankAccount,
+    BankPermission,
+    BankPermissions,
+    BillingCategory,
+    CurrencyInfo,
+    MonetaryAmount
+} from "../../types";
 import Decimal from "decimal.js";
 
 export type GQLAccount = {
@@ -78,4 +86,45 @@ export const mapMonetaryAmount = (monetaryAmount: MonetaryAmount) => {
         amount: new Decimal(monetaryAmount.amount),
         currency: mapCurrencyInfo(monetaryAmount.currency),
     } as GQLMonetaryAmount;
+}
+
+
+export type GQLBankPermissions = {
+    granted: GQLBankPermission[];
+    toProcess: GQLBankPermission[];
+}
+
+export const mapBankPermissions = (bankPermissions: BankPermissions) => {
+    return {
+        granted: bankPermissions.granted.map(mapBankPermission),
+        toProcess: bankPermissions.toProcess.map(mapBankPermission)
+    } as GQLBankPermissions;
+}
+
+export type GQLBankPermission = {
+    publicId: string;
+    createdAt: Date;
+    givenAt: Date;
+    withdrawnAt: Date;
+    bankAccounts: GQLBankAccount[];
+    institutionId: string;
+    reference: string;
+    ssn: string;
+    confirmationLink: string;
+    requisitionId: string;
+}
+
+export const mapBankPermission = (bankPermission: BankPermission) => {
+    return {
+        publicId: bankPermission.publicId,
+        createdAt: bankPermission.createdAt ? new Date(bankPermission.createdAt) : null,
+        givenAt: bankPermission.givenAt ? new Date(bankPermission.givenAt) : null,
+        withdrawnAt: bankPermission.withdrawnAt ? new Date(bankPermission.withdrawnAt) : null,
+        bankAccounts: bankPermission.bankAccounts.map(mapBankAccount),
+        institutionId: bankPermission.institutionId,
+        reference: bankPermission.reference,
+        ssn: bankPermission.ssn,
+        confirmationLink: bankPermission.confirmationLink,
+        requisitionId: bankPermission.requisitionId,
+    } as GQLBankPermission;
 }
