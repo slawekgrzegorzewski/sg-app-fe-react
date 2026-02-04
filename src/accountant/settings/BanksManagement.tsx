@@ -19,23 +19,44 @@ export function BanksManagement() {
         return <>
         </>
     else
-        return <SimpleCrudList
-            title={'Dostęp udzielony'}
-            list={[...bankAccountPermissionsData.bankPermissions.granted]
-                .map(mapBankPermission)
-                .sort(ComparatorBuilder.comparing<GQLBankPermission>(bankPermissions => bankPermissions.institutionId).build())}
-            idExtractor={bankPermission => bankPermission.publicId}
-            rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-                return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}>
-                </Card>;
-            }}
-            entityDisplay={
-                bankPermission => {
-                    return <>{bankPermission.institutionId}</>
+        return <>
+            <SimpleCrudList
+                title={'Dostęp udzielony'}
+                list={[...bankAccountPermissionsData.bankPermissions.granted]
+                    .map(mapBankPermission)
+                    .sort(ComparatorBuilder.comparing<GQLBankPermission>(bankPermissions => bankPermissions.institutionId).build())}
+                idExtractor={bankPermission => bankPermission.publicId}
+                rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
+                    return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}>
+                    </Card>;
+                }}
+                entityDisplay={
+                    bankPermission => {
+                        return <>{bankPermission.institutionId} - udzielono {bankPermission.givenAt.toLocaleString()}</>
+                    }
                 }
-            }
-            enableDndReorder={
-                false
-            }
-        />
+                enableDndReorder={
+                    false
+                }
+            />
+            <SimpleCrudList
+                title={'Potrzebne udzielenie pozwolenia'}
+                list={[...bankAccountPermissionsData.bankPermissions.toProcess]
+                    .map(mapBankPermission)
+                    .sort(ComparatorBuilder.comparing<GQLBankPermission>(bankPermissions => bankPermissions.institutionId).build())}
+                idExtractor={bankPermission => bankPermission.publicId}
+                rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
+                    return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}>
+                    </Card>;
+                }}
+                entityDisplay={
+                    bankPermission => {
+                        return <>{bankPermission.institutionId}</>
+                    }
+                }
+                enableDndReorder={
+                    false
+                }
+            />
+        </>
 }

@@ -786,7 +786,7 @@ type BankPermissions {
 type BankPermission{
     publicId: UUID!
     createdAt:LocalDateTime!
-    givenAt:LocalDateTime!
+    givenAt:LocalDateTime
     withdrawnAt: LocalDateTime
     bankAccounts: [BankAccount!]!
     institutionId: String!
