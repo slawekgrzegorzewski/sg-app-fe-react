@@ -38,7 +38,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{ secrets.SSH_PASSWORD }}
-        port: 101
+        port: 10000
         source: "react.tar"
         target: "/home/slawek"
     - name: unpack and deploy application files
@@ -47,7 +47,7 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         password: ${{ secrets.SSH_PASSWORD }}
-        port: 101
+        port: 10000
         script: |
           mkdir -p /home/slawek/Cluster/permanent_data/sg-application-gateway/react
           rm -rf /home/slawek/Cluster/permanent_data/sg-application-gateway/react/*
