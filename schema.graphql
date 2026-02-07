@@ -96,6 +96,9 @@ type Mutation{
     createInvoice(invoiceCreationInput: InvoiceCreationInput!): Invoice!
     updateInvoice(invoiceUpdateInput: InvoiceUpdateInput!): Invoice!
     deleteFinancialDocument(financialDocumentPublicId: UUID!): String!
+
+    startPermissionRequest(bankPermissionRequest: BankPermissionRequest!):  [BankPermission!]!
+    confirmPermission(confirmPermissionRequest: ConfirmPermissionRequest!): String!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
@@ -779,8 +782,10 @@ input AccountantSettingsUpdateInput {
 }
 
 type BankPermissions {
+    availableInstitutions(country: String!): [Institution!]!
     granted: [BankPermission!]!
     toProcess: [BankPermission!]!
+    toRecreate: [Institution!]!
 }
 
 type BankPermission{
@@ -794,4 +799,24 @@ type BankPermission{
     ssn: String
     confirmationLink: URL
     requisitionId: UUID!
+}
+
+type Institution {
+    id: String!
+    name: String!
+    bic: String!
+    transactionTotalDays: Int!
+    countries: [String]
+    logo: String!
+}
+
+input BankPermissionRequest{
+    institutionId:String!
+    maxHistoricalDays:Int!
+    redirect:URL!
+    userLanguage:String!
+}
+
+input ConfirmPermissionRequest {
+    reference: String!
 }

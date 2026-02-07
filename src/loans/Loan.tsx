@@ -27,7 +27,7 @@ import {LoanSimulation} from "./LoanSimulation";
 import IconButton from "@mui/material/IconButton";
 
 export function Loan() {
-    const {changePageParams} = useApplicationNavigation();
+    const {setPageParams} = useApplicationNavigation();
     const {param1} = useParams();
     const {loading, error, data, refetch} = useQuery<SingleLoanQuery>(SingleLoan, {
         variables: {
@@ -49,7 +49,7 @@ export function Loan() {
     }
     const deleteLoan = async (loanId: string): Promise<any> => {
         await deleteLoanMutation({variables: {loanId: loanId}});
-        changePageParams([])
+        setPageParams([])
         return Promise.resolve("");
     }
     const createInstallment = async (loanId: string, loanCurrency: string, paidAt: string, repaidInterest: Decimal, repaidAmount: Decimal, overpayment: Decimal): Promise<any> => {
@@ -80,7 +80,7 @@ export function Loan() {
             <Box component="section" sx={{width: 1000, m: 'auto'}}>
                 {
                     (<Stack direction={"row"}>
-                        <Button variant={"text"} onClick={(e) => changePageParams([])}>
+                        <Button variant={"text"} onClick={(e) => setPageParams([])}>
                             <ArrowLeft/>
                         </Button>
                         <Stack direction={"column"} key={loan.publicId}>

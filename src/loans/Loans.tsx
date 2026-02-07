@@ -37,7 +37,7 @@ import Decimal from "decimal.js";
 
 export function Loans() {
 
-    const {changePageParams} = useApplicationNavigation();
+    const {setPageParams} = useApplicationNavigation();
     const {loading, error, data, refetch} = useQuery<GetLoansQuery>(GetLoans);
     const [createLoanMutation, createLoanMutationResult] = useMutation<CreateLoanMutation>(CreateLoan);
     const [deleteLoanMutation, deleteLoanMutationResult] = useMutation<DeleteLoanMutation>(DeleteLoan);
@@ -121,7 +121,7 @@ export function Loans() {
                                                 <LoanDetails
                                                     loan={loan}
                                                     short={true}
-                                                    onClick={event => changePageParams([loan.publicId])}/>
+                                                    onClick={event => setPageParams([loan.publicId])}/>
                                                 <DeleteButton
                                                     object={loan.publicId}
                                                     confirmationMessage={'Na pewno usunąć?'}

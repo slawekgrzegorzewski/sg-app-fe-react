@@ -1,37 +1,79 @@
-import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText} from "@mui/material";
+import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText, Theme} from "@mui/material";
 import * as React from "react";
+import {SxProps} from "@mui/system";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-export interface PickDialogProps {
-    options: { id: string, value: string }[];
+export interface PickDialogProps<T> {
+    title: string;
+    options: T[];
+    idExtractor: (object: T) => string;
+    descriptionExtractor: (object: T) => string;
     open: boolean;
-    selectedValue: string;
-    onClose: (value: string) => void;
+    onClose: () => void;
+    onPick: (value: T) => void;
+    containerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
+    elementContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any, element: T) => React.JSX.Element
 }
 
-export default function PickDialog(props: PickDialogProps) {
-    const {onClose, selectedValue, open, options} = props;
-    const selectedOption = options.find(option => option.id === selectedValue);
-    const notSelectedOptions = options.filter(option => option.id !== selectedValue);
-    const handleClose = () => {
-        onClose(selectedValue);
+export default function PickDialog<T>({
+                                          title,
+                                          onClose,
+                                          onPick,
+                                          open,
+                                          options,
+                                          idExtractor,
+                                          descriptionExtractor,
+                                          containerProvider,
+                                          elementContainerProvider
+                                      }: PickDialogProps<T>) {
+
+    const DEFAULT_CONTAINER_PROVIDER = (sx: SxProps<Theme>, additionalProperties: any) => {
+        return <List sx={{pt: 0, ...sx}} {...additionalProperties}></List>;
     };
 
-    const handleListItemClick = (value: string) => {
-        onClose(value);
+    const DEFAULT_ELEMENT_CONTAINER_PROVIDER = (sx: SxProps<Theme>, additionalProperties: any, element: T) => {
+        return <ListItem sx={sx} {...additionalProperties} disableGutters key={idExtractor(element)}>
+            <ListItemButton>
+                <ListItemText primary={descriptionExtractor(element)}/>
+            </ListItemButton>
+        </ListItem>;
     };
+
+    if (!containerProvider || !elementContainerProvider) {
+        containerProvider = DEFAULT_CONTAINER_PROVIDER;
+        elementContainerProvider = DEFAULT_ELEMENT_CONTAINER_PROVIDER;
+    }
 
     return (
-        <Dialog onClose={handleClose} open={open}>
-            <DialogTitle>{selectedOption ? selectedOption.value : 'Wybierz aplikację'}</DialogTitle>
-            <List sx={{pt: 0}}>
-                {notSelectedOptions.map((option) => (
-                    <ListItem disableGutters key={option.id}>
-                        <ListItemButton onClick={() => handleListItemClick(option.id)}>
-                            <ListItemText primary={option.value}/>
-                        </ListItemButton>
-                    </ListItem>
-                ))}
-            </List>
+        <Dialog onClose={() => onClose()} open={open} fullScreen>
+            <DialogTitle>{title}</DialogTitle>
+            <IconButton
+                aria-label="close"
+                onClick={() => onClose()}
+                sx={(theme) => ({
+                    position: 'absolute',
+                    right: 8,
+                    top: 8,
+                    color: theme.palette.grey[500],
+                })}
+            >
+                <CloseIcon/>
+            </IconButton>
+            {
+                containerProvider(
+                    {},
+                    {
+                        children: options.map((option) => (
+                            elementContainerProvider!(
+                                {},
+                                {
+                                    key: idExtractor(option),
+                                    onClick: () => onPick(option)
+                                },
+                                option)))
+                    })
+            }
         </Dialog>
     );
 }

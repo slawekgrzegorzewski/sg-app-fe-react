@@ -6,6 +6,7 @@ import {
     BankPermissions,
     BillingCategory,
     CurrencyInfo,
+    Institution,
     MonetaryAmount
 } from "../../types";
 import Decimal from "decimal.js";
@@ -114,6 +115,15 @@ export type GQLBankPermission = {
     requisitionId: string;
 }
 
+export type GQLInstitution = {
+    id: string;
+    name: string;
+    bic: string;
+    transactionTotalDays: number;
+    countries: string[];
+    logo: string;
+}
+
 export const mapBankPermission = (bankPermission: BankPermission) => {
     return {
         publicId: bankPermission.publicId,
@@ -128,3 +138,14 @@ export const mapBankPermission = (bankPermission: BankPermission) => {
         requisitionId: bankPermission.requisitionId,
     } as GQLBankPermission;
 }
+
+export const mapInstitution = (institution: Institution) => {
+    return {
+        id: institution.id,
+        name: institution.name,
+        bic: institution.bic,
+        transactionTotalDays: institution.transactionTotalDays,
+        countries: institution.countries,
+        logo: institution.logo
+    } as GQLInstitution;
+};

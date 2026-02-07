@@ -13,7 +13,7 @@ import {CURRENT_USER_KEY, useCurrentUser} from "../utils/users/use-current-user"
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import type {ServerParseError} from "@apollo/client/link/http";
 import type {ServerError} from "@apollo/client/link/utils";
-import {SwitchDomain, SwitchDomainMutation} from "../types";
+import {Institution, SwitchDomain, SwitchDomainMutation} from "../types";
 import getUserApplications, {Application} from "../utils/applications/applications-access";
 
 function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
@@ -97,6 +97,9 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
                             return `Task:${object.id}:${timeRecordsLength}:${datesPart}`;
                         }
                         return `Task:${object.id}:${timeRecordsLength}`;
+                    case 'Institution':
+                        const institution = object as Institution;
+                        return `Institution:${institution.id}:${institution.bic}`;
                     default:
                         return defaultDataIdFromObject(object);
                 }

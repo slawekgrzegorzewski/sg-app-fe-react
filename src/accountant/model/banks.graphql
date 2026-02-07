@@ -1,3 +1,16 @@
+query GetAvailableInstitutions($country: String!){
+    bankPermissions {
+        availableInstitutions(country: $country){
+            id
+            name
+            bic
+            transactionTotalDays
+            countries
+            logo
+        }
+    }
+}
+
 query GetBankPermissions {
     bankPermissions {
         granted {
@@ -30,5 +43,46 @@ query GetBankPermissions {
             confirmationLink
             requisitionId
         }
+        toRecreate {
+            id
+            name
+            bic
+            transactionTotalDays
+            countries
+            logo
+        }
     }
+}
+
+mutation StartPermissionRequest(
+    $institutionId:String!
+    $maxHistoricalDays:Int!
+    $redirect:URL!
+    $userLanguage:String!
+){
+    startPermissionRequest(bankPermissionRequest: {
+        institutionId: $institutionId,
+        maxHistoricalDays: $maxHistoricalDays,
+        redirect: $redirect,
+        userLanguage: $userLanguage}){
+        publicId
+        createdAt
+        givenAt
+        withdrawnAt
+        bankAccounts{
+            publicId
+            iban
+        }
+        institutionId
+        reference
+        ssn
+        confirmationLink
+        requisitionId
+    }
+}
+
+mutation ConfirmPermission(
+    $reference:String!
+){
+    confirmPermission(confirmPermissionRequest: {reference: $reference})
 }

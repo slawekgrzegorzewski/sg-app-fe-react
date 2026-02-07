@@ -10,7 +10,7 @@ import {FormDialog} from "../../utils/dialogs/FormDialog";
 import IconButton from "@mui/material/IconButton";
 import {FormProps} from "../../utils/forms/Form";
 import {ReorderEvent, SimpleCrudListRow} from "./SimpleCrudListRow";
-import {SxProps} from "@mui/system";
+import {ResponsiveStyleValue, SxProps} from "@mui/system";
 
 export interface SimpleCrudListProps<T> {
     title: string,
@@ -18,9 +18,11 @@ export interface SimpleCrudListProps<T> {
     idExtractor: (t: T) => string,
 
     createTitle?: string,
+
     onCreate?(t: T): Promise<void>,
 
     editTitle?: string,
+
     onUpdate?(t: T): Promise<void>,
 
     onDelete?(t: T): Promise<void>,
@@ -28,6 +30,9 @@ export interface SimpleCrudListProps<T> {
     onReorder?(event: ReorderEvent): Promise<void>,
 
     formSupplier?: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
+
+    elementsDirection?: ResponsiveStyleValue<'row' | 'row-reverse' | 'column' | 'column-reverse'>,
+
     rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
 
     entityDisplay(t: T, index: number): React.JSX.Element,
@@ -51,6 +56,7 @@ export function SimpleCrudList<T>({
                                       onUpdate,
                                       formSupplier,
                                       entityDisplay,
+                                      elementsDirection,
                                       rowContainerProvider,
                                       rowStyle,
                                       dialogOptions,
@@ -125,7 +131,7 @@ export function SimpleCrudList<T>({
                 }
             </Stack>
 
-            <Stack direction={"column"}>
+            <Stack direction={elementsDirection ? elementsDirection : "column"}>
                 {
                     elements
                 }
@@ -134,14 +140,14 @@ export function SimpleCrudList<T>({
 
         {
             selectedEntity && onUpdate && editTitle && formSupplier && <FormDialog dialogTitle={editDialogTitleElement}
-                                          open={showEditDialog}
-                                          onSave={value => onUpdate(value)}
-                                          onCancel={() => {
-                                              setShowEditDialog(false);
-                                              return Promise.resolve();
-                                          }}
-                                          formProps={formSupplier(selectedEntity)}
-                                          dialogOptions={dialogOptions}/>
+                                                                                   open={showEditDialog}
+                                                                                   onSave={value => onUpdate(value)}
+                                                                                   onCancel={() => {
+                                                                                       setShowEditDialog(false);
+                                                                                       return Promise.resolve();
+                                                                                   }}
+                                                                                   formProps={formSupplier(selectedEntity)}
+                                                                                   dialogOptions={dialogOptions}/>
         }
         {
             selectedEntity && onDelete && <ConfirmationDialog companionObject={selectedEntity}
