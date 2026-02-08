@@ -9,9 +9,8 @@ import {useQuery} from "@apollo/client";
 import {
     GetAccountantSettings,
     GetAccountantSettingsQuery,
-    GetFinanceManagement,
-    GetFinanceManagementQuery,
-    GetFinanceManagementWithNotAssignedBankAccounts, GetFinanceManagementWithNotAssignedBankAccountsQuery,
+    GetFinanceManagementWithNotAssignedBankAccounts,
+    GetFinanceManagementWithNotAssignedBankAccountsQuery,
     PiggyBank
 } from "../../types";
 import {mapAccount, mapBankAccount, mapBillingCategory, mapCurrencyInfo} from "../model/types";
