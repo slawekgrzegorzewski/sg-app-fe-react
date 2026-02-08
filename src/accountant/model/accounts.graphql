@@ -264,3 +264,16 @@ mutation ReorderAccount(
         }
     })
 }
+
+mutation AssignBankAccountToAccount(
+    $bankAccountPublicId: UUID!,
+    $accountPublicId: UUID!
+){
+    assignBankAccountToAccount(assignBankAccountToAccountInput: {accountPublicId: $accountPublicId, bankAccountPublicId: $bankAccountPublicId})
+}
+
+mutation DeleteBankAccountAssignment(
+    $accountPublicId: UUID!
+) {
+    deleteBankAccountAssignment(deleteBankAccountAssignmentInput: {accountPublicId: $accountPublicId})
+}

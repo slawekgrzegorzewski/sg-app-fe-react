@@ -100,6 +100,8 @@ type Mutation{
     startPermissionRequest(bankPermissionRequest: BankPermissionRequest!):  [BankPermission!]!
     confirmPermission(confirmPermissionRequest: ConfirmPermissionRequest!): String!
     triggerFetchBankAccountData(fetchBankAccountDataInput: FetchBankAccountDataInput!): String!
+    assignBankAccountToAccount(assignBankAccountToAccountInput: AssignBankAccountToAccountInput!): String!
+    deleteBankAccountAssignment(deleteBankAccountAssignmentInput: DeleteBankAccountAssignmentInput!): String!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
@@ -826,4 +828,13 @@ input ConfirmPermissionRequest {
 
 input FetchBankAccountDataInput {
     bankAccountPublicId: UUID!
+}
+
+input AssignBankAccountToAccountInput{
+    bankAccountPublicId: UUID!
+    accountPublicId: UUID!
+}
+
+input DeleteBankAccountAssignmentInput{
+    accountPublicId: UUID!
 }

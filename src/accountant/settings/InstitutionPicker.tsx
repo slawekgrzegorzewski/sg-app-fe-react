@@ -31,6 +31,7 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
         })
     }
     return <PickDialog
+        fullScreen={true}
         title={'Wybierz bank do podłączenia'}
         options={pickNewInstitutionDialogOptions.options}
         open={pickNewInstitutionDialogOptions.open}
@@ -48,7 +49,7 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
         containerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
             return <Stack direction={'row'}
                           useFlexGap
-                          sx={{flexWrap: 'wrap'}}
+                          sx={{flexWrap: 'wrap', ...sx}}
                           {...additionalProperties}>
             </Stack>;
         }}

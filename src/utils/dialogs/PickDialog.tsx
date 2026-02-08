@@ -13,7 +13,8 @@ export interface PickDialogProps<T> {
     onClose: () => void;
     onPick: (value: T) => void;
     containerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
-    elementContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any, element: T) => React.JSX.Element
+    elementContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any, element: T) => React.JSX.Element,
+    fullScreen?: boolean
 }
 
 export default function PickDialog<T>({
@@ -25,7 +26,8 @@ export default function PickDialog<T>({
                                           idExtractor,
                                           descriptionExtractor,
                                           containerProvider,
-                                          elementContainerProvider
+                                          elementContainerProvider,
+                                          fullScreen = false
                                       }: PickDialogProps<T>) {
 
     const DEFAULT_CONTAINER_PROVIDER = (sx: SxProps<Theme>, additionalProperties: any) => {
@@ -46,7 +48,7 @@ export default function PickDialog<T>({
     }
 
     return (
-        <Dialog onClose={() => onClose()} open={open} fullScreen>
+        <Dialog onClose={() => onClose()} open={open} fullScreen={fullScreen}>
             <DialogTitle>{title}</DialogTitle>
             <IconButton
                 aria-label="close"

@@ -1,35 +1,50 @@
 import {useMutation} from "@apollo/client";
 import {
+    AssignBankAccountToAccount,
+    AssignBankAccountToAccountMutation,
     CreateAccount,
     CreateAccountMutation,
     DeleteAccount,
     DeleteAccountMutation,
+    DeleteBankAccountAssignment,
+    DeleteBankAccountAssignmentMutation,
     ReorderAccount,
     ReorderAccountMutation,
     UpdateAccount,
     UpdateAccountMutation
 } from "../../types";
 import * as React from "react";
+import {useState} from "react";
 import * as Yup from "yup";
 import {AutocompleteEditorField, BooleanEditorField, EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Decimal from "decimal.js";
-import Box from "@mui/material/Box";
 import {formatBalance} from "../../utils/functions";
-import {Card, Theme, useTheme} from "@mui/material";
+import {Card, Stack, Theme, useTheme} from "@mui/material";
 import {GQLAccount, GQLBankAccount, GQLCurrencyInfo} from "../model/types";
 import {SxProps} from "@mui/system";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
+import Button from "@mui/material/Button";
+import Typography from "@mui/material/Typography";
+import {PickBankAccountButton} from "./PickBankAccountButton";
+import {FormDialog} from "../../utils/dialogs/FormDialog";
+import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 
 type AccountDTO = {
     publicId: string,
     name: string,
     visible: boolean,
+    bankAccount?: BankAccountDTO,
     currentBalance: Decimal,
     currency: string,
     creditLimitAmount: Decimal,
     order: number
+}
+
+type BankAccountDTO = {
+    publicId: string,
+    iban: string
 }
 
 const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
@@ -112,6 +127,13 @@ export function AccountsManagement({
     const [updateAccountMutation] = useMutation<UpdateAccountMutation>(UpdateAccount);
     const [deleteAccountMutation] = useMutation<DeleteAccountMutation>(DeleteAccount);
     const [reorderAccountMutation] = useMutation<ReorderAccountMutation>(ReorderAccount);
+    const [assignBankAccountToAccountMutation] = useMutation<AssignBankAccountToAccountMutation>(AssignBankAccountToAccount);
+    const [deleteBankAccountAssignmentMutation] = useMutation<DeleteBankAccountAssignmentMutation>(DeleteBankAccountAssignment);
+    const [editDialogOptions, setEditDialogOptions] = useState<{ account: AccountDTO | null }>({account: null});
+    const [deleteDialogOptions, setDeleteDialogOptions] = useState<{ account: AccountDTO | null }>({account: null});
+    const [deleteBankAccountAssignmentDialogOptions, setDeleteBankAccountAssignmentDialogOptions] = useState<{
+        account: AccountDTO | null
+    }>({account: null});
 
     const createAccount = async (account: AccountDTO): Promise<any> => {
         return await createAccountMutation({
@@ -148,6 +170,22 @@ export function AccountsManagement({
             .finally(() => refetch());
     };
 
+    const assignBankAccountToAccount = async (bankAccountPublicId: string, accountPublicId: string): Promise<any> => {
+        return await assignBankAccountToAccountMutation({
+            variables: {
+                accountPublicId: accountPublicId,
+                bankAccountPublicId: bankAccountPublicId
+            }
+        })
+            .finally(() => refetch());
+    };
+
+    const deleteBankAccountAssignment = async (accountPublicId: string): Promise<any> => {
+        console.log(JSON.stringify({variables: {accountPublicId: accountPublicId}}));
+        return await deleteBankAccountAssignmentMutation({variables: {accountPublicId: accountPublicId}})
+            .finally(() => refetch());
+    };
+
     const reorderAccount = async (publicId: string, beforeAccountPublicId: string | null, afterAccountPublicId: string | null): Promise<any> => {
         return await reorderAccountMutation({
             variables: {
@@ -160,60 +198,137 @@ export function AccountsManagement({
     };
 
     const currencies = supportedCurrencies.map(currency => currency.code).sort();
-    return <SimpleCrudList
-        title={'KONTA'}
-        editTitle={'Edytuj'}
-        createTitle={'Dodaj'}
-        list={
-            accounts
-                .sort(ComparatorBuilder.comparing<GQLAccount>(account => account.order).build())
-                .map(account => {
-                    return {
-                        publicId: account.publicId,
-                        name: account.name,
-                        visible: account.visible,
-                        currentBalance: new Decimal(account.currentBalance.amount),
-                        currency: account.currentBalance.currency.code,
-                        creditLimitAmount: new Decimal(account.creditLimit.amount),
-                        order: account.order
-                    } as AccountDTO
-                })
+    return <>
+        <SimpleCrudList
+            title={'KONTA'}
+            editTitle={'Edytuj'}
+            createTitle={'Dodaj'}
+            list={
+                accounts
+                    .sort(ComparatorBuilder.comparing<GQLAccount>(account => account.order).build())
+                    .map(account => {
+                        return {
+                            publicId: account.publicId,
+                            name: account.name,
+                            visible: account.visible,
+                            bankAccount: account.bankAccount ? {
+                                    publicId: account.bankAccount.publicId,
+                                    iban: account.bankAccount.iban
+                                }
+                                : undefined,
+                            currentBalance: new Decimal(account.currentBalance.amount),
+                            currency: account.currentBalance.currency.code,
+                            creditLimitAmount: new Decimal(account.creditLimit.amount),
+                            order: account.order
+                        } as AccountDTO
+                    })
+            }
+            idExtractor={account => account.publicId}
+            highlightRowOnHover={false}
+            onCreate={account => createAccount(account)}
+            formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
+            rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
+                return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
+            }}
+            entityDisplay={(account, index) => {
+                return <Stack direction={'row'} key={account.publicId} sx={{paddingLeft: '15px'}}
+                              justifyContent={'space-between'} alignItems={'baseline'}>
+                    <Stack direction={'column'} alignItems={'flex-start'}>
+                        <Typography variant={'body1'}>{account.name}</Typography>
+                        <Stack direction={'column'} sx={{paddingLeft: '15px'}}>
+                            {account.bankAccount && (
+                                <Typography variant={'body2'}
+                                            sx={{
+                                                color: theme.palette.text.disabled
+                                            }}>
+                                    Powiązane z kontem bankowym: {account.bankAccount.iban}
+                                </Typography>
+                            )}
+                            <Typography variant={'body2'}
+                                        sx={{
+                                            color: account.currentBalance.toNumber() < 0 ? theme.palette.error.main : theme.palette.text.disabled
+                                        }}>
+                                Stan konta: {formatBalance(account.currency, account.currentBalance)}
+                            </Typography>
+                            {account.creditLimitAmount.toNumber() > 0 && (
+                                <Typography variant={'body2'}
+                                            sx={{
+                                                color: theme.palette.text.disabled
+                                            }}>
+                                    Limit kredytowy: {formatBalance(account.currency, account.creditLimitAmount)}
+                                </Typography>
+                            )}
+                            {!account.visible && (
+                                <Typography variant={'body2'}
+                                            sx={{
+                                                color: theme.palette.warning.main
+                                            }}>
+                                    Ukryte z interfejsu
+                                </Typography>
+                            )}
+                        </Stack>
+                    </Stack>
+                    <Stack direction={'column'} alignItems={'flex-start'}>
+                        <Stack direction={'row'}>
+                            <Button onClick={() => setEditDialogOptions({account: account})}>Edytuj</Button>
+                            <Button onClick={() => setDeleteDialogOptions({account: account})}>Usuń</Button>
+                        </Stack>
+                        {account.bankAccount &&
+                            <Button onClick={() => setDeleteBankAccountAssignmentDialogOptions({account: account})}>Usuń
+                                przypisanie konta</Button>}
+                        {!account.bankAccount && notAssignedBankAccounts.length > 0 &&
+                            <PickBankAccountButton
+                                bankAccounts={notAssignedBankAccounts}
+                                onPick={bankAccount => assignBankAccountToAccount(bankAccount.publicId, account.publicId)}
+                                onClose={() => {
+                                }}
+                                text={'Przypisz konto'}
+                            />}
+                    </Stack>
+                </Stack>;
+            }}
+            enableDndReorder={true}
+            onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
+        />
+        {
+            editDialogOptions.account && <FormDialog dialogTitle={<Typography>Edytuj konto</Typography>}
+                                                     open={true}
+                                                     onSave={value => updateAccount(value)}
+                                                     onCancel={() => {
+                                                         setEditDialogOptions({account: null});
+                                                         return Promise.resolve();
+                                                     }}
+                                                     formProps={ACCOUNT_FORM(currencies, editDialogOptions.account)}
+            />
         }
-        idExtractor={account => account.publicId}
-        onCreate={account => createAccount(account)}
-        onUpdate={account => updateAccount(account)}
-        onDelete={account => deleteAccount(account.publicId)}
-        formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
-        rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-            return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
-        }}
-        entityDisplay={(account, index) => {
-            return <Box dir={'column'} key={account.publicId} sx={{paddingLeft: '15px'}}>
-                <div>{account.name}</div>
-                <div style={{
-                    color: account.currentBalance.toNumber() < 0 ? theme.palette.error.main : theme.palette.text.disabled,
-                    paddingLeft: '15px'
-                }}>
-                    Stan konta: {formatBalance(account.currency, account.currentBalance)}
-                    {account.bankAccount}
-                </div>
-                {account.creditLimitAmount.toNumber() > 0 && (
-                    <div style={{
-                        color: theme.palette.text.disabled,
-                        paddingLeft: '15px'
-                    }}>
-                        Limit kredytowy: {formatBalance(account.currency, account.creditLimitAmount)}
-                    </div>)}
-                {!account.visible && (
-                    <div style={{
-                        color: theme.palette.warning.main,
-                        paddingLeft: '15px'
-                    }}>
-                        Ukryte z interfejsu
-                    </div>)}
-            </Box>;
-        }}
-        enableDndReorder={true}
-        onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
-    />
+        {
+            deleteDialogOptions.account && <ConfirmationDialog companionObject={deleteDialogOptions.account}
+                                                               title={'Na pewno usunąć?'}
+                                                               message={'Na pewno usunąć?'}
+                                                               open={true}
+                                                               onConfirm={(entity: AccountDTO) => {
+                                                                   setDeleteDialogOptions({account: null});
+                                                                   return deleteAccount(entity.publicId);
+                                                               }}
+                                                               onCancel={() => {
+                                                                   setDeleteDialogOptions({account: null});
+                                                                   return Promise.resolve();
+                                                               }}/>
+        }
+        {
+            deleteBankAccountAssignmentDialogOptions.account &&
+            <ConfirmationDialog companionObject={deleteBankAccountAssignmentDialogOptions.account}
+                                title={'Na pewno usunąć?'}
+                                message={'Na pewno usunąć powiązanie z kontem bankowym?'}
+                                open={true}
+                                onConfirm={(entity: AccountDTO) => {
+                                    setDeleteBankAccountAssignmentDialogOptions({account: null});
+                                    return deleteBankAccountAssignment(entity.publicId);
+                                }}
+                                onCancel={() => {
+                                    setDeleteBankAccountAssignmentDialogOptions({account: null});
+                                    return Promise.resolve();
+                                }}/>
+        }
+    </>
 }
