@@ -10,6 +10,7 @@ export interface SimpleCrudListRowProps<T> {
     index: number;
     entity: T,
     idExtractor: (t: T) => string,
+    highlightRowOnHover: boolean;
 
     entityDisplay(t: T, index: number): React.JSX.Element,
 
@@ -54,6 +55,7 @@ export function SimpleCrudListRow<T>({
                                          index,
                                          entity,
                                          idExtractor,
+                                         highlightRowOnHover = true,
                                          rowContainerProvider,
                                          entityDisplay,
                                          rowStyle,
@@ -154,10 +156,12 @@ export function SimpleCrudListRow<T>({
     );
     return (rowContainerProvider || ROW_CONTAINER_DEFAULT_PROVIDER)(
         {
-            '&:hover': {
-                color: theme.palette.primary.contrastText,
-                backgroundColor: theme.palette.primary.main,
-            },
+            '&:hover': highlightRowOnHover
+                ? {
+                    color: theme.palette.primary.contrastText,
+                    backgroundColor: theme.palette.primary.main,
+                }
+                : {},
             ...(draggingInfo.mouseDirection === 'up'
                 ? {borderTop: '2px solid ' + theme.palette.primary.main}
                 : draggingInfo.mouseDirection === 'down'

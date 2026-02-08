@@ -4,8 +4,8 @@ import {useQuery} from "@apollo/client";
 import {GetAvailableInstitutions, GetAvailableInstitutionsQuery, Institution} from "../../types";
 import PickDialog from "../../utils/dialogs/PickDialog";
 import {SxProps} from "@mui/system";
-import {Card, Stack, Theme} from "@mui/material";
-import {InstitutionCardContent} from "./InstitutionCardContent";
+import {Card, CardContent, CardMedia, Stack, Theme} from "@mui/material";
+import Typography from "@mui/material/Typography";
 
 export interface InstitutionPickerProps {
     onPick: (value: Institution) => void;
@@ -34,7 +34,7 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
         title={'Wybierz bank do podłączenia'}
         options={pickNewInstitutionDialogOptions.options}
         open={pickNewInstitutionDialogOptions.open}
-        onClose={()=>onClose()}
+        onClose={() => onClose()}
         onPick={(value) => {
             setPickNewInstitutionDialogOptions({options: [], open: false});
             onPick(value);
@@ -55,7 +55,18 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
         elementContainerProvider={
             (sx: SxProps<Theme>, additionalProperties: any, institution: Institution) => {
                 return <Card sx={{marginBottom: '10px', maxWidth: '150px', ...sx}} {...additionalProperties}>
-                    <InstitutionCardContent institution={institution}/>
+                    <CardMedia component="img" image={institution.logo} sx={{maxWidth: "150px"}}></CardMedia>
+                    <CardContent>
+                        <Typography variant="body1">
+                            {institution.id}
+                        </Typography>
+                        <Typography variant="body2" sx={{color: "text.secondary"}}>
+                            {institution.bic}
+                        </Typography>
+                        <Typography variant="body2" sx={{color: "text.secondary"}}>
+                            {institution.name}
+                        </Typography>
+                    </CardContent>
                 </Card>;
             }
         }

@@ -99,6 +99,7 @@ type Mutation{
 
     startPermissionRequest(bankPermissionRequest: BankPermissionRequest!):  [BankPermission!]!
     confirmPermission(confirmPermissionRequest: ConfirmPermissionRequest!): String!
+    triggerFetchBankAccountData(fetchBankAccountDataInput: FetchBankAccountDataInput!): String!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
@@ -795,6 +796,7 @@ type BankPermission{
     withdrawnAt: LocalDateTime
     bankAccounts: [BankAccount!]!
     institutionId: String!
+    institution: Institution
     reference: String
     ssn: String
     confirmationLink: URL
@@ -819,4 +821,8 @@ input BankPermissionRequest{
 
 input ConfirmPermissionRequest {
     reference: String!
+}
+
+input FetchBankAccountDataInput {
+    bankAccountPublicId: UUID!
 }

@@ -109,6 +109,7 @@ export type GQLBankPermission = {
     withdrawnAt: Date;
     bankAccounts: GQLBankAccount[];
     institutionId: string;
+    institution: GQLInstitution;
     reference: string;
     ssn: string;
     confirmationLink: string;
@@ -132,6 +133,7 @@ export const mapBankPermission = (bankPermission: BankPermission) => {
         withdrawnAt: bankPermission.withdrawnAt ? new Date(bankPermission.withdrawnAt) : null,
         bankAccounts: bankPermission.bankAccounts.map(mapBankAccount),
         institutionId: bankPermission.institutionId,
+        institution: bankPermission.institution ? mapInstitution(bankPermission.institution) : null,
         reference: bankPermission.reference,
         ssn: bankPermission.ssn,
         confirmationLink: bankPermission.confirmationLink,

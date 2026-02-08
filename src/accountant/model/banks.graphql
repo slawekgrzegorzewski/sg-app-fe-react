@@ -23,6 +23,14 @@ query GetBankPermissions {
                 iban
             }
             institutionId
+            institution {
+                id
+                name
+                bic
+                transactionTotalDays
+                countries
+                logo
+            }
             reference
             ssn
             confirmationLink
@@ -38,6 +46,14 @@ query GetBankPermissions {
                 iban
             }
             institutionId
+            institution {
+                id
+                name
+                bic
+                transactionTotalDays
+                countries
+                logo
+            }
             reference
             ssn
             confirmationLink
@@ -85,4 +101,8 @@ mutation ConfirmPermission(
     $reference:String!
 ){
     confirmPermission(confirmPermissionRequest: {reference: $reference})
+}
+
+mutation TriggerFetchBankAccountData($bankAccountPublicId: UUID!){
+    triggerFetchBankAccountData(fetchBankAccountDataInput: {bankAccountPublicId: $bankAccountPublicId})
 }

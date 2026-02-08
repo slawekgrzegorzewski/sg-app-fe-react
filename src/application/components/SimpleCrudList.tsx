@@ -16,6 +16,7 @@ export interface SimpleCrudListProps<T> {
     title: string,
     list: T[],
     idExtractor: (t: T) => string,
+    highlightRowOnHover?: boolean;
 
     createTitle?: string,
 
@@ -47,6 +48,7 @@ export interface SimpleCrudListProps<T> {
 
 export function SimpleCrudList<T>({
                                       idExtractor,
+                                      highlightRowOnHover = true,
                                       title,
                                       createTitle,
                                       editTitle,
@@ -97,6 +99,7 @@ export function SimpleCrudList<T>({
         elements.push(<SimpleCrudListRow index={i}
                                          entity={list[i]}
                                          idExtractor={idExtractor}
+                                         highlightRowOnHover={highlightRowOnHover}
                                          key={idExtractor(list[i])}
                                          rowContainerProvider={rowContainerProvider}
                                          entityDisplay={entityDisplay}
