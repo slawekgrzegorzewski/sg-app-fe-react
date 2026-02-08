@@ -18,7 +18,7 @@ import Decimal from "decimal.js";
 import Box from "@mui/material/Box";
 import {formatBalance} from "../../utils/functions";
 import {Card, Theme, useTheme} from "@mui/material";
-import {GQLAccount, GQLCurrencyInfo} from "../model/types";
+import {GQLAccount, GQLBankAccount, GQLCurrencyInfo} from "../model/types";
 import {SxProps} from "@mui/system";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
 
@@ -96,11 +96,17 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
 
 export interface AccountsManagementProps {
     accounts: GQLAccount[],
+    notAssignedBankAccounts: GQLBankAccount[],
     supportedCurrencies: GQLCurrencyInfo[],
     refetch: () => void
 }
 
-export function AccountsManagement({accounts, supportedCurrencies, refetch}: AccountsManagementProps) {
+export function AccountsManagement({
+                                       accounts,
+                                       notAssignedBankAccounts,
+                                       supportedCurrencies,
+                                       refetch
+                                   }: AccountsManagementProps) {
 
     const [createAccountMutation] = useMutation<CreateAccountMutation>(CreateAccount);
     const [updateAccountMutation] = useMutation<UpdateAccountMutation>(UpdateAccount);
@@ -189,6 +195,7 @@ export function AccountsManagement({accounts, supportedCurrencies, refetch}: Acc
                     paddingLeft: '15px'
                 }}>
                     Stan konta: {formatBalance(account.currency, account.currentBalance)}
+                    {account.bankAccount}
                 </div>
                 {account.creditLimitAmount.toNumber() > 0 && (
                     <div style={{

@@ -11,9 +11,10 @@ import {
     GetAccountantSettingsQuery,
     GetFinanceManagement,
     GetFinanceManagementQuery,
+    GetFinanceManagementWithNotAssignedBankAccounts, GetFinanceManagementWithNotAssignedBankAccountsQuery,
     PiggyBank
 } from "../../types";
-import {mapAccount, mapBillingCategory, mapCurrencyInfo} from "../model/types";
+import {mapAccount, mapBankAccount, mapBillingCategory, mapCurrencyInfo} from "../model/types";
 import {PiggyBankDTO, PiggyBanksManagement} from "./PiggyBanksManagement";
 import Decimal from "decimal.js";
 import {AccountantSettingsManagement} from "./AccountantSettingsManagement";
@@ -57,7 +58,7 @@ export function AccountantSettings() {
         error: financeManagementError,
         data: financeManagementData,
         refetch: financeManagementRefetch
-    } = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
+    } = useQuery<GetFinanceManagementWithNotAssignedBankAccountsQuery>(GetFinanceManagementWithNotAssignedBankAccounts);
 
     function mapPiggyBank(piggyBank: PiggyBank) {
         return {
@@ -98,6 +99,7 @@ export function AccountantSettings() {
                 {
                     activeTabIndex === ACCOUNTS_TAB_LABEL && <Grid size={columnSizing}>
                         <AccountsManagement accounts={[...financeManagementData.financeManagement.accounts].map(mapAccount)}
+                                            notAssignedBankAccounts={[...financeManagementData.bankPermissions.bankAccountsNotAssignedToAccount.map(mapBankAccount)]}
                                             supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies].map(mapCurrencyInfo)}
                                             refetch={financeManagementRefetch}/>
                     </Grid>

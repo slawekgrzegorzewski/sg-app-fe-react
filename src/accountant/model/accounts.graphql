@@ -69,6 +69,83 @@ query GetFinanceManagement {
     }
 }
 
+query GetFinanceManagementWithNotAssignedBankAccounts {
+    financeManagement {
+        supportedCurrencies {
+            code
+            description
+        }
+        accounts {
+            publicId
+            order
+            name
+            currentBalance {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            creditLimit {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            balanceIndex
+            visible
+            bankAccount {
+                publicId
+                iban
+            }
+            domain {
+                publicId
+                name
+            }
+        }
+        billingCategories {
+            publicId
+            name
+            description
+            domain {
+                publicId
+                name
+            }
+        }
+        piggyBanks {
+            publicId
+            name
+            description
+            balance {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            monthlyTopUp {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            savings
+            domain {
+                publicId
+                name
+            }
+        }
+    }
+    bankPermissions {
+        bankAccountsNotAssignedToAccount {
+            publicId
+            iban
+        }
+    }
+}
+
 mutation CreateAccount(
     $name: String!,
     $balanceIndex: Int,

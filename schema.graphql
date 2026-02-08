@@ -787,6 +787,7 @@ type BankPermissions {
     granted: [BankPermission!]!
     toProcess: [BankPermission!]!
     toRecreate: [Institution!]!
+    bankAccountsNotAssignedToAccount: [BankAccount!]!
 }
 
 type BankPermission{
