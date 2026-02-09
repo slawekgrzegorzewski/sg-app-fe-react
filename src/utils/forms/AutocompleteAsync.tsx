@@ -1,7 +1,7 @@
 import {Autocomplete, CircularProgress, debounce, TextField} from "@mui/material";
 import * as React from "react";
 import {AutocompleteAsyncEditorField} from "./Form";
-import {useLazyQuery} from "@apollo/client";
+import {useLazyQuery} from "@apollo/client/react";
 
 export type AutocompleteAsyncProps = {
     formik: any,
@@ -26,11 +26,7 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField}: Aut
             data
         }
     ]
-        = useLazyQuery<any>(editorField.query, {
-        variables: {
-            descriptionLike: options.filter
-        }
-    });
+        = useLazyQuery(editorField.query, );
 
     if (!loading && !error && data) {
         if (!options.loaded)
@@ -49,7 +45,7 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField}: Aut
             loaded: false,
             options: []
         });
-        performSearch();
+        performSearch({variables: {descriptionLike: options.filter}});
         console.log(options.target.value);
     }, 500);
 

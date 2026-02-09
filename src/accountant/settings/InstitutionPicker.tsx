@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useState} from "react";
-import {useQuery} from "@apollo/client";
+import {useQuery} from "@apollo/client/react";
 import {GetAvailableInstitutions, GetAvailableInstitutionsQuery, Institution} from "../../types";
 import PickDialog from "../../utils/dialogs/PickDialog";
 import {SxProps} from "@mui/system";

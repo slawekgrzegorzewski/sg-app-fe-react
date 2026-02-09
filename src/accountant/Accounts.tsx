@@ -1,4 +1,4 @@
-import {useQuery} from "@apollo/client";
+import {useQuery} from "@apollo/client/react";
 import {GetFinanceManagement, GetFinanceManagementQuery} from "../types";
 import React from "react";
 import {GQLAccount, mapAccount} from "./model/types";

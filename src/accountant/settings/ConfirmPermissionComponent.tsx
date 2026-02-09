@@ -1,5 +1,5 @@
 import {useContext} from "react";
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {ConfirmPermission, ConfirmPermissionMutation} from "../../types";
 import {useApplicationNavigation} from "../../utils/use-application-navigation";
 import {ShowBackdropContext} from "../../utils/DrawerAppBar";

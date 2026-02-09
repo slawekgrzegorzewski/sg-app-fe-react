@@ -1,4 +1,4 @@
-import {useMutation, useQuery} from "@apollo/client";
+import {useMutation, useQuery} from "@apollo/client/react";
 import {
     CreateConstantForNFirstInstallmentRateStrategyConfig,
     CreateConstantForNFirstInstallmentRateStrategyConfigMutation,
@@ -16,7 +16,7 @@ import {
     GetLoansQuery,
 } from "../types";
 import {Box, Button, Card, CardContent, CardHeader, Stack} from "@mui/material";
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import * as React from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";

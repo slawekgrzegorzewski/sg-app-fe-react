@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useMutation, useQuery} from "@apollo/client";
+import {useMutation, useQuery} from "@apollo/client/react";
 import {
     GetBankPermissions,
     GetBankPermissionsQuery,

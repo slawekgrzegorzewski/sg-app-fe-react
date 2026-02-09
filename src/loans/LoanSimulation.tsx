@@ -1,4 +1,4 @@
-import {useQuery} from "@apollo/client";
+import {useQuery} from "@apollo/client/react";
 import {Loan, SimulateExistingLoan, SimulateExistingLoanQuery,} from "../types";
 import * as React from "react";
 import {remainingCapital} from "./utils/loan-form";

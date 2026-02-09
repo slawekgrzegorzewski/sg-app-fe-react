@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {
     PerformRegistration,
     PerformRegistrationMutation,

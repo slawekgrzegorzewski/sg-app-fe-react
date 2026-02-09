@@ -1,11 +1,11 @@
 import React, {useContext} from "react";
 import {SuppliersManagement} from "./SuppliersManagement";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import {ClientsManagement} from "./ClientsManagement";
 import {AccountsManagement} from "./AccountsManagement";
 import {Tab, Tabs} from "@mui/material";
 import {BillingCategoriesManagement} from "./BillingCategoriesManagement";
-import {useQuery} from "@apollo/client";
+import {useQuery} from "@apollo/client/react";
 import {
     GetAccountantSettings,
     GetAccountantSettingsQuery,

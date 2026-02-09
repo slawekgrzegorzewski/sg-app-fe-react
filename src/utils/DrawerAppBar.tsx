@@ -16,7 +16,7 @@ import {Backdrop, CircularProgress, Link, Menu, MenuItem, Stack, styled, useThem
 import {useApplication} from "./applications/use-application";
 import {applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
-import {useMutation, useQuery} from "@apollo/client";
+import {useMutation, useQuery} from "@apollo/client/react";
 import {
     AcceptInvitationToDomain,
     AcceptInvitationToDomainMutation,
@@ -25,7 +25,7 @@ import {
     RejectInvitationToDomain,
     RejectInvitationToDomainMutation
 } from "../types";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import {GQLDomain, mapDomain} from "../application/model/types";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';

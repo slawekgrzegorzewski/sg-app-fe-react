@@ -1,4 +1,4 @@
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {
     CreatePiggyBank,
     CreatePiggyBankMutation,
@@ -17,7 +17,7 @@ import {Card, Theme, useTheme} from "@mui/material";
 import {SxProps} from "@mui/system";
 import Decimal from "decimal.js";
 import {formatBalance} from "../../utils/functions";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import {PiggyBankBalanceEditor, Type} from "./PiggyBankBalanceEditor";
 

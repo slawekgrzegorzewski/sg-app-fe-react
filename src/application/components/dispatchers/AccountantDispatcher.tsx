@@ -6,7 +6,7 @@ import React from "react";
 import {Loan} from "../../../loans/Loan";
 import {AccountantSettings} from "../../../accountant/settings/AccountantSettings";
 import {useApplicationAndDomain} from "../../../utils/use-application-and-domain";
-import {useQuery} from "@apollo/client";
+import {useQuery} from "@apollo/client/react";
 import {GetAccountantSettings, GetAccountantSettingsQuery} from "../../../types";
 
 type AccountantSettingsContextType = {

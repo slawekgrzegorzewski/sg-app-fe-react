@@ -1,4 +1,4 @@
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {CreateTask, CreateTaskMutation} from "../types";
 import {Button, Stack, useTheme} from "@mui/material";
 import * as React from "react";

@@ -3,10 +3,10 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import {createBrowserRouter, Navigate, RouterProvider, useRouteError} from "react-router-dom";
-import {QueryClient, QueryClientProvider} from "react-query";
 import {Authenticated} from "./security/Authenticated";
 import {Login} from "./security/login/Login";
-import {ApolloClient, ApolloProvider, HttpLink, InMemoryCache} from "@apollo/client";
+import {ApolloClient, HttpLink, InMemoryCache} from "@apollo/client";
+import {ApolloProvider} from "@apollo/client/react";
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
@@ -18,6 +18,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import {createTheme, ThemeProvider} from "@mui/material";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +75,7 @@ const router = createBrowserRouter([
                     </LocalizationProvider>
                 </ThemeProvider>
             </QueryClientProvider>,
-        errorElement: <ErrorBoundary />
+        errorElement: <ErrorBoundary/>
     }
 ], {
     basename: process.env.REACT_APP_BROWSER_HISTORY_BASENAME

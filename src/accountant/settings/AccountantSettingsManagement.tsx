@@ -1,4 +1,4 @@
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {UpdateAccountantSettings, UpdateAccountantSettingsMutation} from "../../types";
 import * as React from "react";
 import * as Yup from "yup";

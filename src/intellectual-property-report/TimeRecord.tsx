@@ -6,7 +6,7 @@ import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import IconButton from "@mui/material/IconButton";
 import {Delete, Edit} from "@mui/icons-material";
 import * as Yup from "yup";
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {
     AssignmentAction,
     DeleteTimeRecord,

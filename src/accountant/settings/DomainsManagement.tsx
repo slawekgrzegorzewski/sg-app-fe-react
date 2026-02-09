@@ -1,4 +1,4 @@
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {
     CreateDomain,
     CreateDomainMutation,
@@ -20,7 +20,7 @@ import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import {SxProps} from "@mui/system";
 import {Card, Theme} from "@mui/material";
-import Grid from "@mui/material/Grid2";
+import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import {useCurrentUser} from "../../utils/users/use-current-user";

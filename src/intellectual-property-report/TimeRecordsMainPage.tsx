@@ -1,4 +1,4 @@
-import {useMutation, useQuery} from "@apollo/client";
+import {useMutation, useQuery} from "@apollo/client/react";
 import {AssignmentAction, CreateTimeRecord, CreateTimeRecordMutation, TimeRecords, TimeRecordsQuery} from "../types";
 import * as React from "react";
 import {useState} from "react";

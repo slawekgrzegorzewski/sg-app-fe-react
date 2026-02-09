@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {PerformLogin, PerformLoginMutation} from "../../types";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";

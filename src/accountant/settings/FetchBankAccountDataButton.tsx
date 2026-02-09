@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useMutation} from "@apollo/client";
+import {useMutation} from "@apollo/client/react";
 import {BankAccount, TriggerFetchBankAccountData, TriggerFetchBankAccountDataMutation} from "../../types";
 import {Button} from "@mui/material";
 import {GQLBankAccount} from "../model/types";

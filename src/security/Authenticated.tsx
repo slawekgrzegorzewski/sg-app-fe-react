@@ -1,18 +1,10 @@
-import {
-    ApolloClient,
-    ApolloLink,
-    ApolloProvider,
-    defaultDataIdFromObject,
-    InMemoryCache,
-    useMutation
-} from "@apollo/client";
-import {onError} from "@apollo/client/link/error";
+import {ApolloClient, ApolloLink, defaultDataIdFromObject, InMemoryCache, ServerParseError} from "@apollo/client";
+import {ApolloProvider, useMutation} from "@apollo/client/react";
+import {ErrorLink} from "@apollo/client/link/error";
 import React from "react";
 import {Navigate, useParams} from "react-router-dom";
 import {CURRENT_USER_KEY, useCurrentUser} from "../utils/users/use-current-user";
-import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
-import type {ServerParseError} from "@apollo/client/link/http";
-import type {ServerError} from "@apollo/client/link/utils";
+import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
 import {Institution, SwitchDomain, SwitchDomainMutation} from "../types";
 import getUserApplications, {Application} from "../utils/applications/applications-access";
 
@@ -55,7 +47,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         return <Navigate to={`/${applicationId}/${user!.user.domainPublicId}`}></Navigate>
     }
 
-    const httpLink = createUploadLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
+    const httpLink = new UploadHttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'})
     const authMiddleware = new ApolloLink((operation, forward) => {
         operation.setContext(({headers = {}}) => ({
             headers: {
@@ -68,19 +60,16 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         return forward(operation);
     })
 
-    const errorHandlerLink = onError((response) => {
-        if (response.graphQLErrors
-            && response.graphQLErrors.length > 0
-            && response.graphQLErrors[0].extensions?.errorType === 'UNAUTHENTICATED') {
+    const errorHandlerLink = new ErrorLink((response) => {
+        console.error(response);
+        //TODO: test
+        if (response.error
+            && ServerParseError.is(response.error)
+            && response.error.statusCode === 401
+        ) {
             deleteCurrentUser();
         }
-        if (response.networkError) {
-            const statusCode = (response.networkError as ServerParseError).statusCode || (response.networkError as ServerError).statusCode
-            if (statusCode && statusCode === 401) {
-                deleteCurrentUser();
-            }
-        }
-    })
+    });
 
     const apolloClient = new ApolloClient({
         cache: new InMemoryCache({
