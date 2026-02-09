@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import {createBrowserRouter, Navigate, RouterProvider} from "react-router-dom";
+import {createBrowserRouter, Navigate, RouterProvider, useRouteError} from "react-router-dom";
 import {QueryClient, QueryClientProvider} from "react-query";
 import {Authenticated} from "./security/Authenticated";
 import {Login} from "./security/login/Login";
@@ -45,7 +45,7 @@ const theme = createTheme({
 const router = createBrowserRouter([
     {
         path: '',
-        element: <Navigate to={process.env.REACT_APP_BROWSER_DEFAULT_REDIRECT || '/login'}/>
+        element: <Navigate to={process.env.REACT_APP_BROWSER_DEFAULT_REDIRECT || '/login'}/>,
     },
     {
         path: "/login",
@@ -73,7 +73,8 @@ const router = createBrowserRouter([
                         </Authenticated>
                     </LocalizationProvider>
                 </ThemeProvider>
-            </QueryClientProvider>
+            </QueryClientProvider>,
+        errorElement: <ErrorBoundary />
     }
 ], {
     basename: process.env.REACT_APP_BROWSER_HISTORY_BASENAME
@@ -90,3 +91,10 @@ root.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals(console.log);
+
+function ErrorBoundary() {
+    let error = useRouteError();
+    console.error(error);
+    // Uncaught ReferenceError: path is not defined
+    return <div>Dang!</div>;
+}
