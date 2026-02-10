@@ -12,7 +12,6 @@ export interface FormDialogButtonProps<T> {
     buttonContent?: React.ReactNode,
     formProps: Omit<FormProps<T>, "onSave" | "onCancel">;
     dialogOptions?: any;
-    clickTrigger?: React.MutableRefObject<(e: React.MouseEvent<HTMLElement>) => void>
 }
 
 export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
@@ -31,10 +30,6 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     const editClicked = (e: React.MouseEvent<HTMLElement>) => {
         setEditDialogOpen(true);
         e.stopPropagation();
-    }
-
-    if(props.clickTrigger) {
-        props.clickTrigger.current = editClicked;
     }
 
     function performEdit(object: T) {
