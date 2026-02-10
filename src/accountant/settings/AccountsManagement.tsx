@@ -14,7 +14,7 @@ import {
     UpdateAccountMutation
 } from "../../types";
 import * as React from "react";
-import {useState} from "react";
+import {useRef, useState} from "react";
 import * as Yup from "yup";
 import {AutocompleteEditorField, BooleanEditorField, EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
@@ -134,6 +134,10 @@ export function AccountsManagement({
     const [deleteBankAccountAssignmentDialogOptions, setDeleteBankAccountAssignmentDialogOptions] = useState<{
         account: AccountDTO | null
     }>({account: null});
+    const createTrigger: React.MutableRefObject<(e: React.MouseEvent<HTMLElement>) => void> = useRef<(e: React.MouseEvent<HTMLElement>) => void>((e: React.MouseEvent<HTMLElement>) => {
+    });
+    const editTrigger: React.MutableRefObject<((accountDTO: AccountDTO) => void)> = useRef<(accountDTO: AccountDTO) => void>((accountDTO: AccountDTO) => {
+    });
 
     const createAccount = async (account: AccountDTO): Promise<any> => {
         return await createAccountMutation({
@@ -199,7 +203,10 @@ export function AccountsManagement({
 
     const currencies = supportedCurrencies.map(currency => currency.code).sort();
     return <>
+        <Button onClick={(e)=> createTrigger.current(e)}>AA</Button>
         <SimpleCrudList
+            createTrigger={createTrigger}
+            editTrigger={editTrigger}
             title={'KONTA'}
             editTitle={'Edytuj'}
             createTitle={'Dodaj'}
@@ -226,6 +233,8 @@ export function AccountsManagement({
             idExtractor={account => account.publicId}
             highlightRowOnHover={false}
             onCreate={account => createAccount(account)}
+            onUpdate={account => updateAccount(account)}
+            onDelete={account => deleteAccount(account.publicId)}
             formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
             rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
                 return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
@@ -270,7 +279,7 @@ export function AccountsManagement({
                     </Stack>
                     <Stack direction={'column'} alignItems={'flex-start'}>
                         <Stack direction={'row'}>
-                            <Button onClick={() => setEditDialogOptions({account: account})}>Edytuj</Button>
+                            <Button onClick={() => editTrigger.current(account)}>Edytuj</Button>
                             <Button onClick={() => setDeleteDialogOptions({account: account})}>Usuń</Button>
                         </Stack>
                         {account.bankAccount &&

@@ -1,6 +1,5 @@
 import {FormDialogButton} from "../../utils/buttons/FormDialogButton";
-import * as React from "react";
-import {useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import {Add, Delete} from "@mui/icons-material";
@@ -16,8 +15,7 @@ export interface SimpleCrudListProps<T> {
     title: string,
     list: T[],
     idExtractor: (t: T) => string,
-    highlightRowOnHover?: boolean;
-
+    highlightRowOnHover?: boolean,
     createTitle?: string,
 
     onCreate?(t: T): Promise<void>,
@@ -31,19 +29,20 @@ export interface SimpleCrudListProps<T> {
     onReorder?(event: ReorderEvent): Promise<void>,
 
     formSupplier?: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
-
     elementsDirection?: ResponsiveStyleValue<'row' | 'row-reverse' | 'column' | 'column-reverse'>,
-
-    rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
+    rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element,
 
     entityDisplay(t: T, index: number): React.JSX.Element,
 
     rowStyle?(t: T, index: number): React.CSSProperties,
 
-    dialogOptions?: any;
-    enableDndReorder: boolean;
+    dialogOptions?: any,
+    enableDndReorder: boolean,
 
     selectEntityListener?(t: T): void,
+
+    createTrigger?: React.MutableRefObject<(e: React.MouseEvent<HTMLElement>)=> void>
+    editTrigger?: React.MutableRefObject<(accountDTO: T)=> void>
 }
 
 export function SimpleCrudList<T>({
@@ -64,8 +63,21 @@ export function SimpleCrudList<T>({
                                       dialogOptions,
                                       onReorder,
                                       enableDndReorder,
-                                      selectEntityListener
+                                      selectEntityListener,
+                                      createTrigger,
+                                      editTrigger
                                   }: SimpleCrudListProps<T>) {
+
+    const editButtonClick: React.MutableRefObject<(() => void)> = useRef<() => void>(() => {
+    });
+    useEffect(() => {
+        if(createTrigger) {
+            createTrigger.current = editButtonClick.current;
+        }
+        if(editTrigger) {
+            editTrigger.current = selectEntity;
+        }
+    })
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteConfirmationDialog, setShowDeleteConfirmationDialog] = useState(false);
     const [selectedEntity, setSelectedEntity] = useState<T | null>(null);
@@ -121,6 +133,7 @@ export function SimpleCrudList<T>({
             <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
                 <TitleBox>{title}</TitleBox>
                 {createTitle && onCreate && formSupplier && <FormDialogButton
+                    clickTrigger={editButtonClick}
                     title={createTitle}
                     onSave={(t) => onCreate(t)}
                     onCancel={() => {
