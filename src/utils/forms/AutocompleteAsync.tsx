@@ -11,53 +11,48 @@ export type AutocompleteAsyncProps = {
 
 export default function AutocompleteAsync({formik, autoSubmit, editorField}: AutocompleteAsyncProps) {
 
-    const [options, setOptions] = React.useState<{ open: boolean, filter: string, loaded: boolean, options: any[] }>({
+    const [options, setOptions] = React.useState<{ open: boolean, loaded: boolean, options: any[] }>({
         open: false,
-        filter: '',
         loaded: false,
         options: []
     });
 
-    const [
-        performSearch,
-        {
-            loading,
-            error,
-            data
-        }
-    ]
-        = useLazyQuery(editorField.query, );
+    const [performSearch, {loading, error, data}] = useLazyQuery(editorField.query);
 
-    if (!loading && !error && data) {
-        if (!options.loaded)
-            setOptions({
-                open: true,
-                filter: options.filter,
-                loaded: true,
-                options: editorField.queryToOptionsMapper(data)
-            });
-    }
-
-    const handleInputChange = debounce((options: any) => {
+    if (!loading && !error && data && !options.loaded) {
         setOptions({
             open: true,
-            filter: options.target.value,
-            loaded: false,
-            options: []
+            loaded: true,
+            options: editorField.queryToOptionsMapper(data)
         });
-        performSearch({variables: {descriptionLike: options.filter}});
-        console.log(options.target.value);
+    }
+
+    const handleInputChange = debounce((event: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+        if (event.target.value.length >= 3) {
+            setOptions({
+                open: true,
+                loaded: false,
+                options: []
+            });
+            performSearch({
+                variables: {descriptionLike: event.target.value}
+            });
+        } else {
+            setOptions({
+                open: true,
+                loaded: true,
+                options: []
+            });
+        }
     }, 500);
 
     const handleClose = () => {
         setOptions({
             open: false,
-            filter: options.filter,
             loaded: true,
             options: options.options
         });
     };
-
 
     return <Autocomplete
         {...editorField.additionalProps}
