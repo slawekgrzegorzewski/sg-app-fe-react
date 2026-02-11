@@ -39,7 +39,7 @@ const DOMAIN_FORM = (domain?: GQLDomain) => {
             name: Yup.string().required()
         }),
         initialValues: {
-            publicId: domain?.publicId || '',
+            publicId: domain?.publicId || 'new id',
             name: domain?.name || ''
         } as GQLDomain,
         fields:
@@ -149,7 +149,7 @@ function UserRow({user, domain, showDomainAccessLevelButtons, setDomainAccessLev
     </Grid>;
 }
 
-export function DomainsManagement() {
+function DomainsManagement() {
 
     const [domainAccessLevelDialogOptions, setDomainAccessLevelDialogOptions] = useState<DomainAccessLevelData | null>(null)
     const [inviteUserToDomainDataDialogOptions, setInviteUserToDomainDataDialogOptions] = useState<InviteUserToDomainData | null>(null)
@@ -211,15 +211,19 @@ export function DomainsManagement() {
     return <>
         <SimpleCrudList
             title={'ZARZĄDZAJ DOMENAMI'}
-            createTitle={'Dodaj domenę'}
-            editTitle={'Edytuj domenę'}
+            createSettings={{
+                dialogTitle: 'Dodaj domenę',
+                onCreate: createDomain,
+            }}
+            editSettings={{
+                dialogTitle: 'Edytuj domenę',
+                onUpdate: updateDomain,
+            }}
             list={[...domains].filter(domain => domain.name !== '').sort(ComparatorBuilder.comparing<GQLDomain>(domain => domain.name).build())}
             idExtractor={domain => domain.publicId}
-            onCreate={value => createDomain(value)}
-            onUpdate={value => updateDomain(value)}
             formSupplier={value => value ? DOMAIN_FORM(value) : DOMAIN_FORM()}
-            rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-                return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
+            rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
+                return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
             }}
             entityDisplay={
                 domain => {
@@ -228,8 +232,8 @@ export function DomainsManagement() {
                     const members = domain.users.filter(user => user.domainAccessLevel === 'MEMBER');
                     const size = {xs: 12, sm: 12, md: 12, lg: 7, xl: 7};
                     const size2 = {xs: 12, sm: 12, md: 12, lg: 12 - size.lg, xl: 12 - size.xl};
-                    return <Grid container justifyContent={'space-between'} >
-                        <Grid container justifyContent={'space-between'} alignItems={theme => 'flex-start'} size={size}>
+                    return <Grid container justifyContent={'space-between'}>
+                        <Grid container justifyContent={'space-between'} alignItems={() => 'flex-start'} size={size}>
                             {domain.name}
                             <Button variant="text" onClick={(event) => {
                                 setInviteUserToDomainDataDialogOptions({
@@ -286,7 +290,7 @@ export function DomainsManagement() {
                                 message={setAccessLevelMessage(domainAccessLevelDialogOptions)}
                                 open={true}
                                 onConfirm={setUserDomainAccessLevel}
-                                onCancel={(a) => {
+                                onCancel={() => {
                                     setDomainAccessLevelDialogOptions(null);
                                     return Promise.resolve();
                                 }}/>
@@ -296,10 +300,12 @@ export function DomainsManagement() {
             inviteUserToDomainDataDialogOptions &&
             <FormDialog dialogTitle={<Box>Zapraszanie użytkownika do domeny</Box>}
                         open={true}
-                        onSave={inviteUserToDomain}
+                        onConfirm={inviteUserToDomain}
                         onCancel={() => Promise.resolve()}
                         formProps={{...INVITE_USER_FORM(inviteUserToDomainDataDialogOptions)}}
             />
         }
     </>
 }
+
+export default DomainsManagement

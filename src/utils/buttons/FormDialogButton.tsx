@@ -7,58 +7,57 @@ import {FormDialog} from "../dialogs/FormDialog";
 
 export interface FormDialogButtonProps<T> {
     title: string;
-    onSave: ((object: T) => Promise<void>),
+    onConfirm: ((object: T) => Promise<void>),
     onCancel: (() => Promise<void>),
     buttonContent?: React.ReactNode,
     formProps: Omit<FormProps<T>, "onSave" | "onCancel">;
     dialogOptions?: any;
-    clickTrigger?: React.MutableRefObject<(e: React.MouseEvent<HTMLElement>) => void>
+    clickTrigger?: React.MutableRefObject<() => void>
 }
 
 export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     let {
         title,
         buttonContent,
-        onSave,
+        onConfirm,
         onCancel,
         formProps,
         dialogOptions
     } = props;
 
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [formDialogOpen, setFormDialogOpen] = useState(false);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
 
-    const editClicked = (e: React.MouseEvent<HTMLElement>) => {
-        setEditDialogOpen(true);
-        e.stopPropagation();
+    const openFormClicked = (e?: React.MouseEvent<HTMLElement>) => {
+        setFormDialogOpen(true);
+        e?.stopPropagation();
     }
 
     if(props.clickTrigger) {
-        props.clickTrigger.current = editClicked;
+        props.clickTrigger.current = openFormClicked;
     }
 
-    function performEdit(object: T) {
-        setEditDialogOpen(false);
+    function confirm(object: T) {
+        setFormDialogOpen(false);
         setShowBackdrop(true);
-        return onSave(object).finally(() => setShowBackdrop(false));
+        return onConfirm(object).finally(() => setShowBackdrop(false));
     }
 
-    function cancelEdit() {
-        setEditDialogOpen(false);
+    function cancel() {
+        setFormDialogOpen(false);
         setShowBackdrop(true);
         return onCancel().finally(() => setShowBackdrop(false));
     }
 
-
     return <>
-        <Box onClick={(e) => editClicked(e)}>
+        <Box onClick={(e) => openFormClicked(e)}>
             {buttonContent!}
         </Box>
         <FormDialog dialogTitle={<>{title}</>}
                     formProps={formProps}
-                    onSave={performEdit}
-                    onCancel={cancelEdit}
-                    open={editDialogOpen}
+                    onConfirm={confirm}
+                    onCancel={cancel}
+                    open={formDialogOpen}
                     dialogOptions={dialogOptions}/>
     </>
 }

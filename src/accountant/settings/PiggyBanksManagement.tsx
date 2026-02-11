@@ -148,30 +148,37 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
             .finally(() => refetch());
     };
 
-    const deletePiggyBank = async (publicId: string): Promise<any> => {
-        return await deletePiggyBankMutation({variables: {publicId: publicId}})
+    const deletePiggyBank = async (piggyBank: PiggyBankDTO): Promise<any> => {
+        return await deletePiggyBankMutation({variables: {publicId: piggyBank.publicId}})
             .finally(() => refetch());
     };
 
     return <>
         <SimpleCrudList
             title={'SKARBONKI'}
-            editTitle={'Edytuj'}
-            createTitle={'Dodaj'}
+            editSettings={{
+                dialogTitle: 'Edytuj',
+                onUpdate: updatePiggyBank,
+            }}
+            createSettings={{
+                dialogTitle: 'Dodaj',
+                onCreate: createPiggyBank,
+            }}
+            deleteSettings={{
+                showControl: true,
+                onDelete: deletePiggyBank,
+            }}
             list={
                 piggyBanks
                     .sort(ComparatorBuilder.comparing<PiggyBankDTO>(piggyBank => piggyBank.name).build())
             }
             idExtractor={piggyBank => piggyBank.publicId}
-            onCreate={piggyBank => createPiggyBank(piggyBank)}
-            onUpdate={piggyBank => updatePiggyBank(piggyBank)}
-            onDelete={piggyBank => deletePiggyBank(piggyBank.publicId)}
             formSupplier={piggyBank => piggyBank ? PIGGY_BANK_FORM(supportedCurrencies, piggyBank) : PIGGY_BANK_FORM(supportedCurrencies)}
-            rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-                return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
+            rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
+                return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
             }}
 
-            entityDisplay={(piggyBank, index) => {
+            entityDisplay={(piggyBank) => {
                 return <Grid container>
                     <Grid size={8}>
                         <Box dir={'column'} key={piggyBank.publicId} sx={{paddingLeft: '15px'}}>

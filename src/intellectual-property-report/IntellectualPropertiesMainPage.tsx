@@ -84,7 +84,7 @@ export function IntellectualPropertiesMainPage() {
                                 stwórz własność intelektualną
                             </Button>
                         }
-                        onSave={(value) => createIntellectualProperty(value)}
+                        onConfirm={(value) => createIntellectualProperty(value)}
                         onCancel={() => {
                             return Promise.resolve();
                         }}

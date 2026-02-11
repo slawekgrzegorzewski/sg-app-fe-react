@@ -132,7 +132,7 @@ export function Task(properties: {
                                 <Edit fontSize='inherit'/>
                             </IconButton>
                         }
-                        onSave={(value) => updateTask(value)}
+                        onConfirm={(value) => updateTask(value)}
                         onCancel={() => {
                             return Promise.resolve();
                         }}

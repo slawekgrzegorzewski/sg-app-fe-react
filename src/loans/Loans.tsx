@@ -104,7 +104,7 @@ export function Loans() {
                         <Stack direction="row">
                             <FormDialogButton
                                 title='Dane pożyczki'
-                                onSave={createLoan}
+                                onConfirm={createLoan}
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
@@ -121,7 +121,7 @@ export function Loans() {
                                                 <LoanDetails
                                                     loan={loan}
                                                     short={true}
-                                                    onClick={event => setPageParams([loan.publicId])}/>
+                                                    onClick={() => setPageParams([loan.publicId])}/>
                                                 <DeleteButton
                                                     object={loan.publicId}
                                                     confirmationMessage={'Na pewno usunąć?'}
@@ -141,7 +141,7 @@ export function Loans() {
                         <CardContent>
                             <FormDialogButton
                                 title='Tworzenie'
-                                onSave={createConstantForNFirstInstallmentRateStrategyConfig}
+                                onConfirm={createConstantForNFirstInstallmentRateStrategyConfig}
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
@@ -174,7 +174,7 @@ export function Loans() {
                         <CardContent>
                             <FormDialogButton
                                 title='Tworzenie'
-                                onSave={createNthDayOfMonthRepaymentDayStrategyConfig}
+                                onConfirm={createNthDayOfMonthRepaymentDayStrategyConfig}
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}

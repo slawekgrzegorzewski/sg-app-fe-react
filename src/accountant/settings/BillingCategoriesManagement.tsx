@@ -88,28 +88,35 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
             .finally(() => refetch());
     };
 
-    const deleteBillingCategory = async (publicId: string): Promise<any> => {
-        return await deleteBillingCategoryMutation({variables: {publicId: publicId}})
+    const deleteBillingCategory = async (billingCategory: GQLBillingCategory): Promise<any> => {
+        return await deleteBillingCategoryMutation({variables: {publicId: billingCategory.publicId}})
             .finally(() => refetch());
     };
 
     return <SimpleCrudList
         title={'KATEGORIE'}
-        editTitle={'Edytuj'}
-        createTitle={'Dodaj'}
+        editSettings={{
+            dialogTitle: 'Edytuj',
+            onUpdate: updateBillingCategory,
+        }}
+        createSettings={{
+            dialogTitle: 'Dodaj',
+            onCreate: createBillingCategory,
+        }}
+        deleteSettings={{
+            showControl: true,
+            onDelete: deleteBillingCategory
+        }}
         list={
             billingCategories
                 .sort(ComparatorBuilder.comparing<GQLBillingCategory>(billingCategory => billingCategory.name).build())
         }
         idExtractor={billingCategory => billingCategory.publicId}
-        onCreate={billingCategory => createBillingCategory(billingCategory)}
-        onUpdate={billingCategory => updateBillingCategory(billingCategory)}
-        onDelete={billingCategory => deleteBillingCategory(billingCategory.publicId)}
         formSupplier={billingCategory => billingCategory ? BILLING_CATEGORY_FORM(billingCategory) : BILLING_CATEGORY_FORM()}
-        rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-            return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
+        rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
+            return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
         }}
-        entityDisplay={(billingCategory, index) => {
+        entityDisplay={(billingCategory) => {
             return <Box dir={'column'} key={billingCategory.publicId} sx={{paddingLeft: '15px'}}>
                 <div>{billingCategory.name}</div>
                 <div style={{

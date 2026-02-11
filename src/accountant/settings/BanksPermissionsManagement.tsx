@@ -51,14 +51,16 @@ export function BanksPermissionsManagement() {
             </Stack>
             <SimpleCrudList
                 title={'Dostęp udzielony'}
-                createTitle={'Dodaj'}
+                createSettings={{
+                    dialogTitle: 'Dodaj'
+                }}
                 highlightRowOnHover={false}
                 list={[...bankAccountPermissionsData.bankPermissions.granted]
                     .map(mapBankPermission)
                     .sort(ComparatorBuilder.comparing<GQLBankPermission>(bankPermissions => bankPermissions.institutionId).build())}
                 idExtractor={bankPermission => bankPermission.publicId}
-                rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-                    return <Card sx={{marginBottom: '10px', width: '600px', ...sx}} {...additionalProperties}>
+                rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
+                    return <Card key={key} sx={{marginBottom: '10px', width: '600px', ...sx}} {...additionalProperties}>
                     </Card>;
                 }}
                 entityDisplay={
@@ -102,8 +104,8 @@ export function BanksPermissionsManagement() {
                     .sort(ComparatorBuilder.comparing<GQLBankPermission>(bankPermissions => bankPermissions.institutionId).build())}
                 idExtractor={bankPermission => bankPermission.publicId}
                 highlightRowOnHover={false}
-                rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-                    return <Card sx={{marginBottom: '10px', ...sx}} {...additionalProperties}>
+                rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
+                    return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}>
                     </Card>;
                 }}
                 entityDisplay={
@@ -137,8 +139,8 @@ export function BanksPermissionsManagement() {
                     .sort(ComparatorBuilder.comparing<GQLInstitution>(institution => institution.id).build())}
                 idExtractor={institution => institution.logo}
                 elementsDirection='row'
-                rowContainerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
-                    return <Card sx={{
+                rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
+                    return <Card key={key}  sx={{
                         marginBottom: '10px', ...sx
                     }} {...additionalProperties}>
                     </Card>;

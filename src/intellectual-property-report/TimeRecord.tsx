@@ -66,7 +66,7 @@ export function TimeRecord(properties: {
             <FormDialogButton
                 title={title}
                 buttonContent={<IconButton size="small"><Edit fontSize='inherit'/></IconButton>}
-                onSave={(value) => {
+                onConfirm={(value) => {
                     let taskId: number | null = value.task?.id;
                     if (taskId === NON_EXISTING_ID)
                         taskId = null;

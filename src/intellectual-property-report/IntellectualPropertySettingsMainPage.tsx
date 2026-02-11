@@ -103,17 +103,24 @@ export function IntellectualPropertySettingsMainPage() {
         return <Stack direction={'column'} sx={{width: '400px'}}>
             <SimpleCrudList
                 title={'Kategorie raportów czasowych'}
-                editTitle={'Edytuj kategorię raportu czasowego'}
-                createTitle={'Dodaj kategorię raportu czasowego'}
+                editSettings={{
+                    dialogTitle: 'Edytuj kategorię raportu czasowego',
+                    onUpdate: updateTimeRecordCategory,
+                }}
+                createSettings={{
+                    dialogTitle: 'Dodaj kategorię raportu czasowego',
+                    onCreate: createTimeRecordCategory,
+                }}
+                deleteSettings={{
+                    showControl: true,
+                    onDelete: deleteTimeRecordCategory,
+                }}
                 list={
                     [...data.allTimeRecordCategories]
                         .map(timeRecordCategory => mapTimeRecordCategory(NON_EXISTING_ID, timeRecordCategory))
                         .sort(ComparatorBuilder.comparing<TimeRecordCategoryDTO>(timeRecordCategory => timeRecordCategory.name).thenComparing(timeRecordCategory => timeRecordCategory.id).build())
                 }
                 idExtractor={timeRecordCategory => timeRecordCategory.id.toString()}
-                onCreate={timeRecordCategory => createTimeRecordCategory(timeRecordCategory)}
-                onUpdate={timeRecordCategory => updateTimeRecordCategory(timeRecordCategory)}
-                onDelete={timeRecordCategory => deleteTimeRecordCategory(timeRecordCategory)}
                 formSupplier={timeRecordCategory => TIME_RECORD_CATEGORY_FORM(timeRecordCategory || null)}
                 entityDisplay={timeRecordCategory => <>{timeRecordCategory.name}</>}
                 enableDndReorder={false}

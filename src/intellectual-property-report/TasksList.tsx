@@ -58,7 +58,7 @@ export function TasksList(properties: {
                             stwórz zadanie
                         </Button>
                     }
-                    onSave={(value) => createTask(value)}
+                    onConfirm={(value) => createTask(value)}
                     onCancel={() => {
                         return Promise.resolve();
                     }}

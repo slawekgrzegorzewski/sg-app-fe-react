@@ -16,21 +16,29 @@ export interface SimpleCrudListProps<T> {
     list: T[],
     idExtractor: (t: T) => string,
     highlightRowOnHover?: boolean,
-    createTitle?: string,
-
-    onCreate?(t: T): Promise<void>,
-
-    editTitle?: string,
-
-    onUpdate?(t: T): Promise<void>,
-
-    onDelete?(t: T): Promise<void>,
+    createSettings?: {
+        showControl?: boolean;
+        dialogTitle: string,
+        trigger?: React.MutableRefObject<() => void>,
+        onCreate?(t: T): Promise<void>,
+    },
+    editSettings?: {
+        rowClickIsTrigger?: boolean;
+        dialogTitle: string,
+        trigger?: React.MutableRefObject<(t: T) => void>,
+        onUpdate?(t: T): Promise<void>,
+    },
+    deleteSettings?: {
+        showControl?: boolean;
+        trigger?: React.MutableRefObject<(t: T) => void>,
+        onDelete?(t: T): Promise<void>,
+    },
 
     onReorder?(event: ReorderEvent): Promise<void>,
 
     formSupplier?: (t?: T) => Omit<FormProps<any>, "onSave" | "onCancel">,
     elementsDirection?: ResponsiveStyleValue<'row' | 'row-reverse' | 'column' | 'column-reverse'>,
-    rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element,
+    rowContainerProvider?: (key: string, sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element,
 
     entityDisplay(t: T, index: number): React.JSX.Element,
 
@@ -39,22 +47,39 @@ export interface SimpleCrudListProps<T> {
     dialogOptions?: any,
     enableDndReorder: boolean,
 
-    selectEntityListener?(t: T): void,
-
-    createTrigger?: React.MutableRefObject<(e: React.MouseEvent<HTMLElement>)=> void>
-    editTrigger?: React.MutableRefObject<(accountDTO: T)=> void>
+    selectEntityListener?(t: T): void
 }
 
 export function SimpleCrudList<T>({
                                       idExtractor,
                                       highlightRowOnHover = true,
                                       title,
-                                      createTitle,
-                                      editTitle,
+                                      createSettings: {
+                                          showControl: showCreateControl = true,
+                                          dialogTitle: createDialogTitle,
+                                          trigger: createTrigger,
+                                          onCreate,
+                                      } = {
+                                          showControl: false,
+                                          dialogTitle: '',
+                                      },
+                                      editSettings: {
+                                          rowClickIsTrigger = true,
+                                          dialogTitle: editDialogTitle,
+                                          trigger: editTrigger,
+                                          onUpdate,
+                                      } = {
+                                          rowClickIsTrigger: false,
+                                          dialogTitle: '',
+                                      },
+                                      deleteSettings: {
+                                          showControl: showDeleteControl = true,
+                                          trigger: deleteTrigger,
+                                          onDelete,
+                                      } = {
+                                          showControl: false,
+                                      },
                                       list,
-                                      onCreate,
-                                      onDelete,
-                                      onUpdate,
                                       formSupplier,
                                       entityDisplay,
                                       elementsDirection,
@@ -63,19 +88,21 @@ export function SimpleCrudList<T>({
                                       dialogOptions,
                                       onReorder,
                                       enableDndReorder,
-                                      selectEntityListener,
-                                      createTrigger,
-                                      editTrigger
+                                      selectEntityListener
                                   }: SimpleCrudListProps<T>) {
 
     const editButtonClick: React.MutableRefObject<(() => void)> = useRef<() => void>(() => {
     });
+
     useEffect(() => {
-        if(createTrigger) {
+        if (createTrigger) {
             createTrigger.current = editButtonClick.current;
         }
-        if(editTrigger) {
+        if (editTrigger) {
             editTrigger.current = selectEntity;
+        }
+        if (deleteTrigger) {
+            deleteTrigger.current = selectEntityForDeletion;
         }
     })
     const [showEditDialog, setShowEditDialog] = useState(false);
@@ -88,13 +115,22 @@ export function SimpleCrudList<T>({
         selectEntityListener?.(t);
     }
 
+    function selectEntityForDeletion(t: T) {
+        setSelectedEntity(t);
+        setShowEditDialog(true);
+        selectEntityListener?.(t);
+        showDeleteConfirmation();
+    }
+
+    function showDeleteConfirmation() {
+        setShowEditDialog(false);
+        setShowDeleteConfirmationDialog(true);
+    }
+
     const editDialogTitleElement = <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
-        <Box>{editTitle}</Box>
-        {onDelete && <IconButton color="primary" size={'small'}
-                                 onClick={() => {
-                                     setShowEditDialog(false);
-                                     setShowDeleteConfirmationDialog(true);
-                                 }}>
+        <Box>{editDialogTitle}</Box>
+        {onDelete && showDeleteControl && <IconButton color="primary" size={'small'}
+                                                      onClick={() => showDeleteConfirmation()}>
             <Delete/>
         </IconButton>
         }
@@ -116,7 +152,11 @@ export function SimpleCrudList<T>({
                                          rowContainerProvider={rowContainerProvider}
                                          entityDisplay={entityDisplay}
                                          rowStyle={rowStyle}
-                                         selectEntityListener={(entity: T) => selectEntity(entity)}
+                                         selectEntityListener={(entity: T) => {
+                                             if (rowClickIsTrigger) {
+                                                 selectEntity(entity);
+                                             }
+                                         }}
                                          reorderProps={enableDndReorder
                                              ? {
                                                  aboveId: i === 0 ? null : idExtractor(list[i - 1]),
@@ -132,10 +172,10 @@ export function SimpleCrudList<T>({
         <Stack direction={'column'}>
             <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
                 <TitleBox>{title}</TitleBox>
-                {createTitle && onCreate && formSupplier && <FormDialogButton
+                {onCreate && formSupplier && showCreateControl && <FormDialogButton
                     clickTrigger={editButtonClick}
-                    title={createTitle}
-                    onSave={(t) => onCreate(t)}
+                    title={createDialogTitle}
+                    onConfirm={(t) => onCreate(t)}
                     onCancel={() => {
                         return Promise.resolve();
                     }}
@@ -155,15 +195,15 @@ export function SimpleCrudList<T>({
         </Stack>
 
         {
-            selectedEntity && onUpdate && editTitle && formSupplier && <FormDialog dialogTitle={editDialogTitleElement}
-                                                                                   open={showEditDialog}
-                                                                                   onSave={value => onUpdate(value)}
-                                                                                   onCancel={() => {
-                                                                                       setShowEditDialog(false);
-                                                                                       return Promise.resolve();
-                                                                                   }}
-                                                                                   formProps={formSupplier(selectedEntity)}
-                                                                                   dialogOptions={dialogOptions}/>
+            selectedEntity && onUpdate && formSupplier && <FormDialog dialogTitle={editDialogTitleElement}
+                                                                      open={showEditDialog}
+                                                                      onConfirm={value => onUpdate(value)}
+                                                                      onCancel={() => {
+                                                                          setShowEditDialog(false);
+                                                                          return Promise.resolve();
+                                                                      }}
+                                                                      formProps={formSupplier(selectedEntity)}
+                                                                      dialogOptions={dialogOptions}/>
         }
         {
             selectedEntity && onDelete && <ConfirmationDialog companionObject={selectedEntity}

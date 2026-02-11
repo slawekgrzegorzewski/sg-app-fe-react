@@ -79,17 +79,24 @@ export function SuppliersManagement() {
     } else if (data) {
         return <SimpleCrudList
             title={'ZARZĄDZAJ DOSTAWCAMI'}
-            createTitle={'Dodaj dostawcę'}
-            editTitle={'Edytuj dostawcę'}
+            createSettings={{
+                dialogTitle: 'Dodaj dostawcę',
+                onCreate: createSupplier,
+            }}
+            editSettings={{
+                dialogTitle: 'Edytuj dostawcę',
+                onUpdate: updateSupplier
+            }}
+            deleteSettings={{
+                showControl: true,
+                onDelete: deleteSupplier,
+            }}
             list={[...data.allSuppliers]
                 .sort(ComparatorBuilder.comparing<GraphqlSupplier>(supplier => supplier.name).build())
                 .map(supplier => {
                     return {publicId: supplier.publicId, name: supplier.name} as SupplierDTO
                 })}
             idExtractor={supplier => supplier.publicId}
-            onCreate={value => createSupplier(value)}
-            onUpdate={value => updateSupplier(value)}
-            onDelete={value => deleteSupplier(value)}
             formSupplier={value => value ? SUPPLIER_FORM(value) : SUPPLIER_FORM()}
             entityDisplay={value => <>{value.name}</>}
             enableDndReorder={false}

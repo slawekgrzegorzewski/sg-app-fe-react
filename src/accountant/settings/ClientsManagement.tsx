@@ -79,17 +79,24 @@ export function ClientsManagement() {
     } else if (data) {
         return <SimpleCrudList
             title={'ZARZĄDZAJ KLIENTAMI'}
-            editTitle={'Edytuj klienta'}
-            createTitle={'Dodaj klienta'}
+            editSettings={{
+                dialogTitle: 'Edytuj klienta',
+                onUpdate: updateClient,
+            }}
+            createSettings={{
+                dialogTitle: 'Dodaj klienta',
+                onCreate: createClient,
+            }}
+            deleteSettings={{
+                showControl: true,
+                onDelete: deleteClient,
+            }}
             list={[...data.allClients]
                 .sort(ComparatorBuilder.comparing<GraphqlClient>(client => client.name).build())
                 .map(client => {
                     return {publicId: client.publicId, name: client.name} as ClientDTO
                 })}
             idExtractor={client => client.publicId}
-            onCreate={value => createClient(value)}
-            onUpdate={value => updateClient(value)}
-            onDelete={value => deleteClient(value)}
             formSupplier={value => value ? CLIENT_FORM(value) : CLIENT_FORM()}
             entityDisplay={value => <>{value.name}</>}
             enableDndReorder={false}

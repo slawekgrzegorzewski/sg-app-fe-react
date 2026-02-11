@@ -18,7 +18,7 @@ import {PiggyBankDTO, PiggyBanksManagement} from "./PiggyBanksManagement";
 import Decimal from "decimal.js";
 import {AccountantSettingsManagement} from "./AccountantSettingsManagement";
 import Box from "@mui/material/Box";
-import {DomainsManagement} from "./DomainsManagement";
+import DomainsManagement from "./DomainsManagement";
 import {AccountantSettingsContext} from "../../application/components/dispatchers/AccountantDispatcher";
 import {BanksManagement} from "./BanksManagement";
 

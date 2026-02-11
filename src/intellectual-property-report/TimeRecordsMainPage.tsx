@@ -79,7 +79,7 @@ export function TimeRecordsMainPage() {
                                 stwórz raport czasowy
                             </Button>
                         }
-                        onSave={(value) => {
+                        onConfirm={(value) => {
                             let taskId: number | null = value.task?.id;
                             if (taskId === NON_EXISTING_ID)
                                 taskId = null;

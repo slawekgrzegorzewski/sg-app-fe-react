@@ -14,7 +14,7 @@ export interface SimpleCrudListRowProps<T> {
 
     entityDisplay(t: T, index: number): React.JSX.Element,
 
-    rowContainerProvider?: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
+    rowContainerProvider?: (key: string, sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element
 
     rowStyle?(t: T, index: number): React.CSSProperties,
 
@@ -48,8 +48,8 @@ const init: DraggingInfo = {
     previousVerticalLocation: 0
 };
 
-const ROW_CONTAINER_DEFAULT_PROVIDER: (sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element = (sx: SxProps<Theme>, additionalProperties: any) =>
-    <Stack direction={'row'} alignSelf={'stretch'} sx={sx} {...additionalProperties}></Stack>;
+const ROW_CONTAINER_DEFAULT_PROVIDER: (key: string, sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element = (key: string, sx: SxProps<Theme>, additionalProperties: any) =>
+    <Stack key={key} direction={'row'} alignSelf={'stretch'} sx={sx} {...additionalProperties}></Stack>;
 
 export function SimpleCrudListRow<T>({
                                          index,
@@ -155,6 +155,7 @@ export function SimpleCrudListRow<T>({
         [entity, idExtractor, reorderProps, setShowBackdrop]
     );
     return (rowContainerProvider || ROW_CONTAINER_DEFAULT_PROVIDER)(
+        idExtractor(entity),
         {
             '&:hover': highlightRowOnHover
                 ? {
@@ -172,7 +173,6 @@ export function SimpleCrudListRow<T>({
         {
             children: entityDisplay(entity, index),
             ref: ref,
-            key: idExtractor(entity),
             onClick: () => selectEntityListener(entity)
         });
 }

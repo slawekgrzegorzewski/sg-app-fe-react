@@ -8,7 +8,7 @@ export interface FormDialogProps<T> {
     dialogTitle: React.JSX.Element;
     dialogOptions?: any;
     open: boolean;
-    onSave: ((object: T) => Promise<void>),
+    onConfirm: ((object: T) => Promise<void>),
     onCancel: (() => Promise<void>),
     formProps: Omit<FormProps<T>, "onSave" | "onCancel">,
     children?: React.JSX.Element
@@ -18,7 +18,7 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
     let {
         open,
         dialogTitle,
-        onSave,
+        onConfirm,
         onCancel,
         formProps,
         children,
@@ -35,7 +35,7 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
 
     function performEdit(object: T) {
         setShowBackdrop(true);
-        onSave(object).finally(() => setShowBackdrop(false));
+        onConfirm(object).finally(() => setShowBackdrop(false));
 
     }
 

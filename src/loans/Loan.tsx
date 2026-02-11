@@ -80,7 +80,7 @@ export function Loan() {
             <Box component="section" sx={{width: 1000, m: 'auto'}}>
                 {
                     (<Stack direction={"row"}>
-                        <Button variant={"text"} onClick={(e) => setPageParams([])}>
+                        <Button variant={"text"} onClick={() => setPageParams([])}>
                             <ArrowLeft/>
                         </Button>
                         <Stack direction={"column"} key={loan.publicId}>
@@ -88,7 +88,7 @@ export function Loan() {
                             <Stack direction={'row'}>
                                 <FormDialogButton
                                     title='Dane raty'
-                                    onSave={value => {
+                                    onConfirm={value => {
                                         return createInstallment(loan.publicId, loan.paidAmount.currency.code, value.paidAt, value.repaidInterest, value.repaidAmount, value.overpayment);
                                     }}
                                     onCancel={() => {
@@ -99,7 +99,7 @@ export function Loan() {
                                 />
                                 <FormDialogButton
                                     title='Parametry symulacji'
-                                    onSave={value => {
+                                    onConfirm={value => {
                                         setSimulationParams({
                                             monthlyBudget: value.monthlyBudget,
                                             yearlyBudget: value.yearlyBudget
@@ -147,7 +147,7 @@ export function Loan() {
                         </Stack>
                         <FormDialogButton
                             title='Dane pożyczki'
-                            onSave={value => {
+                            onConfirm={value => {
                                 return updateLoan(loan.publicId, value.name);
                             }}
                             onCancel={() => {

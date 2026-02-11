@@ -59,7 +59,7 @@ export function IntellectualPropertyReport(properties: {
                     <FormDialogButton
                         title={dialogOptions.title}
                         buttonContent={<IconButton size="small"><Edit fontSize='inherit'/></IconButton>}
-                        onSave={(value) => performEdit(value)}
+                        onConfirm={(value) => performEdit(value)}
                         onCancel={() => {
                             return Promise.resolve();
                         }}
