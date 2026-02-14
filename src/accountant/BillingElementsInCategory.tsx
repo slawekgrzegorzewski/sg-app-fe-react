@@ -14,10 +14,14 @@ export interface BillingElementsInCategoryProps {
     billingElements: (GQLIncome | GQLExpense) [];
 }
 
+const GRID_SIDE_COLUMN_SIZE = {xs: 3, sm: 2}
+const GRID_MAIN_COLUMN_SIZE = {xs: 6, sm: 8}
+
 export function BillingElementsInCategory({categoryName, billingElements}: BillingElementsInCategoryProps) {
     const [expanded, setExpanded] = useState(false)
     const theme = useTheme();
-    return <Stack direction={'column'} width={'100%'} sx={{...rowHover(theme), borderBottom: '1px dotted', borderTop: '1px dotted'}}
+    return <Stack direction={'column'} width={'100%'}
+                  sx={{...rowHover(theme), borderBottom: '1px dotted', borderTop: '1px dotted'}}
                   onClick={() => {
                       setExpanded(!expanded)
                   }}>
@@ -37,15 +41,15 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                            dialogOptions={{fullScreen: true}}>
             <Stack direction={'column'} justifyContent={'space-between'}>
                 {
-                    billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).build()).map(be =>
+                    billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
                         <Grid container spacing={2}>
-                            <Grid size={2}>
+                            <Grid size={GRID_SIDE_COLUMN_SIZE}>
                                 <Typography variant={'body2'}>{dayjs(be.date).format('YYYY-MM-DD')}</Typography>
                             </Grid>
-                            <Grid size={8}>
+                            <Grid size={GRID_MAIN_COLUMN_SIZE}>
                                 <Typography variant={'body2'}>{be.description}</Typography>
                             </Grid>
-                            <Grid size={2}>
+                            <Grid size={GRID_SIDE_COLUMN_SIZE}>
                                 <Typography variant={'body2'}>{formatCurrency(be.currency.code, be.amount)}</Typography>
                             </Grid>
                             <Stack/>
@@ -59,6 +63,5 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                     amountExtractor={be => be.amount}/>
             </Stack>
         </InformationDialog>
-    </Stack>
-        ;
+    </Stack>;
 }
