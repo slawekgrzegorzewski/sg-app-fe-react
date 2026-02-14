@@ -2,12 +2,12 @@ import {useQuery} from "@apollo/client/react";
 import {GetFinanceManagement, GetFinanceManagementQuery} from "../types";
 import React from "react";
 import {GQLAccount, GQLPiggyBank, mapAccount, mapPiggyBank} from "./model/types";
-import {Box, Grid, Stack, useTheme} from "@mui/material";
+import {Stack, useTheme} from "@mui/material";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
 import {formatMonetaryAmount} from "../utils/functions";
 import {ComparatorBuilder} from "../utils/comparator-builder";
-import {BillingPeriodBrowser} from "./BillingPeriodBrowser";
 import {rowHover} from "../utils/theme";
+import Typography from "@mui/material/Typography";
 
 export function Accounts() {
     const {
@@ -30,8 +30,12 @@ export function Accounts() {
         const piggyBanks = data.financeManagement.piggyBanks
             .map(mapPiggyBank)
             .sort(ComparatorBuilder.comparing<GQLPiggyBank>(pb => pb.name).build());
-        return <Grid container spacing={2} justifyContent={'space-between'}>
-            <Grid size={2}>
+        return <Stack direction={{xs: 'column', sm: 'row'}}
+                      spacing={{xs: 0, sm: 2}}
+                      justifyContent={'center'}
+                      sx={{paddingLeft: '20px', paddingRight: '20px'}}>
+            <Stack direction={'column'}>
+                <Typography variant={'h4'} textAlign={'center'}>Twoje konta</Typography>
                 <MultiCurrencySummary data={accounts}
                                       amountExtractor={account => account.currentBalance.amount}
                                       currencyExtractor={account => account.currentBalance.currency.code}
@@ -43,27 +47,28 @@ export function Accounts() {
                         accounts.map(account =>
                             (
                                 <Stack direction={'row'} justifyContent={'space-between'} key={account.publicId}
-                                       sx={{...rowHover(theme)}}>
-                                    <Box>{account.name}</Box>
-                                    <Box>{formatMonetaryAmount(account.currentBalance)}</Box>
+                                       sx={{...rowHover(theme), minWidth: '270px'}}>
+                                    <Typography>{account.name}</Typography>
+                                    <Typography>{formatMonetaryAmount(account.currentBalance)}</Typography>
                                 </Stack>
                             ))
-                    )}</Stack>
-            </Grid>
-            <Grid size={8} display={'flex'} justifyContent={'center'}>
-                <BillingPeriodBrowser/>
-            </Grid>
-            <Grid size={2}>
+                    )}
+                </Stack>
+            </Stack>
+            <Stack direction={'column'}>
+                <Typography variant={'h4'} textAlign={'center'}>Skarbonki</Typography>
                 <Stack>
                     {
-                        piggyBanks.map((piggyBank) => {
-                            return <Box
-                                key={piggyBank.publicId}>{piggyBank.name} {formatMonetaryAmount(piggyBank.balance)}</Box>;
-                        })
+                        piggyBanks.map((piggyBank) =>
+                            <Stack direction={'row'} justifyContent={'space-between'} key={piggyBank.publicId}
+                                   sx={{...rowHover(theme), minWidth: '270px'}}>
+                                <Typography>{piggyBank.name}</Typography>
+                                <Typography>{formatMonetaryAmount(piggyBank.balance)}</Typography>
+                            </Stack>)
                     }
                 </Stack>
-            </Grid>
-        </Grid>;
+            </Stack>
+        </Stack>;
     } else {
         return <></>;
     }

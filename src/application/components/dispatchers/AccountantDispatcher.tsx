@@ -1,5 +1,4 @@
 import {useParams} from "react-router-dom";
-import {Accounts} from "../../../accountant/Accounts";
 import {applications} from "../../../utils/applications/applications-access";
 import {Loans} from "../../../loans/Loans";
 import React from "react";
@@ -8,6 +7,8 @@ import {AccountantSettings} from "../../../accountant/settings/AccountantSetting
 import {useApplicationAndDomain} from "../../../utils/use-application-and-domain";
 import {useQuery} from "@apollo/client/react";
 import {GetAccountantSettings, GetAccountantSettingsQuery} from "../../../types";
+import {Accounts} from "../../../accountant/Accounts";
+import {BillingPeriods} from "../../../accountant/BillingPeriods";
 
 type AccountantSettingsContextType = {
     accountantSettings: { isCompany: boolean },
@@ -44,9 +45,10 @@ export function AccountantDispatcher() {
     } else if (accountantSettingsData) {
         return <AccountantSettingsContext.Provider
             value={{...accountantSettingsData.settings, refreshSettings: accountantSettingsRefetch}}>
-            {(!page || isRequestForPage('ACCOUNTANT')) && <Accounts/>}
-            {isRequestForPage('LOANS') && param1 && <Loan/>}
+            {(!page || isRequestForPage('BILLING_PERIODS')) && <BillingPeriods/>}
+            {isRequestForPage('ACCOUNTS') && <Accounts/>}
             {isRequestForPage('LOANS') && !param1 && <Loans/>}
+            {isRequestForPage('LOANS') && param1 && <Loan/>}
             {isRequestForPage('SETTINGS') && <AccountantSettings/>}
         </AccountantSettingsContext.Provider>
     } else return <></>;

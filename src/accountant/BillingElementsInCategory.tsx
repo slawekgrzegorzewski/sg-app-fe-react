@@ -17,9 +17,10 @@ export interface BillingElementsInCategoryProps {
 export function BillingElementsInCategory({categoryName, billingElements}: BillingElementsInCategoryProps) {
     const [expanded, setExpanded] = useState(false)
     const theme = useTheme();
-    return <Stack direction={'column'} width={'100%'} sx={{...rowHover(theme)}} onClick={() => {
-        setExpanded(!expanded)
-    }}>
+    return <Stack direction={'column'} width={'100%'} sx={{...rowHover(theme), borderBottom: '1px dotted', borderTop: '1px dotted'}}
+                  onClick={() => {
+                      setExpanded(!expanded)
+                  }}>
         <Stack direction={'row'} justifyContent={'space-between'}>
             <Typography variant={'body1'}>{categoryName}</Typography>
             <MultiCurrencySummary
