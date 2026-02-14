@@ -20,8 +20,8 @@ query GetAllSuppliers {
     }
 }
 
-query MonthFinancialDocuments($year: Int!, $month: Int!){
-    monthFinancialDocuments(yearMonthInput: { year: $year, month: $month }) {
+query MonthFinancialDocuments($yearMonth: YearMonth!){
+    monthFinancialDocuments(yearMonth: $yearMonth) {
         publicId
         name
         otherParty {

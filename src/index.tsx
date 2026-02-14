@@ -19,6 +19,7 @@ import {createTheme, ThemeProvider} from "@mui/material";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import 'dayjs/locale/pl'
 
 const queryClient = new QueryClient();
 

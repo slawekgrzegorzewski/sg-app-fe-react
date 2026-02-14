@@ -2,6 +2,9 @@ import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import * as React from "react";
 import {useContext} from "react";
 import {ShowBackdropContext} from "../DrawerAppBar";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 export interface InformationDialogProps {
     title: string,
@@ -9,19 +12,20 @@ export interface InformationDialogProps {
     children?: React.JSX.Element;
     open: boolean;
     onClose: () => Promise<void>;
+    dialogOptions?: any
 }
 
 export default function InformationDialog(props: InformationDialogProps) {
     const {setShowBackdrop} = useContext(ShowBackdropContext);
 
-    const {title, message, children, open, onClose} = props;
+    const {title, message, children, open, onClose, dialogOptions} = props;
 
     const doButtonAction = (action: () => Promise<void>) => {
         setShowBackdrop(true);
         action().finally(() => setShowBackdrop(false));
     };
 
-    const handleClose = (e: React.MouseEvent<HTMLElement>, r: string) => {
+    const handleClose = (e: React.MouseEvent<HTMLElement>, r: string = '') => {
         e.stopPropagation();
         if (!['backdropClick', 'escapeKeyDown', 'cancel'].includes(r)) {
             doButtonAction(() => onClose());
@@ -31,8 +35,15 @@ export default function InformationDialog(props: InformationDialogProps) {
     };
 
     return (
-        <Dialog onClose={handleClose} open={open}>
-            <DialogTitle onClick={e => e.stopPropagation()}>{title}</DialogTitle>
+        <Dialog onClose={handleClose} open={open} {...dialogOptions}>
+            <DialogTitle onClick={e => e.stopPropagation()}>
+                <Stack direction={'row'} justifyContent={'space-between'}>
+                    <Typography variant={"h4"}>{title}</Typography>
+                    <IconButton onClick={handleClose}>
+                        <CloseIcon/>
+                    </IconButton>
+                </Stack>
+            </DialogTitle>
             <DialogContent onClick={e => e.stopPropagation()}>
                 {children
                     ? children

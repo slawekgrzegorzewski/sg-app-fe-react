@@ -4,10 +4,18 @@ import {
     BankAccount,
     BankPermission,
     BankPermissions,
-    BillingCategory,
+    BillingCategory, BillingCategoryShort,
+    BillingPeriod, BillingPeriodCreationBlockers,
     CurrencyInfo,
+    Expense,
+    Income,
     Institution,
-    MonetaryAmount
+    MonetaryAmount,
+    MonthSummary,
+    MonthSummaryAccount,
+    MonthSummaryPiggyBank,
+    MonthSummarySavings,
+    PiggyBank
 } from "../../types";
 import Decimal from "decimal.js";
 
@@ -37,6 +45,28 @@ export const mapAccount = (account: Account) => {
     } as GQLAccount;
 }
 
+export type GQLPiggyBank = {
+    publicId: string;
+    name: string;
+    description: string;
+    balance: GQLMonetaryAmount;
+    monthlyTopUp: GQLMonetaryAmount;
+    savings: boolean;
+    domain: GQLDomainSimple;
+}
+
+export const mapPiggyBank = (piggyBank: PiggyBank) => {
+    return {
+        publicId: piggyBank.publicId,
+        name: piggyBank.name,
+        description: piggyBank.description,
+        balance: mapMonetaryAmount(piggyBank.balance),
+        monthlyTopUp: mapMonetaryAmount(piggyBank.monthlyTopUp),
+        savings: piggyBank.savings,
+        domain: mapDomainSimple(piggyBank.domain)
+    } as GQLPiggyBank;
+}
+
 export type GQLBankAccount = {
     publicId: string;
     iban: string;
@@ -56,6 +86,11 @@ export type GQLBillingCategory = {
     domain: GQLDomainSimple;
 }
 
+export type GQLBillingCategoryShort = {
+    name: string;
+    description: string;
+}
+
 export const mapBillingCategory = (billingCategory: BillingCategory) => {
     return {
         publicId: billingCategory.publicId,
@@ -63,6 +98,13 @@ export const mapBillingCategory = (billingCategory: BillingCategory) => {
         description: billingCategory.description,
         domain: billingCategory.domain ? mapDomainSimple(billingCategory.domain) : null
     } as GQLBillingCategory;
+}
+
+export const mapBillingCategoryShort = (billingCategoryShort: BillingCategoryShort) => {
+    return {
+        name: billingCategoryShort.name,
+        description: billingCategoryShort.description,
+    } as GQLBillingCategoryShort;
 }
 
 export type GQLCurrencyInfo = {
@@ -74,6 +116,13 @@ export const mapCurrencyInfo = (currencyInfo: CurrencyInfo) => {
     return {
         code: currencyInfo.code,
         description: currencyInfo.description,
+    } as GQLCurrencyInfo;
+}
+
+export const createCurrencyInfo = (code: string) => {
+    return {
+        code: code,
+        description: '',
     } as GQLCurrencyInfo;
 }
 
@@ -89,6 +138,141 @@ export const mapMonetaryAmount = (monetaryAmount: MonetaryAmount) => {
     } as GQLMonetaryAmount;
 }
 
+export type GQLBillingPeriod = {
+    publicId: string;
+    name: string;
+    period: Date;
+    incomes: GQLIncome[];
+    expenses: GQLExpense[];
+}
+
+export type GQLBillingPeriodCreationBlockers = {
+    alreadyExists: boolean;
+    notForCurrentMonth: boolean;
+    unfinishedBillingPeriods: boolean;
+}
+
+export type GQLIncome = {
+    publicId: string;
+    description: string;
+    amount: Decimal;
+    currency: GQLCurrencyInfo;
+    category: GQLBillingCategoryShort;
+    date: Date;
+}
+
+export type GQLExpense = {
+    publicId: string;
+    description: string;
+    amount: Decimal;
+    currency: GQLCurrencyInfo;
+    category: GQLBillingCategoryShort;
+    date: Date;
+}
+
+export type GQLMonthSummary = {
+    savings: GQLMonthSummarySavings[];
+    accounts: GQLMonthSummaryAccount[];
+    piggyBanks: GQLMonthSummaryPiggyBank[];
+}
+
+export type GQLMonthSummarySavings = {
+    currency: GQLCurrencyInfo;
+    amount: Decimal;
+}
+
+export type GQLMonthSummaryAccount = {
+    publicId: string;
+    name: string;
+    currency: GQLCurrencyInfo;
+    currentBalance: Decimal;
+    lastTransactionIdIncludedInBalance: number;
+}
+
+export type GQLMonthSummaryPiggyBank = {
+    name: string;
+    description: string;
+    balance: Decimal;
+    currency: GQLCurrencyInfo;
+    savings: boolean;
+    monthlyTopUp: Decimal;
+}
+
+export const mapBillingPeriod = (billingPeriod: BillingPeriod) => {
+    return {
+        publicId: billingPeriod.publicId,
+        name: billingPeriod.name,
+        period: billingPeriod.period,
+        incomes: billingPeriod.incomes ? billingPeriod.incomes.map(mapIncome) : [],
+        expenses: billingPeriod.expenses ? billingPeriod.expenses.map(mapExpense) : [],
+    } as GQLBillingPeriod;
+}
+
+export const mapBillingPeriodCreationBlockers = (billingPeriod: BillingPeriodCreationBlockers) => {
+    return {
+        alreadyExists: billingPeriod.alreadyExists,
+        notForCurrentMonth: billingPeriod.notForCurrentMonth,
+        unfinishedBillingPeriods: billingPeriod.unfinishedBillingPeriods,
+    } as GQLBillingPeriodCreationBlockers;
+}
+
+export const mapIncome = (income: Income) => {
+    return {
+        publicId: income.publicId,
+        description: income.description,
+        amount: new Decimal(income.amount),
+        currency: createCurrencyInfo(income.currency),
+        category: mapBillingCategoryShort(income.category),
+        date: new Date(income.date),
+    } as GQLIncome;
+}
+
+export const mapExpense = (expense: Expense) => {
+    return {
+        publicId: expense.publicId,
+        description: expense.description,
+        amount: new Decimal(expense.amount),
+        currency: createCurrencyInfo(expense.currency),
+        category: mapBillingCategoryShort(expense.category),
+        date: new Date(expense.date),
+    } as GQLExpense;
+}
+
+export const mapMonthSummary = (monthSummary: MonthSummary) => {
+    return {
+        savings: monthSummary.savings ? monthSummary.savings.map(mapMonthSummarySavings) : [],
+        accounts: monthSummary.accounts ? monthSummary.accounts.map(mapMonthSummaryAccount) : [],
+        piggyBanks: monthSummary.piggyBanks ? monthSummary.piggyBanks.map(mapMonthSummaryPiggyBank) : [],
+    } as GQLMonthSummary;
+}
+
+function mapMonthSummarySavings(monthSummarySavings: MonthSummarySavings) {
+    return {
+        currency: mapCurrencyInfo(monthSummarySavings.currency),
+        amount: new Decimal(monthSummarySavings.amount),
+    } as GQLMonthSummarySavings;
+}
+
+function mapMonthSummaryAccount(monthSummaryAccount: MonthSummaryAccount) {
+    return {
+        publicId: monthSummaryAccount.publicId,
+        name: monthSummaryAccount.name,
+        currency: mapCurrencyInfo(monthSummaryAccount.currency),
+        currentBalance: new Decimal(monthSummaryAccount.currentBalance),
+        lastTransactionIdIncludedInBalance: monthSummaryAccount.lastTransactionIdIncludedInBalance,
+    } as GQLMonthSummaryAccount;
+}
+
+function mapMonthSummaryPiggyBank(monthSummaryPiggyBank: MonthSummaryPiggyBank) {
+    return {
+        name: monthSummaryPiggyBank.name,
+        description: monthSummaryPiggyBank.description,
+        balance: new Decimal(monthSummaryPiggyBank.balance),
+        currency: mapCurrencyInfo(monthSummaryPiggyBank.currency),
+        savings: monthSummaryPiggyBank.savings,
+        monthlyTopUp: new Decimal(monthSummaryPiggyBank.monthlyTopUp),
+    } as GQLMonthSummaryPiggyBank;
+}
 
 export type GQLBankPermissions = {
     granted: GQLBankPermission[];

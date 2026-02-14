@@ -9,8 +9,10 @@ scalar YearMonth
 scalar Year
 
 type Query {
-    settings: Settings!
     financeManagement: FinanceManagement!
+    billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!
+
+    settings: Settings!
     domainInvitations: [DomainSimple!]!
     bankPermissions: BankPermissions!
 
@@ -28,7 +30,7 @@ type Query {
     monthLedger(ledgerQuery: LedgerQuery): [RevenueAndExpenseEntry!]!
     allClients: [Client!]!
     allSuppliers: [Supplier!]!
-    monthFinancialDocuments(yearMonthInput: YearMonthInput!): [FinancialDocument!]!
+    monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
 }
 
 type Mutation{
@@ -55,6 +57,8 @@ type Mutation{
     createPiggyBank(piggyBankCreationInput: PiggyBankCreationInput!): PiggyBank!
     updatePiggyBank(piggyBankUpdateInput: PiggyBankUpdateInput!): PiggyBank!
     deletePiggyBank(piggyBankPublicId: UUID!): String!
+    createBillingPeriod(yearMonth: YearMonth!): BillingPeriod!
+    finishBillingPeriod(yearMonth: YearMonth!): String!
 
     addIPR(input: IntellectualPropertyData): IntellectualProperty
     updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
@@ -442,11 +446,80 @@ input AccountPutBetweenInput {
     afterAccountPublicId:UUID,
 }
 
+type BillingPeriodResponse {
+    billingPeriod: BillingPeriod
+    creationBlockers: BillingPeriodCreationBlockers!
+}
+
+type BillingPeriod {
+    publicId: UUID!
+    name: String!
+    period: YearMonth!
+    incomes: [Income!]!
+    expenses: [Expense!]!
+    monthSummary: MonthSummary
+}
+
+type BillingPeriodCreationBlockers {
+    alreadyExists: Boolean!
+    notForCurrentMonth: Boolean!
+    unfinishedBillingPeriods: Boolean!
+}
+
+type Income {
+    publicId: UUID!
+    description: String!
+    amount: BigDecimal!
+    currency: Currency!
+    category: BillingCategoryShort!
+    date: LocalDate!
+}
+
+type Expense {
+    publicId: UUID!
+    description: String!
+    amount: BigDecimal!
+    currency: Currency!
+    category: BillingCategoryShort!
+    date: LocalDate!
+}
+
+type MonthSummary {
+    savings: [MonthSummarySavings!]!
+    accounts: [MonthSummaryAccount!]!
+    piggyBanks: [MonthSummaryPiggyBank!]!
+}
+type MonthSummarySavings {
+    currency: Currency!,
+    amount: BigDecimal!
+}
+type MonthSummaryAccount {
+    publicId: String!
+    name: String!
+    currency: Currency!
+    currentBalance: BigDecimal!
+    lastTransactionIdIncludedInBalance: Int!
+}
+
+type MonthSummaryPiggyBank {
+    name: String!
+    description: String!
+    balance: BigDecimal!
+    currency: Currency!
+    savings: Boolean!
+    monthlyTopUp: BigDecimal!
+}
+
 type BillingCategory {
     publicId: UUID!
     name: String!
     description: String!
     domain:DomainSimple!
+}
+
+type BillingCategoryShort {
+    name: String!
+    description: String!
 }
 
 input BillingCategoryCreationInput {
@@ -601,12 +674,7 @@ input InstallmentCreationInput {
 }
 
 input LedgerQuery {
-    yearMonth: YearMonthInput!
-}
-
-input YearMonthInput {
-    year: Int!
-    month: Int!
+    yearMonth: YearMonth!
 }
 
 interface OtherParty {

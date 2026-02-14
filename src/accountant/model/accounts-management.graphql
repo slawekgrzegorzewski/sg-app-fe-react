@@ -1,0 +1,208 @@
+query GetFinanceManagementWithNotAssignedBankAccounts {
+    financeManagement {
+        supportedCurrencies {
+            code
+            description
+        }
+        accounts {
+            publicId
+            order
+            name
+            currentBalance {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            creditLimit {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            balanceIndex
+            visible
+            bankAccount {
+                publicId
+                iban
+            }
+            domain {
+                publicId
+                name
+            }
+        }
+        billingCategories {
+            publicId
+            name
+            description
+            domain {
+                publicId
+                name
+            }
+        }
+        piggyBanks {
+            publicId
+            name
+            description
+            balance {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            monthlyTopUp {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            savings
+            domain {
+                publicId
+                name
+            }
+        }
+    }
+    bankPermissions {
+        bankAccountsNotAssignedToAccount {
+            publicId
+            iban
+        }
+    }
+}
+
+mutation CreateAccount(
+    $name: String!,
+    $balanceIndex: Int,
+    $bankAccountPublicId: UUID,
+    $visible: Boolean!,
+    $creditLimitAmount: BigDecimal!,
+    $creditLimitCurrency: Currency!
+) {
+    createAccount(accountCreationInput: {
+        name: $name
+        balanceIndex: $balanceIndex
+        bankAccountPublicId: $bankAccountPublicId
+        visible: $visible
+        creditLimit: {
+            amount: $creditLimitAmount
+            currency: $creditLimitCurrency
+        }
+    }) {
+        publicId
+        order
+        name
+        currentBalance {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        creditLimit {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        balanceIndex
+        visible
+        bankAccount {
+            publicId
+            iban
+        }
+        domain {
+            publicId
+            name
+        }
+    }
+}
+
+mutation UpdateAccount(
+    $publicId: UUID!,
+    $name: String!,
+    $balanceIndex: Int,
+    $bankAccountPublicId: UUID,
+    $visible: Boolean!,
+    $creditLimitAmount: BigDecimal!,
+    $creditLimitCurrency: Currency!
+) {
+    updateAccount(accountUpdateInput: {
+        publicId: $publicId
+        name: $name
+        balanceIndex: $balanceIndex
+        bankAccountPublicId:$bankAccountPublicId
+        visible: $visible
+        creditLimit: {
+            amount: $creditLimitAmount
+            currency: $creditLimitCurrency
+        }
+    }) {
+        publicId
+        order
+        name
+        currentBalance {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        creditLimit {
+            amount
+            currency {
+                code
+                description
+            }
+        }
+        balanceIndex
+        visible
+        bankAccount {
+            publicId
+            iban
+        }
+        domain {
+            publicId
+            name
+        }
+    }
+}
+
+mutation DeleteAccount(
+    $publicId: UUID!
+) {
+    deleteAccount(accountPublicId: $publicId)
+}
+
+mutation ReorderAccount(
+    $accountPublicId: UUID!,
+    $accountBeforePublicId: UUID,
+    $accountAfterPublicId: UUID
+
+) {
+    reorderAccount(accountReorderInput: {
+        accountPublicId: $accountPublicId
+        putBetween: {
+            beforeAccountPublicId: $accountBeforePublicId
+            afterAccountPublicId: $accountAfterPublicId
+        }
+    })
+}
+
+mutation AssignBankAccountToAccount(
+    $bankAccountPublicId: UUID!,
+    $accountPublicId: UUID!
+){
+    assignBankAccountToAccount(assignBankAccountToAccountInput: {accountPublicId: $accountPublicId, bankAccountPublicId: $bankAccountPublicId})
+}
+
+mutation DeleteBankAccountAssignment(
+    $accountPublicId: UUID!
+) {
+    deleteBankAccountAssignment(deleteBankAccountAssignmentInput: {accountPublicId: $accountPublicId})
+}
