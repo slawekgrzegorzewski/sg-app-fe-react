@@ -181,3 +181,15 @@ mutation CreateBillingPeriod($yearMonth: YearMonth!){
 mutation FinishBillingPeriod($yearMonth: YearMonth!){
     finishBillingPeriod(yearMonth: $yearMonth)
 }
+
+mutation CreateIncome( $accountPublicId: UUID!, $description:String!, $amount:BigDecimal!, $currency:Currency!, $categoryPublicId:UUID!, $date:LocalDate!,$piggyBankPublicId: UUID){
+    createIncome(createIncomeInput: {
+        accountPublicId: $accountPublicId,
+        description: $description,
+        amount: $amount,
+        currency: $currency,
+        categoryPublicId: $categoryPublicId,
+        date: $date,
+        piggyBankPublicId: $piggyBankPublicId}
+    )
+}

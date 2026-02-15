@@ -59,6 +59,7 @@ type Mutation{
     deletePiggyBank(piggyBankPublicId: UUID!): String!
     createBillingPeriod(yearMonth: YearMonth!): BillingPeriod!
     finishBillingPeriod(yearMonth: YearMonth!): String!
+    createIncome(createIncomeInput: CreateIncomeInput!): String!
 
     addIPR(input: IntellectualPropertyData): IntellectualProperty
     updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
@@ -557,6 +558,16 @@ input PiggyBankUpdateInput {
     balance: MonetaryAmountInput
     monthlyTopUp: MonetaryAmountInput
     savings: Boolean
+}
+
+input CreateIncomeInput{
+    accountPublicId: UUID!
+    description:String!
+    amount:BigDecimal!
+    currency:Currency!
+    categoryPublicId:UUID!
+    date:LocalDate!
+    piggyBankPublicId: UUID
 }
 
 type BankAccount {

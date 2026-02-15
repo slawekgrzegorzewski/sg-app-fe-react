@@ -106,8 +106,7 @@ const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
                     } as EditorField
                 ]
         };
-    }
-;
+    };
 
 export interface AccountsManagementProps {
     accounts: GQLAccount[],

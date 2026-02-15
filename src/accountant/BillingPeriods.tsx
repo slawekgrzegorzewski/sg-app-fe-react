@@ -22,6 +22,7 @@ import Typography from "@mui/material/Typography";
 import {BillingElementsInCategory} from "./BillingElementsInCategory";
 import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 import {ResponsiveStyleValue} from "@mui/system";
+import {CreateIncomeButton} from "./CreateIncomeButton";
 
 const YEAR_MONTH_FORMAT = "YYYY-MM";
 const YEAR_MONTH_DISPLAY_FORMAT = "MMMM YYYY";
@@ -112,6 +113,8 @@ export function BillingPeriods() {
                                                                        categoryName={categoryName}
                                                                        billingElements={incomesByCategory.get(categoryName) || []}/>)
                                     }
+                                    {!data.billingPeriod.billingPeriod.monthSummary &&
+                                        (<CreateIncomeButton yearMonth={yearMonth}/>)}
                                 </Stack>
                                 <Stack direction={'column'}
                                        sx={{minWidth: '270px'}}>
