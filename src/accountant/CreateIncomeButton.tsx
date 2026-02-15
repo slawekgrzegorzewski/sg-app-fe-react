@@ -131,7 +131,7 @@ export function CreateIncomeButton({yearMonth}: CreateIncomeButtonPros) {
                 currency: targetAccount!.currentBalance.currency.code,
                 categoryPublicId: incomeDTO.category.publicId,
                 date: incomeDTO.date,
-                piggyBankPublicId: incomeDTO.piggyBank.publicId
+                piggyBankPublicId: incomeDTO.piggyBank.publicId === '' ? null : incomeDTO.piggyBank.publicId
             }
         }).then(result => {
             reset();
@@ -149,7 +149,8 @@ export function CreateIncomeButton({yearMonth}: CreateIncomeButtonPros) {
         return <></>;
     }
     if (showDialog && !targetAccount && financeManagementData) {
-        const accounts = financeManagementData.financeManagement.accounts.map(mapAccount);
+        const accounts = financeManagementData.financeManagement.accounts.map(mapAccount)
+            .sort(ComparatorBuilder.comparing<GQLAccount>(a => a.order).build());
         return <PickDialog
             fullScreen={true}
             title={'Wybierz konto'}
