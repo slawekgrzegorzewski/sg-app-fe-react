@@ -120,7 +120,7 @@ export function CreateIncomeButton({yearMonth}: CreateIncomeButtonPros) {
         refetch
     }] = useLazyQuery<GetFinanceManagementQuery>(GetFinanceManagement, {});
 
-    const [createIncomeMutation, createIncomeResult] = useMutation<CreateIncomeMutation>(CreateIncome);
+    const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
 
     const save = (incomeDTO: IncomeDTO): Promise<void> => {
         return createIncomeMutation({
