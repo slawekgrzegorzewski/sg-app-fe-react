@@ -1,10 +1,11 @@
-import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
+import {Button, Dialog, DialogContent, DialogTitle, Stack, Theme} from "@mui/material";
 import * as React from "react";
 import {useContext} from "react";
 import {ShowBackdropContext} from "../DrawerAppBar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import {SxProps} from "@mui/system";
 
 export interface InformationDialogProps {
     title: string,
@@ -12,7 +13,8 @@ export interface InformationDialogProps {
     children?: React.JSX.Element;
     open: boolean;
     onClose: () => Promise<void>;
-    dialogOptions?: any
+    dialogOptions?: any,
+    sx?: SxProps<Theme>
 }
 
 export default function InformationDialog(props: InformationDialogProps) {
@@ -35,7 +37,7 @@ export default function InformationDialog(props: InformationDialogProps) {
     };
 
     return (
-        <Dialog onClose={handleClose} open={open} {...dialogOptions}>
+        <Dialog onClose={handleClose} open={open} {...dialogOptions} sx={{...props.sx}}>
             <DialogTitle onClick={e => e.stopPropagation()}>
                 <Stack direction={'row'} justifyContent={'space-between'}>
                     <Typography variant={"h4"}>{title}</Typography>

@@ -39,8 +39,9 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                                setExpanded(false);
                                return Promise.resolve();
                            }}
-                           dialogOptions={{fullScreen: isXSBreakpoint}}>
-            <Stack direction={'column'} justifyContent={'space-between'} sx={{minWidth: '800px'}}>
+                           dialogOptions={{fullScreen: isXSBreakpoint}}
+                           sx={{minWidth: '800px'}}>
+            <Stack direction={'column'} justifyContent={'space-between'}>
                 {
                     billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
                         <Grid container spacing={2}>
