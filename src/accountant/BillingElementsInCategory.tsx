@@ -20,7 +20,7 @@ const GRID_MAIN_COLUMN_SIZE = {xs: 6, sm: 8}
 export function BillingElementsInCategory({categoryName, billingElements}: BillingElementsInCategoryProps) {
     const [expanded, setExpanded] = useState(false)
     const theme = useTheme();
-    const showDialogFullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+    const isXSBreakpoint = useMediaQuery(theme.breakpoints.down('sm'));
     return <Stack direction={'column'} width={'100%'}
                   sx={{...rowHover(theme), borderBottom: '1px dotted', borderTop: '1px dotted'}}
                   onClick={() => {
@@ -39,8 +39,8 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                                setExpanded(false);
                                return Promise.resolve();
                            }}
-                           dialogOptions={{fullScreen: showDialogFullScreen}}>
-            <Stack direction={'column'} justifyContent={'space-between'}>
+                           dialogOptions={{fullScreen: isXSBreakpoint}}>
+            <Stack direction={'column'} justifyContent={'space-between'} sx={{minWidth: '800px'}}>
                 {
                     billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
                         <Grid container spacing={2}>
