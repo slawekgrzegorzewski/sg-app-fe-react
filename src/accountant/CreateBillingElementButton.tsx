@@ -1,6 +1,13 @@
 import {EditorField} from "../utils/forms/Form";
 import {useLazyQuery, useMutation} from "@apollo/client/react";
-import {CreateIncome, CreateIncomeMutation, GetFinanceManagement, GetFinanceManagementQuery} from "../types";
+import {
+    CreateExpense,
+    CreateExpenseMutation,
+    CreateIncome,
+    CreateIncomeMutation,
+    GetFinanceManagement,
+    GetFinanceManagementQuery
+} from "../types";
 import * as React from "react";
 import {useState} from "react";
 import Button from "@mui/material/Button";
@@ -19,11 +26,14 @@ import * as Yup from "yup";
 import Typography from "@mui/material/Typography";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 
-export interface CreateIncomeButtonPros {
+export interface CreateBillingElementButtonPros {
     yearMonth: Date;
+    billingElementType: BillingElementType;
 }
 
-type IncomeDTO = {
+export type BillingElementType = 'Income' | 'Expense';
+
+type BillingElementDTO = {
     publicId: string;
     accountName: string;
     amount: number;
@@ -33,7 +43,7 @@ type IncomeDTO = {
     piggyBank: GQLPiggyBank;
 }
 
-const BILLING_ELEMENT_FORM = (account: GQLAccount, categories: GQLBillingCategory[], piggyBanks: GQLPiggyBank[]) => {
+const BILLING_ELEMENT_FORM = (account: GQLAccount, categories: GQLBillingCategory[], piggyBanks: GQLPiggyBank[], billingElementType: BillingElementType) => {
     return {
         validationSchema: Yup.object({
             publicId: Yup.string(),
@@ -52,7 +62,7 @@ const BILLING_ELEMENT_FORM = (account: GQLAccount, categories: GQLBillingCategor
             date: new Date(),
             description: '',
             piggyBank: {publicId: '', name: ''},
-        } as IncomeDTO,
+        } as BillingElementDTO,
         fields:
             [
                 {
@@ -98,7 +108,7 @@ const BILLING_ELEMENT_FORM = (account: GQLAccount, categories: GQLBillingCategor
                     editable: true
                 } as EditorField,
                 {
-                    label: 'Skarbonka do uznania',
+                    label: 'Skarbonka do ' + (billingElementType === 'Income' ? 'uznania' : 'obciążenia'),
                     type: 'AUTOCOMPLETE',
                     key: 'piggyBank',
                     options: piggyBanks,
@@ -110,7 +120,7 @@ const BILLING_ELEMENT_FORM = (account: GQLAccount, categories: GQLBillingCategor
     }
 };
 
-export function CreateIncomeButton({yearMonth}: CreateIncomeButtonPros) {
+export function CreateBillingElementButton({yearMonth, billingElementType}: CreateBillingElementButtonPros) {
     const [showDialog, setShowDialog] = useState(false);
     const [targetAccount, setTargetAccount] = useState<GQLAccount | null>(null);
     const [fetchFinanceManagement, {
@@ -121,22 +131,25 @@ export function CreateIncomeButton({yearMonth}: CreateIncomeButtonPros) {
     }] = useLazyQuery<GetFinanceManagementQuery>(GetFinanceManagement, {});
 
     const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
+    const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
 
-    const save = (incomeDTO: IncomeDTO): Promise<void> => {
-        return createIncomeMutation({
+    const save = (billingElementDTO: BillingElementDTO): Promise<void> => {
+        const variables = {
             variables: {
                 accountPublicId: targetAccount!.publicId,
-                description: incomeDTO.description,
-                amount: incomeDTO.amount,
+                description: billingElementDTO.description,
+                amount: billingElementDTO.amount,
                 currency: targetAccount!.currentBalance.currency.code,
-                categoryPublicId: incomeDTO.category.publicId,
-                date: incomeDTO.date,
-                piggyBankPublicId: incomeDTO.piggyBank.publicId === '' ? null : incomeDTO.piggyBank.publicId
+                categoryPublicId: billingElementDTO.category.publicId,
+                date: billingElementDTO.date,
+                piggyBankPublicId: billingElementDTO.piggyBank.publicId === '' ? null : billingElementDTO.piggyBank.publicId
             }
-        }).then(result => {
-            reset();
-            return Promise.resolve();
-        })
+        };
+        return (billingElementType === 'Income' ? createIncomeMutation(variables) : createExpenseMutation(variables))
+            .then(result => {
+                reset();
+                return Promise.resolve();
+            })
     }
 
     const reset = () => {
@@ -178,13 +191,13 @@ export function CreateIncomeButton({yearMonth}: CreateIncomeButtonPros) {
             .sort(ComparatorBuilder.comparing<GQLPiggyBank>(pb => pb.name).build());
         return <FormDialog
             open={true}
-            dialogTitle={<Typography>Stwórz dochód</Typography>}
+            dialogTitle={<Typography>Stwórz {billingElementType === 'Income' ? 'dochód' : 'wydatek'}</Typography>}
             onConfirm={save}
             onCancel={() => {
                 reset();
                 return Promise.resolve();
             }}
-            formProps={BILLING_ELEMENT_FORM(targetAccount, billingCategories, piggyBanks)}
+            formProps={BILLING_ELEMENT_FORM(targetAccount, billingCategories, piggyBanks, billingElementType)}
         />;
     }
 

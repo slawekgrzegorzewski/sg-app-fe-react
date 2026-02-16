@@ -21,6 +21,16 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
     const [expanded, setExpanded] = useState(false)
     const theme = useTheme();
     const isXSBreakpoint = useMediaQuery(theme.breakpoints.down('sm'));
+    const xs = useMediaQuery(theme.breakpoints.up('xs'));
+    const sm = useMediaQuery(theme.breakpoints.up('sm'));
+    const md = useMediaQuery(theme.breakpoints.up('md'));
+    const lg = useMediaQuery(theme.breakpoints.up('lg'));
+    const xl = useMediaQuery(theme.breakpoints.up('xl'));
+    console.log('xs = ' + xs);
+    console.log('sm = ' + sm);
+    console.log('md = ' + md);
+    console.log('lg = ' + lg);
+    console.log('xl = ' + xl);
     return <Stack direction={'column'} width={'100%'}
                   sx={{...rowHover(theme), borderBottom: '1px dotted', borderTop: '1px dotted'}}
                   onClick={() => {
@@ -40,24 +50,26 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                                return Promise.resolve();
                            }}
                            dialogOptions={{fullScreen: isXSBreakpoint}}
-                           sx={{minWidth: '800px'}}>
-            <Stack direction={'column'} justifyContent={'space-between'}>
-                {
-                    billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
-                        <Grid container spacing={2}>
-                            <Grid size={GRID_SIDE_COLUMN_SIZE}>
-                                <Typography variant={'body2'}>{dayjs(be.date).format('YYYY-MM-DD')}</Typography>
-                            </Grid>
-                            <Grid size={GRID_MAIN_COLUMN_SIZE}>
-                                <Typography variant={'body2'}>{be.description}</Typography>
-                            </Grid>
-                            <Grid size={GRID_SIDE_COLUMN_SIZE}>
-                                <Typography variant={'body2'}>{formatCurrency(be.currency.code, be.amount)}</Typography>
-                            </Grid>
-                            <Stack/>
-                        </Grid>
-                    )
-                }
+                           sx={{minWidth: '650px'}}>
+            <Stack direction={'column'} justifyContent={'space-between'} sx={{minWidth: '550px'}}>
+                <Grid container spacing={2}>
+                    {
+                        billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
+                            <>
+                                <Grid size={GRID_SIDE_COLUMN_SIZE}>
+                                    <Typography variant={'body2'}>{dayjs(be.date).format('YYYY-MM-DD')}</Typography>
+                                </Grid>
+                                <Grid size={GRID_MAIN_COLUMN_SIZE}>
+                                    <Typography variant={'body2'}>{be.description}</Typography>
+                                </Grid>
+                                <Grid size={GRID_SIDE_COLUMN_SIZE}>
+                                    <Typography
+                                        variant={'body2'}>{formatCurrency(be.currency.code, be.amount)}</Typography>
+                                </Grid>
+                            </>
+                        )
+                    }
+                </Grid>
                 <MultiCurrencySummary
                     data={billingElements}
                     header={'Suma:'}

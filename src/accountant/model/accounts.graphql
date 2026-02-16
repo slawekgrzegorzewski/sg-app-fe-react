@@ -193,3 +193,15 @@ mutation CreateIncome( $accountPublicId: UUID!, $description:String!, $amount:Bi
         piggyBankPublicId: $piggyBankPublicId}
     )
 }
+
+mutation CreateExpense( $accountPublicId: UUID!, $description:String!, $amount:BigDecimal!, $currency:Currency!, $categoryPublicId:UUID!, $date:LocalDate!,$piggyBankPublicId: UUID){
+    createExpense(createExpenseInput: {
+        accountPublicId: $accountPublicId,
+        description: $description,
+        amount: $amount,
+        currency: $currency,
+        categoryPublicId: $categoryPublicId,
+        date: $date,
+        piggyBankPublicId: $piggyBankPublicId}
+    )
+}
