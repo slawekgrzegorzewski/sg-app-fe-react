@@ -11,6 +11,7 @@ scalar Year
 type Query {
     financeManagement: FinanceManagement!
     billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!
+    bankTransactionsToImport: [BankTransactionToImport!]!
 
     settings: Settings!
     domainInvitations: [DomainSimple!]!
@@ -917,4 +918,20 @@ input AssignBankAccountToAccountInput{
 
 input DeleteBankAccountAssignmentInput{
     accountPublicId: UUID!
+}
+
+type BankTransactionToImport {
+    id:Int!
+    conversionRate:BigDecimal!
+    credit:BigDecimal!
+    debit:BigDecimal!
+    description:String!
+    timeOfTransaction:LocalDateTime!
+    destinationAccountPublicId:UUID
+    sourceAccountPublicId:UUID
+    creditBankAccountPublicId:UUID
+    debitBankAccountPublicId:UUID
+    transactionPublicId:UUID!
+    creditTransactionPublicId:UUID
+    debitTransactionPublicId:UUID
 }

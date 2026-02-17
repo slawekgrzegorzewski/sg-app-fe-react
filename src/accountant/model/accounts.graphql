@@ -205,3 +205,52 @@ mutation CreateExpense( $accountPublicId: UUID!, $description:String!, $amount:B
         piggyBankPublicId: $piggyBankPublicId}
     )
 }
+
+query BankTransactionsToImport {
+    bankTransactionsToImport {
+        id
+        conversionRate
+        credit
+        debit
+        description
+        timeOfTransaction
+        destinationAccountPublicId
+        sourceAccountPublicId
+        creditBankAccountPublicId
+        debitBankAccountPublicId
+        transactionPublicId
+        creditTransactionPublicId
+        debitTransactionPublicId
+    }
+    financeManagement {
+        accounts {
+            publicId
+            order
+            name
+            currentBalance {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            creditLimit {
+                amount
+                currency {
+                    code
+                    description
+                }
+            }
+            balanceIndex
+            visible
+            bankAccount {
+                publicId
+                iban
+            }
+            domain {
+                publicId
+                name
+            }
+        }
+    }
+}

@@ -21,16 +21,6 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
     const [expanded, setExpanded] = useState(false)
     const theme = useTheme();
     const isXSBreakpoint = useMediaQuery(theme.breakpoints.down('sm'));
-    const xs = useMediaQuery(theme.breakpoints.up('xs'));
-    const sm = useMediaQuery(theme.breakpoints.up('sm'));
-    const md = useMediaQuery(theme.breakpoints.up('md'));
-    const lg = useMediaQuery(theme.breakpoints.up('lg'));
-    const xl = useMediaQuery(theme.breakpoints.up('xl'));
-    console.log('xs = ' + xs);
-    console.log('sm = ' + sm);
-    console.log('md = ' + md);
-    console.log('lg = ' + lg);
-    console.log('xl = ' + xl);
     return <Stack direction={'column'} width={'100%'}
                   sx={{...rowHover(theme), borderBottom: '1px dotted', borderTop: '1px dotted'}}
                   onClick={() => {

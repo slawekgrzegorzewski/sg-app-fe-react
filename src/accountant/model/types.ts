@@ -4,8 +4,11 @@ import {
     BankAccount,
     BankPermission,
     BankPermissions,
-    BillingCategory, BillingCategoryShort,
-    BillingPeriod, BillingPeriodCreationBlockers,
+    BankTransactionToImport,
+    BillingCategory,
+    BillingCategoryShort,
+    BillingPeriod,
+    BillingPeriodCreationBlockers,
     CurrencyInfo,
     Expense,
     Income,
@@ -335,3 +338,37 @@ export const mapInstitution = (institution: Institution) => {
         logo: institution.logo
     } as GQLInstitution;
 };
+
+export type GQLBankTransactionToImport = {
+    id: number;
+    conversionRate: Decimal;
+    credit: Decimal;
+    debit: Decimal;
+    description: string;
+    timeOfTransaction: Date;
+    destinationAccountPublicId: string;
+    sourceAccountPublicId: string;
+    creditBankAccountPublicId: string;
+    debitBankAccountPublicId: string;
+    transactionPublicId: string;
+    creditTransactionPublicId: string;
+    debitTransactionPublicId: string;
+}
+
+export const mapBankTransactionToImport = (bankTransactionToImport: BankTransactionToImport) => {
+    return {
+        id: bankTransactionToImport.id,
+        conversionRate: bankTransactionToImport.conversionRate,
+        credit: new Decimal(bankTransactionToImport.credit),
+        debit: new Decimal(bankTransactionToImport.debit),
+        description: bankTransactionToImport.description,
+        timeOfTransaction: bankTransactionToImport.timeOfTransaction,
+        destinationAccountPublicId: bankTransactionToImport.destinationAccountPublicId,
+        sourceAccountPublicId: bankTransactionToImport.sourceAccountPublicId,
+        creditBankAccountPublicId: bankTransactionToImport.creditBankAccountPublicId,
+        debitBankAccountPublicId: bankTransactionToImport.debitBankAccountPublicId,
+        transactionPublicId: bankTransactionToImport.transactionPublicId,
+        creditTransactionPublicId: bankTransactionToImport.creditTransactionPublicId,
+        debitTransactionPublicId: bankTransactionToImport.debitTransactionPublicId,
+    } as GQLBankTransactionToImport;
+}

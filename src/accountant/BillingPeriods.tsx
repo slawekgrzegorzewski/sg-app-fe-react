@@ -23,6 +23,7 @@ import {BillingElementsInCategory} from "./BillingElementsInCategory";
 import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 import {ResponsiveStyleValue} from "@mui/system";
 import {CreateBillingElementButton} from "./CreateBillingElementButton";
+import {BankTransactionsImporter} from "./BankTransactionsImporter";
 
 const YEAR_MONTH_FORMAT = "YYYY-MM";
 const YEAR_MONTH_DISPLAY_FORMAT = "MMMM YYYY";
@@ -135,6 +136,9 @@ export function BillingPeriods() {
                                     }
                                 </Stack>
                             </Stack>)
+                    }
+                    {
+                        data.billingPeriod.billingPeriod && (<BankTransactionsImporter/>)
                     }
                     {
                         !data.billingPeriod.billingPeriod && billingPeriodCreationBlocker && noCreationBlockers(billingPeriodCreationBlocker) && (
