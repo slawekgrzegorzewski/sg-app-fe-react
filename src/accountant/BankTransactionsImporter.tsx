@@ -43,7 +43,7 @@ export function BankTransactionsImporter() {
         const destinationAccount = accounts.find(account => bankTransactionToImport.destinationAccountPublicId === account.publicId);
         return (<Grid container
                       key={bankTransactionToImport.id}
-                      sx={selectedBankAccountTransactionsToImport?.filter(t => t.id === bankTransactionToImport.id) ? {
+                      sx={selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id) ? {
                           color: theme.palette.primary.contrastText,
                           backgroundColor: theme.palette.primary.main,
                       } : {}}
