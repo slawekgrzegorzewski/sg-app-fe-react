@@ -52,7 +52,7 @@ export function BankTransactionsImporter() {
         let debitExpense: GQLExpenseToImport | 'not possible' | null = null;
         newBankTransactionsToImport.forEach((transaction) => {
             const sourceAccount = transaction.sourceAccountPublicId ? findAccount(accounts, transaction.sourceAccountPublicId) : null;
-            const destinationAccount = transaction.destinationAccountPublicId ? findAccount(accounts, transaction.destinationAccountPublicId) : null;
+            // const destinationAccount = transaction.destinationAccountPublicId ? findAccount(accounts, transaction.destinationAccountPublicId) : null;
             const debit = isDebit(transaction)
             if (!debitExpense) {
                 if (debit) {
