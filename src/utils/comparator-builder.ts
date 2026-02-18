@@ -127,7 +127,7 @@ export class ComparatorBuilder<T> {
     private static convertToNumberExtractor<T>(keyExtractor: TKeyDateExtractor<T>): TKeyExtractor<T> {
         return t => {
             if (t) {
-                const date = keyExtractor(t);
+                const date: Date = keyExtractor(t);
                 if (date) {
                     return Math.floor(date.getTime());
                 }

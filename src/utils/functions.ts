@@ -1,5 +1,10 @@
 import Decimal from "decimal.js";
 import {GQLMonetaryAmount} from "../accountant/model/types";
+import dayjs from "dayjs";
+
+export const trimDateToDay = (date: Date) => {
+    return dayjs(date).startOf('day').toDate();
+}
 
 export const compareDates = (d1: Date, d2: Date) => {
     return d1.getDate() - d2.getDate();

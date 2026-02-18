@@ -362,7 +362,7 @@ export const mapBankTransactionToImport = (bankTransactionToImport: BankTransact
         credit: new Decimal(bankTransactionToImport.credit),
         debit: new Decimal(bankTransactionToImport.debit),
         description: bankTransactionToImport.description,
-        timeOfTransaction: bankTransactionToImport.timeOfTransaction,
+        timeOfTransaction: new Date(bankTransactionToImport.timeOfTransaction),
         destinationAccountPublicId: bankTransactionToImport.destinationAccountPublicId,
         sourceAccountPublicId: bankTransactionToImport.sourceAccountPublicId,
         creditBankAccountPublicId: bankTransactionToImport.creditBankAccountPublicId,
