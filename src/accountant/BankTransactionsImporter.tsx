@@ -4,12 +4,12 @@ import {BankTransactionsToImport, BankTransactionsToImportQuery} from "../types"
 import Button from "@mui/material/Button";
 import {
     GQLAccount,
-    GQLBankTransactionToImport,
+    GQLBankTransactionToImport, GQLCurrencyInfo,
     GQLExpense,
     mapAccount,
     mapBankTransactionToImport
 } from "./model/types";
-import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
+import {Box, Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import {formatCurrency, trimDateToDay} from "../utils/functions";
@@ -42,6 +42,47 @@ export function BankTransactionsImporter() {
     }
 
     function onBankTransactionToImportClicked(accounts: GQLAccount[], bankTransactionToImport: GQLBankTransactionToImport) {
+        const addDebit = (expense: GQLExpenseToImport | "not possible" | null,
+                          transaction: GQLBankTransactionToImport,
+                          currency: GQLCurrencyInfo) => {
+            if (expense === 'not possible') {
+                return expense;
+            }
+            const transactionIsCredit = isCredit(transaction);
+            const transactionIdDebit = isDebit(transaction);
+            if (!transactionIsCredit && !transactionIdDebit) {
+                return 'not possible';
+            }
+            if (!expense) {
+                expense = {
+                    accountPublicId: transaction.sourceAccountPublicId,
+                    description: transaction.description,
+                    amount: transaction.debit,
+                    currency: currency,
+                    date: transaction.timeOfTransaction
+                } as GQLExpenseToImport;
+            } else {
+                const dayOfExpense = trimDateToDay(expense.date);
+                const dayOfTransaction = trimDateToDay(transaction.timeOfTransaction);
+                if (dayOfExpense.getTime() === dayOfTransaction.getTime()
+                    && expense.accountPublicId === (transactionIdDebit ? transaction.sourceAccountPublicId : transaction.destinationAccountPublicId)) {
+                    expense = {
+                        accountPublicId: expense.accountPublicId,
+                        description: transaction.description + '\n' + expense.description,
+                        amount: transactionIdDebit
+                            ? expense.amount.plus(transaction.debit)
+                            : expense.amount.minus(transaction.credit),
+                        currency: expense.currency,
+                        date: trimDateToDay(expense.date)
+                    } as GQLExpenseToImport;
+                } else {
+                    expense = "not possible";
+                }
+            }
+            return expense;
+        }
+
+
         let newBankTransactionsToImport;
         if (selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id)) {
             newBankTransactionsToImport = selectedBankAccountTransactionsToImport?.filter(t => t.id !== bankTransactionToImport.id);
@@ -52,36 +93,9 @@ export function BankTransactionsImporter() {
         let debitExpense: GQLExpenseToImport | 'not possible' | null = null;
         newBankTransactionsToImport.forEach((transaction) => {
             const sourceAccount = transaction.sourceAccountPublicId ? findAccount(accounts, transaction.sourceAccountPublicId) : null;
-            // const destinationAccount = transaction.destinationAccountPublicId ? findAccount(accounts, transaction.destinationAccountPublicId) : null;
+            const destinationAccount = transaction.destinationAccountPublicId ? findAccount(accounts, transaction.destinationAccountPublicId) : null;
             const debit = isDebit(transaction)
-            if (!debitExpense) {
-                if (debit) {
-                    debitExpense = {
-                        accountPublicId: transaction.sourceAccountPublicId,
-                        description: transaction.description,
-                        amount: transaction.debit,
-                        currency: sourceAccount?.currentBalance.currency,
-                        date: transaction.timeOfTransaction
-                    } as GQLExpenseToImport;
-                }
-            } else {
-                if (debitExpense && debitExpense !== 'not possible' && debit) {
-                    const dayOfExpense = trimDateToDay(debitExpense.date);
-                    const dayOfTransaction = trimDateToDay(transaction.timeOfTransaction);
-                    if (dayOfExpense.getTime() === dayOfTransaction.getTime()
-                        && debitExpense.accountPublicId === transaction.sourceAccountPublicId) {
-                        debitExpense = {
-                            accountPublicId: debitExpense.accountPublicId,
-                            description: transaction.description + '\n' + debitExpense.description,
-                            amount: transaction.debit.plus(debitExpense.amount),
-                            currency: debitExpense.currency,
-                            date: trimDateToDay(debitExpense.date)
-                        } as GQLExpenseToImport;
-                    } else {
-                        debitExpense = "not possible";
-                    }
-                }
-            }
+            debitExpense = addDebit(debitExpense, transaction, debit ? sourceAccount!.currentBalance.currency : destinationAccount!.currentBalance.currency);
         })
         setSelectedBankAccountTransactionsToImport([...newBankTransactionsToImport]);
         setPossibleImports({debit: debitExpense === "not possible" ? null : debitExpense});
@@ -89,6 +103,11 @@ export function BankTransactionsImporter() {
 
     function isDebit(bankTransactionToImport: GQLBankTransactionToImport) {
         return bankTransactionToImport.credit.toNumber() === 0 && bankTransactionToImport.debit.toNumber() > 0;
+    }
+
+
+    function isCredit(bankTransactionToImport: GQLBankTransactionToImport) {
+        return bankTransactionToImport.credit.toNumber() > 0 && bankTransactionToImport.debit.toNumber() === 0;
     }
 
     function findAccount(accounts: GQLAccount[], accountPublicId: string) {
@@ -154,11 +173,8 @@ export function BankTransactionsImporter() {
                         {
                             possibleImports.debit && <Stack direction={'column'}>
                                 <Typography>Wydatek</Typography>
-                                <Typography>accountPublicId: {possibleImports.debit.accountPublicId}</Typography>
-                                <Typography>description: {possibleImports.debit.description}</Typography>
-                                <Typography>amount: {possibleImports.debit.amount.toNumber()}</Typography>
-                                <Typography>currency: {possibleImports.debit.currency.code}</Typography>
-                                <Typography>date: {dayjs(possibleImports.debit.date).format("YYYY-MM-DD HH:mm:ss")}</Typography>
+                                <Box component={'code'}
+                                     sx={{'whiteSpaceCollapse': 'break-spaces'}}>{JSON.stringify(possibleImports.debit, null, 2)}</Box>
                             </Stack>
                         }
                     </Stack>
