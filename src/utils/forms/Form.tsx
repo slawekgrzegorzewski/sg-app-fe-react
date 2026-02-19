@@ -16,8 +16,7 @@ import {FormikValues} from "formik";
 import * as Yup from "yup";
 import AutocompleteAsync from "./AutocompleteAsync";
 import {DocumentNode} from "graphql/language";
-import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
-import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers";
+import {DatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
 
 export type EditorFieldType =

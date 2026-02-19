@@ -15,7 +15,7 @@ import {
 import {Box, Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import {formatCurrency, trimDateToDay, trimDateToMonth} from "../utils/functions";
+import {formatCurrency, trimDateToDay} from "../utils/functions";
 import dayjs, {Dayjs} from "dayjs";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";

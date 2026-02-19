@@ -34,7 +34,6 @@ import {LoanDetails} from "./LoanDetails";
 import {RateStrategyDisplay} from "./RateStrategyDisplay";
 import {RepaymentDayStrategyDisplay} from "./RepaymentDayStrategyDisplay";
 import Decimal from "decimal.js";
-import {Dayjs} from "dayjs";
 
 export function Loans() {
 
