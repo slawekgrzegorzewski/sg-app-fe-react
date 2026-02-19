@@ -4,30 +4,51 @@ import {BankTransactionsToImport, BankTransactionsToImportQuery} from "../types"
 import Button from "@mui/material/Button";
 import {
     GQLAccount,
-    GQLBankTransactionToImport, GQLCurrencyInfo,
+    GQLBankTransactionToImport,
+    GQLCurrencyInfo,
     GQLExpense,
     mapAccount,
-    mapBankTransactionToImport
+    mapBankTransactionToImport,
+    mapBillingCategory,
+    mapPiggyBank
 } from "./model/types";
 import {Box, Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import {formatCurrency, trimDateToDay} from "../utils/functions";
-import dayjs from "dayjs";
+import {formatCurrency, trimDateToDay, trimDateToMonth} from "../utils/functions";
+import dayjs, {Dayjs} from "dayjs";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import {ComparatorBuilder} from "../utils/comparator-builder";
+import Form, {AutocompleteEditorField, RegularEditorField, SelectEditorField} from "../utils/forms/Form";
+import * as Yup from "yup";
+
+type ExpenseToCreate = {
+    sourceAccount: GQLAccount,
+    amount: number,
+    category: { publicId: string, name: string },
+    date: Dayjs,
+    description: string,
+    piggyBank: { publicId: string, name: string },
+}
+
+type ExpenseToCreateDTO = Omit<ExpenseToCreate, "sourceAccount"> & {
+    sourceAccount: string
+}
 
 export function BankTransactionsImporter() {
 
-    type GQLExpenseToImport = Omit<GQLExpense, 'publicId' | 'category'> & {
+    type GQLExpenseToImport = Omit<GQLExpense, 'publicId' | 'category' | 'date'> & {
         accountPublicId: string
+        date: Dayjs,
     };
     type ImportType = 'debit';
     const [possibleImports, setPossibleImports] = useState<Record<ImportType, GQLExpenseToImport | null>>({debit: null});
     const {loading, error, data, client} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
     const [showDialog, setShowDialog] = useState(false);
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<GQLBankTransactionToImport[]>([]);
+    const [expenseToCreate, setExpenseToCreate] = useState<ExpenseToCreate | null>(null);
+    const [expenseToCreateDTO, setExpenseToCreateDTO] = useState<ExpenseToCreateDTO | null>(null)
     const theme = useTheme();
     const reset = () => {
         client.clearStore();
@@ -59,7 +80,7 @@ export function BankTransactionsImporter() {
                     description: transaction.description,
                     amount: transaction.debit,
                     currency: currency,
-                    date: transaction.timeOfTransaction
+                    date: dayjs(transaction.timeOfTransaction)
                 } as GQLExpenseToImport;
             } else {
                 const dayOfExpense = trimDateToDay(expense.date);
@@ -73,7 +94,7 @@ export function BankTransactionsImporter() {
                             ? expense.amount.plus(transaction.debit)
                             : expense.amount.minus(transaction.credit),
                         currency: expense.currency,
-                        date: trimDateToDay(expense.date)
+                        date: expense.date
                     } as GQLExpenseToImport;
                 } else {
                     expense = "not possible";
@@ -119,67 +140,191 @@ export function BankTransactionsImporter() {
     } else {
         if (!showDialog) {
             return <Button
-                onClick={() => setShowDialog(true)}>{transactionsToImportButtonText(data.bankTransactionsToImport.length)}</Button>;
-        } else {
+                onClick={() => setShowDialog(true)}>
+                {transactionsToImportButtonText(data.bankTransactionsToImport.length)}
+            </Button>;
+        } else if (showDialog) {
             const accounts = data.financeManagement.accounts.map(mapAccount);
-            return <Dialog onClose={() => reset()}
-                           open={true}
-                           fullScreen={true}>
-                <DialogTitle onClick={e => e.stopPropagation()}>
-                    <Stack direction={'row'} justifyContent={'space-between'}>
-                        <Typography variant={"h4"}>Wybierz transakcja do zaimportowania</Typography>
-                        <IconButton onClick={() => reset()}>
-                            <CloseIcon/>
-                        </IconButton>
-                    </Stack>
-                </DialogTitle>
-                <DialogContent onClick={e => e.stopPropagation()}>
-                    <Stack>
-                        {
-                            (data.bankTransactionsToImport
-                                .map(mapBankTransactionToImport)
-                                .sort(ComparatorBuilder.comparingByDate<GQLBankTransactionToImport>(t => t.timeOfTransaction).build())
-                                .map(bankTransactionToImport => {
-                                    const sourceAccount = findAccount(accounts, bankTransactionToImport.sourceAccountPublicId);
-                                    const destinationAccount = findAccount(accounts, bankTransactionToImport.destinationAccountPublicId);
-                                    return (<Grid container
-                                                  key={bankTransactionToImport.id}
-                                                  sx={selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id) ? {
-                                                      color: theme.palette.primary.contrastText,
-                                                      backgroundColor: theme.palette.primary.main,
-                                                  } : {}}
-                                                  onClick={() => onBankTransactionToImportClicked(accounts, bankTransactionToImport)}>
-                                        <Grid size={5}>
-                                            <Typography>Od: {sourceAccount?.name}</Typography>
-                                        </Grid>
-                                        <Grid
-                                            size={2}><Typography>{sourceAccount ? formatCurrency(sourceAccount.currentBalance.currency.code, bankTransactionToImport.debit) : ''}</Typography>
-                                        </Grid>
-                                        <Grid size={5}>
-                                            <Typography>Data:</Typography>
-                                        </Grid>
-                                        <Grid size={5}>
-                                            <Typography>Do: {destinationAccount?.name}</Typography>
-                                        </Grid>
-                                        <Grid size={2}>
-                                            <Typography>{destinationAccount ? formatCurrency(destinationAccount.currentBalance.currency.code, bankTransactionToImport.credit) : ''}</Typography>
-                                        </Grid>
-                                        <Grid size={5}>
-                                            <Typography>{dayjs(bankTransactionToImport.timeOfTransaction).locale('pl').format('DD MMMM')}</Typography>
-                                        </Grid>
-                                    </Grid>);
-                                }))
-                        }
-                        {
-                            possibleImports.debit && <Stack direction={'column'}>
-                                <Typography>Wydatek</Typography>
-                                <Box component={'code'}
-                                     sx={{'whiteSpaceCollapse': 'break-spaces'}}>{JSON.stringify(possibleImports.debit, null, 2)}</Box>
-                            </Stack>
-                        }
-                    </Stack>
-                </DialogContent>
-            </Dialog>
+            if (!expenseToCreate) {
+                return <Dialog onClose={() => reset()}
+                               open={true}
+                               fullScreen={true}>
+                    <DialogTitle onClick={e => e.stopPropagation()}>
+                        <Stack direction={'row'} justifyContent={'space-between'}>
+                            <Typography variant={"h4"}>Wybierz transakcja do zaimportowania</Typography>
+                            <IconButton onClick={() => reset()}>
+                                <CloseIcon/>
+                            </IconButton>
+                        </Stack>
+                    </DialogTitle>
+                    <DialogContent onClick={e => e.stopPropagation()}>
+                        <Stack>
+                            {
+                                (data.bankTransactionsToImport
+                                    .map(mapBankTransactionToImport)
+                                    .sort(ComparatorBuilder.comparingByDate<GQLBankTransactionToImport>(t => t.timeOfTransaction).build())
+                                    .map(bankTransactionToImport => {
+                                        const sourceAccount = findAccount(accounts, bankTransactionToImport.sourceAccountPublicId);
+                                        const destinationAccount = findAccount(accounts, bankTransactionToImport.destinationAccountPublicId);
+                                        return (<Grid container
+                                                      key={bankTransactionToImport.id}
+                                                      sx={selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id) ? {
+                                                          color: theme.palette.primary.contrastText,
+                                                          backgroundColor: theme.palette.primary.main,
+                                                      } : {}}
+                                                      onClick={() => onBankTransactionToImportClicked(accounts, bankTransactionToImport)}>
+                                            <Grid size={5}>
+                                                <Typography>Od: {sourceAccount?.name}</Typography>
+                                            </Grid>
+                                            <Grid
+                                                size={2}><Typography>{sourceAccount ? formatCurrency(sourceAccount.currentBalance.currency.code, bankTransactionToImport.debit) : ''}</Typography>
+                                            </Grid>
+                                            <Grid size={5}>
+                                                <Typography>Data:</Typography>
+                                            </Grid>
+                                            <Grid size={5}>
+                                                <Typography>Do: {destinationAccount?.name}</Typography>
+                                            </Grid>
+                                            <Grid size={2}>
+                                                <Typography>{destinationAccount ? formatCurrency(destinationAccount.currentBalance.currency.code, bankTransactionToImport.credit) : ''}</Typography>
+                                            </Grid>
+                                            <Grid size={5}>
+                                                <Typography>{dayjs(bankTransactionToImport.timeOfTransaction).locale('pl').format('DD MMMM')}</Typography>
+                                            </Grid>
+                                        </Grid>);
+                                    }))
+                            }
+                            {
+                                possibleImports.debit && <Stack direction={'column'}>
+                                    <Typography onClick={() => {
+                                        setExpenseToCreate({
+                                            sourceAccount: accounts.find(a => a.publicId === possibleImports.debit!.accountPublicId)!,
+                                            amount: possibleImports.debit!.amount.toNumber(),
+                                            category: {
+                                                publicId: '',
+                                                name: ''
+                                            },
+                                            date: possibleImports.debit!.date,
+                                            description: possibleImports.debit!.description,
+                                            piggyBank: {
+                                                publicId: '',
+                                                name: ''
+                                            },
+                                        });
+                                    }}>
+                                        Wydatek
+                                    </Typography>
+                                    <Box component={'code'} sx={{'whiteSpaceCollapse': 'break-spaces'}}>
+                                        {JSON.stringify(possibleImports.debit, null, 2)}
+                                    </Box>
+                                </Stack>
+                            }
+                        </Stack>
+                    </DialogContent>
+                </Dialog>
+            } else if (expenseToCreate) {
+                const billingCategories = data.financeManagement.billingCategories.map(mapBillingCategory);
+                const piggyBanks = data.financeManagement.piggyBanks.map(mapPiggyBank);
+                return <>
+                    <Form
+                        onSave={(value) => {
+                            setExpenseToCreateDTO(value);
+                        }}
+                        onCancel={() => {
+                        }}
+                        initialValues={{
+                            sourceAccount: expenseToCreate.sourceAccount.publicId,
+                            amount: expenseToCreate.amount,
+                            category: {
+                                publicId: '',
+                                name: ''
+                            },
+                            date: expenseToCreate.date,
+                            description: expenseToCreate.description,
+                            piggyBank: {
+                                publicId: '',
+                                name: ''
+                            },
+                        } as ExpenseToCreateDTO}
+                        fields={[
+                            {
+                                key: 'sourceAccount',
+                                label: 'Z konta',
+                                type: 'SELECT',
+                                selectOptions: [{
+                                    key: expenseToCreate.sourceAccount.publicId,
+                                    displayElement: (<>{expenseToCreate.sourceAccount.name + ' (' + expenseToCreate.sourceAccount.currentBalance.currency.code + ')'}</>)
+                                }],
+                                editable: false,
+                            } as SelectEditorField,
+                            {
+                                key: 'amount',
+                                label: 'Kwota',
+                                type: 'NUMBER',
+                                editable: false,
+                            } as RegularEditorField,
+                            {
+                                key: 'category',
+                                label: 'Kategoria',
+                                type: 'AUTOCOMPLETE',
+                                options: billingCategories
+                                    .sort(ComparatorBuilder.comparing<{
+                                        publicId: string,
+                                        name: string
+                                    }>(bc => bc.name).build()),
+                                editable: true,
+                                getOptionLabel: (option: { publicId: string, name: string }) => option.name,
+                                isOptionEqualToValue: (
+                                    option: { publicId: string, name: string },
+                                    value: { publicId: string, name: string }) => option.publicId === value.publicId,
+                            } as AutocompleteEditorField,
+                            {
+                                key: 'date',
+                                label: 'Data',
+                                type: 'DATEPICKER',
+                                editable: false,
+                            } as RegularEditorField,
+                            {
+                                key: 'description',
+                                label: 'Opis',
+                                type: 'TEXTAREA',
+                                editable: true,
+                            } as RegularEditorField,
+                            {
+                                key: 'piggyBank',
+                                label: 'Skarbonka do obciążenia',
+                                type: 'AUTOCOMPLETE',
+                                options: piggyBanks
+                                    .sort(ComparatorBuilder.comparing<{
+                                        publicId: string,
+                                        name: string
+                                    }>(bc => bc.name).build()),
+                                editable: true,
+                                getOptionLabel: (option: { publicId: string, name: string }) => option.name,
+                                isOptionEqualToValue: (
+                                    option: { publicId: string, name: string },
+                                    value: { publicId: string, name: string }) => option.publicId === value.publicId,
+                            } as AutocompleteEditorField,
+                        ]}
+                        validationSchema={Yup.object({
+                            sourceAccount: Yup.string().required('Wymagana'),
+                            amount: Yup.number().required('Wymagana'),
+                            category: Yup.object().required('Wymagana'),
+                            date: Yup.object<Dayjs>()
+                                .required('Wymagana'),
+                            // .validate((value: Dayjs) => trimDateToMonth(value).getTime() === trimDateToMonth(dayjs()).getTime() && dayjs().isAfter(value)),
+                            description: Yup.string().required('Wymagana'),
+                        })}
+                    />
+                    {
+                        expenseToCreateDTO && (<Box component={'code'} sx={{'whiteSpaceCollapse': 'break-spaces'}}>
+                            {JSON.stringify(expenseToCreateDTO, null, 2)}
+                        </Box>)
+                    }
+                </>;
+            } else {
+                return <Typography>WTF?</Typography>;
+            }
         }
     }
 }

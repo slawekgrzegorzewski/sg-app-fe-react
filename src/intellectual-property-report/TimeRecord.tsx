@@ -14,7 +14,7 @@ import {
     UpdateTimeRecord,
     UpdateTimeRecordMutation
 } from "../types";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
 
 export function TimeRecord(properties: {
@@ -31,7 +31,7 @@ export function TimeRecord(properties: {
     const [deleteTimeRecordMutation, deleteTimeRecordMutationResult] = useMutation<DeleteTimeRecordMutation>(DeleteTimeRecord);
 
     const updateTimeRecord = async (assignmentAction: AssignmentAction,
-                                    date: string,
+                                    date: Dayjs,
                                     description: string,
                                     numberOfHours: number,
                                     taskId: number | null,
@@ -39,7 +39,7 @@ export function TimeRecord(properties: {
         await updateTimeRecordMutation({
             variables: {
                 assignmentAction: assignmentAction,
-                date: date,
+                date: date.format('YYYY-MM-DD'),
                 description: description,
                 numberOfHours: numberOfHours,
                 taskId: taskId,
@@ -86,7 +86,7 @@ export function TimeRecord(properties: {
                     initialValues: {
                         task: {id: relatedTask?.id || NON_EXISTING_ID, description: relatedTask?.description || '---'},
                         id: timeRecord.id,
-                        date: dayjs(timeRecord.date).format("YYYY-MM-DD"),
+                        date: dayjs(timeRecord.date),
                         description: timeRecord.description,
                         numberOfHours: timeRecord.numberOfHours
                     },

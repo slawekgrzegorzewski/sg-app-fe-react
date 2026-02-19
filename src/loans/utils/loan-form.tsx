@@ -1,7 +1,7 @@
 import * as Yup from "yup";
 import Decimal from "decimal.js";
 import {EditorField} from "../../utils/forms/Form";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import {Loan, MonetaryAmount} from "../../types";
 import {RepaymentDayStrategyDisplay} from "../RepaymentDayStrategyDisplay";
 import {RateStrategyDisplay} from "../RateStrategyDisplay";
@@ -15,7 +15,7 @@ export const remainingCapital = (loan: Loan): MonetaryAmount => {
 
 export type LoanDTO = {
     name: string,
-    paymentDate: string,
+    paymentDate: Dayjs,
     numberOfInstallments: number,
     paidAmount: Decimal,
     paidCurrency: string,
@@ -80,7 +80,7 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
         }),
         initialValues: {
             name: '',
-            paymentDate: dayjs().format("YYYY-MM-DD"),
+            paymentDate: dayjs(),
             numberOfInstallments: 0,
             paidAmount: new Decimal(0),
             paidCurrency: 'PLN',
@@ -149,7 +149,7 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
 };
 
 export type InstallmentDTO = {
-    paidAt: string;
+    paidAt: Dayjs;
     repaidInterest: Decimal;
     repaidAmount: Decimal;
     overpayment: Decimal;
@@ -171,7 +171,7 @@ export const CREATE_INSTALLMENT_FORM_PROPS = () => {
                 .required('Wymagana')
         }),
         initialValues: {
-            paidAt: dayjs().format("YYYY-MM-DD"),
+            paidAt: dayjs(),
             repaidInterest: new Decimal(0),
             repaidAmount: new Decimal(0),
             overpayment: new Decimal(0),

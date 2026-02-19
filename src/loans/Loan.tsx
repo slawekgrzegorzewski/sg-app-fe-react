@@ -25,6 +25,7 @@ import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
 import {LoanSimulation} from "./LoanSimulation";
 import IconButton from "@mui/material/IconButton";
+import {Dayjs} from "dayjs";
 
 export function Loan() {
     const {setPageParams} = useApplicationNavigation();
@@ -52,11 +53,11 @@ export function Loan() {
         setPageParams([])
         return Promise.resolve("");
     }
-    const createInstallment = async (loanId: string, loanCurrency: string, paidAt: string, repaidInterest: Decimal, repaidAmount: Decimal, overpayment: Decimal): Promise<any> => {
+    const createInstallment = async (loanId: string, loanCurrency: string, paidAt: Dayjs, repaidInterest: Decimal, repaidAmount: Decimal, overpayment: Decimal): Promise<any> => {
         await createInstallmentMutation({
             variables: {
                 loanId: loanId,
-                paidAt: paidAt,
+                paidAt: paidAt.format('YYYY-MM-DD'),
                 repaidInterest: repaidInterest,
                 repaidAmount: repaidAmount,
                 overpayment: overpayment,

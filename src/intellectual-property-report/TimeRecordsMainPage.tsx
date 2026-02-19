@@ -6,7 +6,7 @@ import {emptyTimeRecordEditorProvider, mapTask, mapTimeRecord, NON_EXISTING_ID} 
 import {Button, FormControl, InputLabel, MenuItem, Select, Stack} from "@mui/material";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import * as Yup from "yup";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import {TIME_RECORD_DIALOG_TITLE, timeRecordEditorField, TimeRecordsList} from "./TimeRecordsList";
 
 type TimeRecordsFilter = {
@@ -33,11 +33,11 @@ export function TimeRecordsMainPage() {
 
     const [createTimeRecordMutation, createTimeRecordMutationResult] = useMutation<CreateTimeRecordMutation>(CreateTimeRecord);
 
-    const createTimeRecord = async (assignmentAction: AssignmentAction, date: Date, description: string, numberOfHours: number, taskId: number | null): Promise<any> => {
+    const createTimeRecord = async (assignmentAction: AssignmentAction, date: Dayjs, description: string, numberOfHours: number, taskId: number | null): Promise<any> => {
         await createTimeRecordMutation({
             variables: {
                 assignmentAction: assignmentAction,
-                date: date,
+                date: date.format("YYYY-MM-DD"),
                 description: description,
                 numberOfHours: numberOfHours,
                 taskId: taskId,

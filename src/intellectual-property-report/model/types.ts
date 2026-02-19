@@ -1,4 +1,5 @@
 import {GQLDomainSimple} from "../../application/model/types";
+import dayjs, {Dayjs} from "dayjs";
 
 export const NON_EXISTING_ID = -1;
 
@@ -29,7 +30,7 @@ export type TimeRecordDTO = {
 export type TimeRecordEditorObject = {
     task: { id: number; description: string };
     id: number;
-    date: Date;
+    date: Dayjs;
     description: string;
     numberOfHours: number;
 }
@@ -93,7 +94,7 @@ export const emptyTimeRecordEditorProvider: () => TimeRecordEditorObject = () =>
             description: ''
         },
         id: NON_EXISTING_ID,
-        date: new Date(),
+        date: dayjs(),
         description: '',
         numberOfHours: 0
     };

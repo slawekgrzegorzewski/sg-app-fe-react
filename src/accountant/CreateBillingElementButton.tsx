@@ -25,6 +25,7 @@ import {FormDialog} from "../utils/dialogs/FormDialog";
 import * as Yup from "yup";
 import Typography from "@mui/material/Typography";
 import {ComparatorBuilder} from "../utils/comparator-builder";
+import dayjs, {Dayjs} from "dayjs";
 
 export interface CreateBillingElementButtonPros {
     yearMonth: Date;
@@ -38,7 +39,7 @@ type BillingElementDTO = {
     accountName: string;
     amount: number;
     category: GQLBillingCategory;
-    date: Date;
+    date: Dayjs;
     description: string;
     piggyBank: GQLPiggyBank;
 }
@@ -59,7 +60,7 @@ const BILLING_ELEMENT_FORM = (account: GQLAccount, categories: GQLBillingCategor
             accountName: account.name + " (" + account.currentBalance.currency.code + ")",
             amount: 0,
             category: {publicId: '', name: ''},
-            date: new Date(),
+            date: dayjs(),
             description: '',
             piggyBank: {publicId: '', name: ''},
         } as BillingElementDTO,
@@ -141,7 +142,7 @@ export function CreateBillingElementButton({yearMonth, billingElementType}: Crea
                 amount: billingElementDTO.amount,
                 currency: targetAccount!.currentBalance.currency.code,
                 categoryPublicId: billingElementDTO.category.publicId,
-                date: billingElementDTO.date,
+                date: billingElementDTO.date.format("YYYY-MM-DD"),
                 piggyBankPublicId: billingElementDTO.piggyBank.publicId === '' ? null : billingElementDTO.piggyBank.publicId
             }
         };

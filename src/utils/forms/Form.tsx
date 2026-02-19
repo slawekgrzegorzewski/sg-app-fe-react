@@ -16,6 +16,9 @@ import {FormikValues} from "formik";
 import * as Yup from "yup";
 import AutocompleteAsync from "./AutocompleteAsync";
 import {DocumentNode} from "graphql/language";
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers";
+import {Dayjs} from "dayjs";
 
 export type EditorFieldType =
     'NUMBER'
@@ -35,6 +38,10 @@ export type SelectOption = {
 
 function isEditorFieldKind(object: object, type: string) {
     return !!object && 'type' in object && typeof object.type === 'string' && object.type === type;
+}
+
+function isDatepickerEditorField(object: object): object is BooleanEditorField {
+    return isEditorFieldKind(object, 'DATEPICKER');
 }
 
 function isCheckboxEditorField(object: object): object is BooleanEditorField {
@@ -115,6 +122,7 @@ export default function Form<T>({
     if (showControlButtons === undefined) {
         showControlButtons = true;
     }
+
     function getFieldUniqueProps(editorField: EditorField) {
         switch (editorField.type) {
             case "TEXT":
@@ -176,6 +184,30 @@ export default function Form<T>({
                 ))
             }
         </TextField>
+    }
+
+    function createDatePicker(editorField: EditorField, formik: any) {
+        return <DatePicker
+            {...getFieldUniqueProps(editorField)}
+            {...(editorField.additionalProps || {})}
+            fullWidth
+            variant="standard"
+            id={editorField.key}
+            name={editorField.key}
+            key={editorField.key}
+            label={editorField.label}
+            value={formik.values[editorField.key]}
+            format={'YYYY-MM-DD'}
+            onChange={(newValue: Dayjs) => {
+                formik.setFieldValue(editorField.key, newValue, true);
+                if (autoSubmit) {
+                    formik.submitForm();
+                }
+            }}
+            onBlur={formik.handleBlur}
+            error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+            helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+        />
     }
 
     function createAutocomplete(editorField: AutocompleteEditorField, formik: any) {
@@ -243,7 +275,9 @@ export default function Form<T>({
                         fields
                             .filter(field => field.type !== 'HIDDEN')
                             .map(editorField => {
-                                if (isCheckboxEditorField(editorField)) {
+                                if (isDatepickerEditorField(editorField)) {
+                                    return createDatePicker(editorField, formik);
+                                } else if (isCheckboxEditorField(editorField)) {
                                     return createCheckbox(editorField, formik);
                                 } else if (isAutocompleteEditorField(editorField)) {
                                     return createAutocomplete(editorField, formik);

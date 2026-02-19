@@ -34,6 +34,7 @@ import {LoanDetails} from "./LoanDetails";
 import {RateStrategyDisplay} from "./RateStrategyDisplay";
 import {RepaymentDayStrategyDisplay} from "./RepaymentDayStrategyDisplay";
 import Decimal from "decimal.js";
+import {Dayjs} from "dayjs";
 
 export function Loans() {
 
@@ -47,7 +48,17 @@ export function Loans() {
     const [deleteRepaymentDayStrategyConfigMutation, deleteRepaymentDayStrategyConfigResult] = useMutation<DeleteRepaymentDayStrategyConfigMutation>(DeleteRepaymentDayStrategyConfig);
 
     const createLoan = async (loanDTO: LoanDTO): Promise<any> => {
-        await createLoanMutation({variables: {...loanDTO}});
+        await createLoanMutation({
+            variables: {
+                name: loanDTO.name,
+                paymentDate: loanDTO.paymentDate.format('YYYY-MM-DD'),
+                numberOfInstallments: loanDTO.numberOfInstallments,
+                paidAmount: loanDTO.paidAmount,
+                paidCurrency: loanDTO.paidCurrency,
+                rateStrategyConfigId: loanDTO.rateStrategyConfigId,
+                repaymentDayStrategyConfigId: loanDTO.repaymentDayStrategyConfigId
+            }
+        });
         return refetch();
     };
 
