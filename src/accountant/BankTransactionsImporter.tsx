@@ -20,8 +20,9 @@ import dayjs, {Dayjs} from "dayjs";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import {ComparatorBuilder} from "../utils/comparator-builder";
-import Form, {AutocompleteEditorField, RegularEditorField, SelectEditorField} from "../utils/forms/Form";
-import * as Yup from "yup";
+import Form from "../utils/forms/Form";
+import {BILLING_ELEMENT_FORM_PROPERTIES} from "./CreateBillingElementForm";
+import Decimal from "decimal.js";
 
 type ExpenseToCreate = {
     sourceAccount: GQLAccount,
@@ -228,93 +229,36 @@ export function BankTransactionsImporter() {
                 return <>
                     <Form
                         onSave={(value) => {
-                            setExpenseToCreateDTO(value);
+                            const a = {
+                                sourceAccount: value.affectedAccountPublicId,
+                                amount: value.amount.toNumber(),
+                                category: {publicId: value.category!.publicId, name: value.category!.name},
+                                date: value.date,
+                                description: value.description,
+                                piggyBank: {
+                                    publicId: value.piggyBank?.publicId || '',
+                                    name: value.piggyBank?.name || ''
+                                },
+                            } as ExpenseToCreateDTO;
+                            setExpenseToCreateDTO(a);
                         }}
                         onCancel={() => {
                         }}
-                        initialValues={{
-                            sourceAccount: expenseToCreate.sourceAccount.publicId,
-                            amount: expenseToCreate.amount,
-                            category: {
+                        {...BILLING_ELEMENT_FORM_PROPERTIES(
+                            {
+                                billingElementType: 'Expense',
                                 publicId: '',
-                                name: ''
+                                affectedAccountPublicId: expenseToCreate.sourceAccount.publicId,
+                                amount: new Decimal(expenseToCreate.amount),
+                                category: null,
+                                date: expenseToCreate.date,
+                                description: expenseToCreate.description,
+                                piggyBank: null
                             },
-                            date: expenseToCreate.date,
-                            description: expenseToCreate.description,
-                            piggyBank: {
-                                publicId: '',
-                                name: ''
-                            },
-                        } as ExpenseToCreateDTO}
-                        fields={[
-                            {
-                                key: 'sourceAccount',
-                                label: 'Z konta',
-                                type: 'SELECT',
-                                selectOptions: [{
-                                    key: expenseToCreate.sourceAccount.publicId,
-                                    displayElement: (<>{expenseToCreate.sourceAccount.name + ' (' + expenseToCreate.sourceAccount.currentBalance.currency.code + ')'}</>)
-                                }],
-                                editable: false,
-                            } as SelectEditorField,
-                            {
-                                key: 'amount',
-                                label: 'Kwota',
-                                type: 'NUMBER',
-                                editable: false,
-                            } as RegularEditorField,
-                            {
-                                key: 'category',
-                                label: 'Kategoria',
-                                type: 'AUTOCOMPLETE',
-                                options: billingCategories
-                                    .sort(ComparatorBuilder.comparing<{
-                                        publicId: string,
-                                        name: string
-                                    }>(bc => bc.name).build()),
-                                editable: true,
-                                getOptionLabel: (option: { publicId: string, name: string }) => option.name,
-                                isOptionEqualToValue: (
-                                    option: { publicId: string, name: string },
-                                    value: { publicId: string, name: string }) => option.publicId === value.publicId,
-                            } as AutocompleteEditorField,
-                            {
-                                key: 'date',
-                                label: 'Data',
-                                type: 'DATEPICKER',
-                                editable: false,
-                            } as RegularEditorField,
-                            {
-                                key: 'description',
-                                label: 'Opis',
-                                type: 'TEXTAREA',
-                                editable: true,
-                            } as RegularEditorField,
-                            {
-                                key: 'piggyBank',
-                                label: 'Skarbonka do obciążenia',
-                                type: 'AUTOCOMPLETE',
-                                options: piggyBanks
-                                    .sort(ComparatorBuilder.comparing<{
-                                        publicId: string,
-                                        name: string
-                                    }>(bc => bc.name).build()),
-                                editable: true,
-                                getOptionLabel: (option: { publicId: string, name: string }) => option.name,
-                                isOptionEqualToValue: (
-                                    option: { publicId: string, name: string },
-                                    value: { publicId: string, name: string }) => option.publicId === value.publicId,
-                            } as AutocompleteEditorField,
-                        ]}
-                        validationSchema={Yup.object({
-                            sourceAccount: Yup.string().required('Wymagana'),
-                            amount: Yup.number().required('Wymagana'),
-                            category: Yup.object().required('Wymagana'),
-                            date: Yup.object<Dayjs>()
-                                .required('Wymagana'),
-                            // .validate((value: Dayjs) => trimDateToMonth(value).getTime() === trimDateToMonth(dayjs()).getTime() && dayjs().isAfter(value)),
-                            description: Yup.string().required('Wymagana'),
-                        })}
+                            accounts,
+                            billingCategories,
+                            piggyBanks,
+                        )}
                     />
                     {
                         expenseToCreateDTO && (<Box component={'code'} sx={{'whiteSpaceCollapse': 'break-spaces'}}>
