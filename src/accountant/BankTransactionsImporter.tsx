@@ -22,6 +22,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import Form from "../utils/forms/Form";
 import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO} from "./CreateBillingElementForm";
+import {DebugDisplayObject} from "../utils/DebugDisplayObject";
 
 export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
@@ -210,9 +211,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                     }}>
                                         Wydatek
                                     </Typography>
-                                    <Box component={'code'} sx={{'whiteSpaceCollapse': 'break-spaces'}}>
-                                        {JSON.stringify(possibleImports.debit, null, 2)}
-                                    </Box>
+                                    <DebugDisplayObject object={possibleImports.debit}/>
                                 </Stack>
                             }
                         </Stack>
