@@ -1,4 +1,4 @@
-import {Grid, Stack, useMediaQuery, useTheme} from "@mui/material";
+import {Box, Grid, Stack, useMediaQuery, useTheme} from "@mui/material";
 import {GQLExpense, GQLIncome} from "./model/types";
 import Typography from "@mui/material/Typography";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
@@ -42,10 +42,10 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                            dialogOptions={{fullScreen: isXSBreakpoint}}
                            sx={{minWidth: '650px'}}>
             <Stack direction={'column'} justifyContent={'space-between'} sx={{minWidth: '550px'}}>
-                <Grid container spacing={2}>
+                <Box>
                     {
                         billingElements.sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
-                            <>
+                            <Grid key={be.publicId} container spacing={2}>
                                 <Grid size={GRID_SIDE_COLUMN_SIZE}>
                                     <Typography variant={'body2'}>{dayjs(be.date).format('YYYY-MM-DD')}</Typography>
                                 </Grid>
@@ -56,10 +56,10 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                                     <Typography
                                         variant={'body2'}>{formatCurrency(be.currency.code, be.amount)}</Typography>
                                 </Grid>
-                            </>
+                            </Grid>
                         )
                     }
-                </Grid>
+                </Box>
                 <MultiCurrencySummary
                     data={billingElements}
                     header={'Suma:'}

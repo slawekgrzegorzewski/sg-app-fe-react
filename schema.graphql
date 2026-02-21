@@ -570,6 +570,7 @@ input CreateBillingElementInput{
     categoryPublicId:UUID!
     date:LocalDate!
     piggyBankPublicId: UUID
+    bankTransactionPublicIds: [UUID!]!
 }
 
 type BankAccount {

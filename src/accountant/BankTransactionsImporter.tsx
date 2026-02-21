@@ -1,6 +1,6 @@
-import React, {useState} from "react";
-import {useQuery} from "@apollo/client/react";
-import {BankTransactionsToImport, BankTransactionsToImportQuery} from "../types";
+import React, {JSX, useState} from "react";
+import {useMutation, useQuery} from "@apollo/client/react";
+import {BankTransactionsToImport, BankTransactionsToImportQuery, CreateExpense, CreateExpenseMutation} from "../types";
 import Button from "@mui/material/Button";
 import {
     GQLAccount,
@@ -21,23 +21,13 @@ import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import Form from "../utils/forms/Form";
-import {BILLING_ELEMENT_FORM_PROPERTIES} from "./CreateBillingElementForm";
-import Decimal from "decimal.js";
+import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO} from "./CreateBillingElementForm";
 
-type ExpenseToCreate = {
-    sourceAccount: GQLAccount,
-    amount: number,
-    category: { publicId: string, name: string },
-    date: Dayjs,
-    description: string,
-    piggyBank: { publicId: string, name: string },
+export interface BankTransactionsImporterProps {
+    onRefetch: () => Promise<void>
 }
 
-type ExpenseToCreateDTO = Omit<ExpenseToCreate, "sourceAccount"> & {
-    sourceAccount: string
-}
-
-export function BankTransactionsImporter() {
+export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterProps): JSX.Element {
 
     type GQLExpenseToImport = Omit<GQLExpense, 'publicId' | 'category' | 'date'> & {
         accountPublicId: string
@@ -45,14 +35,13 @@ export function BankTransactionsImporter() {
     };
     type ImportType = 'debit';
     const [possibleImports, setPossibleImports] = useState<Record<ImportType, GQLExpenseToImport | null>>({debit: null});
-    const {loading, error, data, client} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
+    const {loading, error, data} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
     const [showDialog, setShowDialog] = useState(false);
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<GQLBankTransactionToImport[]>([]);
-    const [expenseToCreate, setExpenseToCreate] = useState<ExpenseToCreate | null>(null);
-    const [expenseToCreateDTO, setExpenseToCreateDTO] = useState<ExpenseToCreateDTO | null>(null)
+    const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
+    const [expenseToCreate, setExpenseToCreate] = useState<BillingElementDTO | null>(null);
     const theme = useTheme();
     const reset = () => {
-        client.clearStore();
         setShowDialog(false);
         setSelectedBankAccountTransactionsToImport([]);
     }
@@ -169,10 +158,17 @@ export function BankTransactionsImporter() {
                                         const destinationAccount = findAccount(accounts, bankTransactionToImport.destinationAccountPublicId);
                                         return (<Grid container
                                                       key={bankTransactionToImport.id}
-                                                      sx={selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id) ? {
-                                                          color: theme.palette.primary.contrastText,
-                                                          backgroundColor: theme.palette.primary.main,
-                                                      } : {}}
+                                                      sx={{
+                                                          padding: '3px',
+                                                          marginBottom: '20px',
+                                                          border: '1px solid gray',
+                                                          ...(selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id)
+                                                              ? {
+                                                                  color: theme.palette.primary.contrastText,
+                                                                  backgroundColor: theme.palette.primary.main,
+                                                              }
+                                                              : {})
+                                                      }}
                                                       onClick={() => onBankTransactionToImportClicked(accounts, bankTransactionToImport)}>
                                             <Grid size={5}>
                                                 <Typography>Od: {sourceAccount?.name}</Typography>
@@ -192,6 +188,9 @@ export function BankTransactionsImporter() {
                                             <Grid size={5}>
                                                 <Typography>{dayjs(bankTransactionToImport.timeOfTransaction).locale('pl').format('DD MMMM')}</Typography>
                                             </Grid>
+                                            <Grid size={12}>
+                                                <Typography>{bankTransactionToImport.description}</Typography>
+                                            </Grid>
                                         </Grid>);
                                     }))
                             }
@@ -199,19 +198,15 @@ export function BankTransactionsImporter() {
                                 possibleImports.debit && <Stack direction={'column'}>
                                     <Typography onClick={() => {
                                         setExpenseToCreate({
-                                            sourceAccount: accounts.find(a => a.publicId === possibleImports.debit!.accountPublicId)!,
-                                            amount: possibleImports.debit!.amount.toNumber(),
-                                            category: {
-                                                publicId: '',
-                                                name: ''
-                                            },
+                                            billingElementType: 'Expense',
+                                            publicId: '',
+                                            affectedAccountPublicId: possibleImports.debit!.accountPublicId,
+                                            amount: possibleImports.debit!.amount,
+                                            category: null,
                                             date: possibleImports.debit!.date,
                                             description: possibleImports.debit!.description,
-                                            piggyBank: {
-                                                publicId: '',
-                                                name: ''
-                                            },
-                                        });
+                                            piggyBank: null,
+                                        })
                                     }}>
                                         Wydatek
                                     </Typography>
@@ -228,47 +223,37 @@ export function BankTransactionsImporter() {
                 const piggyBanks = data.financeManagement.piggyBanks.map(mapPiggyBank);
                 return <>
                     <Form
-                        onSave={(value) => {
-                            const a = {
-                                sourceAccount: value.affectedAccountPublicId,
-                                amount: value.amount.toNumber(),
-                                category: {publicId: value.category!.publicId, name: value.category!.name},
-                                date: value.date,
-                                description: value.description,
-                                piggyBank: {
-                                    publicId: value.piggyBank?.publicId || '',
-                                    name: value.piggyBank?.name || ''
-                                },
-                            } as ExpenseToCreateDTO;
-                            setExpenseToCreateDTO(a);
+                        onSave={(billingElementDTO) => {
+                            const variables = {
+                                variables: {
+                                    accountPublicId: billingElementDTO.affectedAccountPublicId!,
+                                    description: billingElementDTO.description!,
+                                    amount: billingElementDTO.amount!,
+                                    currency: accounts.find(account => account.publicId === billingElementDTO.affectedAccountPublicId!)!.currentBalance.currency.code,
+                                    categoryPublicId: billingElementDTO.category!.publicId,
+                                    date: billingElementDTO.date!.format("YYYY-MM-DD"),
+                                    piggyBankPublicId: billingElementDTO.piggyBank?.publicId ? billingElementDTO.piggyBank!.publicId : null,
+                                    bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
+                                }
+                            };
+                            createExpenseMutation(variables)
+                                .then(() => onRefetch())
                         }}
                         onCancel={() => {
                         }}
                         {...BILLING_ELEMENT_FORM_PROPERTIES(
-                            {
-                                billingElementType: 'Expense',
-                                publicId: '',
-                                affectedAccountPublicId: expenseToCreate.sourceAccount.publicId,
-                                amount: new Decimal(expenseToCreate.amount),
-                                category: null,
-                                date: expenseToCreate.date,
-                                description: expenseToCreate.description,
-                                piggyBank: null
-                            },
+                            expenseToCreate,
                             accounts,
                             billingCategories,
                             piggyBanks,
                         )}
                     />
-                    {
-                        expenseToCreateDTO && (<Box component={'code'} sx={{'whiteSpaceCollapse': 'break-spaces'}}>
-                            {JSON.stringify(expenseToCreateDTO, null, 2)}
-                        </Box>)
-                    }
                 </>;
             } else {
                 return <Typography>WTF?</Typography>;
             }
+        } else {
+            return <Typography>WTF2?</Typography>;
         }
     }
 }

@@ -182,7 +182,14 @@ mutation FinishBillingPeriod($yearMonth: YearMonth!){
     finishBillingPeriod(yearMonth: $yearMonth)
 }
 
-mutation CreateIncome( $accountPublicId: UUID!, $description:String!, $amount:BigDecimal!, $currency:Currency!, $categoryPublicId:UUID!, $date:LocalDate!,$piggyBankPublicId: UUID){
+mutation CreateIncome($accountPublicId: UUID!,
+    $description:String!,
+    $amount:BigDecimal!,
+    $currency:Currency!,
+    $categoryPublicId:UUID!,
+    $date:LocalDate!,
+    $piggyBankPublicId: UUID,
+    $bankTransactionPublicIds: [UUID!]!){
     createIncome(createIncomeInput: {
         accountPublicId: $accountPublicId,
         description: $description,
@@ -190,11 +197,19 @@ mutation CreateIncome( $accountPublicId: UUID!, $description:String!, $amount:Bi
         currency: $currency,
         categoryPublicId: $categoryPublicId,
         date: $date,
-        piggyBankPublicId: $piggyBankPublicId}
+        piggyBankPublicId: $piggyBankPublicId,
+        bankTransactionPublicIds: $bankTransactionPublicIds}
     )
 }
 
-mutation CreateExpense( $accountPublicId: UUID!, $description:String!, $amount:BigDecimal!, $currency:Currency!, $categoryPublicId:UUID!, $date:LocalDate!,$piggyBankPublicId: UUID){
+mutation CreateExpense($accountPublicId: UUID!,
+    $description:String!,
+    $amount:BigDecimal!,
+    $currency:Currency!,
+    $categoryPublicId:UUID!,
+    $date:LocalDate!,
+    $piggyBankPublicId: UUID,
+    $bankTransactionPublicIds: [UUID!]!){
     createExpense(createExpenseInput: {
         accountPublicId: $accountPublicId,
         description: $description,
@@ -202,7 +217,8 @@ mutation CreateExpense( $accountPublicId: UUID!, $description:String!, $amount:B
         currency: $currency,
         categoryPublicId: $categoryPublicId,
         date: $date,
-        piggyBankPublicId: $piggyBankPublicId}
+        piggyBankPublicId: $piggyBankPublicId,
+        bankTransactionPublicIds: $bankTransactionPublicIds}
     )
 }
 

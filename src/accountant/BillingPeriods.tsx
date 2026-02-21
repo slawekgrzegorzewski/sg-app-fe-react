@@ -138,7 +138,9 @@ export function BillingPeriods() {
                             </Stack>)
                     }
                     {
-                        data.billingPeriod.billingPeriod && (<BankTransactionsImporter/>)
+                        data.billingPeriod.billingPeriod && (
+                            <BankTransactionsImporter
+                                onRefetch={() => client.clearStore().then(() => refetch()).then(() => Promise.resolve())}/>)
                     }
                     {
                         !data.billingPeriod.billingPeriod && billingPeriodCreationBlocker && noCreationBlockers(billingPeriodCreationBlocker) && (

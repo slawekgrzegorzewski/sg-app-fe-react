@@ -53,7 +53,8 @@ export function CreateBillingElementButton({yearMonth, billingElementType}: Crea
                 currency: affectedAccount!.currentBalance.currency.code,
                 categoryPublicId: billingElementDTO.category!.publicId,
                 date: billingElementDTO.date!.format("YYYY-MM-DD"),
-                piggyBankPublicId: billingElementDTO.piggyBank?.publicId ? billingElementDTO.piggyBank!.publicId : null
+                piggyBankPublicId: billingElementDTO.piggyBank?.publicId ? billingElementDTO.piggyBank!.publicId : null,
+                bankTransactionPublicIds: []
             }
         };
         return (billingElementType === 'Income' ? createIncomeMutation(variables) : createExpenseMutation(variables))
