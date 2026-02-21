@@ -12,7 +12,7 @@ import {
     mapBillingCategory,
     mapPiggyBank
 } from "./model/types";
-import {Box, Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
+import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import {formatCurrency, trimDateToDay} from "../utils/functions";
