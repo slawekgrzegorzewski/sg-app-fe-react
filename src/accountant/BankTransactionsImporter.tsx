@@ -1,4 +1,4 @@
-import React, {JSX, useState} from "react";
+import React, {JSX, useContext, useState} from "react";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {BankTransactionsToImport, BankTransactionsToImportQuery, CreateExpense, CreateExpenseMutation} from "../types";
 import Button from "@mui/material/Button";
@@ -23,6 +23,7 @@ import {ComparatorBuilder} from "../utils/comparator-builder";
 import Form from "../utils/forms/Form";
 import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO} from "./CreateBillingElementForm";
 import {DebugDisplayObject} from "../utils/DebugDisplayObject";
+import {ShowBackdropContext} from "../utils/DrawerAppBar";
 
 export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
@@ -41,6 +42,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<GQLBankTransactionToImport[]>([]);
     const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
     const [expenseToCreate, setExpenseToCreate] = useState<BillingElementDTO | null>(null);
+    const {setShowBackdrop} = useContext(ShowBackdropContext);
     const theme = useTheme();
     const reset = () => {
         setShowDialog(false);
@@ -235,8 +237,10 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                     bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
                                 }
                             };
+                            setShowBackdrop(true);
                             createExpenseMutation(variables)
                                 .then(() => onRefetch())
+                                .finally(() => setShowBackdrop(false));
                         }}
                         onCancel={() => {
                         }}
