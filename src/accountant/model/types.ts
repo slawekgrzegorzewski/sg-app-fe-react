@@ -155,6 +155,8 @@ export type GQLBillingPeriodCreationBlockers = {
     unfinishedBillingPeriods: boolean;
 }
 
+export type GQLBillingElementType = 'Income' | 'Expense';
+
 export type GQLIncome = {
     publicId: string;
     description: string;

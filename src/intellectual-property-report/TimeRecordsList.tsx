@@ -1,6 +1,11 @@
 import {Stack} from "@mui/material";
 import * as React from "react";
-import {AutocompleteAsyncEditorField, EditorField, RegularEditorField} from "../utils/forms/Form";
+import {
+    AutocompleteAsyncEditorField,
+    DatePickerEditorField,
+    EditorField,
+    RegularEditorField
+} from "../utils/forms/Form";
 import {TaskDTO, TimeRecordDTO} from "./model/types";
 import dayjs from "dayjs";
 import {SearchTasks, SearchTasksQuery} from "../types";
@@ -40,7 +45,7 @@ export function timeRecordEditorField(descriptionEditable: boolean): EditorField
             additionalProps: {
                 sx: {width: '200px'},
             }
-        } as RegularEditorField,
+        } as DatePickerEditorField,
         {
             label: 'Liczba godzin',
             type: 'NUMBER',

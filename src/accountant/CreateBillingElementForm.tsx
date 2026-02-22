@@ -1,18 +1,16 @@
-import {EditorField, SelectEditorField} from "../utils/forms/Form";
+import {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
-import {GQLAccount, GQLBillingCategory, GQLPiggyBank} from "./model/types";
+import {GQLAccount, GQLBillingCategory, GQLBillingElementType, GQLPiggyBank} from "./model/types";
 import * as Yup from "yup";
 import dayjs, {Dayjs} from "dayjs";
 import Decimal from "decimal.js";
-
-export type BillingElementType = 'Income' | 'Expense';
 
 export type Option = { id: string; name: string; }
 
 export const EMPTY_OPTION = {id: '', name: ''}
 
 export type BillingElementDTO = {
-    billingElementType: BillingElementType;
+    billingElementType: GQLBillingElementType;
     publicId: string;
     affectedAccountPublicId: string;
     amount: Decimal;
@@ -25,6 +23,7 @@ export type BillingElementDTO = {
 export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDTO, accounts: GQLAccount[], categories: GQLBillingCategory[], piggyBanks: GQLPiggyBank[]) => {
     return {
         validationSchema: Yup.object({
+            billingElementType: Yup.string(),
             publicId: Yup.string(),
             affectedAccountPublicId: Yup.string().required('Wymagana'),
             amount: Yup.number().required('Wymagana'),
@@ -34,6 +33,7 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
             piggyBank: Yup.object().required('Wymagana'),
         }),
         initialValues: {
+            billingElementType: billingElement.billingElementType,
             publicId: billingElement.publicId,
             affectedAccountPublicId: billingElement.affectedAccountPublicId,
             amount: billingElement.amount,
@@ -44,6 +44,12 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
         } as BillingElementDTO,
         fields:
             [
+                {
+                    label: 'BillingElementType',
+                    type: 'HIDDEN',
+                    key: 'billingElementType',
+                    editable: false
+                } as EditorField,
                 {
                     label: 'PublicId',
                     type: 'HIDDEN',
@@ -85,7 +91,7 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
                     additionalProps: {
                         sx: {width: '200px'},
                     }
-                } as EditorField,
+                } as DatePickerEditorField,
                 {
                     label: 'Opis',
                     type: 'TEXTAREA',

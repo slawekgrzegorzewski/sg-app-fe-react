@@ -1,6 +1,6 @@
 import * as Yup from "yup";
 import Decimal from "decimal.js";
-import {EditorField} from "../../utils/forms/Form";
+import {DatePickerEditorField, EditorField} from "../../utils/forms/Form";
 import dayjs, {Dayjs} from "dayjs";
 import {Loan, MonetaryAmount} from "../../types";
 import {RepaymentDayStrategyDisplay} from "../RepaymentDayStrategyDisplay";
@@ -100,7 +100,7 @@ export const CREATE_LOAN_FORM_PROPS = (currencies: string[], rateStrategyConfigs
                     type: 'DATEPICKER',
                     key: 'paymentDate',
                     editable: true
-                } as EditorField,
+                } as DatePickerEditorField,
                 {
                     label: 'Liczba rat',
                     type: 'NUMBER',
@@ -183,7 +183,7 @@ export const CREATE_INSTALLMENT_FORM_PROPS = () => {
                     type: 'DATEPICKER',
                     key: 'paidAt',
                     editable: true
-                } as EditorField,
+                } as DatePickerEditorField,
                 {
                     label: 'Spłacone odsetki',
                     type: 'NUMBER',

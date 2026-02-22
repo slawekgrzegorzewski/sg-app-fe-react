@@ -222,6 +222,17 @@ mutation CreateExpense($accountPublicId: UUID!,
     )
 }
 
+mutation CreateTransfer($fromAccountPublicId: UUID!,$toAccountPublicId: UUID!, $amount: BigDecimal!, $description: String!, $date: LocalDate!, $bankTransactionPublicIds: [UUID!]!){
+    createTransfer(createTransferInput: {
+        fromAccountPublicId:$fromAccountPublicId,
+        toAccountPublicId:$toAccountPublicId ,
+        amount: $amount,
+        description: $description,
+        date: $date,
+        bankTransactionPublicIds:$bankTransactionPublicIds
+    })
+}
+
 query BankTransactionsToImport {
     bankTransactionsToImport {
         id

@@ -5,7 +5,7 @@ export type DebugDisplayObjectProps = {
 }
 
 export function DebugDisplayObject({object}: DebugDisplayObjectProps) {
-    return <Box component={'code'} sx={{'whiteSpaceCollapse': 'break-spaces'}}>
+    return <Box component={'code'} sx={{whiteSpaceCollapse: 'break-spaces'}}>
         {JSON.stringify(object, null, 2)}
     </Box>;
 }

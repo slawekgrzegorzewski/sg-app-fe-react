@@ -39,7 +39,7 @@ function isEditorFieldKind(object: object, type: string) {
     return !!object && 'type' in object && typeof object.type === 'string' && object.type === type;
 }
 
-function isDatepickerEditorField(object: object): object is BooleanEditorField {
+function isDatepickerEditorField(object: object): object is DatePickerEditorField {
     return isEditorFieldKind(object, 'DATEPICKER');
 }
 
@@ -62,9 +62,14 @@ function isAutocompleteAsyncEditorField(object: object): object is AutocompleteA
 export type RegularEditorField = {
     key: string;
     label: string;
-    type: Omit<EditorFieldType, 'SELECT | AUTOCOMPLETE' | 'AUTOCOMPLETE_ASYNC'>;
+    type: Omit<EditorFieldType, 'SELECT | AUTOCOMPLETE' | 'AUTOCOMPLETE_ASYNC' | 'CHECKBOX' | 'DATEPICKER'>;
     additionalProps?: any;
     editable: boolean | ((object: any) => boolean);
+};
+
+export type DatePickerEditorField = Omit<RegularEditorField, 'type'> & {
+    type: 'DATEPICKER';
+    restrictToDates?: Dayjs[]
 };
 
 export type BooleanEditorField = Omit<RegularEditorField, 'type'> & {
@@ -185,7 +190,7 @@ export default function Form<T>({
         </TextField>
     }
 
-    function createDatePicker(editorField: EditorField, formik: any) {
+    function createDatePicker(editorField: DatePickerEditorField, formik: any) {
         return <DatePicker
             {...getFieldUniqueProps(editorField)}
             {...(editorField.additionalProps || {})}
@@ -206,6 +211,9 @@ export default function Form<T>({
             onBlur={formik.handleBlur}
             error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
             helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+            shouldDisableDate={day =>
+                (!editorField.restrictToDates || editorField.restrictToDates.length === 0)
+                || editorField.restrictToDates.filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0}
         />
     }
 

@@ -62,6 +62,7 @@ type Mutation{
     finishBillingPeriod(yearMonth: YearMonth!): String!
     createIncome(createIncomeInput: CreateBillingElementInput!): String!
     createExpense(createExpenseInput: CreateBillingElementInput!): String!
+    createTransfer(createTransferInput: CreateTransferInput!): String!
 
     addIPR(input: IntellectualPropertyData): IntellectualProperty
     updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
@@ -570,6 +571,15 @@ input CreateBillingElementInput{
     categoryPublicId:UUID!
     date:LocalDate!
     piggyBankPublicId: UUID
+    bankTransactionPublicIds: [UUID!]!
+}
+
+input CreateTransferInput{
+    fromAccountPublicId: UUID!
+    toAccountPublicId: UUID!
+    amount:BigDecimal!
+    date:LocalDate!
+    description:String!
     bankTransactionPublicIds: [UUID!]!
 }
 

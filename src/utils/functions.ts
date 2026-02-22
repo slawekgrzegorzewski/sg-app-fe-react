@@ -35,3 +35,7 @@ export const formatBalance = (currency: string, amount: Decimal) => {
     const formatted = formatCurrency(currency, amount);
     return amount.toNumber() < 0 ? `(${formatted})` : `${formatted}`;
 }
+
+export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {
+    return value !== null && value !== undefined;
+}

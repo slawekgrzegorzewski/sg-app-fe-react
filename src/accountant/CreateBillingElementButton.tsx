@@ -14,6 +14,7 @@ import PickDialog from "../utils/dialogs/PickDialog";
 import {
     GQLAccount,
     GQLBillingCategory,
+    GQLBillingElementType,
     GQLPiggyBank,
     mapAccount,
     mapBillingCategory,
@@ -23,12 +24,12 @@ import {formatMonetaryAmount} from "../utils/functions";
 import {FormDialog} from "../utils/dialogs/FormDialog";
 import Typography from "@mui/material/Typography";
 import {ComparatorBuilder} from "../utils/comparator-builder";
-import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO, BillingElementType} from "./CreateBillingElementForm";
+import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO} from "./CreateBillingElementForm";
 import Decimal from "decimal.js";
 
 export interface CreateBillingElementButtonPros {
     yearMonth: Date;
-    billingElementType: BillingElementType;
+    billingElementType: GQLBillingElementType;
 }
 
 export function CreateBillingElementButton({yearMonth, billingElementType}: CreateBillingElementButtonPros) {
