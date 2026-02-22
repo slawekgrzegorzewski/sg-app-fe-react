@@ -211,9 +211,12 @@ export default function Form<T>({
             onBlur={formik.handleBlur}
             error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
             helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-            shouldDisableDate={day =>
-                (!editorField.restrictToDates || editorField.restrictToDates.length === 0)
-                || editorField.restrictToDates.filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0}
+            shouldDisableDate={day => {
+                const shouldDisableDate = ((editorField.restrictToDates || []).length > 0)
+                    && (editorField.restrictToDates || []).filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0;
+                console.log(day.format("YYYY-MM-DD") + ': ' + shouldDisableDate);
+                return shouldDisableDate;
+            }}
         />
     }
 
