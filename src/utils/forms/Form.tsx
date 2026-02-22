@@ -212,10 +212,9 @@ export default function Form<T>({
             error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
             helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
             shouldDisableDate={day => {
-                const shouldDisableDate = ((editorField.restrictToDates || []).length > 0)
-                    && (editorField.restrictToDates || []).filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0;
-                console.log(day.format("YYYY-MM-DD") + ': ' + shouldDisableDate);
-                return shouldDisableDate;
+                const restrictedDays = editorField.restrictToDates || [];
+                return restrictedDays.length > 0
+                    && restrictedDays.filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0;
             }}
         />
     }
