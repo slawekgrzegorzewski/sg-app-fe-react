@@ -13,6 +13,7 @@ import {
 } from "../../../intellectual-property-report/IntellectualPropertySettingsMainPage";
 import {useApplicationAndDomain} from "../../../utils/use-application-and-domain";
 import {AccountantDispatcher} from "./AccountantDispatcher";
+import {CubesMainPage} from "../../../cubes/CubesMainPage";
 
 
 export function Dispatcher() {
@@ -42,6 +43,11 @@ export function Dispatcher() {
             return (<IntellectualPropertySettingsMainPage/>);
         }
     } else if (application.id === 'HOME') {
+        return <></>;
+    } else if (application.id === 'CUBES') {
+        if(!page || isRequestForPage('CUBE_MAIN')) {
+            return (<CubesMainPage></CubesMainPage>);
+        }
         return <></>;
     }
     return (

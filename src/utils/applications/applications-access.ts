@@ -36,13 +36,27 @@ export const applications = new Map<ApplicationId, Application>([
         id: "ACCOUNTANT",
         name: "Księgowość",
         pages: new Map<ApplicationPageId, ApplicationPage>([
-            ['BILLING_PERIODS', {id: 'BILLING_PERIODS', links: ['', '/', 'home'], label: 'Okresy rozliczeniowe'} as ApplicationPage],
+            ['BILLING_PERIODS', {
+                id: 'BILLING_PERIODS',
+                links: ['', '/', 'home'],
+                label: 'Okresy rozliczeniowe'
+            } as ApplicationPage],
             ['ACCOUNTS', {id: 'ACCOUNTS', links: ['accounts'], label: 'Konta'} as ApplicationPage],
             ['LOANS', {id: 'LOANS', links: ['loans'], label: 'Pożyczki'} as ApplicationPage],
             ['SETTINGS', {id: 'SETTINGS', links: ['settings'], label: 'Ustawienia'} as ApplicationPage]
         ])
     } as Application],
-    ["CUBES", {id: "CUBES", name: "Kostka rubika"} as Application],
+    ["CUBES", {
+        id: "CUBES",
+        name: "Kostka rubika",
+        pages: new Map<ApplicationPageId, ApplicationPage>([
+            ['CUBE_MAIN', {
+                id: 'CUBE_MAIN',
+                links: ['', '/'],
+                label: 'Kostki'
+            } as ApplicationPage]
+        ])
+    } as Application],
     ["CHECKER", {id: "CHECKER", name: "Sprawdzanie stron"} as Application],
     ["SYR", {id: "SYR", name: "Raporty roczne ŚJ"} as Application],
     ["IPR", {
