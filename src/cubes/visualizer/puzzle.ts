@@ -1,6 +1,6 @@
-import { expandDoubleMoves } from "./alg";
-import { Shape } from "./buffers";
-import { KeyBindings, getKeyBindings } from "./keyBindings";
+import {expandDoubleMoves} from "./alg";
+import {Shape} from "./buffers";
+import {KeyBindings, getKeyBindings} from "./keyBindings";
 
 export type Sticker = {
     /**
@@ -24,10 +24,8 @@ export type AnimationData = {
 }
 
 export abstract class Puzzle {
-    // @ts-ignore
-    stickers: number[];
-    // @ts-ignore
-    affectedStickers: boolean[];
+    stickers: number[] = [];
+    affectedStickers: boolean[] = [];
     animationQueue: AnimationData[];
     perspective: number[];
 
@@ -43,7 +41,7 @@ export abstract class Puzzle {
     abstract getHintType(gl: WebGLRenderingContext): WebGLBuffer;
 
     abstract getShapes(): Shape[];
-    
+
     abstract numStickers(): number;
 
     /* Then start index of stickers that are draggable */
@@ -53,22 +51,39 @@ export abstract class Puzzle {
     abstract endDraggable(): number;
 
     abstract x(forward: boolean): void;
+
     abstract y(forward: boolean): void;
+
     abstract z(forward: boolean): void;
+
     abstract U(forward: boolean): void;
+
     abstract Uw(forward: boolean): void;
+
     abstract D(forward: boolean): void;
+
     abstract Dw(forward: boolean): void;
+
     abstract F(forward: boolean): void;
+
     abstract Fw(forward: boolean): void;
+
     abstract B(forward: boolean): void;
+
     abstract Bw(forward: boolean): void;
+
     abstract L(forward: boolean): void;
+
     abstract Lw(forward: boolean): void;
+
     abstract R(forward: boolean): void;
+
     abstract Rw(forward: boolean): void;
+
     abstract M(forward: boolean): void;
+
     abstract E(forward: boolean): void;
+
     abstract S(forward: boolean): void;
 
     protected resetAffectedStickers() {
@@ -105,114 +120,257 @@ export abstract class Puzzle {
         this.performMove(move, true);
     }
 
-    getMoveMap(forward: boolean) {
-        return {
-            "x": () => this.x(forward),
-            "x'": () => this.x(!forward),
-            "x2": () => { this.x(forward); this.x(forward); },
-            "x2'": () => { this.x(!forward); this.x(!forward); },
-            "y": () => this.y(forward),
-            "y'": () => this.y(!forward),
-            "y2": () => { this.y(forward); this.y(forward); },
-            "y2'": () => { this.y(!forward); this.y(!forward); },
-            "z": () => this.z(forward),
-            "z'": () => this.z(!forward),
-            "z2": () => { this.z(forward); this.z(forward); },
-            "z2'": () => { this.z(!forward); this.z(!forward); },
-            "U": () => this.U(forward),
-            "U'": () => this.U(!forward),
-            "U2": () => { this.U(forward); this.U(forward); },
-            "U2'": () => { this.U(!forward); this.U(!forward); },
-            "Uw": () => this.Uw(forward),
-            "Uw'": () => this.Uw(!forward),
-            "Uw2": () => { this.Uw(forward); this.Uw(forward); },
-            "Uw2'": () => { this.Uw(!forward); this.Uw(!forward); },
-            "u": () => this.Uw(forward),
-            "u'": () => this.Uw(!forward),
-            "u2": () => { this.Uw(forward); this.Uw(forward); },
-            "u2'": () => { this.Uw(!forward); this.Uw(!forward); },
-            "D": () => this.D(forward),
-            "D'": () => this.D(!forward),
-            "D2": () => { this.D(forward); this.D(forward); },
-            "D2'": () => { this.D(!forward); this.D(!forward); },
-            "Dw": () => this.Dw(forward),
-            "Dw'": () => this.Dw(!forward),
-            "Dw2": () => { this.Dw(forward); this.Dw(forward); },
-            "Dw2'": () => { this.Dw(!forward); this.Dw(!forward); },
-            "d": () => this.Dw(forward),
-            "d'": () => this.Dw(!forward),
-            "d2": () => { this.Dw(forward); this.Dw(forward); },
-            "d2'": () => { this.Dw(!forward); this.Dw(!forward); },
-            "F": () => this.F(forward),
-            "F'": () => this.F(!forward),
-            "F2": () => { this.F(forward); this.F(forward); },
-            "F2'": () => { this.F(!forward); this.F(!forward); },
-            "Fw": () => this.Fw(forward),
-            "Fw'": () => this.Fw(!forward),
-            "Fw2": () => { this.Fw(forward); this.Fw(forward); },
-            "Fw2'": () => { this.Fw(!forward); this.Fw(!forward); },
-            "f": () => this.Fw(forward),
-            "f'": () => this.Fw(!forward),
-            "f2": () => { this.Fw(forward); this.Fw(forward); },
-            "f2'": () => { this.Fw(!forward); this.Fw(!forward); },
-            "B": () => this.B(forward),
-            "B'": () => this.B(!forward),
-            "B2": () => { this.B(forward); this.B(forward); },
-            "B2'": () => { this.B(!forward); this.B(!forward); },
-            "Bw": () => this.Bw(forward),
-            "Bw'": () => this.Bw(!forward),
-            "Bw2": () => { this.Bw(forward); this.Bw(forward); },
-            "Bw2'": () => { this.Bw(!forward); this.Bw(!forward); },
-            "b": () => this.Bw(forward),
-            "b'": () => this.Bw(!forward),
-            "b2": () => { this.Bw(forward); this.Bw(forward); },
-            "b2'": () => { this.Bw(!forward); this.Bw(!forward); },
-            "L": () => this.L(forward),
-            "L'": () => this.L(!forward),
-            "L2": () => { this.L(forward); this.L(forward); },
-            "L2'": () => { this.L(!forward); this.L(!forward); },
-            "L3": () => this.L(!forward),
-            "L3'": () => this.L(forward),
-            "Lw": () => this.Lw(forward),
-            "Lw'": () => this.Lw(!forward),
-            "Lw2": () => { this.Lw(forward); this.Lw(forward); },
-            "Lw2'": () => { this.Lw(!forward); this.Lw(!forward); },
-            "l": () => this.Lw(forward),
-            "l'": () => this.Lw(!forward),
-            "l2": () => { this.Lw(forward); this.Lw(forward); },
-            "l2'": () => { this.Lw(!forward); this.Lw(!forward); },
-            "R": () => this.R(forward),
-            "R'": () => this.R(!forward),
-            "R2": () => { this.R(forward); this.R(forward); },
-            "R2'": () => { this.R(!forward); this.R(!forward); },
-            "R3": () => this.R(!forward),
-            "R3'": () => this.R(forward),
-            "Rw": () => this.Rw(forward),
-            "Rw'": () => this.Rw(!forward),
-            "Rw2": () => { this.Rw(forward); this.Rw(forward); },
-            "Rw2'": () => { this.Rw(!forward); this.Rw(!forward); },
-            "r": () => this.Rw(forward),
-            "r'": () => this.Rw(!forward),
-            "r2": () => { this.Rw(forward); this.Rw(forward); },
-            "r2'": () => { this.Rw(!forward); this.Rw(!forward); },
-            "M": () => this.M(forward),
-            "M'": () => this.M(!forward),
-            "M2": () => { this.M(forward); this.M(forward); },
-            "M2'": () => { this.M(!forward); this.M(!forward); },
-            "E": () => this.E(forward),
-            "E'": () => this.E(!forward),
-            "E2": () => { this.E(forward); this.E(forward); },
-            "E2'": () => { this.E(!forward); this.E(!forward); },
-            "S": () => this.S(forward),
-            "S'": () => this.S(!forward),
-            "S2": () => { this.S(forward); this.S(forward); },
-            "S2'": () => { this.S(!forward); this.S(!forward); },
-        };
+    getMoveMap(forward: boolean): Map<string, () => void> {
+        return new Map([
+            ["x", () => this.x(forward)],
+            ["x'", () => this.x(!forward)],
+            ["x2", () => {
+                this.x(forward);
+                this.x(forward);
+            }],
+            ["x2'", () => {
+                this.x(!forward);
+                this.x(!forward);
+            }],
+            ["y", () => this.y(forward)],
+            ["y'", () => this.y(!forward)],
+            ["y2", () => {
+                this.y(forward);
+                this.y(forward);
+            }],
+            ["y2'", () => {
+                this.y(!forward);
+                this.y(!forward);
+            }],
+            ["z", () => this.z(forward)],
+            ["z'", () => this.z(!forward)],
+            ["z2", () => {
+                this.z(forward);
+                this.z(forward);
+            }],
+            ["z2'", () => {
+                this.z(!forward);
+                this.z(!forward);
+            }],
+            ["U", () => this.U(forward)],
+            ["U'", () => this.U(!forward)],
+            ["U2", () => {
+                this.U(forward);
+                this.U(forward);
+            }],
+            ["U2'", () => {
+                this.U(!forward);
+                this.U(!forward);
+            }],
+            ["Uw", () => this.Uw(forward)],
+            ["Uw'", () => this.Uw(!forward)],
+            ["Uw2", () => {
+                this.Uw(forward);
+                this.Uw(forward);
+            }],
+            ["Uw2'", () => {
+                this.Uw(!forward);
+                this.Uw(!forward);
+            }],
+            ["u", () => this.Uw(forward)],
+            ["u'", () => this.Uw(!forward)],
+            ["u2", () => {
+                this.Uw(forward);
+                this.Uw(forward);
+            }],
+            ["u2'", () => {
+                this.Uw(!forward);
+                this.Uw(!forward);
+            }],
+            ["D", () => this.D(forward)],
+            ["D'", () => this.D(!forward)],
+            ["D2", () => {
+                this.D(forward);
+                this.D(forward);
+            }],
+            ["D2'", () => {
+                this.D(!forward);
+                this.D(!forward);
+            }],
+            ["Dw", () => this.Dw(forward)],
+            ["Dw'", () => this.Dw(!forward)],
+            ["Dw2", () => {
+                this.Dw(forward);
+                this.Dw(forward);
+            }],
+            ["Dw2'", () => {
+                this.Dw(!forward);
+                this.Dw(!forward);
+            }],
+            ["d", () => this.Dw(forward)],
+            ["d'", () => this.Dw(!forward)],
+            ["d2", () => {
+                this.Dw(forward);
+                this.Dw(forward);
+            }],
+            ["d2'", () => {
+                this.Dw(!forward);
+                this.Dw(!forward);
+            }],
+            ["F", () => this.F(forward)],
+            ["F'", () => this.F(!forward)],
+            ["F2", () => {
+                this.F(forward);
+                this.F(forward);
+            }],
+            ["F2'", () => {
+                this.F(!forward);
+                this.F(!forward);
+            }],
+            ["Fw", () => this.Fw(forward)],
+            ["Fw'", () => this.Fw(!forward)],
+            ["Fw2", () => {
+                this.Fw(forward);
+                this.Fw(forward);
+            }],
+            ["Fw2'", () => {
+                this.Fw(!forward);
+                this.Fw(!forward);
+            }],
+            ["f", () => this.Fw(forward)],
+            ["f'", () => this.Fw(!forward)],
+            ["f2", () => {
+                this.Fw(forward);
+                this.Fw(forward);
+            }],
+            ["f2'", () => {
+                this.Fw(!forward);
+                this.Fw(!forward);
+            }],
+            ["B", () => this.B(forward)],
+            ["B'", () => this.B(!forward)],
+            ["B2", () => {
+                this.B(forward);
+                this.B(forward);
+            }],
+            ["B2'", () => {
+                this.B(!forward);
+                this.B(!forward);
+            }],
+            ["Bw", () => this.Bw(forward)],
+            ["Bw'", () => this.Bw(!forward)],
+            ["Bw2", () => {
+                this.Bw(forward);
+                this.Bw(forward);
+            }],
+            ["Bw2'", () => {
+                this.Bw(!forward);
+                this.Bw(!forward);
+            }],
+            ["b", () => this.Bw(forward)],
+            ["b'", () => this.Bw(!forward)],
+            ["b2", () => {
+                this.Bw(forward);
+                this.Bw(forward);
+            }],
+            ["b2'", () => {
+                this.Bw(!forward);
+                this.Bw(!forward);
+            }],
+            ["L", () => this.L(forward)],
+            ["L'", () => this.L(!forward)],
+            ["L2", () => {
+                this.L(forward);
+                this.L(forward);
+            }],
+            ["L2'", () => {
+                this.L(!forward);
+                this.L(!forward);
+            }],
+            ["L3", () => this.L(!forward)],
+            ["L3'", () => this.L(forward)],
+            ["Lw", () => this.Lw(forward)],
+            ["Lw'", () => this.Lw(!forward)],
+            ["Lw2", () => {
+                this.Lw(forward);
+                this.Lw(forward);
+            }],
+            ["Lw2'", () => {
+                this.Lw(!forward);
+                this.Lw(!forward);
+            }],
+            ["l", () => this.Lw(forward)],
+            ["l'", () => this.Lw(!forward)],
+            ["l2", () => {
+                this.Lw(forward);
+                this.Lw(forward);
+            }],
+            ["l2'", () => {
+                this.Lw(!forward);
+                this.Lw(!forward);
+            }],
+            ["R", () => this.R(forward)],
+            ["R'", () => this.R(!forward)],
+            ["R2", () => {
+                this.R(forward);
+                this.R(forward);
+            }],
+            ["R2'", () => {
+                this.R(!forward);
+                this.R(!forward);
+            }],
+            ["R3", () => this.R(!forward)],
+            ["R3'", () => this.R(forward)],
+            ["Rw", () => this.Rw(forward)],
+            ["Rw'", () => this.Rw(!forward)],
+            ["Rw2", () => {
+                this.Rw(forward);
+                this.Rw(forward);
+            }],
+            ["Rw2'", () => {
+                this.Rw(!forward);
+                this.Rw(!forward);
+            }],
+            ["r", () => this.Rw(forward)],
+            ["r'", () => this.Rw(!forward)],
+            ["r2", () => {
+                this.Rw(forward);
+                this.Rw(forward);
+            }],
+            ["r2'", () => {
+                this.Rw(!forward);
+                this.Rw(!forward);
+            }],
+            ["M", () => this.M(forward)],
+            ["M'", () => this.M(!forward)],
+            ["M2", () => {
+                this.M(forward);
+                this.M(forward);
+            }],
+            ["M2'", () => {
+                this.M(!forward);
+                this.M(!forward);
+            }],
+            ["E", () => this.E(forward)],
+            ["E'", () => this.E(!forward)],
+            ["E2", () => {
+                this.E(forward);
+                this.E(forward);
+            }],
+            ["E2'", () => {
+                this.E(!forward);
+                this.E(!forward);
+            }],
+            ["S", () => this.S(forward)],
+            ["S'", () => this.S(!forward)],
+            ["S2", () => {
+                this.S(forward);
+                this.S(forward);
+            }],
+            ["S2'", () => {
+                this.S(!forward);
+                this.S(!forward);
+            }]
+        ]);
     }
 
     performMove(move: string, forward: boolean) {
-        // @ts-ignore
-        const moveFunc = this.getMoveMap(forward)[move];
+        const moveFunc = this.getMoveMap(forward).get(move);
         if (moveFunc) {
             moveFunc();
         } else {

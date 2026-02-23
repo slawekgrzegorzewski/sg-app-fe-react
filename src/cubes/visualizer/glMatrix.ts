@@ -13,8 +13,7 @@ export function create() {
 }
 
 /** Copy contents of `a` into `b` */
-// @ts-ignore
-export function copy(a, b) {
+export function copy<T>(a: T[], b: T[]) {
     b[0] = a[0];
     b[1] = a[1];
     b[2] = a[2];
@@ -46,8 +45,8 @@ export function copy(a, b) {
  * @param near Near bound of the frustum
  * @param far Far bound of the frustum, can be null or Infinity
  */
-// @ts-ignore
-export function perspective(out, fovy, aspect, near, far) {
+
+export function perspective(out: number[], fovy: number, aspect: number, near: number, far: number | null) {
     const f = 1.0 / Math.tan(fovy / 2);
     out[0] = f / aspect;
     out[1] = 0;
@@ -83,8 +82,8 @@ export function perspective(out, fovy, aspect, near, far) {
  * @param rad angle to rotate the matrix by
  * @param axis axis to rotate around
  */
-// @ts-ignore
-export function rotate(out, a, rad, axis) {
+
+export function rotate(out: number[], a: number[], rad: number, axis: number[]) {
     let x = axis[0],
         y = axis[1],
         z = axis[2],
@@ -148,8 +147,7 @@ export function rotate(out, a, rad, axis) {
  * @param m source and destination matrix
  * @param v vector to translate by
  */
-// @ts-ignore
-export function translate(m, v) {
+export function translate(m: number[], v: any[]) {
     let x = v[0],
         y = v[1],
         z = v[2];

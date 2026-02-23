@@ -1,6 +1,6 @@
-import { Shape, Triangle, getBuffer } from "../buffers";
-import { BLUE, Color, GREEN, RED, YELLOW } from "../colors";
-import { Puzzle } from "../puzzle";
+import {Shape, Triangle, getBuffer} from "../buffers";
+import {BLUE, Color, GREEN, RED, YELLOW} from "../colors";
+import {Puzzle} from "../puzzle";
 
 // Sticker order is Front, Bottom, Back left, Back right.
 // Top to bottom, left to right.
@@ -66,10 +66,10 @@ export class Pyraminx extends Puzzle {
         super(perspective);
 
         this.stickers = [
-            0,1,2,3,4,5,6,7,8, // Front
-            9,10,11,12,13,14,15,16,17, // Bottom
-            18,19,20,21,22,23,24,25,26, // Back left
-            27,28,29,30,31,32,33,34,35, // Back right
+            0, 1, 2, 3, 4, 5, 6, 7, 8, // Front
+            9, 10, 11, 12, 13, 14, 15, 16, 17, // Bottom
+            18, 19, 20, 21, 22, 23, 24, 25, 26, // Back left
+            27, 28, 29, 30, 31, 32, 33, 34, 35, // Back right
         ];
 
         let front = [
@@ -101,16 +101,16 @@ export class Pyraminx extends Puzzle {
         ]
     }
 
-    // @ts-ignore
-    private hintType: WebGLBuffer;
+
+    private hintType: WebGLBuffer | null = null;
+
     // Implement abstract method
     getHintType(gl: WebGLRenderingContext): WebGLBuffer {
         if (!this.hintType) {
             // IDK why I have to put the number 4 times.
-            // @ts-ignore
             this.hintType = getBuffer(gl, [2, 2, 2, 2]);
         }
-        return this.hintType;
+        return this.hintType!;
     }
 
     // Implement abstract method
@@ -417,14 +417,12 @@ function splitIntoMiniTriangles(coords: number[]): number[][] {
 }
 
 // Find the point that lies 1/3 of the way between the two points.
-// @ts-ignore
-function thirdPoint(x1, y1, z1, x2, y2, z2): [number, number, number] {
+function thirdPoint(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): [number, number, number] {
     return [(2 * x1 + x2) / 3, (2 * y1 + y2) / 3, (2 * z1 + z2) / 3];
 }
 
 // Find the point that lies 2/3 of the way between the two points.
-// @ts-ignore
-function twoThirdsPoint(x1, y1, z1, x2, y2, z2): [number, number, number] {
+function twoThirdsPoint(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number): [number, number, number] {
     return [(x1 + 2 * x2) / 3, (y1 + 2 * y2) / 3, (z1 + 2 * z2) / 3];
 }
 

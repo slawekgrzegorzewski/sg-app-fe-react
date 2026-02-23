@@ -1,4 +1,4 @@
-import { Puzzle } from "./puzzle";
+import {Puzzle} from "./puzzle";
 
 /**
  * Translate coordinate from pixels (relative to canvas) to clipping space
@@ -19,26 +19,19 @@ function areaTriangle(x1: number, y1: number, x2: number, y2: number, x3: number
     return Math.abs(0.5 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)));
 }
 
-function almostEqual(a: number, b: number) {
+function almostEqual(a: number, b: number): boolean {
     const EPSILON = 0.0001;
     return Math.abs(a - b) < EPSILON;
 }
 
 export abstract class DragDetector {
-    // @ts-ignore
-    numOfPointerMoves: number;
-    // @ts-ignore
-    xOnDown: number;
-    // @ts-ignore
-    yOnDown: number;
-    // @ts-ignore
-    xOnMove: number;
-    // @ts-ignore
-    yOnMove: number;
-    // @ts-ignore
-    stickerOnDown: number;
-    // @ts-ignore
-    cart2dOnDown: number[];
+    numOfPointerMoves: number = 0;
+    xOnDown: number = 0;
+    yOnDown: number = 0;
+    xOnMove: number = 0;
+    yOnMove: number = 0;
+    stickerOnDown: number = 0;
+    cart2dOnDown: number[] = [];
 
     abstract _onPointerDown(x: number, y: number, puzzle: Puzzle): void;
 
@@ -51,11 +44,12 @@ export abstract class DragDetector {
         const clipY = yPixelToClip(y, div.clientHeight);
         this.xOnDown = clipX;
         this.yOnDown = clipY;
-
-        [this.stickerOnDown, this.cart2dOnDown] = this.coordsToSticker(clipX, clipY, puzzle);
-
+        const coordsToSticker = this.coordsToSticker(clipX, clipY, puzzle);
+        if (coordsToSticker) {
+            this.stickerOnDown = coordsToSticker[0];
+            this.cart2dOnDown = coordsToSticker[1];
+        }
         if (this.stickerOnDown !== -1) return;
-
         this._onPointerDown(clipX, clipY, puzzle);
     }
 
@@ -82,32 +76,29 @@ export abstract class DragDetector {
      * Find the sticker with cart2d that contains this coordinate.
      * Return -1 if it's not in any sticker.
      */
-    private coordsToSticker(x: number, y: number, puzzle: Puzzle) {
+    private coordsToSticker(x: number, y: number, puzzle: Puzzle): [number, number[]] | null {
         const shapes = puzzle.getShapes();
-
         // Determine if coordinate is in convex quadrilateral
-        // @ts-ignore
-        const isInQuad = i => {
+        const isInQuad: (i: number) => [number, number[]] | null = (i: number) => {
             const coords = shapes[i].cart2d;
             const [x1, y1, x2, y2, x3, y3, x4, y4] = coords;
 
-            const totalArea = 
+            const totalArea: number =
                 areaTriangle(x1, y1, x2, y2, x3, y3)
                 + areaTriangle(x1, y1, x3, y3, x4, y4);
 
-            const area1 = areaTriangle(x, y, x1, y1, x2, y2);
-            const area2 = areaTriangle(x, y, x2, y2, x3, y3);
-            const area3 = areaTriangle(x, y, x3, y3, x4, y4);
-            const area4 = areaTriangle(x, y, x4, y4, x1, y1);
+            const area1: number = areaTriangle(x, y, x1, y1, x2, y2);
+            const area2: number = areaTriangle(x, y, x2, y2, x3, y3);
+            const area3: number = areaTriangle(x, y, x3, y3, x4, y4);
+            const area4: number = areaTriangle(x, y, x4, y4, x1, y1);
 
             return almostEqual(totalArea, area1 + area2 + area3 + area4)
                 ? [i, coords]
-                : undefined;
+                : null;
         }
 
         // Determine if coordinate is in triangle
-        // @ts-ignore
-        const isInTriangle = i => {
+        const isInTriangle: (i: number) => [number, number[]] | null = (i: number) => {
             const coords = shapes[i].cart2d;
             const [x1, y1, x2, y2, x3, y3] = coords;
 
@@ -119,11 +110,10 @@ export abstract class DragDetector {
 
             return almostEqual(totalArea, area1 + area2 + area3)
                 ? [i, coords]
-                : undefined;
+                : null;
         }
 
-        // @ts-ignore
-        const isInSticker = i => {
+        const isInSticker = (i: number) => {
             const cart2d = shapes[i].cart2d;
 
             if (Number.isNaN(cart2d[6]) || Number.isNaN(cart2d[7])) {
@@ -139,7 +129,7 @@ export abstract class DragDetector {
             if (output) return output;
         }
 
-        return [-1, undefined];
+        return [-1, []];
     }
 
     protected slope(x1: number, y1: number, x2: number, y2: number) {

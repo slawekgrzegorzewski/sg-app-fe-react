@@ -1,17 +1,16 @@
 import { BLACK, Color } from "./colors";
 
 export function getBuffer(gl: WebGLRenderingContext, data: number[]) {
-    const buff = gl.createBuffer();
+    const buff = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, buff);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
     return buff;
 }
 
 export function getFloatBuffer(gl: WebGLRenderingContext, data: number): WebGLBuffer {
-    const buff = gl.createBuffer();
+    const buff = gl.createBuffer()!;
     gl.bindBuffer(gl.LOW_FLOAT, buff);
     gl.bufferData(gl.LOW_FLOAT, data, gl.STATIC_DRAW);
-    // @ts-ignore
     return buff;
 }
 
@@ -35,20 +34,15 @@ export abstract class Shape {
     cart2d: number[];
 
     constructor(gl: WebGLRenderingContext, args: ShapeArgs) {
-        // @ts-ignore
         this.base = getBuffer(gl, args.baseVertices);
-        // @ts-ignore
         this.sticker = getBuffer(gl, args.stickerVertices);
-        // @ts-ignore
         this.hint = getBuffer(gl, args.hintVertices);
         this.color = this.getColorBuffer(gl, args.color);
         this.black = this.getColorBuffer(gl, BLACK);
-
         // Define a square as two triangles.
         // Given vertices A, B, C, and D, we define triangles ABC and ACD.
         const data = [0, 1, 2, 0, 2, 3];
-        // @ts-ignore
-        this.indexBuffer = gl.createBuffer();
+        this.indexBuffer = gl.createBuffer()!;
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
 
@@ -67,7 +61,6 @@ export class Triangle extends Shape {
     }
 
     getColorBuffer(gl: WebGLRenderingContext, color: number[]): WebGLBuffer {
-        // @ts-ignore
         return getBuffer(gl, [
             color[0], color[1], color[2], 1,
             color[0], color[1], color[2], 1,
@@ -82,7 +75,7 @@ export class Square extends Shape {
     }
 
     getColorBuffer(gl: WebGLRenderingContext, color: Color): WebGLBuffer {
-        // @ts-ignore
+        
         return getBuffer(gl, [
             color[0], color[1], color[2], 1,
             color[0], color[1], color[2], 1,

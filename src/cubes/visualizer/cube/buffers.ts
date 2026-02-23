@@ -14,7 +14,7 @@ export type BufferObject = {
 
 type Axis = 0 | 1 | 2;
 
-const cache = {};
+const cache = new Map<string, Shape[]>();
 
 function half(x: number): number {
     return Math.floor(x / 2);
@@ -29,10 +29,9 @@ export function createBuffers(gl: WebGLRenderingContext, cube: Cube): Shape[] {
     const perspective = cube.perspective;
 
     const cacheKey = `${layers}-${perspective}`;
-    // @ts-ignore
-    if (cache[cacheKey]) {
-        // @ts-ignore
-        return cache[cacheKey]!;
+
+    if (cache.has(cacheKey)) {
+        return cache.get(cacheKey)!;
     }
 
     let allBase = makePositions(layers, 1.0, 0.0);
@@ -64,9 +63,7 @@ export function createBuffers(gl: WebGLRenderingContext, cube: Cube): Shape[] {
 
         objects[i] = new Square(gl, shapeArgs);
     }
-
-    // @ts-ignore
-    cache[cacheKey] = objects;
+    cache.set(cacheKey, objects);
     return objects;
 }
 
@@ -255,10 +252,9 @@ function rightFace(arr: number[], offset: number, layers: number, a: Axis, r: nu
     makeFace(arr, offset, layers, coords, a, gap);
 }
 
-function makeFace(arr: number[], offset: number, layers: number, coords: number[], a: Axis, gap: number) {
+function makeFace(arr: number[], offset: number, layers: number, coords: number[][], a: Axis, gap: number) {
     for (let i = 0; i < sq(layers); i++) {
         const temp = coords[i];
-        // @ts-ignore
         makeSticker(arr, offset + i * perSticker, layers, temp[0], temp[1], temp[2], a, gap);
     }
 }

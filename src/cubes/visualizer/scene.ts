@@ -1,14 +1,13 @@
-import { Shape, getBuffer } from "./buffers";
-import { Cube } from "./cube/cube";
-// import { DragDetector } from "./cube/dragDetector";
-import { CubeDragDetector } from "./cube/dragDetector";
-import { DragDetector } from "./dragDetector";
+import {Shape, getBuffer} from "./buffers";
+import {Cube} from "./cube/cube";
+import {CubeDragDetector} from "./cube/dragDetector";
+import {DragDetector} from "./dragDetector";
 import * as glMat from "./glMatrix";
-import { Puzzle } from "./puzzle";
-import { PyraDragDetector } from "./pyraminx/dragDetector";
-import { Pyraminx } from "./pyraminx/pyraminx";
-import { singleton } from "./singleton";
-import { Spring } from "./spring";
+import {Puzzle} from "./puzzle";
+import {PyraDragDetector} from "./pyraminx/dragDetector";
+import {Pyraminx} from "./pyraminx/pyraminx";
+import {singleton} from "./singleton";
+import {Spring} from "./spring";
 
 export {
     newCube,
@@ -19,10 +18,10 @@ export {
 
 let canvas: HTMLCanvasElement = initCanvas();
 let gl: WebGLRenderingContext = initGL(canvas);
-let programInfo: ProgramInfo = initProgram(gl);
+let programInfo: ProgramInfo = initProgram(gl)!;
 
 // IDK why I have to put the number 4 times.
-const notHintBuffer = getBuffer(gl, [0, 0, 0, 0]);
+const notHintBuffer = getBuffer(gl, [0, 0, 0, 0])!;
 
 function initCanvas() {
     const canvas = document.createElement("canvas");
@@ -67,7 +66,7 @@ type ProgramInfo = {
     },
 };
 
-function initProgram(gl: WebGLRenderingContext): ProgramInfo {
+function initProgram(gl: WebGLRenderingContext): ProgramInfo | null {
     /* Vertex shader source */
     const vsSource = `
     attribute vec4 aHintType;
@@ -130,22 +129,22 @@ function initProgram(gl: WebGLRenderingContext): ProgramInfo {
     }
     `;
 
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource)!;
+    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource)!;
 
-    const shaderProgram = gl.createProgram();
-    // @ts-ignore
+    const shaderProgram = gl.createProgram()!;
+
     gl.attachShader(shaderProgram, vertexShader);
-    // @ts-ignore
+
     gl.attachShader(shaderProgram, fragmentShader);
-    // @ts-ignore
+
     gl.linkProgram(shaderProgram);
 
-    // @ts-ignore
+
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        // @ts-ignore
+
         alert("Unable to initialize the shader program: " + gl.getProgramInfoLog(shaderProgram));
-        // @ts-ignore
+
         return null;
     }
 
@@ -153,17 +152,12 @@ function initProgram(gl: WebGLRenderingContext): ProgramInfo {
 
     return {
         attributes: {
-            // @ts-ignore
             hintType: gl.getAttribLocation(shaderProgram, 'aHintType'),
-            // @ts-ignore
             vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-            // @ts-ignore
             vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
         },
         uniforms: {
-            // @ts-ignore
             transformMatrix: gl.getUniformLocation(shaderProgram, 'uTransformMatrix') as WebGLUniformLocation,
-            // @ts-ignore
             rotateMatrix: gl.getUniformLocation(shaderProgram, 'uRotateMatrix') as WebGLUniformLocation,
         }
     }
@@ -187,6 +181,7 @@ let internalScenes: InternalScene[] = [];
 let time: number = Date.now() * 0.001;
 
 let loopStarted = false;
+
 function startLoop() {
     if (loopStarted) return;
     loopStarted = true;
@@ -195,26 +190,20 @@ function startLoop() {
 
 function newCube(div: HTMLElement, layers: number = 3): Scene {
     let perspective = initPerspective(div);
-
     let cube = new Cube(gl, perspective, layers);
-
     let spring = new Spring();
     let dragDetector = new CubeDragDetector();
-
     let scene: Scene = {
         puzzle: cube,
         dragEnabled: true,
         enableKey: (_) => true,
     };
-
     let internalScene: InternalScene = {
         div,
         puzzle: cube,
         spring,
     }
-
     addDragListeners(div, dragDetector, scene);
-
     scenes.push(scene);
     internalScenes.push(internalScene);
     startLoop();
@@ -223,26 +212,20 @@ function newCube(div: HTMLElement, layers: number = 3): Scene {
 
 function newPyraminx(div: HTMLElement): Scene {
     const perspective = initPerspective(div);
-
     let pyraminx = new Pyraminx(gl, perspective);
-
     let spring = new Spring();
     let dragDetector = new PyraDragDetector();
-
     let scene: Scene = {
         puzzle: pyraminx,
         dragEnabled: true,
         enableKey: (_) => true,
     };
-
     let internalScene: InternalScene = {
         div,
         puzzle: pyraminx,
         spring,
     }
-
     addDragListeners(div, dragDetector, scene);
-
     scenes.push(scene);
     internalScenes.push(internalScene);
     startLoop();
@@ -251,40 +234,33 @@ function newPyraminx(div: HTMLElement): Scene {
 
 function initPerspective(element: HTMLElement) {
     let mat = glMat.create();
-
     glMat.perspective(mat,
         50 * Math.PI / 180, // field of view
         element.clientWidth / element.clientHeight, // aspect
         0.1, // z near
         100.0); // z far
-
-    glMat.translate(mat,
-        [0.0, 0.0, -5.0]);
-
+    glMat.translate(mat, [0.0, 0.0, -5.0]);
     glMat.rotate(mat,
         mat,
         45 * Math.PI / 180,
         [1, 0, 0],
     );
-
     glMat.rotate(mat,
         mat,
         0,
         [0, -1, 0],
     );
-
     return mat;
 }
 
 function addDragListeners(div: HTMLElement, dragDetector: DragDetector, scene: Scene) {
-    // @ts-ignore
-    const pointerdown = (offsetX, offsetY) => {
+
+    const pointerdown = (offsetX: number, offsetY: number) => {
         if (!scene.dragEnabled) return;
         dragDetector.onPointerDown(offsetX, offsetY, div, (scene.puzzle as Cube));
     }
 
-    // @ts-ignore
-    const pointermove = (offsetX, offsetY) => {
+    const pointermove = (offsetX: number, offsetY: number) => {
         if (!scene.dragEnabled) return;
         dragDetector.onPointerMove(offsetX, offsetY);
     }
@@ -294,12 +270,11 @@ function addDragListeners(div: HTMLElement, dragDetector: DragDetector, scene: S
         dragDetector.onPointerUp(div, (scene.puzzle as Cube));
     }
 
-    // @ts-ignore
-    const calcOffset = (event) => {
-        const rect = event.target.getBoundingClientRect();
+    const calcOffset = (event: TouchEvent) => {
+        const rect = (event.target! as Element).getBoundingClientRect();
         const x = event.touches[0].pageX - rect.left;
         const y = event.touches[0].pageY - rect.top;
-        return { x, y };
+        return {x, y};
     }
 
     const addPointerListeners = () => {
@@ -309,12 +284,12 @@ function addDragListeners(div: HTMLElement, dragDetector: DragDetector, scene: S
     }
 
     const addTouchListeners = () => {
-        div.addEventListener("touchstart", event => {
-            const { x, y } = calcOffset(event);
+        div.addEventListener("touchstart", (event: TouchEvent) => {
+            const {x, y} = calcOffset(event);
             pointerdown(x, y);
         });
         div.addEventListener("touchmove", event => {
-            const { x, y } = calcOffset(event);
+            const {x, y} = calcOffset(event);
             pointermove(x, y);
         });
         div.addEventListener("touchend", () => {
@@ -352,9 +327,9 @@ function bindHintType(gl: WebGLRenderingContext, hintType: WebGLBuffer) {
 }
 
 // Creates a shader of the given type, uploads the source and compiles it.
-// @ts-ignore
-function loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
+
+function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
+    const shader = gl.createShader(type)!;
 
     gl.shaderSource(shader, source);
 
@@ -408,7 +383,7 @@ function render(newTime: number) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     for (let i = 0; i < scenes.length; i++) {
-        const { div, puzzle, spring } = internalScenes[i];
+        const {div, puzzle, spring} = internalScenes[i];
 
         const rect = div.getBoundingClientRect();
         if (rect.bottom < 0 || rect.top > canvas.clientHeight ||
@@ -488,7 +463,7 @@ function render(newTime: number) {
                 rotation,
             );
 
-            // @ts-ignore
+
             bindHintType(gl, notHintBuffer);
 
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, originalBuffer.indexBuffer);
@@ -499,7 +474,7 @@ function render(newTime: number) {
                 originalBuffer.base,
                 currentBuffer.black,
             );
-            
+
             drawShape(
                 gl,
                 originalBuffer,

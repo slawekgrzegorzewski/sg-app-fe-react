@@ -73,11 +73,10 @@ export class CubeDragDetector extends DragDetector {
             if (x === this.xOnDown) {
                 cube.turn(0, topColumn(cube, this.stickerOnDown), y > this.yOnDown);
             } else {
-                // @ts-ignore
-                if (slope > posSlope) {
+                if (slope > posSlope!) {
                     cube.turn(0, topColumn(cube, this.stickerOnDown), x > this.xOnDown);
-                    // @ts-ignore
-                } else if (slope < negSlope) {
+                    
+                } else if (slope < negSlope!) {
                     cube.turn(0, topColumn(cube, this.stickerOnDown), x < this.xOnDown);
                 } else {
                     cube.turn(2, topRow(cube, this.stickerOnDown), x > this.xOnDown);
@@ -87,11 +86,11 @@ export class CubeDragDetector extends DragDetector {
             if (x === this.xOnDown) {
                 cube.turn(0, frontColumn(cube, this.stickerOnDown), y > this.yOnDown);
             } else {
-                // @ts-ignore
-                if (slope > posSlope) {
+                
+                if (slope > posSlope!) {
                     cube.turn(0, frontColumn(cube, this.stickerOnDown), x > this.xOnDown);
-                // @ts-ignore
-                } else if (slope < negSlope) {
+                
+                } else if (slope < negSlope!) {
                     cube.turn(0, frontColumn(cube, this.stickerOnDown), x < this.xOnDown);
                 } else {
                     cube.turn(1, frontRow(cube, this.stickerOnDown), x < this.xOnDown);

@@ -26,18 +26,15 @@ export class Cube extends Puzzle {
 
         this.shapes = createBuffers(gl, this);
     }
-
-    // @ts-ignore
-    private hintType: WebGLBuffer;
+    private hintType: WebGLBuffer | null = null;
 
     // Implement abstract method
     getHintType(gl: WebGLRenderingContext): WebGLBuffer {
         if (!this.hintType) {
             // IDK why I have to put the number 4 times.
-            // @ts-ignore
             this.hintType = getBuffer(gl, [1, 1, 1, 1]);
         }
-        return this.hintType;
+        return this.hintType!;
     }
 
     getShapes(): Shape[] {
@@ -149,12 +146,10 @@ export class Cube extends Puzzle {
         this.sliceTurn(2, forward);
     }
 
-    // @ts-ignore
-    private pushAnimation(axis, clockwise, prevStickers) {
+    private pushAnimation(axis: number, clockwise: boolean, prevStickers: number[]) {
         let x = clockwise ? -1 : 1;
         let rotationAxis: [number, number, number] = [0, 0, 0];
         rotationAxis[axis] = x;
-
         this.animationQueue.push({
             axis: rotationAxis,
             degrees: 90,
@@ -163,49 +158,41 @@ export class Cube extends Puzzle {
         });
     }
 
-    // @ts-ignore
-    turn(axis, layer, clockwise) {
+    
+    turn(axis: number, layer: number, clockwise: boolean) {
         this.resetAffectedStickers();
-
         this.pushAnimation(axis, clockwise, [...this.stickers]);
-
         this.matchTurn(axis, layer, clockwise);
     }
 
-    // @ts-ignore
-    sliceTurn(axis, clockwise) {
+    
+    sliceTurn(axis: number, clockwise: boolean) {
         this.resetAffectedStickers();
-
         this.pushAnimation(axis, clockwise, [...this.stickers]);
-
         for (let i = 1; i < this.layers - 1; i++) {
             this.matchTurn(axis, i, clockwise);
         }
     }
 
-    // @ts-ignore
-    wideTurn(axis, layer1, layer2, clockwise) {
+    
+    wideTurn(axis: number, layer1: number, layer2: number, clockwise: boolean) {
         this.resetAffectedStickers();
-
         this.pushAnimation(axis, clockwise, [...this.stickers]);
-
         this.matchTurn(axis, layer1, clockwise);
         this.matchTurn(axis, layer2, clockwise);
     }
 
-    // @ts-ignore
-    cubeRotate(axis, clockwise) {
+    
+    cubeRotate(axis: number, clockwise: boolean) {
         this.resetAffectedStickers();
-
         this.pushAnimation(axis, clockwise, [...this.stickers]);
-
         for (let i = 0; i < this.layers; i++) {
             this.matchTurn(axis, i, clockwise);
         }
     }
 
-    // @ts-ignore
-    private matchTurn(axis, layer, clockwise) {
+    
+    private matchTurn(axis: number, layer: number, clockwise: boolean) {
         if (axis == 0) {
             this.turnXAxis(layer, clockwise);
             if (layer == 0) {
@@ -232,8 +219,8 @@ export class Cube extends Puzzle {
         }
     }
 
-    // @ts-ignore
-    private turnXAxis(layer, clockwise) {
+    
+    private turnXAxis(layer: number, clockwise: boolean) {
         for (let i = 1; i <= this.layers; i++) {
             this.cycle(
                 clockwise,
@@ -245,8 +232,8 @@ export class Cube extends Puzzle {
         }
     }
 
-    // @ts-ignore
-    private turnYAxis(layer, clockwise) {
+    
+    private turnYAxis(layer: number, clockwise: boolean) {
         for (let i = 0; i < this.layers; i++) {
             this.cycle(
                 clockwise,
@@ -258,8 +245,8 @@ export class Cube extends Puzzle {
         }
     }
 
-    // @ts-ignore
-    private turnZAxis(layer, clockwise) {
+    
+    private turnZAxis(layer: number, clockwise: boolean) {
         for (let i = 0; i < this.layers; i++) {
             this.cycle(
                 clockwise,
@@ -271,8 +258,8 @@ export class Cube extends Puzzle {
         }
     }
 
-    // @ts-ignore
-    private turnOuter(face, clockwise) {
+    
+    private turnOuter(face: number, clockwise: boolean) {
         if (this.layers % 2 != 0) {
             let center = this.center(face);
             this.affectedStickers[center] = true;
