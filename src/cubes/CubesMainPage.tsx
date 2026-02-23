@@ -1,7 +1,7 @@
 import * as React from "react";
 import {useEffect, useRef, useState} from "react";
 import {Box, Stack} from "@mui/material";
-import {newCube, Scene} from "./visualizer";
+import {newCube} from "./visualizer";
 import scramble from "./cube-scrambler";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";

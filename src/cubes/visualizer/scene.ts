@@ -9,13 +9,6 @@ import {Pyraminx} from "./pyraminx/pyraminx";
 import {singleton} from "./singleton";
 import {Spring} from "./spring";
 
-export {
-    newCube,
-    newPyraminx,
-    type Scene,
-    scenes,
-};
-
 let canvas: HTMLCanvasElement = initCanvas();
 let gl: WebGLRenderingContext = initGL(canvas);
 let programInfo: ProgramInfo = initProgram(gl)!;
@@ -495,3 +488,10 @@ function render(newTime: number) {
 
     requestAnimationFrame(render);
 }
+
+export {
+    newCube,
+    newPyraminx,
+    type Scene,
+    scenes,
+};

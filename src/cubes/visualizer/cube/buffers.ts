@@ -21,7 +21,7 @@ function half(x: number): number {
 }
 
 function even(x: number): boolean {
-    return x % 2 == 0;
+    return x % 2 === 0;
 }
 
 export function createBuffers(gl: WebGLRenderingContext, cube: Cube): Shape[] {
@@ -75,8 +75,8 @@ const dimensions: number = 3;
 function makePositions(layers: number, radius: number, gap: number) {
     const perFace = sq(layers) * perSticker;
     const out = Array(6 * perFace);
-    topFace(out, 0 * perFace, layers, 1, radius, gap);
-    frontFace(out, 1 * perFace, layers, 0, radius, gap);
+    topFace(out, 0, layers, 1, radius, gap);
+    frontFace(out, perFace, layers, 0, radius, gap);
     bottomFace(out, 2 * perFace, layers, 1, -radius, gap);
     backFace(out, 3 * perFace, layers, 0, -radius, gap);
     leftFace(out, 4 * perFace, layers, 2, -radius, gap);

@@ -193,25 +193,25 @@ export class Cube extends Puzzle {
 
     
     private matchTurn(axis: number, layer: number, clockwise: boolean) {
-        if (axis == 0) {
+        if (axis === 0) {
             this.turnXAxis(layer, clockwise);
-            if (layer == 0) {
+            if (layer === 0) {
                 this.turnOuter(5, clockwise);
-            } else if (layer == this.layers - 1) {
+            } else if (layer === this.layers - 1) {
                 this.turnOuter(4, !clockwise);
             }
-        } else if (axis == 1) {
+        } else if (axis === 1) {
             this.turnYAxis(layer, clockwise);
-            if (layer == 0) {
+            if (layer === 0) {
                 this.turnOuter(0, clockwise);
-            } else if (layer == this.layers - 1) {
+            } else if (layer === this.layers - 1) {
                 this.turnOuter(2, !clockwise);
             }
-        } else if (axis == 2) {
+        } else if (axis === 2) {
             this.turnZAxis(layer, clockwise);
-            if (layer == 0) {
+            if (layer === 0) {
                 this.turnOuter(1, clockwise);
-            } else if (layer == this.layers - 1) {
+            } else if (layer === this.layers - 1) {
                 this.turnOuter(3, !clockwise);
             }
         } else {
@@ -224,10 +224,10 @@ export class Cube extends Puzzle {
         for (let i = 1; i <= this.layers; i++) {
             this.cycle(
                 clockwise,
-                0 * sq(this.layers) + sq(this.layers) - i - layer * this.layers,
+                sq(this.layers) - i - layer * this.layers,
                 3 * sq(this.layers) + sq(this.layers) - i - layer * this.layers,
                 2 * sq(this.layers) + sq(this.layers) - i - layer * this.layers,
-                1 * sq(this.layers) + sq(this.layers) - i - layer * this.layers,
+                sq(this.layers) + sq(this.layers) - i - layer * this.layers,
             );
         }
     }
@@ -237,7 +237,7 @@ export class Cube extends Puzzle {
         for (let i = 0; i < this.layers; i++) {
             this.cycle(
                 clockwise,
-                1 * sq(this.layers) + i * this.layers + layer,
+                sq(this.layers) + i * this.layers + layer,
                 4 * sq(this.layers) + i * this.layers + layer,
                 3 * sq(this.layers) + (this.layers - i - 1) * this.layers + (this.layers - 1) - layer,
                 5 * sq(this.layers) + i * this.layers + layer,
@@ -250,7 +250,7 @@ export class Cube extends Puzzle {
         for (let i = 0; i < this.layers; i++) {
             this.cycle(
                 clockwise,
-                0 * sq(this.layers) + (i + 1) * this.layers - 1 - layer,
+                (i + 1) * this.layers - 1 - layer,
                 5 * sq(this.layers) + i + this.layers * layer,
                 2 * sq(this.layers) + (this.layers - i - 1) * this.layers + layer,
                 4 * sq(this.layers) + sq(this.layers) - (i + 1) - layer * this.layers,
@@ -260,7 +260,7 @@ export class Cube extends Puzzle {
 
     
     private turnOuter(face: number, clockwise: boolean) {
-        if (this.layers % 2 != 0) {
+        if (this.layers % 2 !== 0) {
             let center = this.center(face);
             this.affectedStickers[center] = true;
         }
