@@ -19,18 +19,18 @@ export interface SimpleCrudListProps<T> {
     createSettings?: {
         showControl?: boolean;
         dialogTitle: string,
-        trigger?: React.MutableRefObject<() => void>,
+        trigger?: React.RefObject<() => void>,
         onCreate?(t: T): Promise<void>,
     },
     editSettings?: {
         rowClickIsTrigger?: boolean;
         dialogTitle: string,
-        trigger?: React.MutableRefObject<(t: T) => void>,
+        trigger?: React.RefObject<(t: T) => void>,
         onUpdate?(t: T): Promise<void>,
     },
     deleteSettings?: {
         showControl?: boolean;
-        trigger?: React.MutableRefObject<(t: T) => void>,
+        trigger?: React.RefObject<(t: T) => void>,
         onDelete?(t: T): Promise<void>,
     },
 

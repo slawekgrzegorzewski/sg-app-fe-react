@@ -133,7 +133,7 @@ export function AccountsManagement({
     const [deleteBankAccountAssignmentDialogOptions, setDeleteBankAccountAssignmentDialogOptions] = useState<{
         account: AccountDTO | null
     }>({account: null});
-    const editTrigger: React.MutableRefObject<((accountDTO: AccountDTO) => void)> = useRef<(accountDTO: AccountDTO) => void>(() => {
+    const editTrigger: React.RefObject<((accountDTO: AccountDTO) => void)> = useRef<(accountDTO: AccountDTO) => void>(() => {
     });
 
     const createAccount = async (account: AccountDTO): Promise<any> => {

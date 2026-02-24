@@ -32,6 +32,8 @@ type Query {
     allClients: [Client!]!
     allSuppliers: [Supplier!]!
     monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
+
+    cubeResults(cubeResultsQuery: CubeResultsQuery!): CubeResults!
 }
 
 type Mutation{
@@ -110,6 +112,8 @@ type Mutation{
     triggerFetchBankAccountData(fetchBankAccountDataInput: FetchBankAccountDataInput!): String!
     assignBankAccountToAccount(assignBankAccountToAccountInput: AssignBankAccountToAccountInput!): String!
     deleteBankAccountAssignment(deleteBankAccountAssignmentInput: DeleteBankAccountAssignmentInput!): String!
+
+    saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
@@ -945,4 +949,23 @@ type BankTransactionToImport {
     transactionPublicId:UUID!
     creditTransactionPublicId:UUID
     debitTransactionPublicId:UUID
+}
+
+enum CubeType {
+    THREE_BY_THREE
+}
+
+input CubeResultsQuery {
+    cubeType: CubeType!
+}
+
+type CubeResults {
+    numberOfSolves: Int!
+    todayAverageInMillis: Int!
+}
+
+input SaveCubeResultInput {
+    cubeType: CubeType!
+    timestampOfSolve: LocalDateTime!
+    timeInMillis: Int!
 }

@@ -1,0 +1,14 @@
+query GetCubeResults($cubeType: CubeType!) {
+    cubeResults(cubeResultsQuery: {cubeType: $cubeType}){
+        numberOfSolves
+        todayAverageInMillis
+    }
+}
+
+mutation StoreCubeResult($cubeType: CubeType!, $timeInMillis:Int!, $timestampOfSolve: LocalDateTime!) {
+    saveCubeResult(saveCubeResultInput: {
+        cubeType: $cubeType
+        timeInMillis: $timeInMillis
+        timestampOfSolve: $timestampOfSolve
+    })
+}
