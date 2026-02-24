@@ -23,11 +23,21 @@ export function CubesMainPage() {
     const result = useRef(0);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
     const cubeVisualizationContainerRef = useRef<HTMLElement | null>(null);
+    const save = useRef(() => {
+        let resultCopy = result.current;
+        reset();
+        storeCubeResultMutation({
+            variables: {
+                cubeType: "THREE_BY_THREE",
+                timestampOfSolve: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
+                timeInMillis: resultCopy
+            }
+        })
+            .then(() => refetch());
+    });
 
     const {
         data,
-        loading,
-        error,
         refetch
     } = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType: "THREE_BY_THREE"}})
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
@@ -42,18 +52,6 @@ export function CubesMainPage() {
     const resetTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
     });
 
-    const save = () => {
-        let resultCopy = result.current;
-        reset();
-        storeCubeResultMutation({
-            variables: {
-                cubeType: "THREE_BY_THREE",
-                timestampOfSolve: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
-                timeInMillis: resultCopy
-            }
-        })
-            .then(() => refetch());
-    }
 
     const reset = () => {
         setScramble("");
@@ -68,7 +66,7 @@ export function CubesMainPage() {
                 if (phase === "IDLE") {
                     setPhase("INSPECTION_EARLY");
                     if (!becomeLateInspectionTimeOutId.current) {
-                        becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 1500);
+                        becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
                     }
                 } else if (phase === 'SOLVING') {
                     result.current = stopTrigger.current();
@@ -85,9 +83,10 @@ export function CubesMainPage() {
                 }
             }
             if (e.code === 'Enter' && phase === 'IDLE' && result.current > 0) {
-                save();
+                save.current();
             }
         };
+
         const keyUpListener = (e: KeyboardEvent) => {
             if (becomeLateInspectionTimeOutId.current) {
                 clearTimeout(becomeLateInspectionTimeOutId.current);
@@ -132,13 +131,35 @@ export function CubesMainPage() {
                  sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}>
             </Box>
             <Typography>{phase}</Typography>
-            <StopWatch
-                sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
-                startTrigger={startTrigger}
-                stopTrigger={stopTrigger}
-                resetTrigger={resetTrigger}
-            />
-            {result.current > 0 && phase === 'IDLE' && <Button onClick={save}>Zapisz</Button>}
+            <Box
+                onTouchStart={() => {
+                    if (phase === "IDLE") {
+                        setPhase("INSPECTION_EARLY");
+                        if (!becomeLateInspectionTimeOutId.current) {
+                            becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 1500);
+                        }
+                    } else if (phase === 'SOLVING') {
+                        result.current = stopTrigger.current();
+                        setPhase('IDLE');
+                    }
+                }}
+                onTouchEnd={() => {
+                    if (becomeLateInspectionTimeOutId.current) {
+                        clearTimeout(becomeLateInspectionTimeOutId.current);
+                    }
+                    if (isInspection(phase)) {
+                        setPhase("SOLVING");
+                        startTrigger.current();
+                    }
+                }}>
+                <StopWatch
+                    sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
+                    startTrigger={startTrigger}
+                    stopTrigger={stopTrigger}
+                    resetTrigger={resetTrigger}
+                />
+            </Box>
+            {result.current > 0 && phase === 'IDLE' && <Button onClick={save.current}>Zapisz</Button>}
         </Stack>;
     } else {
         return <></>;
