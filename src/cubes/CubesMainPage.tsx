@@ -117,6 +117,10 @@ export function CubesMainPage() {
 
     if (data) {
         return <Stack
+            sx={{
+                height: '100%',
+                width: '100%',
+            }}
             direction={'column'}
             alignItems={'center'}>
             <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
@@ -131,35 +135,43 @@ export function CubesMainPage() {
                  sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}>
             </Box>
             <Typography>{phase}</Typography>
-            <Box
-                onTouchStart={() => {
-                    if (phase === "IDLE") {
-                        setPhase("INSPECTION_EARLY");
-                        if (!becomeLateInspectionTimeOutId.current) {
-                            becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 1500);
-                        }
-                    } else if (phase === 'SOLVING') {
-                        result.current = stopTrigger.current();
-                        setPhase('IDLE');
-                    }
-                }}
-                onTouchEnd={() => {
-                    if (becomeLateInspectionTimeOutId.current) {
-                        clearTimeout(becomeLateInspectionTimeOutId.current);
-                    }
-                    if (isInspection(phase)) {
-                        setPhase("SOLVING");
-                        startTrigger.current();
-                    }
-                }}>
+            <Stack direction={'column'}
+                   sx={{
+                       flexGrow: 1,
+                       alignSelf: 'stretch',
+                       userSelect: 'none',
+                   }}
+                   onTouchStart={() => {
+                       if (phase === "IDLE") {
+                           setPhase("INSPECTION_EARLY");
+                           if (!becomeLateInspectionTimeOutId.current) {
+                               becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
+                           }
+                       } else if (phase === 'SOLVING') {
+                           result.current = stopTrigger.current();
+                           setPhase('IDLE');
+                       }
+                   }}
+                   onTouchEnd={() => {
+                       if (becomeLateInspectionTimeOutId.current) {
+                           clearTimeout(becomeLateInspectionTimeOutId.current);
+                       }
+                       if (isInspection(phase)) {
+                           setPhase("SOLVING");
+                           startTrigger.current();
+                       }
+                   }}>
                 <StopWatch
                     sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
                     startTrigger={startTrigger}
                     stopTrigger={stopTrigger}
                     resetTrigger={resetTrigger}
                 />
-            </Box>
-            {result.current > 0 && phase === 'IDLE' && <Button onClick={save.current}>Zapisz</Button>}
+                {result.current > 0 && phase === 'IDLE' && <Button onClick={(e) => {
+                    e.stopPropagation();
+                    save.current();
+                }}>Zapisz</Button>}
+            </Stack>
         </Stack>;
     } else {
         return <></>;

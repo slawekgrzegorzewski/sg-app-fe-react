@@ -95,7 +95,7 @@ export default function DrawerAppBar(props: Props) {
                     domains: [...domainsData.settings.domains].map(mapDomain),
                     refreshDomains: domainsDataRefetch
                 }}>
-                <Stack direction="column" sx={{width: '100%'}}>
+                <Stack direction="column" sx={{width: '100dvw', height: '100dvh'}}>
                     <Backdrop
                         sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
                         open={showInfiniteBackdrop}>
@@ -218,7 +218,7 @@ export default function DrawerAppBar(props: Props) {
                             </Box>
                         )}
                     </Drawer>
-                    <Offset>
+                    <Offset sx={{flexGrow: 1}}>
                         <ShowBackdropContext.Provider
                             value={{showBackdrop: showInfiniteBackdrop, setShowBackdrop: setShowInfiniteBackdrop}}>
                             {children}
