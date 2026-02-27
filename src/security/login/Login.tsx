@@ -4,12 +4,10 @@ import {PerformLogin, PerformLoginMutation} from "../../types";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
-import {Navigate, useLocation} from "react-router-dom";
+import {Navigate} from "react-router-dom";
 import {LoginWithGoogleButton} from "./LoginWithGoogleButton";
 
 export function Login() {
-    const location = useLocation();
-    console.log(JSON.stringify(location));
     const {user, setCurrentUser} = useCurrentUser();
 
     const [loginData, setLoginData] = useState({
