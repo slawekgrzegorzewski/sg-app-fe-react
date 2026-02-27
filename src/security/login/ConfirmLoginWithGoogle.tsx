@@ -1,15 +1,13 @@
 import './loginWithGoogle'
 import {useMutation} from "@apollo/client/react";
 import {LoginWithGoogle, LoginWithGoogleMutation} from "../../types";
-import React, {useContext} from "react";
-import {ShowBackdropContext} from "../../utils/DrawerAppBar";
+import React from "react";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
 import {Navigate} from "react-router-dom";
 
 export function ConfirmLoginWithGoogle({googleToken}: { googleToken: string }) {
     const [loginWithGoogleGraphqlMutation, loginWithGoogleGraphqlMutationResult] = useMutation<LoginWithGoogleMutation>(LoginWithGoogle);
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
     const {user, setCurrentUser} = useCurrentUser();
 
 
@@ -32,9 +30,6 @@ export function ConfirmLoginWithGoogle({googleToken}: { googleToken: string }) {
                     applications: applications
                 });
 
-            })
-            .finally(() => {
-                setShowBackdrop(false);
             });
 
         return <></>;
