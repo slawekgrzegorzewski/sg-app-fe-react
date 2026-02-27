@@ -58,19 +58,19 @@ export function CubesMainPage() {
     const startTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
     });
 
-    const start = () => {
+    const start: React.RefObject<(() => void)> = useRef<() => void>(() => {
         startTrigger.current();
         requestWakeLock();
-    }
+    });
 
     const stopTrigger: React.RefObject<(() => number)> = useRef<() => number>(() => {
         return 0;
     });
 
-    const stop = () => {
+    const stop: React.RefObject<(() => number)> = useRef<() => number>(() => {
         releaseWakeLock();
         return stopTrigger.current();
-    }
+    });
 
     const resetTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
     });
@@ -84,7 +84,7 @@ export function CubesMainPage() {
                         becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
                     }
                 } else if (phase === 'SOLVING') {
-                    result.current = stop();
+                    result.current = stop.current();
                     setPhase('IDLE');
                 }
             }
@@ -109,7 +109,7 @@ export function CubesMainPage() {
             if (e.code === 'Space') {
                 if (isInspection(phase)) {
                     setPhase("SOLVING");
-                    start();
+                    start.current();
                 }
             }
         };
@@ -170,7 +170,7 @@ export function CubesMainPage() {
                                                                                                becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
                                                                                            }
                                                                                        } else if (phase === 'SOLVING') {
-                                                                                           result.current = stop();
+                                                                                           result.current = stop.current();
                                                                                            setPhase('IDLE');
                                                                                        }
                                                                                    }}
@@ -180,7 +180,7 @@ export function CubesMainPage() {
                                                                                        }
                                                                                        if (isInspection(phase)) {
                                                                                            setPhase("SOLVING");
-                                                                                           start();
+                                                                                           start.current();
                                                                                        }
                                                                                    }}>
 
