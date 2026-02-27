@@ -24,6 +24,23 @@ mutation PerformLogin(
     }
 }
 
+mutation LoginWithGoogle($token: String!){
+    loginWithGoogleToken(loginWithGoogleTokenParameters: {googleToken: $token}){
+        jwt,
+        user {
+            login
+            name,
+            email,
+            roles,
+            domainPublicId,
+            domains {
+                publicId,
+                name
+            }
+        }
+    }
+}
+
 mutation SwitchDomain (
     $domainPublicId: UUID!
 ) {

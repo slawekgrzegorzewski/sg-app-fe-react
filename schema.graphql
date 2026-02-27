@@ -38,6 +38,7 @@ type Query {
 
 type Mutation{
     login(loginParameters:LoginParameters!): AuthenticationInfo!
+    loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
     switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!
     register(registrationParameters:RegistrationParameters!): MFAData!
     setupMFA(mfaParameters:MFAParameters!): Boolean!
@@ -189,6 +190,10 @@ input LoginParameters{
     password: String!
     otp:String!
     domainPublicId: UUID
+}
+
+input LoginWithGoogleTokenParameters{
+    googleToken: String!
 }
 
 input SwitchDomainParameters {

@@ -5,6 +5,7 @@ import {useCurrentUser} from "../../utils/users/use-current-user";
 import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
 import {Navigate} from "react-router-dom";
+import {LoginWithGoogleButton} from "./LoginWithGoogleButton";
 
 export function Login() {
 
@@ -79,14 +80,15 @@ export function Login() {
                                })}
                                sx={{width: '100%'}}
                                required/>
-                    {(
+                    <Stack direction={'row'} justifyContent={'center'} spacing={4} alignItems={"center"}>
                         <Button
                             variant="outlined"
                             onClick={performLogin}
                             disabled={!validateLoginForm()}>
                             Zaloguj się
                         </Button>
-                    )}
+                        <LoginWithGoogleButton />
+                    </Stack>
                     <p>Nie masz jeszcze konta? <Link href="/register">Zarejestruj się tutaj</Link></p>
                 </Stack>
             </Paper>

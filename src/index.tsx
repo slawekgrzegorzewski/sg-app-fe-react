@@ -50,10 +50,10 @@ const router = createBrowserRouter([
         element: <Navigate to={process.env.REACT_APP_BROWSER_DEFAULT_REDIRECT || '/login'}/>,
     },
     {
-        path: "/login",
+        path: "/login/:googleToken?",
         element: <ApolloProvider client={apolloClient}>
             <Login/>
-        </ApolloProvider>
+        </ApolloProvider>,
     },
     {
         path: "/register",
