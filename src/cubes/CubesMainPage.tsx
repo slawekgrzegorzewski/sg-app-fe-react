@@ -1,6 +1,6 @@
 import * as React from "react";
-import {useEffect, useRef, useState} from "react";
-import {Box, Stack} from "@mui/material";
+import {useEffect, useReducer, useRef, useState} from "react";
+import {Box, Stack, useMediaQuery, useTheme} from "@mui/material";
 import {newCube} from "./visualizer";
 import {scramble as generateScramble} from "./cube-scrambler";
 import Typography from "@mui/material/Typography";
@@ -9,6 +9,7 @@ import {StopWatch} from "./StopWatch";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMutation} from "../types";
 import dayjs from "dayjs";
+import {useWakeLock} from "../utils/use-wake-lock";
 
 type Phase = 'IDLE' | 'INSPECTION_EARLY' | 'INSPECTION_LATE' | 'SOLVING'
 type InspectionPhase = Extract<Phase, 'INSPECTION_EARLY' | 'INSPECTION_LATE'>
@@ -18,14 +19,26 @@ function isInspection(phase: string): phase is InspectionPhase {
 }
 
 export function CubesMainPage() {
+    const [, forceUpdate] = useReducer(x => x + 1, 0);
+    const theme = useTheme();
+    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const [requestWakeLock, releaseWakeLock] = useWakeLock();
     const [scramble, setScramble] = useState("");
     const [phase, setPhase] = useState<Phase>('IDLE');
     const result = useRef(0);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
     const cubeVisualizationContainerRef = useRef<HTMLElement | null>(null);
+    const reset = useRef(() => {
+        result.current = 0;
+        resetTrigger.current();
+        releaseWakeLock();
+        setScramble("");
+        setPhase("IDLE");
+        forceUpdate();
+    });
     const save = useRef(() => {
         let resultCopy = result.current;
-        reset();
+        reset.current();
         storeCubeResultMutation({
             variables: {
                 cubeType: "THREE_BY_THREE",
@@ -45,20 +58,22 @@ export function CubesMainPage() {
     const startTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
     });
 
+    const start = () => {
+        startTrigger.current();
+        requestWakeLock();
+    }
+
     const stopTrigger: React.RefObject<(() => number)> = useRef<() => number>(() => {
         return 0;
     });
 
+    const stop = () => {
+        releaseWakeLock();
+        return stopTrigger.current();
+    }
+
     const resetTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
     });
-
-
-    const reset = () => {
-        setScramble("");
-        result.current = 0;
-        resetTrigger.current();
-        setPhase("IDLE");
-    }
 
     useEffect(() => {
         const keyDownListener = (e: KeyboardEvent) => {
@@ -69,7 +84,7 @@ export function CubesMainPage() {
                         becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
                     }
                 } else if (phase === 'SOLVING') {
-                    result.current = stopTrigger.current();
+                    result.current = stop();
                     setPhase('IDLE');
                 }
             }
@@ -77,7 +92,7 @@ export function CubesMainPage() {
                 setScramble(generateScramble({turns: 30}).join(" "));
             }
             if (e.code === 'KeyR') {
-                reset();
+                reset.current();
                 if (becomeLateInspectionTimeOutId.current) {
                     clearTimeout(becomeLateInspectionTimeOutId.current);
                 }
@@ -94,7 +109,7 @@ export function CubesMainPage() {
             if (e.code === 'Space') {
                 if (isInspection(phase)) {
                     setPhase("SOLVING");
-                    startTrigger.current();
+                    start();
                 }
             }
         };
@@ -127,51 +142,80 @@ export function CubesMainPage() {
             <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
             <Stack direction={'row'}>
                 <Button onClick={() => setScramble(generateScramble({turns: 30}).join(" "))}>Scramble</Button>
-                <Button onClick={reset}>Reset</Button>
+                <Button onClick={reset.current}>Reset</Button>
             </Stack>
             <Typography variant={'h5'}>{scramble}</Typography>
             <Box component="div" ref={cubeVisualizationContainerRef}
                  id="scenesContainer"
                  sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}>
             </Box>
+            <StopWatch
+                sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
+                startTrigger={startTrigger}
+                stopTrigger={stopTrigger}
+                resetTrigger={resetTrigger}
+            />
             <Typography>{phase}</Typography>
-            <Stack direction={'column'}
-                   sx={{
-                       flexGrow: 1,
-                       alignSelf: 'stretch',
-                       userSelect: 'none',
-                   }}
-                   onTouchStart={() => {
-                       if (phase === "IDLE") {
-                           setPhase("INSPECTION_EARLY");
-                           if (!becomeLateInspectionTimeOutId.current) {
-                               becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
-                           }
-                       } else if (phase === 'SOLVING') {
-                           result.current = stopTrigger.current();
-                           setPhase('IDLE');
-                       }
-                   }}
-                   onTouchEnd={() => {
-                       if (becomeLateInspectionTimeOutId.current) {
-                           clearTimeout(becomeLateInspectionTimeOutId.current);
-                       }
-                       if (isInspection(phase)) {
-                           setPhase("SOLVING");
-                           startTrigger.current();
-                       }
-                   }}>
-                <StopWatch
-                    sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
-                    startTrigger={startTrigger}
-                    stopTrigger={stopTrigger}
-                    resetTrigger={resetTrigger}
-                />
-                {result.current > 0 && phase === 'IDLE' && <Button onClick={(e) => {
-                    e.stopPropagation();
-                    save.current();
-                }}>Zapisz</Button>}
-            </Stack>
+            {
+                fullScreen && (result.current === 0 || phase !== 'IDLE') && <Stack direction={'column'}
+                                                                                   sx={{
+                                                                                       flexGrow: 1,
+                                                                                       alignSelf: 'stretch',
+                                                                                       userSelect: 'none',
+                                                                                   }}
+                                                                                   onTouchStart={() => {
+                                                                                       if (phase === "IDLE") {
+                                                                                           setPhase("INSPECTION_EARLY");
+                                                                                           if (!becomeLateInspectionTimeOutId.current) {
+                                                                                               becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
+                                                                                           }
+                                                                                       } else if (phase === 'SOLVING') {
+                                                                                           result.current = stop();
+                                                                                           setPhase('IDLE');
+                                                                                       }
+                                                                                   }}
+                                                                                   onTouchEnd={() => {
+                                                                                       if (becomeLateInspectionTimeOutId.current) {
+                                                                                           clearTimeout(becomeLateInspectionTimeOutId.current);
+                                                                                       }
+                                                                                       if (isInspection(phase)) {
+                                                                                           setPhase("SOLVING");
+                                                                                           start();
+                                                                                       }
+                                                                                   }}>
+
+                </Stack>
+            }
+            {
+                fullScreen && result.current > 0 && phase === 'IDLE' &&
+                <Stack direction={'row'} justifyContent={'stretch'}
+                       sx={{
+                           flexGrow: 1,
+                           alignSelf: 'stretch',
+                           userSelect: 'none',
+                       }}>
+                    <Stack sx={{
+                        backgroundColor: '#c6efce',
+                        color: '#006100',
+                        width: '50%',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                           onClick={(e) => save.current()}>
+                        <b>ZAPISZ</b>
+                    </Stack>
+                    <Stack sx={{
+                        backgroundColor: '#ffc7ce',
+                        color: '#9c0006',
+                        width: '50%',
+                        justifyContent: 'center',
+                        alignItems: 'center'
+                    }}
+                           onClick={(e) => reset.current()}>
+                        <b>ODRZUĆ</b>
+                    </Stack>
+                </Stack>
+            }
         </Stack>;
     } else {
         return <></>;
