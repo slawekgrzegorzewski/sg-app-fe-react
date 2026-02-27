@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useEffect, useReducer, useRef, useState} from "react";
-import {Box, Stack, useMediaQuery, useTheme} from "@mui/material";
+import {Box, Dialog, Stack, useMediaQuery, useTheme} from "@mui/material";
 import {newCube} from "./visualizer";
 import {scramble as generateScramble} from "./cube-scrambler";
 import Typography from "@mui/material/Typography";
@@ -149,12 +149,32 @@ export function CubesMainPage() {
                  id="scenesContainer"
                  sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}>
             </Box>
-            <StopWatch
-                sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
-                startTrigger={startTrigger}
-                stopTrigger={stopTrigger}
-                resetTrigger={resetTrigger}
-            />
+            {fullScreen && (<Dialog open={fullScreen && phase === 'SOLVING'}
+                                    fullScreen={true}
+                                    keepMounted={true}
+                                    onTouchStart={() => {
+                                        result.current = stop.current();
+                                        setPhase('IDLE');
+                                    }}>
+                    <Stack style={{width: '100%', height: '100%'}} justifyContent={'center'} alignItems={'center'}>
+                        <StopWatch
+                            variant={'h2'}
+                            showControls={false}
+                            startTrigger={startTrigger}
+                            stopTrigger={stopTrigger}
+                            resetTrigger={resetTrigger}
+                        />
+                    </Stack>
+                </Dialog>
+            )}
+            {!fullScreen && (
+                <StopWatch
+                    sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
+                    startTrigger={startTrigger}
+                    stopTrigger={stopTrigger}
+                    resetTrigger={resetTrigger}
+                />
+            )}
             <Typography>{phase}</Typography>
             {
                 fullScreen && (result.current === 0 || phase !== 'IDLE') && <Stack direction={'column'}
@@ -169,9 +189,6 @@ export function CubesMainPage() {
                                                                                            if (!becomeLateInspectionTimeOutId.current) {
                                                                                                becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
                                                                                            }
-                                                                                       } else if (phase === 'SOLVING') {
-                                                                                           result.current = stop.current();
-                                                                                           setPhase('IDLE');
                                                                                        }
                                                                                    }}
                                                                                    onTouchEnd={() => {

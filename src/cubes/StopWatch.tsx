@@ -5,19 +5,25 @@ import Button from "@mui/material/Button";
 import dayjs from "dayjs";
 import {StopWatchDisplay} from "./StopWatchDisplay";
 import {SxProps} from "@mui/system";
+import {TypographyVariant} from "@mui/material/styles/createTypography";
 
 interface StopWatchProps {
-    sx: SxProps<Theme>,
+    showControls?: boolean;
+    variant?: TypographyVariant;
+    sx?: SxProps<Theme>,
     startTrigger?: React.RefObject<() => void>,
     stopTrigger?: React.RefObject<() => number>,
     resetTrigger?: React.RefObject<() => void>,
 }
 
-export function StopWatch({sx, startTrigger, stopTrigger, resetTrigger}: StopWatchProps) {
+export function StopWatch({showControls = true, variant, sx, startTrigger, stopTrigger, resetTrigger}: StopWatchProps) {
     const [startTime, setStartTime] = useState<number | null>(null);
     const [currentTime, setCurrentTime] = useState<number>(0);
     const [isRunning, setIsRunning] = useState(false);
 
+    useEffect(() => {
+        console.log('Stop Watch loaded')
+    }, []);
 
     useEffect(() => {
         if (startTrigger) {
@@ -60,14 +66,16 @@ export function StopWatch({sx, startTrigger, stopTrigger, resetTrigger}: StopWat
     }
 
     return <Stack direction={'column'} alignItems={'center'} sx={sx}>
-        <Stack direction={'row'}>
-            <Button onClick={start}>
-                Start
-            </Button>
-            <Button onClick={stop}>
-                Stop
-            </Button>
-        </Stack>
-        <StopWatchDisplay currentTimeInMilis={currentTime}/>
+        {
+            showControls && <Stack direction={'row'}>
+                <Button onClick={start}>
+                    Start
+                </Button>
+                <Button onClick={stop}>
+                    Stop
+                </Button>
+            </Stack>
+        }
+        <StopWatchDisplay currentTimeInMillis={currentTime} variant={variant}/>
     </Stack>;
 }
