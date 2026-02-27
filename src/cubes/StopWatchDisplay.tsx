@@ -20,7 +20,7 @@ export function StopWatchDisplay({currentTimeInMillis, variant = 'h5'}: StopWatc
     }
 
     return <Stack direction={'row'} alignItems={'center'}>
-1        <Typography variant={variant}>{zeroPad(minutes, 2)}</Typography>
+        <Typography variant={variant}>{zeroPad(minutes, 2)}</Typography>
         <Typography variant={variant}>:</Typography>
         <Typography variant={variant}>{zeroPad(secondsInMinute, 2)}</Typography>
         <Typography variant={variant}>.</Typography>
