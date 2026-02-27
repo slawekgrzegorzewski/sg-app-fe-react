@@ -1,17 +1,18 @@
 import React, {useEffect} from "react";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import './loginWithGoogle'
 import {ConfirmLoginWithGoogle} from "./ConfirmLoginWithGoogle";
 
 export function LoginWithGoogleButton() {
 
+    const navigate = useNavigate();
     const {googleToken} = useParams();
 
     useEffect(() => {
         window.handleCredentialResponse = (response: { credential: string; }) => {
-            document.location = document.location + "/" + response.credential;
+            navigate('/login/' + response.credential);
         };
-    }, []);
+    }, [navigate]);
 
     if (googleToken) {
         return <ConfirmLoginWithGoogle googleToken={googleToken}></ConfirmLoginWithGoogle>;

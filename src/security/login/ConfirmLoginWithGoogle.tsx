@@ -15,28 +15,28 @@ export function ConfirmLoginWithGoogle({googleToken}: { googleToken: string }) {
 
     if (loginWithGoogleGraphqlMutationResult.called || loginWithGoogleGraphqlMutationResult.loading) {
         return <></>;
-    }
-    if (user)
+    } else if (user) {
         return <Navigate to={'/'}></Navigate>;
-    loginWithGoogleGraphqlMutation({variables: {token: googleToken}})
-        .catch((error) =>
-            console.log(error)
-        )
-        .then(value => {
-            if (!value || !value.data) return;
-            const {jwt, user} = value!.data!.loginWithGoogleToken!
-            const applications: Application[] = getUserApplications(user);
-            setCurrentUser({
-                jwtToken: jwt,
-                user: user,
-                applications: applications
+    } else {
+        loginWithGoogleGraphqlMutation({variables: {token: googleToken}})
+            .catch((error) =>
+                console.log(error)
+            )
+            .then(value => {
+                if (!value || !value.data) return;
+                const {jwt, user} = value!.data!.loginWithGoogleToken!
+                const applications: Application[] = getUserApplications(user);
+                setCurrentUser({
+                    jwtToken: jwt,
+                    user: user,
+                    applications: applications
+                });
+
+            })
+            .finally(() => {
+                setShowBackdrop(false);
             });
 
-        })
-        .finally(() => {
-            setShowBackdrop(false);
-        });
-
-    return <></>;
-
+        return <></>;
+    }
 }
