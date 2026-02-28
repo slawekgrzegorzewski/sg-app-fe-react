@@ -11,6 +11,7 @@ import {GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMut
 import dayjs from "dayjs";
 import {useWakeLock} from "../utils/use-wake-lock";
 import {StopWatchDisplay} from "./StopWatchDisplay";
+import {useIsTouchDevice} from "../utils/use-is-touch-screen";
 
 type Phase = 'IDLE' | 'INSPECTION_EARLY' | 'INSPECTION_LATE' | 'SOLVING'
 type InspectionPhase = Extract<Phase, 'INSPECTION_EARLY' | 'INSPECTION_LATE'>
@@ -22,7 +23,8 @@ function isInspection(phase: string): phase is InspectionPhase {
 export function CubesMainPage() {
     const [, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useTheme();
-    const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+    const isTouchDevice = useIsTouchDevice();
+    const fullScreen = useMediaQuery(theme.breakpoints.down('md')) || isTouchDevice;
     const [requestWakeLock, releaseWakeLock] = useWakeLock();
     const [scramble, setScramble] = useState("");
     const [phase, setPhase] = useState<Phase>('IDLE');
