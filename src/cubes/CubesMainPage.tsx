@@ -205,7 +205,8 @@ export function CubesMainPage() {
                 </Stack>
             }
             {
-                fullScreen && result.current > 0 && phase === 'IDLE' && <StopWatchDisplay currentTimeInMillis={result.current} />
+                fullScreen && result.current > 0 && phase === 'IDLE' &&
+                <StopWatchDisplay currentTimeInMillis={result.current}/>
             }
             {
                 fullScreen && result.current > 0 && phase === 'IDLE' &&
