@@ -10,6 +10,7 @@ import {useMutation, useQuery} from "@apollo/client/react";
 import {GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMutation} from "../types";
 import dayjs from "dayjs";
 import {useWakeLock} from "../utils/use-wake-lock";
+import {StopWatchDisplay} from "./StopWatchDisplay";
 
 type Phase = 'IDLE' | 'INSPECTION_EARLY' | 'INSPECTION_LATE' | 'SOLVING'
 type InspectionPhase = Extract<Phase, 'INSPECTION_EARLY' | 'INSPECTION_LATE'>
@@ -202,6 +203,9 @@ export function CubesMainPage() {
                                                                                    }}>
 
                 </Stack>
+            }
+            {
+                fullScreen && result.current > 0 && phase === 'IDLE' && <StopWatchDisplay currentTimeInMillis={result.current} />
             }
             {
                 fullScreen && result.current > 0 && phase === 'IDLE' &&
