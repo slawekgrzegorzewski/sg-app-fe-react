@@ -25,7 +25,7 @@ export function CubesMainPage() {
     const theme = useTheme();
     const isTouchDevice = useIsTouchDevice();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md')) || isTouchDevice;
-    const [wakeLockAcquired, requestWakeLock, releaseWakeLock] = useWakeLock();
+    const [wakeLock, requestWakeLock, releaseWakeLock] = useWakeLock();
     const [scramble, setScramble] = useState("");
     const [phase, setPhase] = useState<Phase>('IDLE');
     const result = useRef(0);
@@ -62,8 +62,8 @@ export function CubesMainPage() {
     });
 
     const start: React.RefObject<(() => void)> = useRef<() => void>(() => {
-        startTrigger.current();
         requestWakeLock();
+        startTrigger.current();
     });
 
     const stopTrigger: React.RefObject<(() => number)> = useRef<() => number>(() => {
@@ -142,10 +142,10 @@ export function CubesMainPage() {
             direction={'column'}
             alignItems={'center'}>
             {
-                wakeLockAcquired && <Typography>Wake lock on</Typography>
+                wakeLock && <Typography>Wake lock on</Typography>
             }
             {
-                !wakeLockAcquired && <Typography>Wake lock off</Typography>
+                !wakeLock && <Typography>Wake lock off</Typography>
             }
             <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
             <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
@@ -168,10 +168,10 @@ export function CubesMainPage() {
                                        }}>
                         <Stack style={{width: '100%', height: '100%'}} justifyContent={'center'} alignItems={'center'}>
                             {
-                                wakeLockAcquired && <Typography variant={'h5'}>Wake lock on</Typography>
+                                wakeLock && <Typography variant={'h5'}>Wake lock on</Typography>
                             }
                             {
-                                !wakeLockAcquired && <Typography>Wake lock off</Typography>
+                                !wakeLock && <Typography>Wake lock off</Typography>
                             }
                             <StopWatch
                                 variant={'h2'}
