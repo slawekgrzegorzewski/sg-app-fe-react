@@ -1,25 +1,33 @@
-import { useEffect, useRef } from "react";
+import {useEffect, useState} from "react";
 
 export function useWakeLock() {
-    const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+    const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
 
     const requestWakeLock = async () => {
         try {
-            wakeLockRef.current = await navigator.wakeLock.request("screen");
+            if (!wakeLock) {
+                const wakeLockSentinel = await navigator.wakeLock.request("screen");
+                wakeLockSentinel.addEventListener("release", () => {
+                    setWakeLock(null);
+                });
+                setWakeLock(wakeLockSentinel);
+            }
         } catch (err) {
             console.error("Wake Lock error:", err);
         }
     };
 
     const releaseWakeLock = async () => {
-        wakeLockRef.current?.release();
+        wakeLock?.release();
+        setWakeLock(null);
     };
 
     useEffect(() => {
         return () => {
-            releaseWakeLock();
+            wakeLock?.release();
+            setWakeLock(null);
         };
-    }, []);
+    }, [wakeLock]);
 
-    return [requestWakeLock, releaseWakeLock];
+    return [!!wakeLock, requestWakeLock, releaseWakeLock] as [boolean, () => Promise<void>, () => Promise<void>];
 }

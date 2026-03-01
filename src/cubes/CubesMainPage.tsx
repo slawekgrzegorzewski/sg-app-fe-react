@@ -25,7 +25,7 @@ export function CubesMainPage() {
     const theme = useTheme();
     const isTouchDevice = useIsTouchDevice();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md')) || isTouchDevice;
-    const [requestWakeLock, releaseWakeLock] = useWakeLock();
+    const [wakeLockAcquired, requestWakeLock, releaseWakeLock] = useWakeLock();
     const [scramble, setScramble] = useState("");
     const [phase, setPhase] = useState<Phase>('IDLE');
     const result = useRef(0);
@@ -141,6 +141,9 @@ export function CubesMainPage() {
             }}
             direction={'column'}
             alignItems={'center'}>
+            {
+                wakeLockAcquired && <Typography>Wake lock on</Typography>
+            }
             <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
             <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
             <Stack direction={'row'}>
@@ -152,32 +155,38 @@ export function CubesMainPage() {
                  id="scenesContainer"
                  sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}>
             </Box>
-            {fullScreen && (<Dialog open={fullScreen && phase === 'SOLVING'}
-                                    fullScreen={true}
-                                    keepMounted={true}
-                                    onTouchStart={() => {
-                                        result.current = stop.current();
-                                        setPhase('IDLE');
-                                    }}>
-                    <Stack style={{width: '100%', height: '100%'}} justifyContent={'center'} alignItems={'center'}>
-                        <StopWatch
-                            variant={'h2'}
-                            showControls={false}
-                            startTrigger={startTrigger}
-                            stopTrigger={stopTrigger}
-                            resetTrigger={resetTrigger}
-                        />
-                    </Stack>
-                </Dialog>
-            )}
-            {!fullScreen && (
-                <StopWatch
-                    sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
-                    startTrigger={startTrigger}
-                    stopTrigger={stopTrigger}
-                    resetTrigger={resetTrigger}
-                />
-            )}
+            {
+                fullScreen && (<Dialog open={fullScreen && phase === 'SOLVING'}
+                                       fullScreen={true}
+                                       keepMounted={true}
+                                       onTouchStart={() => {
+                                           result.current = stop.current();
+                                           setPhase('IDLE');
+                                       }}>
+                        <Stack style={{width: '100%', height: '100%'}} justifyContent={'center'} alignItems={'center'}>
+                            {
+                                wakeLockAcquired && <Typography variant={'h5'}>Wake lock on</Typography>
+                            }
+                            <StopWatch
+                                variant={'h2'}
+                                showControls={false}
+                                startTrigger={startTrigger}
+                                stopTrigger={stopTrigger}
+                                resetTrigger={resetTrigger}
+                            />
+                        </Stack>
+                    </Dialog>
+                )
+            }
+            {
+                !fullScreen && (<StopWatch
+                        sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
+                        startTrigger={startTrigger}
+                        stopTrigger={stopTrigger}
+                        resetTrigger={resetTrigger}
+                    />
+                )
+            }
             <Typography>{phase}</Typography>
             {
                 fullScreen && (result.current === 0 || phase !== 'IDLE') && <Stack direction={'column'}
