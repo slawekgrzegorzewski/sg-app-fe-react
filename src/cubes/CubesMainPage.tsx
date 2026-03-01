@@ -144,6 +144,9 @@ export function CubesMainPage() {
             {
                 wakeLockAcquired && <Typography>Wake lock on</Typography>
             }
+            {
+                !wakeLockAcquired && <Typography>Wake lock off</Typography>
+            }
             <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
             <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
             <Stack direction={'row'}>
@@ -166,6 +169,9 @@ export function CubesMainPage() {
                         <Stack style={{width: '100%', height: '100%'}} justifyContent={'center'} alignItems={'center'}>
                             {
                                 wakeLockAcquired && <Typography variant={'h5'}>Wake lock on</Typography>
+                            }
+                            {
+                                !wakeLockAcquired && <Typography>Wake lock off</Typography>
                             }
                             <StopWatch
                                 variant={'h2'}

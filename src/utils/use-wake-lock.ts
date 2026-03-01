@@ -14,6 +14,7 @@ export function useWakeLock() {
             }
         } catch (err) {
             console.error("Wake Lock error:", err);
+            setWakeLock(null);
         }
     };
 
