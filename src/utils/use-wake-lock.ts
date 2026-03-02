@@ -23,8 +23,7 @@ export function useWakeLock() {
     };
 
     const releaseWakeLock = async () => {
-        wakeLock?.release();
-        wakeLockRef.current = null;
+        wakeLock?.release() || wakeLockRef.current?.release();
     };
 
     useEffect(() => {
