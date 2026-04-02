@@ -81,7 +81,7 @@ export function CubesMainPage() {
     useEffect(() => {
         const keyDownListener = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
-                if (phase === "IDLE") {
+                if (phase === "IDLE" && result.current === 0) {
                     setPhase("INSPECTION_EARLY");
                     if (!becomeLateInspectionTimeOutId.current) {
                         becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
