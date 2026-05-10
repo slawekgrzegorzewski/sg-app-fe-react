@@ -6,7 +6,11 @@ import {
     CreateExpense,
     CreateExpenseMutation,
     CreateIncome,
-    CreateIncomeMutation, CreateTransfer, CreateTransferMutation
+    CreateIncomeMutation,
+    CreateTransfer,
+    CreateTransferMutation,
+    MutuallyCancel,
+    MutuallyCancelMutation
 } from "../types";
 import Button from "@mui/material/Button";
 import {
@@ -15,6 +19,7 @@ import {
     GQLBillingElementType,
     GQLCurrencyInfo,
     GQLExpense,
+    GQLMonetaryAmount,
     mapAccount,
     mapBankTransactionToImport,
     mapBillingCategory,
@@ -34,6 +39,7 @@ import {DebugDisplayObject} from "../utils/DebugDisplayObject";
 import {ShowBackdropContext} from "../utils/DrawerAppBar";
 import Decimal from "decimal.js";
 import {TRANSFER_FORM_PROPERTIES, TransferDTO} from "./CreateTransferForm";
+import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 
 export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
@@ -53,15 +59,21 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
         toAccountCredit: Decimal,
         possibleDates: Dayjs[],
     };
-    type ImportType = 'debit' | 'credit' | 'transfer';
 
-    type PossibleImports = Record<Exclude<ImportType, 'transfer'>, BillingElementToImport | null>
-        & Record<Extract<ImportType, 'transfer'>, TransferToImport | null>;
+    type TransactionsToIgnore = {
+        balance: GQLMonetaryAmount
+    };
+    type ImportType = 'debit' | 'credit' | 'transfer' | 'ignore';
+
+    type PossibleImports = Record<Extract<ImportType, 'debit' | 'credit'>, BillingElementToImport | null>
+        & Record<Extract<ImportType, 'transfer'>, TransferToImport | null>
+        & Record<Extract<ImportType, 'ignore'>, TransactionsToIgnore | null>;
 
     const [possibleImports, setPossibleImports] = useState<PossibleImports>({
         debit: null,
         credit: null,
         transfer: null,
+        ignore: null,
     });
     const {loading, error, data} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
     const [showDialog, setShowDialog] = useState(false);
@@ -69,8 +81,10 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
     const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
     const [createTransferMutation] = useMutation<CreateTransferMutation>(CreateTransfer);
+    const [mutuallyCancelMutation] = useMutation<MutuallyCancelMutation>(MutuallyCancel);
     const [billingElementToCreate, setBillingElementToCreate] = useState<BillingElementDTO | null>(null);
     const [transferToCreate, setTransferToCreate] = useState<TransferDTO & { possibleDays: Dayjs[] } | null>(null);
+    const [transactionsToMutuallyCancelPublicId, setTransactionsToMutuallyCancelPublicId] = useState<string[] | null>(null);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
     const theme = useTheme();
     const reset = () => {
@@ -127,6 +141,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             }
             return billingElement;
         }
+
         const addTransactionToTransfer = (
             transfer: TransferToImport | "not possible" | null,
             transaction: GQLBankTransactionToImport) => {
@@ -158,7 +173,9 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 }
             }
 
-            const transactionDate = dayjs(transaction.timeOfTransaction).startOf('day').add(12, 'hours');
+            const transactionDate = dayjs(transaction.timeOfTransaction)
+                .startOf('day')
+                .add(12, 'hours');
             if (!transfer) {
                 transfer = {
                     fromAccountPublicId: transaction.sourceAccountPublicId,
@@ -171,11 +188,12 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 } as TransferToImport;
             } else {
                 if ((!transfer.fromAccountPublicId || !transaction.sourceAccountPublicId || transfer.fromAccountPublicId === transaction.sourceAccountPublicId)
-                    && (!transfer.toAccountPublicId || !transaction.destinationAccountPublicId || transfer.toAccountPublicId === transaction.destinationAccountPublicId)) {
+                    && (!transfer.toAccountPublicId || !transaction.destinationAccountPublicId || transfer.toAccountPublicId === transaction.destinationAccountPublicId)
+                    && ((transfer.toAccountPublicId || transaction.sourceAccountPublicId) !== (transfer.fromAccountPublicId || transaction.sourceAccountPublicId))
+                ) {
                     if (transfer.possibleDates.filter(date => date.isSame(transactionDate)).length === 0) {
                         transfer.possibleDates.push(transactionDate);
                     }
-
                     transfer = {
                         fromAccountPublicId: transfer.fromAccountPublicId || transaction.sourceAccountPublicId,
                         toAccountPublicId: transfer.toAccountPublicId || transaction.destinationAccountPublicId,
@@ -192,6 +210,40 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             return transfer;
         }
 
+        const addTransactionToIgnore = (ignore: TransactionsToIgnore | "not possible" | null, transaction: GQLBankTransactionToImport) => {
+            if (transaction.destinationAccountPublicId && transaction.sourceAccountPublicId) {
+                ignore = "not possible";
+            } else if (!transaction.destinationAccountPublicId && !transaction.sourceAccountPublicId) {
+                ignore = "not possible";
+            } else if (ignore !== "not possible") {
+                const amount = transaction.destinationAccountPublicId ? transaction.credit : transaction.debit.negated();
+                const currency = data!.financeManagement.accounts
+                    .filter(ba => ba.publicId === (transaction.destinationAccountPublicId || transaction.sourceAccountPublicId))
+                    .map(ba => ba.currentBalance.currency)[0];
+                if (!ignore) {
+                    ignore = {
+                        balance: {
+                            amount: amount,
+                            currency: {
+                                code: currency.code,
+                                description: currency.description,
+                            }
+                        },
+                    };
+                } else if (currency.code === ignore.balance.currency.code) {
+                    ignore = {
+                        balance: {
+                            amount: ignore.balance.amount.plus(amount),
+                            currency: ignore.balance.currency,
+                        }
+                    }
+                } else {
+                    ignore = "not possible";
+                }
+            }
+            return ignore;
+        }
+
 
         let newBankTransactionsToImport;
         if (selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id)) {
@@ -203,6 +255,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
         let income: BillingElementToImport | 'not possible' | null = null;
         let expense: BillingElementToImport | 'not possible' | null = null;
         let transfer: TransferToImport | 'not possible' | null = null;
+        let ignore: TransactionsToIgnore | 'not possible' | null = null;
+
         newBankTransactionsToImport.forEach((transaction) => {
             const sourceAccount = transaction.sourceAccountPublicId ? findAccount(accounts, transaction.sourceAccountPublicId) : null;
             const destinationAccount = transaction.destinationAccountPublicId ? findAccount(accounts, transaction.destinationAccountPublicId) : null;
@@ -212,12 +266,14 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             income = addTransactionToBillingElement('Income', income, transaction, currency);
             expense = addTransactionToBillingElement('Expense', expense, transaction, currency);
             transfer = addTransactionToTransfer(transfer, transaction);
+            ignore = addTransactionToIgnore(ignore, transaction);
         })
         setSelectedBankAccountTransactionsToImport([...newBankTransactionsToImport]);
         setPossibleImports({
             credit: (income === "not possible" || income === null || (income as BillingElementToImport).amount.lessThanOrEqualTo(new Decimal(0))) ? null : income,
             debit: (expense === "not possible" || expense === null || (expense as BillingElementToImport).amount.lessThanOrEqualTo(new Decimal(0))) ? null : expense,
             transfer: (transfer === 'not possible' || transfer === null) || !(transfer as TransferToImport).toAccountCredit.equals((transfer as TransferToImport).fromAccountDebit) ? null : transfer,
+            ignore: (ignore === "not possible" || ignore === null || !(ignore as TransactionsToIgnore).balance.amount.equals(new Decimal(0))) ? null : ignore,
         });
     }
 
@@ -244,7 +300,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             </Button>;
         } else if (showDialog) {
             const accounts = data.financeManagement.accounts.map(mapAccount);
-            if (!billingElementToCreate && !transferToCreate) {
+            if (!billingElementToCreate && !transferToCreate && !transactionsToMutuallyCancelPublicId) {
                 return <Dialog onClose={() => reset()}
                                open={true}
                                fullScreen={true}>
@@ -358,6 +414,18 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                     <DebugDisplayObject object={possibleImports.transfer}/>
                                 </Stack>
                             }
+                            {
+                                possibleImports.ignore && <Stack direction={'column'}>
+                                    <Typography onClick={() => {
+                                        const strings = selectedBankAccountTransactionsToImport.map(t => t.transactionPublicId);
+                                        console.log(strings);
+                                        setTransactionsToMutuallyCancelPublicId(strings);
+                                    }}>
+                                        Wzajemnie ignoruj
+                                    </Typography>
+                                    <DebugDisplayObject object={possibleImports.ignore}/>
+                                </Stack>
+                            }
                         </Stack>
                     </DialogContent>
                 </Dialog>
@@ -420,6 +488,27 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                         transferToCreate.possibleDays
                     )}
                 />;
+            } else if (transactionsToMutuallyCancelPublicId) {
+                console.log('jkasne')
+                return <ConfirmationDialog companionObject={transactionsToMutuallyCancelPublicId}
+                                           title={'Na pewno anulować wzajemnie zaznaczone transakcje?'}
+                                           message={'Na pewno anulować wzajemnie zaznaczone transakcje?'}
+                                           open={true}
+                                           onConfirm={(entity: string[]) => {
+                                               const variables = {
+                                                   variables: {
+                                                       transactionsPublicId: entity
+                                                   }
+                                               };
+                                               setShowBackdrop(true);
+                                               return mutuallyCancelMutation(variables)
+                                                   .then(() => onRefetch())
+                                                   .finally(() => setShowBackdrop(false));
+                                           }}
+                                           onCancel={() => {
+                                               setTransactionsToMutuallyCancelPublicId(null);
+                                               return Promise.resolve();
+                                           }}/>
             } else {
                 return <Typography>WTF?</Typography>;
             }

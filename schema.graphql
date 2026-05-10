@@ -66,6 +66,7 @@ type Mutation{
     createIncome(createIncomeInput: CreateBillingElementInput!): String!
     createExpense(createExpenseInput: CreateBillingElementInput!): String!
     createTransfer(createTransferInput: CreateTransferInput!): String!
+    mutuallyCancel(mutuallyCancelInput: MutuallyCancelInput!): String!
 
     addIPR(input: IntellectualPropertyData): IntellectualProperty
     updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
@@ -590,6 +591,10 @@ input CreateTransferInput{
     date:LocalDate!
     description:String!
     bankTransactionPublicIds: [UUID!]!
+}
+
+input MutuallyCancelInput{
+    transactionsPublicId: [UUID!]!
 }
 
 type BankAccount {

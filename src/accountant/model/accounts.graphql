@@ -233,6 +233,12 @@ mutation CreateTransfer($fromAccountPublicId: UUID!,$toAccountPublicId: UUID!, $
     })
 }
 
+mutation MutuallyCancel($transactionsPublicId: [UUID!]!){
+    mutuallyCancel(mutuallyCancelInput: {
+        transactionsPublicId: $transactionsPublicId
+    })
+}
+
 query BankTransactionsToImport {
     bankTransactionsToImport {
         id
