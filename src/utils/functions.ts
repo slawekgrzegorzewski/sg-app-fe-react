@@ -20,6 +20,12 @@ export const maxDate = (dates: Date[]) => {
     return dates.reduce((d1, d2) => d1 > d2 ? d1 : d2);
 }
 
+export const minDate = (dates: Dayjs[]) => {
+    if (dates.length === 0) return new Date();
+    if (dates.length === 1) return dates[0];
+    return dates.reduce((d1, d2) => d1 > d2 ? d2 : d1);
+}
+
 export const formatMonetaryAmount = (monetaryAmount: GQLMonetaryAmount) => {
     return formatCurrency(monetaryAmount.currency.code, monetaryAmount.amount);
 }

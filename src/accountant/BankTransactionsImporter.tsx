@@ -18,7 +18,6 @@ import {
     GQLBankTransactionToImport,
     GQLBillingElementType,
     GQLCurrencyInfo,
-    GQLExpense,
     GQLMonetaryAmount,
     mapAccount,
     mapBankTransactionToImport,
@@ -28,7 +27,7 @@ import {
 import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import {formatCurrency, notEmpty, trimDateToDay} from "../utils/functions";
+import {formatCurrency, minDate, notEmpty, trimDateToDay} from "../utils/functions";
 import dayjs, {Dayjs} from "dayjs";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -47,17 +46,22 @@ export interface BankTransactionsImporterProps {
 
 export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterProps): JSX.Element {
 
-    type BillingElementToImport = Omit<GQLExpense, 'publicId' | 'category' | 'date'> & {
-        accountPublicId: string
+    type BillingElementToImport = {
+        description: string,
+        amount: Decimal,
+        currency: GQLCurrencyInfo,
+        accountPublicId: string,
         date: Dayjs,
     };
 
-    type TransferToImport = Omit<BillingElementToImport, 'accountPublicId' | 'amount' | 'date'> & {
+    type TransferToImport = {
+        description: string,
+        currency: GQLCurrencyInfo,
+        possibleDates: Dayjs[],
         fromAccountPublicId?: string,
         toAccountPublicId?: string,
         fromAccountDebit: Decimal,
-        toAccountCredit: Decimal,
-        possibleDates: Dayjs[],
+        toAccountCredit: Decimal
     };
 
     type TransactionsToIgnore = {
@@ -125,15 +129,13 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                     date: dayjs(transaction.timeOfTransaction)
                 } as BillingElementToImport;
             } else {
-                const dayOfExpense = trimDateToDay(billingElement.date);
-                const dayOfTransaction = trimDateToDay(transaction.timeOfTransaction);
-                if (dayOfExpense.getTime() === dayOfTransaction.getTime() && billingElement.accountPublicId === accountPublicId) {
+                if (billingElement.accountPublicId === accountPublicId) {
                     billingElement = {
                         accountPublicId: accountPublicId,
                         description: transaction.description + '\n' + billingElement.description,
                         amount: billingElement.amount.plus(amount),
                         currency: billingElement.currency,
-                        date: billingElement.date
+                        date: minDate([billingElement.date, dayjs(trimDateToDay(transaction.timeOfTransaction))])
                     } as BillingElementToImport;
                 } else {
                     billingElement = "not possible";
