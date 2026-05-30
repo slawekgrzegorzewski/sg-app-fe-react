@@ -1,5 +1,6 @@
-import {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
+import Form, {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
+import {JSX} from "react";
 import {GQLAccount} from "./model/types";
 import * as Yup from "yup";
 import dayjs, {Dayjs} from "dayjs";
@@ -80,3 +81,21 @@ export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAcc
             ]
     }
 };
+
+export interface CreateTransferFormProps {
+    accounts: GQLAccount[];
+    transferToCreate: TransferDTO & { possibleDays: Dayjs[] };
+    onClose: (transferToCreate: TransferDTO | null) => void;
+}
+
+export function CreateTransferForm({accounts, transferToCreate, onClose}: CreateTransferFormProps): JSX.Element {
+    return <Form
+        onSave={(transferDTO) => onClose(transferDTO)}
+        onCancel={() => onClose(null)}
+        {...TRANSFER_FORM_PROPERTIES(
+            transferToCreate,
+            accounts,
+            transferToCreate.possibleDays
+        )}
+    />;
+}

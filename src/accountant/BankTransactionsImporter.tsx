@@ -22,10 +22,9 @@ import {
 } from "./model/types";
 import Typography from "@mui/material/Typography";
 import {Dayjs} from "dayjs";
-import Form from "../utils/forms/Form";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
 import {ShowBackdropContext} from "../utils/DrawerAppBar";
-import {TRANSFER_FORM_PROPERTIES, TransferDTO} from "./CreateTransferForm";
+import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
 import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 import {
     BankTransactionsToImportPicker,
@@ -123,30 +122,27 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                         }
                     }}/>;
             } else if (transferToCreate) {
-                return <Form
-                    onSave={(transferDTO) => {
-                        const variables = {
-                            variables: {
-                                fromAccountPublicId: transferDTO.fromAccountPublicId!,
-                                toAccountPublicId: transferDTO.toAccountPublicId!,
-                                amount: transferDTO.amount!,
-                                description: transferDTO.description!,
-                                date: transferDTO.day!.format('YYYY-MM-DD'),
-                                bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId!),
-                            }
-                        };
-                        setShowBackdrop(true);
-                        createTransferMutation(variables)
-                            .then(() => onRefetch())
-                            .finally(() => setShowBackdrop(false));
-                    }}
-                    onCancel={reset}
-                    {...TRANSFER_FORM_PROPERTIES(
-                        transferToCreate,
-                        data.financeManagement.accounts.map(mapAccount),
-                        transferToCreate.possibleDays
-                    )}
-                />;
+                return <CreateTransferForm accounts={data.financeManagement.accounts.map(mapAccount)}
+                                           transferToCreate={transferToCreate}
+                                           onClose={transferToCreate => {
+                                               if (!transferToCreate) reset();
+                                               else {
+                                                   const variables = {
+                                                       variables: {
+                                                           fromAccountPublicId: transferToCreate.fromAccountPublicId!,
+                                                           toAccountPublicId: transferToCreate.toAccountPublicId!,
+                                                           amount: transferToCreate.amount!,
+                                                           description: transferToCreate.description!,
+                                                           date: transferToCreate.day!.format('YYYY-MM-DD'),
+                                                           bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId!),
+                                                       }
+                                                   };
+                                                   setShowBackdrop(true);
+                                                   createTransferMutation(variables)
+                                                       .then(() => onRefetch())
+                                                       .finally(() => setShowBackdrop(false));
+                                               }
+                                           }}/>
             } else if (transactionsToMutuallyCancelPublicId) {
                 return <ConfirmationDialog companionObject={transactionsToMutuallyCancelPublicId}
                                            title={'Na pewno anulować wzajemnie zaznaczone transakcje?'}
