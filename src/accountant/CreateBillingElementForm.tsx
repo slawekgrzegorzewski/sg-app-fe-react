@@ -1,5 +1,6 @@
-import {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
+import Form, {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
+import {JSX} from "react";
 import {GQLAccount, GQLBillingCategory, GQLBillingElementType, GQLPiggyBank} from "./model/types";
 import * as Yup from "yup";
 import dayjs, {Dayjs} from "dayjs";
@@ -110,3 +111,30 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
             ]
     }
 };
+
+export interface CreateBillingElementFormProps {
+    accounts: GQLAccount[];
+    billingCategories: GQLBillingCategory[];
+    piggyBanks: GQLPiggyBank[];
+    billingElementToCreate: BillingElementDTO;
+    onClose: (billingElement: BillingElementDTO | null) => void;
+}
+
+export function CreateBillingElementForm({
+                                             accounts,
+                                             billingCategories,
+                                             piggyBanks,
+                                             billingElementToCreate,
+                                             onClose
+                                         }: CreateBillingElementFormProps): JSX.Element {
+    return <Form
+        onSave={onClose}
+        onCancel={() => onClose(null)}
+        {...BILLING_ELEMENT_FORM_PROPERTIES(
+            billingElementToCreate,
+            accounts,
+            billingCategories,
+            piggyBanks,
+        )}
+    />;
+}
