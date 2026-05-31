@@ -9,6 +9,8 @@ import {
     CreateIncomeMutation,
     CreateTransfer,
     CreateTransferMutation,
+    ImportBankTransactions,
+    ImportBankTransactionsMutation,
     MutuallyCancel,
     MutuallyCancelMutation
 } from "../types";
@@ -29,9 +31,11 @@ import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 import {
     BankTransactionsToImportPicker,
     isBillingElementToCreate,
+    isCustomImport,
     isTransactionsToMutuallyCancel,
     isTransferToCreate
 } from "./BankTransactionsToImportPicker";
+import {CreateCustomImportForm} from "./CreateCustomImportForm";
 
 export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
@@ -46,15 +50,18 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
     const [createTransferMutation] = useMutation<CreateTransferMutation>(CreateTransfer);
     const [mutuallyCancelMutation] = useMutation<MutuallyCancelMutation>(MutuallyCancel);
+    const [importBankTransactionsMutation] = useMutation<ImportBankTransactionsMutation>(ImportBankTransactions);
     const [billingElementToCreate, setBillingElementToCreate] = useState<BillingElementDTO | null>(null);
     const [transferToCreate, setTransferToCreate] = useState<TransferDTO & { possibleDays: Dayjs[] } | null>(null);
     const [transactionsToMutuallyCancelPublicId, setTransactionsToMutuallyCancelPublicId] = useState<string[] | null>(null);
+    const [transactionsToCustomImport, setTransactionsToCustomImport] = useState<GQLBankTransactionToImport[] | null>(null);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
     const reset = () => {
         setShowDialog(false);
         setBillingElementToCreate(null);
         setTransferToCreate(null);
         setTransactionsToMutuallyCancelPublicId(null);
+        setTransactionsToCustomImport(null);
         setSelectedBankAccountTransactionsToImport([]);
     }
 
@@ -73,20 +80,22 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 {transactionsToImportButtonText(data.bankTransactionsToImport.length)}
             </Button>;
         } else if (showDialog) {
-            if (!billingElementToCreate && !transferToCreate && !transactionsToMutuallyCancelPublicId) {
+            if (!billingElementToCreate && !transferToCreate && !transactionsToMutuallyCancelPublicId && !transactionsToCustomImport) {
                 return <BankTransactionsToImportPicker
                     accounts={data.financeManagement.accounts.map(mapAccount)}
                     bankTransactions={data.bankTransactionsToImport.map(mapBankTransactionToImport)}
                     onClose={(pickOption) => {
                         setSelectedBankAccountTransactionsToImport(pickOption?.selectedBankTransactions || []);
-                        if (pickOption && isBillingElementToCreate(pickOption.elementToCreate)) {
-                            setBillingElementToCreate(pickOption.elementToCreate);
-                        }
-                        if (pickOption && isTransferToCreate(pickOption.elementToCreate)) {
-                            setTransferToCreate(pickOption.elementToCreate);
-                        }
-                        if (pickOption && isTransactionsToMutuallyCancel(pickOption.elementToCreate)) {
-                            setTransactionsToMutuallyCancelPublicId(pickOption.elementToCreate);
+                        if (pickOption) {
+                            if (isBillingElementToCreate(pickOption.importDecision)) {
+                                setBillingElementToCreate(pickOption.importDecision.data);
+                            } else if (isTransferToCreate(pickOption.importDecision)) {
+                                setTransferToCreate(pickOption.importDecision.data);
+                            } else if (isTransactionsToMutuallyCancel(pickOption.importDecision)) {
+                                setTransactionsToMutuallyCancelPublicId(pickOption.selectedBankTransactions.map(t => t.transactionPublicId));
+                            } else if (isCustomImport(pickOption.importDecision)) {
+                                setTransactionsToCustomImport(pickOption.selectedBankTransactions);
+                            }
                         }
                     }}/>;
             } else if (billingElementToCreate) {
@@ -163,6 +172,69 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                reset();
                                                return Promise.resolve();
                                            }}/>
+            } else if (transactionsToCustomImport) {
+                return <CreateCustomImportForm
+                    accountsWithAssignedBankAccounts={data.financeManagement.accounts.map(mapAccount).filter(a => a.bankAccount)}
+                    accountsWithoutAssignedBankAccounts={data.financeManagement.accounts.map(mapAccount).filter(a => !a.bankAccount)}
+                    billingCategories={data.financeManagement.billingCategories.map(mapBillingCategory)}
+                    piggyBanks={data.financeManagement.piggyBanks.map(mapPiggyBank)}
+                    bankTransactions={transactionsToCustomImport}
+                    onClose={(customImportResult) => {
+                        if (!customImportResult) reset();
+                        else {
+                            const variables = {
+                                variables: {
+                                    bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId),
+                                    expenses: customImportResult.billingElements
+                                        .filter(billingElementToCreate => billingElementToCreate.billingElementType === 'Expense')
+                                        .map(billingElementToCreate => {
+                                            return {
+                                                accountPublicId: billingElementToCreate.affectedAccountPublicId!,
+                                                description: billingElementToCreate.description!,
+                                                amount: billingElementToCreate.amount!,
+                                                currency: data.financeManagement.accounts.map(mapAccount).find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
+                                                categoryPublicId: billingElementToCreate.category!.publicId,
+                                                date: billingElementToCreate.date!.format("YYYY-MM-DD"),
+                                                piggyBankPublicId: billingElementToCreate.piggyBank?.publicId ? billingElementToCreate.piggyBank!.publicId : null,
+                                                bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
+                                            };
+                                        }),
+                                    incomes: customImportResult.billingElements
+                                        .filter(billingElementToCreate => billingElementToCreate.billingElementType === 'Income')
+                                        .map(billingElementToCreate => {
+                                            return {
+                                                accountPublicId: billingElementToCreate.affectedAccountPublicId!,
+                                                description: billingElementToCreate.description!,
+                                                amount: billingElementToCreate.amount!,
+                                                currency: data.financeManagement.accounts.map(mapAccount).find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
+                                                categoryPublicId: billingElementToCreate.category!.publicId,
+                                                date: billingElementToCreate.date!.format("YYYY-MM-DD"),
+                                                piggyBankPublicId: billingElementToCreate.piggyBank?.publicId ? billingElementToCreate.piggyBank!.publicId : null,
+                                                bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
+                                            };
+                                        }),
+                                    transfers: customImportResult.transfers.map(transferToCreate => {
+                                        return {
+                                            fromAccountPublicId: transferToCreate.fromAccountPublicId!,
+                                            toAccountPublicId: transferToCreate.toAccountPublicId!,
+                                            amount: transferToCreate.amount!,
+                                            description: transferToCreate.description!,
+                                            date: transferToCreate.day!.format('YYYY-MM-DD'),
+                                            bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId!),
+                                        };
+                                    })
+                                }
+                            };
+                            setShowBackdrop(true);
+                            importBankTransactionsMutation(variables)
+                                .then(() => {
+                                    reset();
+                                    onRefetch();
+                                })
+                                .finally(() => setShowBackdrop(false));
+                        }
+                    }}
+                />
             } else {
                 return <Typography>WTF?</Typography>;
             }

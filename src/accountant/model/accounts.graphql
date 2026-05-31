@@ -320,3 +320,7 @@ query BankTransactionsToImport {
         }
     }
 }
+
+mutation ImportBankTransactions($bankTransactionPublicIds: [UUID!]!, $expenses: [CreateBillingElementInput!]!, $incomes: [CreateBillingElementInput!]!, $transfers: [CreateTransferInput!]!) {
+    importBankTransactions(importBankTransactionsInput: {bankTransactionPublicIds: $bankTransactionPublicIds, expenses: $expenses, incomes: $incomes, transfers: $transfers})
+}

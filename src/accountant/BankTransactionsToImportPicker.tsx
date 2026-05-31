@@ -19,25 +19,31 @@ import Decimal from "decimal.js";
 import {BillingElementDTO} from "./CreateBillingElementForm";
 import {TransferDTO} from "./CreateTransferForm";
 
-export type ElementToCreate = BillingElementDTO | TransferDTO & { possibleDays: Dayjs[] } | string[]
+type BillingElementImport = { importType: 'billingElement', data: BillingElementDTO };
+type TransferImport = { importType: 'transfer', data: TransferDTO & { possibleDays: Dayjs[] } };
+type MutuallyIgnoreImport = { importType: 'mutuallyIgnore' };
+type CustomImport = { importType: 'custom' };
+export type ImportDecision = BillingElementImport | TransferImport | MutuallyIgnoreImport | CustomImport
 
 export type PickOption = {
     selectedBankTransactions: GQLBankTransactionToImport[],
-    elementToCreate: ElementToCreate
+    importDecision: ImportDecision
 }
 
-export function isBillingElementToCreate(elementToCreate: ElementToCreate): elementToCreate is BillingElementDTO {
-    return !Array.isArray(elementToCreate) && 'billingElementType' in elementToCreate;
+export function isBillingElementToCreate(importDecision: ImportDecision): importDecision is BillingElementImport {
+    return importDecision.importType === 'billingElement';
 }
 
-export function isTransferToCreate(elementToCreate: ElementToCreate): elementToCreate is TransferDTO & {
-    possibleDays: Dayjs[]
-} {
-    return !Array.isArray(elementToCreate) && 'possibleDays' in elementToCreate;
+export function isTransferToCreate(importDecision: ImportDecision): importDecision is TransferImport {
+    return importDecision.importType === 'transfer';
 }
 
-export function isTransactionsToMutuallyCancel(elementToCreate: ElementToCreate): elementToCreate is  string[] {
-    return Array.isArray(elementToCreate);
+export function isTransactionsToMutuallyCancel(importDecision: ImportDecision): importDecision is MutuallyIgnoreImport {
+    return importDecision.importType === 'mutuallyIgnore';
+}
+
+export function isCustomImport(importDecision: ImportDecision): importDecision is CustomImport {
+    return importDecision.importType === 'custom';
 }
 
 export interface BankTransactionsToImportPickerProps {
@@ -340,15 +346,18 @@ export function BankTransactionsToImportPicker({
                         <Typography onClick={() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                elementToCreate: {
-                                    billingElementType: 'Income',
-                                    publicId: '',
-                                    affectedAccountPublicId: possibleImports.credit!.accountPublicId,
-                                    amount: possibleImports.credit!.amount,
-                                    category: null,
-                                    date: possibleImports.credit!.date,
-                                    description: possibleImports.credit!.description,
-                                    piggyBank: null,
+                                importDecision: {
+                                    importType: 'billingElement',
+                                    data: {
+                                        billingElementType: 'Income',
+                                        publicId: '',
+                                        affectedAccountPublicId: possibleImports.credit!.accountPublicId,
+                                        amount: possibleImports.credit!.amount,
+                                        category: null,
+                                        date: possibleImports.credit!.date,
+                                        description: possibleImports.credit!.description,
+                                        piggyBank: null,
+                                    }
                                 }
                             })
                         }}>
@@ -362,15 +371,18 @@ export function BankTransactionsToImportPicker({
                         <Typography onClick={() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                elementToCreate: {
-                                    billingElementType: 'Expense',
-                                    publicId: '',
-                                    affectedAccountPublicId: possibleImports.debit!.accountPublicId,
-                                    amount: possibleImports.debit!.amount,
-                                    category: null,
-                                    date: possibleImports.debit!.date,
-                                    description: possibleImports.debit!.description,
-                                    piggyBank: null,
+                                importDecision: {
+                                    importType: 'billingElement',
+                                    data: {
+                                        billingElementType: 'Expense',
+                                        publicId: '',
+                                        affectedAccountPublicId: possibleImports.debit!.accountPublicId,
+                                        amount: possibleImports.debit!.amount,
+                                        category: null,
+                                        date: possibleImports.debit!.date,
+                                        description: possibleImports.debit!.description,
+                                        piggyBank: null,
+                                    }
                                 }
                             })
                         }}>
@@ -384,13 +396,16 @@ export function BankTransactionsToImportPicker({
                         <Typography onClick={() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                elementToCreate: {
-                                    fromAccountPublicId: possibleImports.transfer!.fromAccountPublicId,
-                                    toAccountPublicId: possibleImports.transfer!.toAccountPublicId,
-                                    day: possibleImports.transfer!.possibleDates.length === 1 ? possibleImports.transfer!.possibleDates[0] : null,
-                                    amount: possibleImports.transfer!.fromAccountDebit,
-                                    description: possibleImports.transfer!.description,
-                                    possibleDays: possibleImports.transfer!.possibleDates,
+                                importDecision: {
+                                    importType: 'transfer',
+                                    data: {
+                                        fromAccountPublicId: possibleImports.transfer!.fromAccountPublicId,
+                                        toAccountPublicId: possibleImports.transfer!.toAccountPublicId,
+                                        day: possibleImports.transfer!.possibleDates.length === 1 ? possibleImports.transfer!.possibleDates[0] : null,
+                                        amount: possibleImports.transfer!.fromAccountDebit,
+                                        description: possibleImports.transfer!.description,
+                                        possibleDays: possibleImports.transfer!.possibleDates,
+                                    }
                                 }
                             })
                         }}>
@@ -404,12 +419,26 @@ export function BankTransactionsToImportPicker({
                         <Typography onClick={() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                elementToCreate: selectedBankAccountTransactionsToImport.map(t => t.transactionPublicId)
+                                importDecision: {
+                                    importType: 'mutuallyIgnore'
+                                }
                             })
                         }}>
                             Wzajemnie ignoruj
                         </Typography>
                         <DebugDisplayObject object={possibleImports.ignore}/>
+                    </Stack>
+                }
+                {
+                    selectedBankAccountTransactionsToImport.length > 0 && <Stack direction={'column'}>
+                        <Typography onClick={() => {
+                            onClose({
+                                selectedBankTransactions: selectedBankAccountTransactionsToImport,
+                                importDecision: {importType: 'custom'}
+                            })
+                        }}>
+                            Własny import
+                        </Typography>
                     </Stack>
                 }
             </Stack>
