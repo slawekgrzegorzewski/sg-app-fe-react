@@ -21,7 +21,7 @@ export type BillingElementDTO = {
     piggyBank: GQLPiggyBank | null;
 }
 
-export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDTO, accounts: GQLAccount[], categories: GQLBillingCategory[], piggyBanks: GQLPiggyBank[]) => {
+export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDTO, accounts: GQLAccount[], categories: GQLBillingCategory[], piggyBanks: GQLPiggyBank[], alwaysEditable: boolean = false) => {
     return {
         validationSchema: Yup.object({
             billingElementType: Yup.string(),
@@ -67,13 +67,13 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
                             displayElement: (<>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>)
                         };
                     }),
-                    editable: !billingElement.affectedAccountPublicId,
+                    editable: alwaysEditable || !billingElement.affectedAccountPublicId,
                 } as SelectEditorField,
                 {
                     label: 'Kwota',
                     type: 'NUMBER',
                     key: 'amount',
-                    editable: billingElement.amount.isZero(),
+                    editable: alwaysEditable || billingElement.amount.isZero(),
                 } as EditorField,
                 {
                     label: 'Kategoria',
@@ -82,13 +82,13 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
                     options: categories,
                     getOptionLabel: (billingCategory: Option) => billingCategory.name,
                     isOptionEqualToValue: (option: Option, value: Option) => option.id === value.id,
-                    editable: !billingElement.category
+                    editable: alwaysEditable || !billingElement.category
                 } as EditorField,
                 {
                     label: 'Data',
                     type: 'DATEPICKER',
                     key: 'date',
-                    editable: !billingElement.date,
+                    editable: alwaysEditable || !billingElement.date,
                     additionalProps: {
                         sx: {width: '200px'},
                     }
@@ -118,6 +118,7 @@ export interface CreateBillingElementFormProps {
     piggyBanks: GQLPiggyBank[];
     billingElementToCreate: BillingElementDTO;
     onClose: (billingElement: BillingElementDTO | null) => void;
+    alwaysEditable?: boolean;
 }
 
 export function CreateBillingElementForm({
@@ -125,16 +126,23 @@ export function CreateBillingElementForm({
                                              billingCategories,
                                              piggyBanks,
                                              billingElementToCreate,
-                                             onClose
+                                             onClose,
+                                             alwaysEditable = false,
                                          }: CreateBillingElementFormProps): JSX.Element {
     return <Form
-        onSave={onClose}
+        onSave={be => {
+            onClose({
+                ...be,
+                amount: new Decimal(be.amount)
+            })
+        }}
         onCancel={() => onClose(null)}
         {...BILLING_ELEMENT_FORM_PROPERTIES(
             billingElementToCreate,
             accounts,
             billingCategories,
             piggyBanks,
+            alwaysEditable
         )}
     />;
 }

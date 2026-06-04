@@ -14,7 +14,7 @@ export type TransferDTO = {
     description: string;
 }
 
-export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAccount[], restrictToDates: Dayjs[]) => {
+export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAccount[], restrictToDates: Dayjs[], alwaysEditable: boolean = false) => {
     return {
         validationSchema: Yup.object({
             fromAccountPublicId: Yup.string().required('Wymagana'),
@@ -42,7 +42,7 @@ export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAcc
                             displayElement: (<>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>)
                         };
                     }),
-                    editable: !transfer.fromAccountPublicId,
+                    editable: alwaysEditable || !transfer.fromAccountPublicId,
                 } as SelectEditorField,
                 {
                     key: 'toAccountPublicId',
@@ -54,19 +54,19 @@ export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAcc
                             displayElement: (<>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>)
                         };
                     }),
-                    editable: !transfer.toAccountPublicId,
+                    editable: alwaysEditable || !transfer.toAccountPublicId,
                 } as SelectEditorField,
                 {
                     label: 'Kwota',
                     type: 'NUMBER',
                     key: 'amount',
-                    editable: transfer.amount.isZero(),
+                    editable: alwaysEditable || transfer.amount.isZero(),
                 } as EditorField,
                 {
                     label: 'Data',
                     type: 'DATEPICKER',
                     key: 'day',
-                    editable: !transfer.day,
+                    editable: alwaysEditable || !transfer.day,
                     additionalProps: {
                         sx: {width: '200px'},
                     },
@@ -86,16 +86,27 @@ export interface CreateTransferFormProps {
     accounts: GQLAccount[];
     transferToCreate: TransferDTO & { possibleDays: Dayjs[] };
     onClose: (transferToCreate: TransferDTO | null) => void;
+    alwaysEditable?: boolean;
 }
 
-export function CreateTransferForm({accounts, transferToCreate, onClose}: CreateTransferFormProps): JSX.Element {
+export function CreateTransferForm({
+                                       accounts,
+                                       transferToCreate,
+                                       onClose,
+                                       alwaysEditable = false
+                                   }: CreateTransferFormProps): JSX.Element {
     return <Form
-        onSave={(transferDTO) => onClose(transferDTO)}
+        onSave={(transferDTO) => onClose({
+            ...transferDTO,
+            amount: new Decimal(transferDTO.amount),
+            day: dayjs(transferDTO.day)
+        })}
         onCancel={() => onClose(null)}
         {...TRANSFER_FORM_PROPERTIES(
             transferToCreate,
             accounts,
-            transferToCreate.possibleDays
+            transferToCreate.possibleDays,
+            alwaysEditable
         )}
     />;
 }
