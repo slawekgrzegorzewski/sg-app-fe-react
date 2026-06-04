@@ -43,7 +43,7 @@ export function CustomImportSummary({
                     map.set(creditKey, {
                         bankAccountPublicId: creditKey,
                         balanceFromImportingTransactions: item.credit,
-                        balanceAfterImport: new Decimal(0),
+                        balanceAfterImport: item.credit,
                         currency: accountsWithAssignedBankAccounts.filter(account => account.bankAccount.publicId === creditKey)![0].currentBalance.currency.code,
                         rows: [item],
                     });
@@ -61,7 +61,7 @@ export function CustomImportSummary({
                     map.set(debitKey, {
                         bankAccountPublicId: debitKey,
                         balanceFromImportingTransactions: item.debit.negated(),
-                        balanceAfterImport: new Decimal(0),
+                        balanceAfterImport: item.debit.negated(),
                         currency: accountsWithAssignedBankAccounts.filter(account => account.bankAccount.publicId === debitKey)![0].currentBalance.currency.code,
                         rows: [item],
                     });
