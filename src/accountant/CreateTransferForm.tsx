@@ -1,4 +1,4 @@
-import Form, {DatePickerEditorField, EditorField, RegularEditorField, SelectEditorField} from "../utils/forms/Form";
+import Form, {DatePickerEditorField, RegularEditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
 import {JSX, useState} from "react";
 import {GQLAccount} from "./model/types";
