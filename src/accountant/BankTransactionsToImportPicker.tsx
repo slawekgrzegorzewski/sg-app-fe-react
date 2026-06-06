@@ -9,7 +9,7 @@ import {
 import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import {formatCurrency, minDate, notEmpty, trimDateToDay} from "../utils/functions";
+import {formatCurrency, minDate, trimDateToDay} from "../utils/functions";
 import dayjs, {Dayjs} from "dayjs";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -161,18 +161,6 @@ export function BankTransactionsToImportPicker({
             if (transfer === 'not possible') {
                 return transfer;
             }
-
-            const currencies = [
-                transaction.sourceAccountPublicId,
-                transaction.destinationAccountPublicId,
-                (transfer as TransferToImport)?.fromAccountPublicId,
-                (transfer as TransferToImport)?.toAccountPublicId,
-            ]
-                .filter(notEmpty)
-                .map((accountPublicId) => accounts.find(account => account.publicId === accountPublicId))
-                .filter(notEmpty)
-                .map(account => account.currentBalance.currency)
-                .filter((value, index, self) => self.indexOf(value) === index);
 
             const fromCurrency = accounts
                 .find(account => account.publicId === ((transfer as TransferToImport)?.fromAccountPublicId || transaction.sourceAccountPublicId))
