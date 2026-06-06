@@ -55,7 +55,7 @@ export function CreateCustomImportForm({
             <span>Transfer </span>
             {(fromAccount && toAccount && fromAccount.length > 0 && toAccount.length > 0) && <>
                 <Box component="span" sx={{fontWeight: 900}}>
-                    {formatCurrency(fromAccount[0].currentBalance.currency.code, new Decimal(transfer.amount))}
+                    {formatCurrency(fromAccount[0].currentBalance.currency.code, new Decimal(transfer.fromAmount))}
                 </Box>
                 <span> z </span>
                 <Box component="span" sx={{fontWeight: 900}}>
@@ -78,7 +78,7 @@ export function CreateCustomImportForm({
                     formatCurrency(account.currentBalance.currency.code, new Decimal(be.amount))
                 )}
             </Box>
-            {(be.billingElementType === 'Expense' ? ' z ' : 'na ')}
+            {(be.billingElementType === 'Expense' ? ' z ' : ' na ')}
             <Box component="span" sx={{fontWeight: 900}}>
                 {affectedAccount.map(account => account.name)}
             </Box>
@@ -205,7 +205,8 @@ export function CreateCustomImportForm({
                         onClick={e => {
                             const transfer = {
                                 day: null,
-                                amount: new Decimal(0),
+                                fromAmount: new Decimal(0),
+                                toAmount: new Decimal(0),
                                 description: ''
                             } as TransferDTO;
                             setTransfers([transfer, ...transfers]);

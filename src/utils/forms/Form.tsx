@@ -100,7 +100,9 @@ export type EditorField =
     RegularEditorField
     | SelectEditorField
     | AutocompleteEditorField
-    | AutocompleteAsyncEditorField;
+    | AutocompleteAsyncEditorField
+    | DatePickerEditorField
+    | BooleanEditorField;
 
 export type FormProps<T> = {
     fields: EditorField[];
@@ -111,6 +113,7 @@ export type FormProps<T> = {
     showControlButtons?: boolean;
     onSave: (value: T) => void;
     onCancel: () => void
+    onChange?(value: T): void;
 }
 
 export default function Form<T>({
@@ -121,7 +124,8 @@ export default function Form<T>({
                                     autoSubmit,
                                     showControlButtons,
                                     onSave,
-                                    onCancel
+                                    onCancel,
+                                    onChange,
                                 }: FormProps<T>) {
     if (showControlButtons === undefined) {
         showControlButtons = true;
@@ -276,7 +280,12 @@ export default function Form<T>({
         </FormControl>;
     }
 
-    const form = (formik: any) => {
+    const Form = (formik: any) => {
+
+        React.useEffect(() => {
+            onChange?.(formik.values as T);
+        }, [formik.values]);
+
         return (
             <form onSubmit={formik.handleSubmit}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
@@ -293,7 +302,7 @@ export default function Form<T>({
                                 } else if (isAutocompleteAsyncEditorField(editorField)) {
                                     return AutocompleteAsync({
                                         formik: formik,
-                                        editorField: editorField
+                                        editorField: editorField,
                                     });
                                 } else {
                                     return createTextField(editorField, formik);
@@ -332,6 +341,6 @@ export default function Form<T>({
             }, 400);
         }}
     >
-        {form}
+        {Form}
     </Formik>
 }

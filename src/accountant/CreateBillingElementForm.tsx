@@ -31,7 +31,7 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
             category: Yup.object().required('Wymagana'),
             date: Yup.object().required('Wymagana'),
             description: Yup.string().required('Wymagana'),
-            piggyBank: Yup.object().required('Wymagana'),
+            piggyBank: Yup.object().nullable(),
         }),
         initialValues: {
             billingElementType: billingElement.billingElementType,

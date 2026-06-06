@@ -588,7 +588,8 @@ input CreateBillingElementInput{
 input CreateTransferInput{
     fromAccountPublicId: UUID!
     toAccountPublicId: UUID!
-    amount:BigDecimal!
+    fromAmount:BigDecimal!
+    toAmount:BigDecimal!
     date:LocalDate!
     description:String!
     bankTransactionPublicIds: [UUID!]!

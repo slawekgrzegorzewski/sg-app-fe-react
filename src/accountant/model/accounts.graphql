@@ -222,11 +222,12 @@ mutation CreateExpense($accountPublicId: UUID!,
     )
 }
 
-mutation CreateTransfer($fromAccountPublicId: UUID!,$toAccountPublicId: UUID!, $amount: BigDecimal!, $description: String!, $date: LocalDate!, $bankTransactionPublicIds: [UUID!]!){
+mutation CreateTransfer($fromAccountPublicId: UUID!,$toAccountPublicId: UUID!, $fromAmount: BigDecimal!, $toAmount: BigDecimal!, $description: String!, $date: LocalDate!, $bankTransactionPublicIds: [UUID!]!){
     createTransfer(createTransferInput: {
         fromAccountPublicId:$fromAccountPublicId,
         toAccountPublicId:$toAccountPublicId ,
-        amount: $amount,
+        fromAmount: $fromAmount,
+        toAmount: $toAmount,
         description: $description,
         date: $date,
         bankTransactionPublicIds:$bankTransactionPublicIds

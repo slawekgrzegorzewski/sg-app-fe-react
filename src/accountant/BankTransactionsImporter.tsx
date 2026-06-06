@@ -75,6 +75,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     if (loading || error || !data || data.bankTransactionsToImport.length <= 0) {
         return <></>
     } else {
+        const mappedAccounts = data.financeManagement.accounts.map(mapAccount);
         if (!showDialog) {
             return <Button
                 onClick={() => setShowDialog(true)}>
@@ -83,7 +84,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
         } else if (showDialog) {
             if (!billingElementToCreate && !transferToCreate && !transactionsToMutuallyCancelPublicId && !transactionsToCustomImport) {
                 return <BankTransactionsToImportPicker
-                    accounts={data.financeManagement.accounts.map(mapAccount)}
+                    accounts={mappedAccounts}
                     bankTransactions={data.bankTransactionsToImport.map(mapBankTransactionToImport)}
                     onClose={(pickOption) => {
                         setSelectedBankAccountTransactionsToImport(pickOption?.selectedBankTransactions || []);
@@ -105,7 +106,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 return <Dialog open={true} maxWidth={"lg"} fullWidth={false}>
                     <DialogContent>
                         <CreateBillingElementForm
-                            accounts={data.financeManagement.accounts.map(mapAccount)}
+                            accounts={mappedAccounts}
                             billingCategories={data.financeManagement.billingCategories.map(mapBillingCategory)}
                             piggyBanks={data.financeManagement.piggyBanks.map(mapPiggyBank)}
                             billingElementToCreate={billingElementToCreate}
@@ -117,7 +118,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                             accountPublicId: billingElementDTO.affectedAccountPublicId!,
                                             description: billingElementDTO.description!,
                                             amount: billingElementDTO.amount!,
-                                            currency: data.financeManagement.accounts.map(mapAccount).find(account => account.publicId === billingElementDTO.affectedAccountPublicId!)!.currentBalance.currency.code,
+                                            currency: mappedAccounts.find(account => account.publicId === billingElementDTO.affectedAccountPublicId!)!.currentBalance.currency.code,
                                             categoryPublicId: billingElementDTO.category!.publicId,
                                             date: billingElementDTO.date!.format("YYYY-MM-DD"),
                                             piggyBankPublicId: billingElementDTO.piggyBank?.publicId ? billingElementDTO.piggyBank!.publicId : null,
@@ -140,7 +141,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             } else if (transferToCreate) {
                 return <Dialog open={true} maxWidth={"lg"} fullWidth={false}>
                     <DialogContent>
-                        <CreateTransferForm accounts={data.financeManagement.accounts.map(mapAccount)}
+                        <CreateTransferForm accounts={mappedAccounts}
                                             transferToCreate={transferToCreate}
                                             onClose={transferToCreate => {
                                                 if (!transferToCreate) reset();
@@ -149,7 +150,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                         variables: {
                                                             fromAccountPublicId: transferToCreate.fromAccountPublicId!,
                                                             toAccountPublicId: transferToCreate.toAccountPublicId!,
-                                                            amount: transferToCreate.amount!,
+                                                            fromAmount: transferToCreate.fromAmount!,
+                                                            toAmount: transferToCreate.toAmount!,
                                                             description: transferToCreate.description!,
                                                             date: transferToCreate.day!.format('YYYY-MM-DD'),
                                                             bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId!),
@@ -187,8 +189,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 return <Dialog open={true} maxWidth={"lg"} fullWidth={false}>
                     <DialogContent>
                         <CreateCustomImportForm
-                            accountsWithAssignedBankAccounts={data.financeManagement.accounts.map(mapAccount).filter(a => a.bankAccount)}
-                            accountsWithoutAssignedBankAccounts={data.financeManagement.accounts.map(mapAccount).filter(a => !a.bankAccount)}
+                            accountsWithAssignedBankAccounts={mappedAccounts.filter(a => a.bankAccount)}
+                            accountsWithoutAssignedBankAccounts={mappedAccounts.filter(a => !a.bankAccount)}
                             billingCategories={data.financeManagement.billingCategories.map(mapBillingCategory)}
                             piggyBanks={data.financeManagement.piggyBanks.map(mapPiggyBank)}
                             bankTransactions={transactionsToCustomImport}
@@ -205,7 +207,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                         accountPublicId: billingElementToCreate.affectedAccountPublicId!,
                                                         description: billingElementToCreate.description!,
                                                         amount: billingElementToCreate.amount!,
-                                                        currency: data.financeManagement.accounts.map(mapAccount).find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
+                                                        currency: mappedAccounts.find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
                                                         categoryPublicId: billingElementToCreate.category!.publicId,
                                                         date: billingElementToCreate.date!.format("YYYY-MM-DD"),
                                                         piggyBankPublicId: billingElementToCreate.piggyBank?.publicId ? billingElementToCreate.piggyBank!.publicId : null,
@@ -219,7 +221,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                         accountPublicId: billingElementToCreate.affectedAccountPublicId!,
                                                         description: billingElementToCreate.description!,
                                                         amount: billingElementToCreate.amount!,
-                                                        currency: data.financeManagement.accounts.map(mapAccount).find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
+                                                        currency: mappedAccounts.find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
                                                         categoryPublicId: billingElementToCreate.category!.publicId,
                                                         date: billingElementToCreate.date!.format("YYYY-MM-DD"),
                                                         piggyBankPublicId: billingElementToCreate.piggyBank?.publicId ? billingElementToCreate.piggyBank!.publicId : null,
@@ -230,7 +232,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                 return {
                                                     fromAccountPublicId: transferToCreate.fromAccountPublicId!,
                                                     toAccountPublicId: transferToCreate.toAccountPublicId!,
-                                                    amount: transferToCreate.amount!,
+                                                    fromAmount: transferToCreate.fromAmount!,
+                                                    toAmount: transferToCreate.toAmount!,
                                                     description: transferToCreate.description!,
                                                     date: transferToCreate.day!.format('YYYY-MM-DD'),
                                                     bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId!),

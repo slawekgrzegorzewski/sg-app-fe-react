@@ -1,15 +1,17 @@
-import {Autocomplete, CircularProgress, debounce, TextField} from "@mui/material";
+import {Autocomplete, CircularProgress, debounce, TextField, Theme} from "@mui/material";
 import * as React from "react";
 import {AutocompleteAsyncEditorField} from "./Form";
 import {useLazyQuery} from "@apollo/client/react";
+import {SxProps} from "@mui/system";
 
 export type AutocompleteAsyncProps = {
     formik: any,
     autoSubmit?: boolean,
-    editorField: AutocompleteAsyncEditorField
+    editorField: AutocompleteAsyncEditorField,
+    sx?: SxProps<Theme>
 }
 
-export default function AutocompleteAsync({formik, autoSubmit, editorField}: AutocompleteAsyncProps) {
+export default function AutocompleteAsync({formik, autoSubmit, editorField, sx}: AutocompleteAsyncProps) {
 
     const [options, setOptions] = React.useState<{ open: boolean, loaded: boolean, options: any[] }>({
         open: false,
@@ -76,6 +78,7 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField}: Aut
         getOptionLabel={option => editorField.getOptionLabel!(option)}
         isOptionEqualToValue={editorField.isOptionEqualToValue!}
         options={options.options}
+        sx={sx || {}}
 
         renderInput={(params) => (
             <TextField

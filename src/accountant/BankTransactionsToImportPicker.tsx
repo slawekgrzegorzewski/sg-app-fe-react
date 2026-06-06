@@ -65,7 +65,9 @@ export type TransferToImport = {
     currency: GQLCurrencyInfo,
     possibleDates: Dayjs[],
     fromAccountPublicId?: string,
+    fromCurrency?: GQLCurrencyInfo,
     toAccountPublicId?: string,
+    toCurrency?: GQLCurrencyInfo,
     fromAccountDebit: Decimal,
     toAccountCredit: Decimal
 };
@@ -79,6 +81,20 @@ export type ImportType = 'debit' | 'credit' | 'transfer' | 'ignore';
 export type PossibleImports = Record<Extract<ImportType, 'debit' | 'credit'>, BillingElementToImport | null>
     & Record<Extract<ImportType, 'transfer'>, TransferToImport | null>
     & Record<Extract<ImportType, 'ignore'>, TransactionsToIgnore | null>;
+
+function isValidTransfer(transfer: null) {
+    let validTransfer = false;
+    if (transfer !== 'not possible' && transfer !== null) {
+        const transferToImport = transfer as TransferToImport;
+        validTransfer = !transferToImport.fromAccountDebit?.isZero() && !transferToImport.toAccountCredit?.isZero() &&
+            transferToImport.fromAccountDebit?.isPositive() && transferToImport.toAccountCredit?.isPositive() &&
+            (
+                transferToImport.fromCurrency?.code !== transferToImport.toCurrency?.code ||
+                transferToImport.fromAccountDebit.equals(transferToImport.toAccountCredit)
+            );
+    }
+    return validTransfer;
+}
 
 export function BankTransactionsToImportPicker({
                                                    accounts,
@@ -158,16 +174,13 @@ export function BankTransactionsToImportPicker({
                 .map(account => account.currentBalance.currency)
                 .filter((value, index, self) => self.indexOf(value) === index);
 
-            if (currencies.length === 0) {
-                return 'not possible';
-            }
+            const fromCurrency = accounts
+                .find(account => account.publicId === ((transfer as TransferToImport)?.fromAccountPublicId || transaction.sourceAccountPublicId))
+                ?.currentBalance.currency;
 
-            let currency = currencies[0];
-            for (let i = 1; i < currencies.length; i++) {
-                if (currencies[i].code !== currency.code) {
-                    return 'not possible';
-                }
-            }
+            const toCurrency = accounts
+                .find(account => account.publicId === ((transfer as TransferToImport)?.toAccountPublicId || transaction.destinationAccountPublicId))
+                ?.currentBalance.currency;
 
             const transactionDate = dayjs(transaction.timeOfTransaction)
                 .startOf('day')
@@ -178,8 +191,9 @@ export function BankTransactionsToImportPicker({
                     toAccountPublicId: transaction.destinationAccountPublicId,
                     description: transaction.description,
                     fromAccountDebit: transaction.debit,
+                    fromCurrency: fromCurrency,
                     toAccountCredit: transaction.credit,
-                    currency: currency,
+                    toCurrency: toCurrency,
                     possibleDates: [transactionDate]
                 } as TransferToImport;
             } else {
@@ -195,8 +209,9 @@ export function BankTransactionsToImportPicker({
                         toAccountPublicId: transfer.toAccountPublicId || transaction.destinationAccountPublicId,
                         description: transaction.description + '\n' + transfer.description,
                         fromAccountDebit: transaction.debit.plus(transfer.fromAccountDebit),
+                        fromCurrency: transfer.fromCurrency || fromCurrency,
                         toAccountCredit: transaction.credit.plus(transfer.toAccountCredit),
-                        currency: transfer.currency,
+                        toCurrency: transfer.toCurrency || toCurrency,
                         possibleDates: transfer.possibleDates,
                     } as TransferToImport;
                 } else {
@@ -267,7 +282,7 @@ export function BankTransactionsToImportPicker({
         setPossibleImports({
             credit: (income === "not possible" || income === null || (income as BillingElementToImport).amount.lessThanOrEqualTo(new Decimal(0))) ? null : income,
             debit: (expense === "not possible" || expense === null || (expense as BillingElementToImport).amount.lessThanOrEqualTo(new Decimal(0))) ? null : expense,
-            transfer: (transfer === 'not possible' || transfer === null) || !(transfer as TransferToImport).toAccountCredit.equals((transfer as TransferToImport).fromAccountDebit) ? null : transfer,
+            transfer: isValidTransfer(transfer) ? transfer : null,
             ignore: (ignore === "not possible" || ignore === null || !(ignore as TransactionsToIgnore).balance.amount.equals(new Decimal(0))) ? null : ignore,
         });
     }
@@ -392,7 +407,8 @@ export function BankTransactionsToImportPicker({
                     </Stack>
                 }
                 {
-                    possibleImports.transfer && <Stack direction={'column'}>
+                    possibleImports.transfer &&
+                    <Stack direction={'column'}>
                         <Typography onClick={() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
@@ -402,14 +418,15 @@ export function BankTransactionsToImportPicker({
                                         fromAccountPublicId: possibleImports.transfer!.fromAccountPublicId,
                                         toAccountPublicId: possibleImports.transfer!.toAccountPublicId,
                                         day: possibleImports.transfer!.possibleDates.length === 1 ? possibleImports.transfer!.possibleDates[0] : null,
-                                        amount: possibleImports.transfer!.fromAccountDebit,
+                                        fromAmount: possibleImports.transfer!.fromAccountDebit,
+                                        toAmount: possibleImports.transfer!.toAccountCredit,
                                         description: possibleImports.transfer!.description,
                                         possibleDays: possibleImports.transfer!.possibleDates,
                                     }
                                 }
                             })
                         }}>
-                            Transfer bez wymiany walut
+                            {possibleImports.transfer.fromCurrency!.code === possibleImports.transfer.toCurrency!.code ? 'Transfer bez wymiany walut' : 'Transfer z wymianą walut'}
                         </Typography>
                         <DebugDisplayObject object={possibleImports.transfer}/>
                     </Stack>

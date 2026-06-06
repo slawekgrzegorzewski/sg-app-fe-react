@@ -74,12 +74,12 @@ export function transactionCustomImportSummary(bankTransactionsToImport: GQLBank
             const fromAccount = findAccount(transfer.fromAccountPublicId || '');
             let group = map.get((fromAccount && fromAccount.length > 0) ? fromAccount[0].bankAccount.publicId : '');
             if (group) {
-                group.balanceAfterImport = group.balanceAfterImport.plus(transfer.amount);
+                group.balanceAfterImport = group.balanceAfterImport.plus(transfer.fromAmount);
             }
             const toAccount = findAccount(transfer.toAccountPublicId || '');
             group = map.get((toAccount && toAccount.length > 0) ? toAccount[0].bankAccount.publicId : '');
             if (group) {
-                group.balanceAfterImport = group.balanceAfterImport.minus(transfer.amount);
+                group.balanceAfterImport = group.balanceAfterImport.minus(transfer.toAmount);
             }
         })
 
