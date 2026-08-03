@@ -64,9 +64,15 @@ export function Task(properties: {
 
 
     const downloadAttachment = (attachmentName: string) => {
-        fetch(process.env.REACT_APP_BACKEND_URL + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + domainPublicId! + '&authorization=' + user!.jwtToken, {
-            method: 'GET'
-        })
+        fetch(
+            process.env.REACT_APP_BACKEND_URL + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + domainPublicId!,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + user!.jwtToken,
+                }
+            }
+        )
             .then((response) => response.blob())
             .then((blob) => {
                 const url = window.URL.createObjectURL(

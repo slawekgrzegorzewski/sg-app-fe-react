@@ -144,7 +144,7 @@ export const mapMonetaryAmount = (monetaryAmount: MonetaryAmount) => {
 export type GQLBillingPeriod = {
     publicId: string;
     name: string;
-    period: Date;
+    period: string;
     incomes: GQLIncome[];
     expenses: GQLExpense[];
 }
@@ -182,14 +182,14 @@ export type GQLMonthSummary = {
 }
 
 export type GQLMonthSummarySavings = {
-    currency: GQLCurrencyInfo;
+    currency: string;
     amount: Decimal;
 }
 
 export type GQLMonthSummaryAccount = {
     publicId: string;
     name: string;
-    currency: GQLCurrencyInfo;
+    currency: string;
     currentBalance: Decimal;
     lastTransactionIdIncludedInBalance: number;
 }
@@ -198,7 +198,7 @@ export type GQLMonthSummaryPiggyBank = {
     name: string;
     description: string;
     balance: Decimal;
-    currency: GQLCurrencyInfo;
+    currency: string;
     savings: boolean;
     monthlyTopUp: Decimal;
 }
@@ -253,7 +253,7 @@ export const mapMonthSummary = (monthSummary: MonthSummary) => {
 
 function mapMonthSummarySavings(monthSummarySavings: MonthSummarySavings) {
     return {
-        currency: mapCurrencyInfo(monthSummarySavings.currency),
+        currency: monthSummarySavings.currency,
         amount: new Decimal(monthSummarySavings.amount),
     } as GQLMonthSummarySavings;
 }
@@ -262,7 +262,7 @@ function mapMonthSummaryAccount(monthSummaryAccount: MonthSummaryAccount) {
     return {
         publicId: monthSummaryAccount.publicId,
         name: monthSummaryAccount.name,
-        currency: mapCurrencyInfo(monthSummaryAccount.currency),
+        currency: monthSummaryAccount.currency,
         currentBalance: new Decimal(monthSummaryAccount.currentBalance),
         lastTransactionIdIncludedInBalance: monthSummaryAccount.lastTransactionIdIncludedInBalance,
     } as GQLMonthSummaryAccount;
@@ -273,7 +273,7 @@ function mapMonthSummaryPiggyBank(monthSummaryPiggyBank: MonthSummaryPiggyBank) 
         name: monthSummaryPiggyBank.name,
         description: monthSummaryPiggyBank.description,
         balance: new Decimal(monthSummaryPiggyBank.balance),
-        currency: mapCurrencyInfo(monthSummaryPiggyBank.currency),
+        currency: monthSummaryPiggyBank.currency,
         savings: monthSummaryPiggyBank.savings,
         monthlyTopUp: new Decimal(monthSummaryPiggyBank.monthlyTopUp),
     } as GQLMonthSummaryPiggyBank;
@@ -360,7 +360,7 @@ export type GQLBankTransactionToImport = {
 export const mapBankTransactionToImport = (bankTransactionToImport: BankTransactionToImport) => {
     return {
         id: bankTransactionToImport.id,
-        conversionRate: bankTransactionToImport.conversionRate,
+        conversionRate:  new Decimal(bankTransactionToImport.conversionRate),
         credit: new Decimal(bankTransactionToImport.credit),
         debit: new Decimal(bankTransactionToImport.debit),
         description: bankTransactionToImport.description,

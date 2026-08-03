@@ -23,7 +23,7 @@ import 'dayjs/locale/pl'
 
 const queryClient = new QueryClient();
 
-const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
+const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/auth/graphql'});
 
 const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
