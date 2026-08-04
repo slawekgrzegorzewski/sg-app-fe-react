@@ -1,4 +1,4 @@
-import {ApolloClient, ApolloLink, defaultDataIdFromObject, InMemoryCache, ServerParseError} from "@apollo/client";
+import {ApolloClient, ApolloLink, defaultDataIdFromObject, InMemoryCache, ServerError} from "@apollo/client";
 import {ApolloProvider, useMutation} from "@apollo/client/react";
 import {ErrorLink} from "@apollo/client/link/error";
 import React from "react";
@@ -64,7 +64,7 @@ export function Authenticated({children}: { children: React.JSX.Element }) {
         console.error(response);
         //TODO: test
         if (response.error
-            && ServerParseError.is(response.error)
+            && ServerError.is(response.error)
             && response.error.statusCode === 401
         ) {
             deleteCurrentUser();
