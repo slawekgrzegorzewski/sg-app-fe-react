@@ -26,7 +26,7 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
         ...(mode === 'light'
             ? {
                 background: {
-                    default: '#FAFAFA',
+                    default: '#FFFBF5',
                     paper: '#FFFBF5',
                 },
                 text: {
@@ -34,6 +34,9 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
                     secondary: '#6B7280',
                 },
                 divider: '#E5E7EB',
+                action: {
+                    hover: '#DEDAD5',
+                },
             }
             : {
                 background: {
@@ -45,6 +48,9 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
                     secondary: '#9CA3AF',
                 },
                 divider: '#3A3A4C',
+                action: {
+                    hover: '#3A3A4C',
+                },
             }),
         error: {
             main: '#EF4444',

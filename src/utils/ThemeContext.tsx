@@ -1,5 +1,6 @@
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
 import {PaletteMode, ThemeProvider, useMediaQuery} from "@mui/material";
+// import {createAppTheme as buildTheme} from "./theme2";
 import {buildTheme} from "./theme";
 
 export type ThemeMode = 'light' | 'dark' | 'auto';

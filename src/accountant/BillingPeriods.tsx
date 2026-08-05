@@ -25,6 +25,7 @@ import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 import {ResponsiveStyleValue} from "@mui/system";
 import {CreateBillingElementButton} from "./CreateBillingElementButton";
 import {BankTransactionsImporter} from "./BankTransactionsImporter";
+import {logDebug} from "../utils/logger";
 
 const YEAR_MONTH_FORMAT = "YYYY-MM";
 const YEAR_MONTH_DISPLAY_FORMAT = "MMMM YYYY";
@@ -53,6 +54,9 @@ export function BillingPeriods() {
 
     useEffect(() => {
         performSearch({variables: {yearMonth: dayjs(yearMonth).format(YEAR_MONTH_FORMAT)}});
+        return () => {
+            logDebug('Unmounted')
+        }
     }, [yearMonth, performSearch]);
 
     const fetchBillingPeriod = async (date: Date) => {

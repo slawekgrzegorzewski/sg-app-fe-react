@@ -129,14 +129,17 @@ export default function DrawerAppBar(props: Props) {
                         {
                             domainsData.domainInvitations.length > 0 &&
                             <Toolbar sx={{backgroundColor: theme.palette.info.main}}>
-                                <Grid container sx={{width: domainsData.domainInvitations.length > 1 ? '350px' : '250px'}}>
+                                <Grid container
+                                      sx={{width: domainsData.domainInvitations.length > 1 ? '350px' : '250px'}}>
                                     <Grid size={12}>
-                                        Nowe zaproszenia do {domainsData.domainInvitations.length > 1 ? ' następujących domen:' : ' domeny:'}
+                                        Nowe zaproszenia
+                                        do {domainsData.domainInvitations.length > 1 ? ' następujących domen:' : ' domeny:'}
                                     </Grid>
                                     {
                                         domainsData.domainInvitations.map(
                                             invitation =>
-                                                <Grid container justifyContent={'space-between'} style={{width:'100%'}}>
+                                                <Grid container justifyContent={'space-between'}
+                                                      style={{width: '100%'}}>
                                                     <Grid>{invitation.name}</Grid>
                                                     <Grid container direction={'row'}>
                                                         <Grid onClick={() => {
@@ -145,7 +148,7 @@ export default function DrawerAppBar(props: Props) {
                                                                 .then(deleteCurrentUser)
                                                                 .finally(() => setShowInfiniteBackdrop(false))
                                                         }}>
-                                                            <CheckIcon />
+                                                            <CheckIcon/>
                                                         </Grid>
                                                         <Grid onClick={() => {
                                                             setShowInfiniteBackdrop(true);
@@ -153,7 +156,7 @@ export default function DrawerAppBar(props: Props) {
                                                                 .then(domainsDataRefetch)
                                                                 .finally(() => setShowInfiniteBackdrop(false))
                                                         }}>
-                                                            <CloseIcon />
+                                                            <CloseIcon/>
                                                         </Grid>
                                                     </Grid>
                                                 </Grid>
@@ -172,59 +175,60 @@ export default function DrawerAppBar(props: Props) {
                             >
                                 <MenuIcon/>
                             </IconButton>
-                            <Box sx={{display: {xs: 'none', sm: 'flex'}, flexWrap: 'wrap', gap: 0.5, alignItems: 'center'}}>
-                            <Button
-                                onClick={(e) => setAppMenuAnchor(e.currentTarget)}
-                                sx={(t) => ({
-                                    color: t.palette.secondary.light,
-                                    backgroundColor: `${t.palette.secondary.light}22`,
-                                    whiteSpace: 'nowrap',
-                                    px: 2,
-                                    py: 0.5,
-                                    '&:hover': {
-                                        backgroundColor: `${t.palette.secondary.light}40`,
-                                    },
-                                })}
-                            >
-                                {applications.get(currentApplicationId)?.name || currentApplicationId}
-                            </Button>
-                            <Menu
-                                anchorEl={appMenuAnchor}
-                                open={Boolean(appMenuAnchor)}
-                                onClose={() => setAppMenuAnchor(null)}
-                            >
-                                {user!.applications.map(app => (
-                                    <MenuItem
-                                        key={app.id}
-                                        selected={app.id === currentApplicationId}
-                                        onClick={() => {
-                                            changeCurrentSettings(app.id as ApplicationId, currentDomainPublicId!);
-                                            setAppMenuAnchor(null);
-                                        }}
-                                    >
-                                        {app.name}
-                                    </MenuItem>
-                                ))}
-                            </Menu>
-                            {
-                                Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
-                                    <Button
-                                        onClick={() => changePage(page.links[0])}
-                                        key={page.id}
-                                        sx={(t) => ({
-                                            color: t.palette.secondary.light,
-                                            backgroundColor: `${t.palette.secondary.light}22`,
-                                            whiteSpace: 'nowrap',
-                                            px: 2,
-                                            py: 0.5,
-                                            '&:hover': {
-                                                backgroundColor: `${t.palette.secondary.light}40`,
-                                            },
-                                        })}
-                                    >
-                                        {page.label}
-                                    </Button>))
-                            }
+                            <Box sx={{
+                                display: {xs: 'none', sm: 'flex'},
+                                flexWrap: 'wrap',
+                                gap: 0.5,
+                                alignItems: 'center'
+                            }}>
+                                <Button
+                                    onClick={(e) => setAppMenuAnchor(e.currentTarget)}
+                                    sx={(t) => ({
+                                        color: t.palette.secondary.light,
+                                        backgroundColor: `${t.palette.secondary.light}50`,
+                                        whiteSpace: 'nowrap',
+                                        px: 2,
+                                        py: 0.5,
+                                        '&:hover': {
+                                            backgroundColor: `${t.palette.secondary.light}40`,
+                                        },
+                                    })}>
+                                    {applications.get(currentApplicationId)?.name || currentApplicationId}
+                                </Button>
+                                <Menu anchorEl={appMenuAnchor}
+                                      open={Boolean(appMenuAnchor)}
+                                      onClose={() => setAppMenuAnchor(null)}>
+                                    {user!.applications.map(app => (
+                                        <MenuItem
+                                            key={app.id}
+                                            selected={app.id === currentApplicationId}
+                                            onClick={() => {
+                                                changeCurrentSettings(app.id as ApplicationId, currentDomainPublicId!);
+                                                setAppMenuAnchor(null);
+                                            }}>
+                                            {app.name}
+                                        </MenuItem>
+                                    ))}
+                                </Menu>
+                                {
+                                    Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
+                                        <Button
+                                            onClick={() => changePage(page.links[0])}
+                                            key={page.id}
+                                            sx={(t) => ({
+                                                color: t.palette.secondary.light,
+                                                backgroundColor: `${t.palette.secondary.light}25`,
+                                                whiteSpace: 'nowrap',
+                                                px: 2,
+                                                py: 0.5,
+                                                '&:hover': {
+                                                    backgroundColor: `${t.palette.secondary.light}50`,
+                                                },
+                                            })}
+                                        >
+                                            {page.label}
+                                        </Button>))
+                                }
                             </Box>
                             <Box sx={{flexGrow: 1}}/>
                             <IconButton

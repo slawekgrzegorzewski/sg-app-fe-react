@@ -44,7 +44,7 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                 <Box>
                     {
                         [...billingElements].sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
-                            <Grid key={be.publicId} container spacing={2}>
+                            <Grid key={be.publicId} container spacing={2} sx={{...rowHover(theme)}}>
                                 <Grid size={GRID_SIDE_COLUMN_SIZE}>
                                     <Typography variant={'body2'}>{dayjs(be.date).format('YYYY-MM-DD')}</Typography>
                                 </Grid>
