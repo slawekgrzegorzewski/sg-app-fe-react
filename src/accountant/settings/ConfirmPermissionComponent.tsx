@@ -1,26 +1,31 @@
-import {useContext} from "react";
+import {useContext, useEffect, useRef} from "react";
 import {useMutation} from "@apollo/client/react";
 import {ConfirmPermission, ConfirmPermissionMutation} from "../../types";
 import {useApplicationNavigation} from "../../utils/use-application-navigation";
 import {ShowBackdropContext} from "../../utils/DrawerAppBar";
+import {logError} from "../../utils/logger";
 
 export function ConfirmPermissionComponent({reference}: { reference: string }) {
-    const [confirmPermissionMutation, confirmPermissionMutationResult] = useMutation<ConfirmPermissionMutation>(ConfirmPermission);
+    const [confirmPermissionMutation] = useMutation<ConfirmPermissionMutation>(ConfirmPermission);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
     const {setPageParams} = useApplicationNavigation();
-    if (confirmPermissionMutationResult.called || confirmPermissionMutationResult.loading) {
-        return <></>;
-    }
 
-    setTimeout(() => {
+    const confirmedReference = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (confirmedReference.current === reference) {
+            return;
+        }
+        confirmedReference.current = reference;
+
         setShowBackdrop(true);
         confirmPermissionMutation({variables: {reference: reference}})
-            .catch((error) => {
-            })
+            .catch(error => logError(`Could not confirm bank permission ${reference}`, error))
             .finally(() => {
                 setShowBackdrop(false);
                 setPageParams([]);
             });
-    }, 10);
+    }, [reference, confirmPermissionMutation, setShowBackdrop, setPageParams]);
+
     return <></>;
 }

@@ -1,3 +1,4 @@
+import {clickableProps} from "../application/components/clickable";
 import React, {JSX, useState} from "react";
 import {
     GQLAccount,
@@ -243,13 +244,11 @@ export function BankTransactionsToImportPicker({
             return ignore;
         }
 
-        let newBankTransactionsToImport;
-        if (selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id)) {
-            newBankTransactionsToImport = selectedBankAccountTransactionsToImport?.filter(t => t.id !== bankTransactionToImport.id);
-        } else {
-            newBankTransactionsToImport = selectedBankAccountTransactionsToImport;
-            newBankTransactionsToImport.push(bankTransactionToImport);
-        }
+        const alreadySelected = selectedBankAccountTransactionsToImport
+            .some(t => t.id === bankTransactionToImport.id);
+        const newBankTransactionsToImport = alreadySelected
+            ? selectedBankAccountTransactionsToImport.filter(t => t.id !== bankTransactionToImport.id)
+            : [...selectedBankAccountTransactionsToImport, bankTransactionToImport];
         let income: BillingElementToImport | 'not possible' | null = null;
         let expense: BillingElementToImport | 'not possible' | null = null;
         let transfer: TransferToImport | 'not possible' | null = null;
@@ -301,18 +300,31 @@ export function BankTransactionsToImportPicker({
         <DialogContent onClick={e => e.stopPropagation()}>
             <Stack>
                 {
-                    (bankTransactions
+                    ([...bankTransactions]
                         .sort(ComparatorBuilder.comparingByDate<GQLBankTransactionToImport>(t => t.timeOfTransaction).build())
                         .map(bankTransactionToImport => {
                             const sourceAccount = findAccount(accounts, bankTransactionToImport.sourceAccountPublicId);
                             const destinationAccount = findAccount(accounts, bankTransactionToImport.destinationAccountPublicId);
+                            const selected = !!selectedBankAccountTransactionsToImport
+                                .find(t => t.id === bankTransactionToImport.id);
                             return (<Grid container
                                           key={bankTransactionToImport.id}
+                                          role={'button'}
+                                          tabIndex={0}
+                                          aria-pressed={selected}
+                                          aria-label={`Transakcja ${bankTransactionToImport.description}`}
+                                          onKeyDown={event => {
+                                              if (event.key === 'Enter' || event.key === ' ') {
+                                                  event.preventDefault();
+                                                  onBankTransactionToImportClicked(accounts, bankTransactionToImport);
+                                              }
+                                          }}
                                           sx={{
                                               padding: '3px',
                                               marginBottom: '20px',
                                               border: '1px solid gray',
-                                              ...(selectedBankAccountTransactionsToImport?.find(t => t.id === bankTransactionToImport.id)
+                                              cursor: 'pointer',
+                                              ...(selected
                                                   ? {
                                                       color: theme.palette.primary.contrastText,
                                                       backgroundColor: theme.palette.primary.main,
@@ -346,7 +358,7 @@ export function BankTransactionsToImportPicker({
                 }
                 {
                     possibleImports.credit && <Stack direction={'column'}>
-                        <Typography onClick={() => {
+                        <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {
@@ -363,7 +375,7 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        }}>
+                        })}>
                             Przychód
                         </Typography>
                         <DebugDisplayObject object={possibleImports.credit}/>
@@ -371,7 +383,7 @@ export function BankTransactionsToImportPicker({
                 }
                 {
                     possibleImports.debit && <Stack direction={'column'}>
-                        <Typography onClick={() => {
+                        <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {
@@ -388,7 +400,7 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        }}>
+                        })}>
                             Wydatek
                         </Typography>
                         <DebugDisplayObject object={possibleImports.debit}/>
@@ -397,7 +409,7 @@ export function BankTransactionsToImportPicker({
                 {
                     possibleImports.transfer &&
                     <Stack direction={'column'}>
-                        <Typography onClick={() => {
+                        <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {
@@ -413,7 +425,7 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        }}>
+                        })}>
                             {possibleImports.transfer.fromCurrency!.code === possibleImports.transfer.toCurrency!.code ? 'Transfer bez wymiany walut' : 'Transfer z wymianą walut'}
                         </Typography>
                         <DebugDisplayObject object={possibleImports.transfer}/>
@@ -421,14 +433,14 @@ export function BankTransactionsToImportPicker({
                 }
                 {
                     possibleImports.ignore && <Stack direction={'column'}>
-                        <Typography onClick={() => {
+                        <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {
                                     importType: 'mutuallyIgnore'
                                 }
                             })
-                        }}>
+                        })}>
                             Wzajemnie ignoruj
                         </Typography>
                         <DebugDisplayObject object={possibleImports.ignore}/>
@@ -436,12 +448,12 @@ export function BankTransactionsToImportPicker({
                 }
                 {
                     selectedBankAccountTransactionsToImport.length > 0 && <Stack direction={'column'}>
-                        <Typography onClick={() => {
+                        <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {importType: 'custom'}
                             })
-                        }}>
+                        })}>
                             Własny import
                         </Typography>
                     </Stack>

@@ -1,3 +1,5 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     CreateInstallment,
@@ -67,21 +69,19 @@ export function Loan() {
         return refetch();
     };
 
-    updateLoanMutationResult.called && updateLoanMutationResult.reset();
-    deleteLoanMutationResult.called && deleteLoanMutationResult.reset();
-    createInstallmentMutationResult.called && createInstallmentMutationResult.reset();
+    useResetMutationResults(updateLoanMutationResult, deleteLoanMutationResult, createInstallmentMutationResult);
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         const loan = data!.singleLoan!;
         return (
             <Box component="section" sx={{width: 1000, m: 'auto'}}>
                 {
                     (<Stack direction={"row"}>
-                        <Button variant={"text"} onClick={() => setPageParams([])}>
+                        <Button variant={"text"} onClick={() => setPageParams([])} aria-label={'Wróć do listy pożyczek'}>
                             <ArrowLeft/>
                         </Button>
                         <Stack direction={"column"} key={loan.publicId}>

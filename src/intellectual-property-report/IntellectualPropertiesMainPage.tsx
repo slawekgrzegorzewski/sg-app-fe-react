@@ -1,3 +1,5 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     CreateIntellectualPropertyReport,
@@ -58,12 +60,12 @@ export function IntellectualPropertiesMainPage() {
         },
     });
 
-    createIntellectualPropertyReportMutationResult.called && createIntellectualPropertyReportMutationResult.reset();
+    useResetMutationResults(createIntellectualPropertyReportMutationResult);
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         const yearMonthFilters = [];
         if (data.intellectualPropertiesRecords?.stats.firstTimeRecord) {
@@ -101,25 +103,26 @@ export function IntellectualPropertiesMainPage() {
                             id="demo-simple-select-standard"
                             value={ipFilter.yearMonthFilter}
                             onChange={event => {
-                                ipFilter.yearMonthFilter = event.target.value as string;
-                                setIpFilter({...ipFilter});
+                                setIpFilter({...ipFilter, yearMonthFilter: event.target.value as string});
                             }}
                             label="Miesiąc"
                         >
                             <MenuItem value={noYearMonthFilterLabel}>{noYearMonthFilterLabel}</MenuItem>
                             {yearMonthFilters.map((yearMonthFilter) => (
                                 <MenuItem key={yearMonthFilter} value={yearMonthFilter}>{yearMonthFilter}</MenuItem>))}
-                            <MenuItem value={noYearMonthFilterLabel}>{noYearMonthFilterLabel}</MenuItem>
                         </Select>
                     </FormControl>
                     <FormGroup>
                         <FormControlLabel control={<Switch
                             checked={ipFilter.onlyReportsWithoutAttachments}
                             onChange={event => {
-                                ipFilter.onlyReportsWithoutAttachments = event.target.checked;
-                                if (ipFilter.onlyReportsWithoutAttachments)
-                                    ipFilter.onlyReportsHavingTasksWithNoAttachments = false;
-                                setIpFilter({...ipFilter});
+                                setIpFilter({
+                                    ...ipFilter,
+                                    onlyReportsWithoutAttachments: event.target.checked,
+                                    onlyReportsHavingTasksWithNoAttachments: event.target.checked
+                                        ? false
+                                        : ipFilter.onlyReportsHavingTasksWithNoAttachments
+                                });
                             }}/>}
                                           label="IP bez załączników"/>
                     </FormGroup>
@@ -127,10 +130,13 @@ export function IntellectualPropertiesMainPage() {
                         <FormControlLabel control={<Switch
                             checked={ipFilter.onlyReportsHavingTasksWithNoAttachments}
                             onChange={event => {
-                                ipFilter.onlyReportsHavingTasksWithNoAttachments = event.target.checked;
-                                if (ipFilter.onlyReportsHavingTasksWithNoAttachments)
-                                    ipFilter.onlyReportsWithoutAttachments = false;
-                                setIpFilter({...ipFilter});
+                                setIpFilter({
+                                    ...ipFilter,
+                                    onlyReportsHavingTasksWithNoAttachments: event.target.checked,
+                                    onlyReportsWithoutAttachments: event.target.checked
+                                        ? false
+                                        : ipFilter.onlyReportsWithoutAttachments
+                                });
                             }}/>}
                                           label="taski bez załączników"/>
                     </FormGroup>

@@ -84,10 +84,12 @@ export function TimeRecordsList(properties: {
 
     taskWithTimeRecords.forEach(taskWithTimeRecords => {
         taskWithTimeRecords.timeRecords.forEach(timeRecord => {
-            var dateKey = dayjs(timeRecord.date).format("YYYY-MM-DD");
+            const dateKey = dayjs(timeRecord.date).format("YYYY-MM-DD");
             timeRecordsByDates[dateKey] = timeRecordsByDates[dateKey] || [];
-            timeRecord.description = taskWithTimeRecords.description;
-            timeRecordsByDates[dateKey].push({task: taskWithTimeRecords, timeRecord: timeRecord});
+            timeRecordsByDates[dateKey].push({
+                task: taskWithTimeRecords,
+                timeRecord: {...timeRecord, description: taskWithTimeRecords.description}
+            });
         })
     });
     return (<>

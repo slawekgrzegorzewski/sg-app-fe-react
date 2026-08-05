@@ -1,3 +1,4 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
 import {useQuery} from "@apollo/client/react";
 import {GetFinanceManagement, GetFinanceManagementQuery} from "../types";
 import React from "react";
@@ -20,9 +21,9 @@ export function Accounts() {
     const theme = useTheme();
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         const accounts = data.financeManagement.accounts
             .map(mapAccount)

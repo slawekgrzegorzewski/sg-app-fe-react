@@ -182,7 +182,6 @@ export function AccountsManagement({
     };
 
     const deleteBankAccountAssignment = async (accountPublicId: string): Promise<any> => {
-        console.log(JSON.stringify({variables: {accountPublicId: accountPublicId}}));
         return await deleteBankAccountAssignmentMutation({variables: {accountPublicId: accountPublicId}})
             .finally(() => refetch());
     };

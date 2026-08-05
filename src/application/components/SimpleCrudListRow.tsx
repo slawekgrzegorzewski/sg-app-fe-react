@@ -130,12 +130,10 @@ export function SimpleCrudListRow<T>({
                     },
                     onDrop: ({source}) => {
                         if (source.element === el) {
-                            console.log("a");
                             setDraggingInfo(init);
                             return;
                         }
                         if (reorderProps.dndLabel === source.data.dndLabel) {
-                            console.log("b");
                             setDraggingInfo(init);
                             return;
                         }

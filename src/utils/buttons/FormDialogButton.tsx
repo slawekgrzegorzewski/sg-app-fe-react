@@ -4,6 +4,7 @@ import {Box} from "@mui/material";
 import {ShowBackdropContext} from "../DrawerAppBar";
 import {FormProps} from "../forms/Form";
 import {FormDialog} from "../dialogs/FormDialog";
+import {activateOnEnterOrSpace} from "../../application/components/clickable";
 
 export interface FormDialogButtonProps<T> {
     title: string;
@@ -28,7 +29,7 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     const [formDialogOpen, setFormDialogOpen] = useState(false);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
 
-    const openFormClicked = (e?: React.MouseEvent<HTMLElement>) => {
+    const openFormClicked = (e?: React.SyntheticEvent) => {
         setFormDialogOpen(true);
         e?.stopPropagation();
     }
@@ -50,7 +51,8 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     }
 
     return <>
-        <Box onClick={(e) => openFormClicked(e)}>
+        <Box onClick={(e) => openFormClicked(e)}
+             onKeyDown={activateOnEnterOrSpace(openFormClicked)}>
             {buttonContent!}
         </Box>
         <FormDialog dialogTitle={<>{title}</>}

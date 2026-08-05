@@ -34,7 +34,7 @@ export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAcc
             toAccountPublicId: transfer.toAccountPublicId,
             fromAmount: transfer.fromAmount,
             toAmount: transfer.toAmount,
-            day: transfer.day || restrictToDates.length > 0 ? restrictToDates[restrictToDates.length - 1] : dayjs(),
+            day: transfer.day || (restrictToDates.length > 0 ? restrictToDates[restrictToDates.length - 1] : dayjs()),
             description: transfer.description
         } as TransferDTO,
         fields:

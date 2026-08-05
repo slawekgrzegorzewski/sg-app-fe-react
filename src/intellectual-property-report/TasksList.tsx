@@ -1,3 +1,4 @@
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation} from "@apollo/client/react";
 import {CreateTask, CreateTaskMutation} from "../types";
 import {Button, Stack, useTheme} from "@mui/material";
@@ -45,7 +46,7 @@ export function TasksList(properties: {
         return refetchDataCallback();
     };
 
-    createTaskMutationResult.called && createTaskMutationResult.reset();
+    useResetMutationResults(createTaskMutationResult);
 
     return (
         <Stack direction="column">

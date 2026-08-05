@@ -1,3 +1,5 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     AllTimeRecordCategories,
@@ -91,14 +93,12 @@ export function IntellectualPropertySettingsMainPage() {
         return refetch();
     }
 
-    updateTimeRecordMutationResult.called && updateTimeRecordMutationResult.reset();
-    deleteTimeRecordMutationResult.called && deleteTimeRecordMutationResult.reset();
-    createTimeRecordMutationResult.called && createTimeRecordMutationResult.reset();
+    useResetMutationResults(updateTimeRecordMutationResult, deleteTimeRecordMutationResult, createTimeRecordMutationResult);
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         return <Stack direction={'column'} sx={{width: '400px'}}>
             <SimpleCrudList

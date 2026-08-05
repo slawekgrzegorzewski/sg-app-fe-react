@@ -1,4 +1,5 @@
-import {createBuffers} from "./buffers";
+import {logError} from "../../../utils/logger";
+import {createBuffers, releaseBuffers} from "./buffers";
 import {Puzzle} from "../puzzle";
 import {Shape, getBuffer} from "../buffers";
 
@@ -41,107 +42,98 @@ export class Cube extends Puzzle {
         return this.shapes;
     }
 
-    // Implement abstract method
+    dispose(gl: WebGLRenderingContext): void {
+        super.dispose(gl);
+        if (this.hintType) {
+            gl.deleteBuffer(this.hintType);
+            this.hintType = null;
+        }
+    }
+
+    protected disposeShapes(gl: WebGLRenderingContext): void {
+        releaseBuffers(gl, this);
+    }
+
     numStickers() {
         return this.layers * this.layers * 6;
     }
 
-    // Implement abstract method
     startDraggable() {
         return 0;
     }
 
-    // Implement abstract method
     endDraggable(): number {
         return sq(this.layers) * 2;
     }
 
-    // Implement abstract method
     x(forward: boolean) {
         this.cubeRotate(0, forward);
     }
 
-    // Implement abstract method
     y(forward: boolean) {
         this.cubeRotate(1, forward);
     }
 
-    // Implement abstract method
     z(forward: boolean) {
         this.cubeRotate(2, forward);
     }
 
-    // Implement abstract method
     U(forward: boolean) {
         this.turn(1, 0, forward);
     }
 
-    // Implement abstract method
     Uw(forward: boolean) {
         this.wideTurn(1, 0, 1, forward);
     }
 
-    // Implement abstract method
     D(forward: boolean) {
         this.turn(1, this.layers - 1, !forward);
     }
 
-    // Implement abstract method
     Dw(forward: boolean) {
         this.wideTurn(1, this.layers - 1, this.layers - 2, !forward);
     }
 
-    // Implement abstract method
     F(forward: boolean) {
         this.turn(2, 0, forward);
     }
 
-    // Implement abstract method
     Fw(forward: boolean) {
         this.wideTurn(2, 0, 1, forward);
     }
 
-    // Implement abstract method
     B(forward: boolean) {
         this.turn(2, this.layers - 1, !forward);
     }
 
-    // Implement abstract method
     Bw(forward: boolean) {
         this.wideTurn(2, this.layers - 1, this.layers - 2, !forward);
     }
 
-    // Implement abstract method
     R(forward: boolean) {
         this.turn(0, 0, forward);
     }
 
-    // Implement abstract method
     Rw(forward: boolean) {
         this.wideTurn(0, 0, 1, forward);
     }
 
-    // Implement abstract method
     L(forward: boolean) {
         this.turn(0, this.layers - 1, !forward);
     }
 
-    // Implement abstract method
     Lw(forward: boolean) {
         this.wideTurn(0, this.layers - 1, this.layers - 2, !forward);
     }
 
-    // Implement abstract method
     M(forward: boolean) {
         this.sliceTurn(0, !forward);
     }
 
-    // Implement abstract method
     E(forward: boolean) {
         this.sliceTurn(1, !forward);
     }
 
-    // Implement abstract method
     S(forward: boolean) {
         this.sliceTurn(2, forward);
     }
@@ -215,7 +207,7 @@ export class Cube extends Puzzle {
                 this.turnOuter(3, !clockwise);
             }
         } else {
-            console.error(`Axis ${axis} not recognized`);
+            logError(`Axis ${axis} not recognized`);
         }
     }
 

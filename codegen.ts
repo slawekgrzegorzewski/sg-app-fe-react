@@ -6,6 +6,7 @@ const config: CodegenConfig = {
     generates: {
         'src/types.ts': {
             plugins: [
+                {add: {content: "import Decimal from 'decimal.js';"}},
                 'typescript',
                 'typescript-resolvers',
                 'typescript-operations',
@@ -13,7 +14,20 @@ const config: CodegenConfig = {
             ],
             config: {
                 scalars: {
-                    LocalDate: 'string'
+                    BigDecimal: {
+                        input: 'Decimal | number | string',
+                        output: 'number'
+                    },
+                    Currency: 'string',
+                    LocalDate: 'string',
+                    LocalDateTime: 'string',
+                    URL: 'string',
+                    UUID: 'string',
+                    YearMonth: 'string',
+                    Year: {
+                        input: 'number | string',
+                        output: 'number'
+                    }
                 }
             }
         }

@@ -1,3 +1,4 @@
+import {ErrorDisplay, LoadingIndicator} from "../../application/components/QueryState";
 import React, {useContext} from "react";
 import {SuppliersManagement} from "./SuppliersManagement";
 import Grid from "@mui/material/Grid";
@@ -72,9 +73,9 @@ export function AccountantSettings() {
     }
 
     if (financeManagementLoading || settingsLoading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (financeManagementError || settingsError) {
-        return <>Error...</>
+        return <ErrorDisplay error={financeManagementError || settingsError}/>
     } else if (financeManagementData && settingsData) {
         const columnSizing = {xs: 12, sm: 8, md: 6, lg: 6, xl: 4};
         const columnSizing2 = {xs: 12, sm: 8, md: 6, lg: 5, xl: 4};

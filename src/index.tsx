@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import reportWebVitals from './reportWebVitals';
 import {createBrowserRouter, Navigate, RouterProvider, useRouteError} from "react-router-dom";
 import {Authenticated} from "./security/Authenticated";
 import {Login} from "./security/login/Login";
@@ -15,15 +14,13 @@ import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
 import {Dispatcher} from "./application/components/dispatchers/Dispatcher";
 import CssBaseline from "@mui/material/CssBaseline";
-import {createTheme, ThemeProvider} from "@mui/material";
+import {Alert, AlertTitle, Button, createTheme, Stack, ThemeProvider} from "@mui/material";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import {logError} from "./utils/logger";
 import 'dayjs/locale/pl'
 
-const queryClient = new QueryClient();
-
-const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/auth/graphql'});
+const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
 
 const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
@@ -64,18 +61,16 @@ const router = createBrowserRouter([
     {
         path: "/:applicationId/:domainPublicId?/:page?/:param1?",
         element:
-            <QueryClientProvider client={queryClient}>
-                <ThemeProvider theme={theme}>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <CssBaseline/>
-                        <Authenticated>
-                            <DrawerAppBar>
-                                <Dispatcher/>
-                            </DrawerAppBar>
-                        </Authenticated>
-                    </LocalizationProvider>
-                </ThemeProvider>
-            </QueryClientProvider>,
+            <ThemeProvider theme={theme}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <CssBaseline/>
+                    <Authenticated>
+                        <DrawerAppBar>
+                            <Dispatcher/>
+                        </DrawerAppBar>
+                    </Authenticated>
+                </LocalizationProvider>
+            </ThemeProvider>,
         errorElement: <ErrorBoundary/>
     }
 ], {
@@ -89,14 +84,15 @@ root.render(
     </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals(console.log);
-
 function ErrorBoundary() {
-    let error = useRouteError();
-    console.error(error);
-    // Uncaught ReferenceError: path is not defined
-    return <div>Dang!</div>;
+    const error = useRouteError();
+    logError('Unhandled routing error', error);
+
+    return <Stack alignItems={'center'} justifyContent={'center'} height={'100vh'} spacing={2}>
+        <Alert severity={'error'}>
+            <AlertTitle>Coś poszło nie tak</AlertTitle>
+            {error instanceof Error ? error.message : 'Nieznany błąd.'}
+        </Alert>
+        <Button variant={'outlined'} onClick={() => window.location.reload()}>Odśwież stronę</Button>
+    </Stack>;
 }

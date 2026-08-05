@@ -1,21 +1,18 @@
-import {ConstantForNFirstInstallmentRateStrategyConfig, Installment, RateStrategyConfig} from "../types";
+import {Installment} from "../types";
 import * as React from "react";
 import {MouseEventHandler} from "react";
-import {PercentDisplay} from "../application/components/PercentDisplay";
 import Box from "@mui/material/Box";
 import {CurrencyAmountDisplay} from "../application/components/CurrencyAmountDisplay";
 
 export type InstallmentDisplayProps = {
     installment: Installment
-    onClick: MouseEventHandler<any>
+    onClick?: MouseEventHandler<any>
 }
 
-InstallmentDisplay.defaultProps = {
-    onClick: () => {
-    }
-}
+const noOp: MouseEventHandler<any> = () => {
+};
 
-export function InstallmentDisplay({installment, onClick}: InstallmentDisplayProps) {
+export function InstallmentDisplay({installment, onClick = noOp}: InstallmentDisplayProps) {
 
 
     function repaidInstallment() {

@@ -1,3 +1,5 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {AssignmentAction, CreateTimeRecord, CreateTimeRecordMutation, TimeRecords, TimeRecordsQuery} from "../types";
 import * as React from "react";
@@ -46,12 +48,12 @@ export function TimeRecordsMainPage() {
         return refetch();
     }
 
-    createTimeRecordMutationResult.called && createTimeRecordMutationResult.reset();
+    useResetMutationResults(createTimeRecordMutationResult);
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         const yearMonthFilters = [];
         if (data.timeRecords?.stats.firstTimeRecord) {

@@ -26,6 +26,8 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run codegen
+    - run: npm run typecheck
+    - run: npm test
     - run: npm run build-prod
     - name: create react.tar
       run: |

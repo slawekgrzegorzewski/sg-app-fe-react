@@ -1,16 +1,9 @@
-import { BLACK, Color } from "./colors";
+import {BLACK, Color} from "./colors";
 
 export function getBuffer(gl: WebGLRenderingContext, data: number[]) {
     const buff = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, buff);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-    return buff;
-}
-
-export function getFloatBuffer(gl: WebGLRenderingContext, data: number): WebGLBuffer {
-    const buff = gl.createBuffer()!;
-    gl.bindBuffer(gl.LOW_FLOAT, buff);
-    gl.bufferData(gl.LOW_FLOAT, data, gl.STATIC_DRAW);
     return buff;
 }
 
@@ -53,6 +46,14 @@ export abstract class Shape {
 
     abstract getColorBuffer(gl: WebGLRenderingContext, color: Color): WebGLBuffer;
 
+    dispose(gl: WebGLRenderingContext): void {
+        gl.deleteBuffer(this.base);
+        gl.deleteBuffer(this.sticker);
+        gl.deleteBuffer(this.hint);
+        gl.deleteBuffer(this.color);
+        gl.deleteBuffer(this.black);
+        gl.deleteBuffer(this.indexBuffer);
+    }
 }
 
 export class Triangle extends Shape {
@@ -75,7 +76,7 @@ export class Square extends Shape {
     }
 
     getColorBuffer(gl: WebGLRenderingContext, color: Color): WebGLBuffer {
-        
+
         return getBuffer(gl, [
             color[0], color[1], color[2], 1,
             color[0], color[1], color[2], 1,
@@ -123,7 +124,7 @@ function multiply(arr: number[], offset: number, a: number[], b: number[]) {
         b1 = b[1],
         b2 = b[2],
         b3 = b[3];
-    arr[offset + 0] = b0 * a[0] + b1 * a[4] + b2 * a[8] + b3 * a[12];
+    arr[offset] = b0 * a[0] + b1 * a[4] + b2 * a[8] + b3 * a[12];
     arr[offset + 1] = b0 * a[1] + b1 * a[5] + b2 * a[9] + b3 * a[13];
     arr[offset + 2] = b0 * a[2] + b1 * a[6] + b2 * a[10] + b3 * a[14];
     arr[offset + 3] = b0 * a[3] + b1 * a[7] + b2 * a[11] + b3 * a[15];

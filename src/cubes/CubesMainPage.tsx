@@ -1,5 +1,7 @@
+import {clickableProps} from "../application/components/clickable";
+import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from "./phase";
 import * as React from "react";
-import {useEffect, useReducer, useRef, useState} from "react";
+import {useCallback, useEffect, useReducer, useRef, useState} from "react";
 import {Box, Dialog, Stack, useMediaQuery, useTheme} from "@mui/material";
 import {newCube} from "./visualizer";
 import {scramble as generateScramble} from "./cube-scrambler";
@@ -13,13 +15,6 @@ import {useWakeLock} from "../utils/use-wake-lock";
 import {StopWatchDisplay} from "./StopWatchDisplay";
 import {useIsTouchDevice} from "../utils/use-is-touch-screen";
 
-type Phase = 'IDLE' | 'INSPECTION_EARLY' | 'INSPECTION_LATE' | 'SOLVING'
-type InspectionPhase = Extract<Phase, 'INSPECTION_EARLY' | 'INSPECTION_LATE'>
-
-function isInspection(phase: string): phase is InspectionPhase {
-    return phase === 'INSPECTION_EARLY' || phase === 'INSPECTION_LATE';
-}
-
 export function CubesMainPage() {
     const [, forceUpdate] = useReducer(x => x + 1, 0);
     const theme = useTheme();
@@ -31,6 +26,21 @@ export function CubesMainPage() {
     const result = useRef(0);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
     const cubeVisualizationContainerRef = useRef<HTMLElement | null>(null);
+
+    const clearInspectionTimeout = useCallback(() => {
+        if (becomeLateInspectionTimeOutId.current) {
+            clearTimeout(becomeLateInspectionTimeOutId.current);
+            becomeLateInspectionTimeOutId.current = null;
+        }
+    }, []);
+
+    const beginInspection = useCallback(() => {
+        setPhase("INSPECTION_EARLY");
+        if (!becomeLateInspectionTimeOutId.current) {
+            becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), INSPECTION_ALLOWANCE_MILLIS);
+        }
+    }, []);
+
     const reset = useRef(() => {
         result.current = 0;
         resetTrigger.current();
@@ -82,10 +92,7 @@ export function CubesMainPage() {
         const keyDownListener = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
                 if (phase === "IDLE" && result.current === 0) {
-                    setPhase("INSPECTION_EARLY");
-                    if (!becomeLateInspectionTimeOutId.current) {
-                        becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
-                    }
+                    beginInspection();
                 } else if (phase === 'SOLVING') {
                     result.current = stop.current();
                     setPhase('IDLE');
@@ -96,9 +103,7 @@ export function CubesMainPage() {
             }
             if (e.code === 'KeyR') {
                 reset.current();
-                if (becomeLateInspectionTimeOutId.current) {
-                    clearTimeout(becomeLateInspectionTimeOutId.current);
-                }
+                clearInspectionTimeout();
             }
             if (e.code === 'Enter' && phase === 'IDLE' && result.current > 0) {
                 save.current();
@@ -106,14 +111,13 @@ export function CubesMainPage() {
         };
 
         const keyUpListener = (e: KeyboardEvent) => {
-            if (becomeLateInspectionTimeOutId.current) {
-                clearTimeout(becomeLateInspectionTimeOutId.current);
+            if (e.code !== 'Space') {
+                return;
             }
-            if (e.code === 'Space') {
-                if (isInspection(phase)) {
-                    setPhase("SOLVING");
-                    start.current();
-                }
+            clearInspectionTimeout();
+            if (isInspection(phase)) {
+                setPhase("SOLVING");
+                start.current();
             }
         };
 
@@ -123,15 +127,26 @@ export function CubesMainPage() {
             document.removeEventListener("keydown", keyDownListener);
             document.removeEventListener("keyup", keyUpListener);
         }
-    }, [phase]);
+    }, [phase, clearInspectionTimeout, beginInspection]);
+
+    useEffect(() => clearInspectionTimeout, [clearInspectionTimeout]);
+
+    const hasCubeResults = !!data;
 
     useEffect(() => {
-        if (cubeVisualizationContainerRef.current) {
-            const s = newCube(cubeVisualizationContainerRef.current, 3);
-            s.enableKey = (_) => false;
-            s.puzzle.performAlg(scramble);
+        const container = cubeVisualizationContainerRef.current;
+        if (!container) {
+            return;
         }
-    }, [scramble, data]);
+        const scene = newCube(container, 3);
+        scene.enableKey = (_) => false;
+        if (scramble) {
+            scene.puzzle.performAlg(scramble);
+        }
+        return () => {
+            scene.dispose();
+        };
+    }, [scramble, hasCubeResults]);
 
     if (data) {
         return <Stack
@@ -195,29 +210,26 @@ export function CubesMainPage() {
             }
             <Typography>{phase}</Typography>
             {
-                fullScreen && (result.current === 0 || phase !== 'IDLE') && <Stack direction={'column'}
-                                                                                   sx={{
-                                                                                       flexGrow: 1,
-                                                                                       alignSelf: 'stretch',
-                                                                                       userSelect: 'none',
-                                                                                   }}
-                                                                                   onTouchStart={() => {
-                                                                                       if (phase === "IDLE") {
-                                                                                           setPhase("INSPECTION_EARLY");
-                                                                                           if (!becomeLateInspectionTimeOutId.current) {
-                                                                                               becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), 15000);
-                                                                                           }
-                                                                                       }
-                                                                                   }}
-                                                                                   onTouchEnd={() => {
-                                                                                       if (becomeLateInspectionTimeOutId.current) {
-                                                                                           clearTimeout(becomeLateInspectionTimeOutId.current);
-                                                                                       }
-                                                                                       if (isInspection(phase)) {
-                                                                                           setPhase("SOLVING");
-                                                                                           start.current();
-                                                                                       }
-                                                                                   }}>
+                fullScreen
+                && (result.current === 0 || phase !== 'IDLE')
+                && <Stack direction={'column'}
+                          sx={{
+                              flexGrow: 1,
+                              alignSelf: 'stretch',
+                              userSelect: 'none',
+                          }}
+                          onTouchStart={() => {
+                              if (phase === "IDLE" && result.current === 0) {
+                                  beginInspection();
+                              }
+                          }}
+                          onTouchEnd={() => {
+                              clearInspectionTimeout();
+                              if (isInspection(phase)) {
+                                  setPhase("SOLVING");
+                                  start.current();
+                              }
+                          }}>
 
                 </Stack>
             }
@@ -240,7 +252,7 @@ export function CubesMainPage() {
                         justifyContent: 'center',
                         alignItems: 'center'
                     }}
-                           onClick={(e) => save.current()}>
+                           {...clickableProps(() => save.current(), 'Zapisz wynik')}>
                         <b>ZAPISZ</b>
                     </Stack>
                     <Stack sx={{
@@ -250,7 +262,7 @@ export function CubesMainPage() {
                         justifyContent: 'center',
                         alignItems: 'center'
                     }}
-                           onClick={(e) => reset.current()}>
+                           {...clickableProps(() => reset.current(), 'Odrzuć wynik')}>
                         <b>ODRZUĆ</b>
                     </Stack>
                 </Stack>

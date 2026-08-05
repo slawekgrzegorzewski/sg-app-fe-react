@@ -14,7 +14,16 @@ export type BufferObject = {
 
 type Axis = 0 | 1 | 2;
 
-const cache = new Map<string, Shape[]>();
+type CacheEntry = {
+    shapes: Shape[],
+    refCount: number,
+};
+
+const cache = new Map<string, CacheEntry>();
+
+function cacheKey(cube: Cube): string {
+    return `${cube.layers}-${cube.perspective}`;
+}
 
 function half(x: number): number {
     return Math.floor(x / 2);
@@ -28,10 +37,12 @@ export function createBuffers(gl: WebGLRenderingContext, cube: Cube): Shape[] {
     const layers = cube.layers;
     const perspective = cube.perspective;
 
-    const cacheKey = `${layers}-${perspective}`;
+    const key = cacheKey(cube);
 
-    if (cache.has(cacheKey)) {
-        return cache.get(cacheKey)!;
+    const cached = cache.get(key);
+    if (cached) {
+        cached.refCount++;
+        return cached.shapes;
     }
 
     let allBase = makePositions(layers, 1.0, 0.0);
@@ -63,8 +74,21 @@ export function createBuffers(gl: WebGLRenderingContext, cube: Cube): Shape[] {
 
         objects[i] = new Square(gl, shapeArgs);
     }
-    cache.set(cacheKey, objects);
+    cache.set(key, {shapes: objects, refCount: 1});
     return objects;
+}
+
+export function releaseBuffers(gl: WebGLRenderingContext, cube: Cube): void {
+    const key = cacheKey(cube);
+
+    const cached = cache.get(key);
+    if (!cached) return;
+
+    cached.refCount--;
+    if (cached.refCount > 0) return;
+
+    cache.delete(key);
+    cached.shapes.forEach(shape => shape.dispose(gl));
 }
 
 const perSticker: number = 12;

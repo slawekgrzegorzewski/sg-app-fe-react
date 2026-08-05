@@ -1,3 +1,4 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
 import {useLazyQuery, useMutation} from "@apollo/client/react";
 import {
     BillingPeriodQuery,
@@ -52,11 +53,10 @@ export function BillingPeriods() {
 
     useEffect(() => {
         performSearch({variables: {yearMonth: dayjs(yearMonth).format(YEAR_MONTH_FORMAT)}});
-    });
+    }, [yearMonth, performSearch]);
 
     const fetchBillingPeriod = async (date: Date) => {
         setYearMonth(date);
-        performSearch({variables: {yearMonth: dayjs(date).format(YEAR_MONTH_FORMAT)}});
     }
 
     function noCreationBlockers(creationBlockers: GQLBillingPeriodCreationBlockers) {
@@ -64,9 +64,9 @@ export function BillingPeriods() {
     }
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         const billingPeriod = data.billingPeriod.billingPeriod ? mapBillingPeriod(data.billingPeriod.billingPeriod) : null;
         const billingPeriodCreationBlocker = data.billingPeriod.creationBlockers ? mapBillingPeriodCreationBlockers(data.billingPeriod.creationBlockers) : null;
@@ -150,7 +150,7 @@ export function BillingPeriods() {
                                         .then(() => setShowFinishBillingPeriodConfirmationDialog(false))
                                         .then(() => createBillingPeriodMutation({variables: {yearMonth: dayjs(yearMonth).format(YEAR_MONTH_FORMAT)}}))
                                         .then(() => refetch())
-                                        .then(bp => Promise.resolve());
+                                        .then(() => Promise.resolve());
                                 }}>
                                     Utwórz
                                 </Button>
@@ -186,12 +186,12 @@ export function BillingPeriods() {
                     title={'Czy na pewno zakończyć ten okres rozliczeniowy?'}
                     message={'Czy na pewno zakończyć ten okres rozliczeniowy?'}
                     open={showFinishBillingPeriodConfirmationDialog}
-                    onConfirm={async bp => {
+                    onConfirm={async () => {
                         await client.clearStore()
                             .then(() => setShowFinishBillingPeriodConfirmationDialog(false))
                             .then(() => finishBillingPeriodMutation({variables: {yearMonth: billingPeriod!.period}}))
                             .then(() => refetch())
-                            .then(bp => Promise.resolve());
+                            .then(() => Promise.resolve());
                     }}
                     onCancel={() => {
                         setShowFinishBillingPeriodConfirmationDialog(false);

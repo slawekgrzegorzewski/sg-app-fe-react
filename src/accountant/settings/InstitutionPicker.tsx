@@ -14,30 +14,19 @@ export interface InstitutionPickerProps {
 
 export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): React.JSX.Element {
 
-    const [pickNewInstitutionDialogOptions, setPickNewInstitutionDialogOptions] = useState<{
-        options: Institution[],
-        open: boolean
-    }>({
-        options: [],
-        open: false
-    });
-
     const {data} = useQuery<GetAvailableInstitutionsQuery>(GetAvailableInstitutions, {variables: {country: 'pl'}});
+    const [picked, setPicked] = useState(false);
 
-    if (data && pickNewInstitutionDialogOptions.options.length !== data.bankPermissions.availableInstitutions.length) {
-        setPickNewInstitutionDialogOptions({
-            options: data.bankPermissions!.availableInstitutions!,
-            open: true
-        })
-    }
+    const institutions = data?.bankPermissions?.availableInstitutions ?? [];
+
     return <PickDialog
         fullScreen={true}
         title={'Wybierz bank do podłączenia'}
-        options={pickNewInstitutionDialogOptions.options}
-        open={pickNewInstitutionDialogOptions.open}
+        options={institutions}
+        open={!picked && institutions.length > 0}
         onClose={() => onClose()}
         onPick={(value) => {
-            setPickNewInstitutionDialogOptions({options: [], open: false});
+            setPicked(true);
             onPick(value);
         }}
         idExtractor={function (institution: Institution | null): string {

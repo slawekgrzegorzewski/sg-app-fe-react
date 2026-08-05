@@ -6,28 +6,30 @@ import Box from "@mui/material/Box";
 
 export type RateStrategyDisplayProps = {
     rateStrategyConfig: RateStrategyConfig
-    onClick: MouseEventHandler<any>
+    onClick?: MouseEventHandler<any>
 }
 
-RateStrategyDisplay.defaultProps = {
-    onClick: () => {
-    }
+const noOp: MouseEventHandler<any> = () => {
+};
+
+function isConstantForNFirstInstallment(
+    config: RateStrategyConfig
+): config is ConstantForNFirstInstallmentRateStrategyConfig {
+    return (config as ConstantForNFirstInstallmentRateStrategyConfig).__typename
+        === 'ConstantForNFirstInstallmentRateStrategyConfig';
 }
 
-export function RateStrategyDisplay({rateStrategyConfig, onClick}: RateStrategyDisplayProps) {
-
+export function RateStrategyDisplay({rateStrategyConfig, onClick = noOp}: RateStrategyDisplayProps) {
 
     function convertToElement() {
-        // @ts-ignore
-        switch (rateStrategyConfig['__typename']) {
-            case "ConstantForNFirstInstallmentRateStrategyConfig":
-                const constantForN = rateStrategyConfig as ConstantForNFirstInstallmentRateStrategyConfig;
-                return <>
-                    Oprocentowanie stałe <b><PercentDisplay rate={constantForN.constantRate}/></b>,
-                    po <b>{constantForN.becomesVariableRateAfterNInstallments} miesiącach</b>
-                    zmienne z marżą <b><PercentDisplay rate={constantForN.variableRateMargin}/></b>
-                </>;
+        if (isConstantForNFirstInstallment(rateStrategyConfig)) {
+            return <>
+                Oprocentowanie stałe <b><PercentDisplay rate={rateStrategyConfig.constantRate}/></b>,
+                po <b>{rateStrategyConfig.becomesVariableRateAfterNInstallments} miesiącach</b>
+                zmienne z marżą <b><PercentDisplay rate={rateStrategyConfig.variableRateMargin}/></b>
+            </>;
         }
+        return <></>;
     }
 
     return (

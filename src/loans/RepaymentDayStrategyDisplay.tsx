@@ -6,22 +6,29 @@ import Box from "@mui/material/Box";
 
 export type RepaymentDayStrategyDisplayProps = {
     repaymentDayStrategyConfig: RepaymentDayStrategyConfig
-    onClick: MouseEventHandler<any>
+    onClick?: MouseEventHandler<any>
 }
 
-RepaymentDayStrategyDisplay.defaultProps = {
-    onClick: () => {
-    }
+const noOp: MouseEventHandler<any> = () => {
+};
+
+
+function isNthDayOfMonth(
+    config: RepaymentDayStrategyConfig
+): config is NthDayOfMonthRepaymentDayStrategyConfig {
+    return (config as NthDayOfMonthRepaymentDayStrategyConfig).__typename
+        === 'NthDayOfMonthRepaymentDayStrategyConfig';
 }
 
-export function RepaymentDayStrategyDisplay({repaymentDayStrategyConfig, onClick}: RepaymentDayStrategyDisplayProps) {
+export function RepaymentDayStrategyDisplay({
+                                                repaymentDayStrategyConfig,
+                                                onClick = noOp
+                                            }: RepaymentDayStrategyDisplayProps) {
     function convertToElement() {
-        // @ts-ignore
-        switch (repaymentDayStrategyConfig['__typename']) {
-            case "NthDayOfMonthRepaymentDayStrategyConfig":
-                const constantForN = repaymentDayStrategyConfig as NthDayOfMonthRepaymentDayStrategyConfig;
-                return <><OrdinalDisplay value={constantForN.dayOfMonth}/> dzień miesiąca</>;
+        if (isNthDayOfMonth(repaymentDayStrategyConfig)) {
+            return <><OrdinalDisplay value={repaymentDayStrategyConfig.dayOfMonth}/> dzień miesiąca</>;
         }
+        return <></>;
     }
 
     return (

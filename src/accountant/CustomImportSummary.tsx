@@ -25,9 +25,11 @@ export function CustomImportSummary({
 
                 <TableBody>
                     {transactionToCustomImportSummaries.map((group) => (
-                        <TableRow>
+                        <TableRow key={group.bankAccountPublicId}>
 
-                            <TableCell>{accountsWithAssignedBankAccounts.filter(a => a.bankAccount.publicId === group.bankAccountPublicId)[0].name}</TableCell>
+                            <TableCell>{accountsWithAssignedBankAccounts
+                                .find(a => a.bankAccount.publicId === group.bankAccountPublicId)?.name
+                                ?? group.bankAccountPublicId}</TableCell>
 
                             <TableCell align="right">
                                 {formatCurrency(group.currency, group.balanceFromImportingTransactions)}

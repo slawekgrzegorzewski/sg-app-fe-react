@@ -13,17 +13,12 @@ let canvas: HTMLCanvasElement = initCanvas();
 let gl: WebGLRenderingContext = initGL(canvas);
 let programInfo: ProgramInfo = initProgram(gl)!;
 
-// IDK why I have to put the number 4 times.
 const notHintBuffer = getBuffer(gl, [0, 0, 0, 0])!;
 
 function initCanvas() {
     const canvas = document.createElement("canvas");
-    /*
-    * This is 'fixed' because if it were 'absolute', then the layout would be broken 
-    * when inside a div with position: relative.
-    */
     canvas.style.position = "fixed";
-    canvas.style.display = "block";
+    canvas.style.display = "none";
     canvas.style.top = "0";
     canvas.style.left = "0";
     canvas.style.width = "100vw";
@@ -31,8 +26,7 @@ function initCanvas() {
     canvas.style.zIndex = "-1";
     document.body.appendChild(canvas);
 
-    // Add key listener inside this if statement so that it is only added once.
-    document.addEventListener("keydown", (e) => {
+   document.addEventListener("keydown", (e) => {
         scenes.forEach(scene => {
             if (!scene.enableKey(e)) return;
 
@@ -160,12 +154,14 @@ type Scene = {
     puzzle: Puzzle,
     dragEnabled: boolean,
     enableKey: (event: KeyboardEvent) => boolean,
+    dispose: () => void,
 };
 
 type InternalScene = {
     div: HTMLElement,
     puzzle: Puzzle,
     spring: Spring,
+    listeners: AbortController,
 };
 
 let scenes: Scene[] = [];
@@ -173,12 +169,49 @@ let internalScenes: InternalScene[] = [];
 
 let time: number = Date.now() * 0.001;
 
-let loopStarted = false;
+let animationFrameHandle: number | null = null;
 
 function startLoop() {
-    if (loopStarted) return;
-    loopStarted = true;
-    requestAnimationFrame(render);
+    if (animationFrameHandle !== null) return;
+    time = Date.now() * 0.001;
+    animationFrameHandle = requestAnimationFrame(render);
+}
+
+function stopLoop() {
+    if (animationFrameHandle === null) return;
+    cancelAnimationFrame(animationFrameHandle);
+    animationFrameHandle = null;
+}
+
+function registerScene(scene: Scene, internalScene: InternalScene) {
+    scenes.push(scene);
+    internalScenes.push(internalScene);
+    canvas.style.display = "block";
+    startLoop();
+}
+
+function clearCanvas() {
+    gl.disable(gl.SCISSOR_TEST);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+}
+
+function disposeScene(scene: Scene) {
+    const index = scenes.indexOf(scene);
+    if (index === -1) return;
+
+    const internalScene = internalScenes[index];
+    scenes.splice(index, 1);
+    internalScenes.splice(index, 1);
+
+    internalScene.listeners.abort();
+    internalScene.puzzle.dispose(gl);
+
+    // Nothing left to draw; keeping the loop alive would burn a frame callback forever.
+    if (scenes.length === 0) {
+        stopLoop();
+        clearCanvas();
+        canvas.style.display = "none";
+    }
 }
 
 function newCube(div: HTMLElement, layers: number = 3): Scene {
@@ -186,20 +219,21 @@ function newCube(div: HTMLElement, layers: number = 3): Scene {
     let cube = new Cube(gl, perspective, layers);
     let spring = new Spring();
     let dragDetector = new CubeDragDetector();
+    const listeners = new AbortController();
     let scene: Scene = {
         puzzle: cube,
         dragEnabled: true,
         enableKey: (_) => true,
+        dispose: () => disposeScene(scene),
     };
     let internalScene: InternalScene = {
         div,
         puzzle: cube,
         spring,
+        listeners,
     }
-    addDragListeners(div, dragDetector, scene);
-    scenes.push(scene);
-    internalScenes.push(internalScene);
-    startLoop();
+    addDragListeners(div, dragDetector, scene, listeners.signal);
+    registerScene(scene, internalScene);
     return scene;
 }
 
@@ -208,20 +242,21 @@ function newPyraminx(div: HTMLElement): Scene {
     let pyraminx = new Pyraminx(gl, perspective);
     let spring = new Spring();
     let dragDetector = new PyraDragDetector();
+    const listeners = new AbortController();
     let scene: Scene = {
         puzzle: pyraminx,
         dragEnabled: true,
         enableKey: (_) => true,
+        dispose: () => disposeScene(scene),
     };
     let internalScene: InternalScene = {
         div,
         puzzle: pyraminx,
         spring,
+        listeners,
     }
-    addDragListeners(div, dragDetector, scene);
-    scenes.push(scene);
-    internalScenes.push(internalScene);
-    startLoop();
+    addDragListeners(div, dragDetector, scene, listeners.signal);
+    registerScene(scene, internalScene);
     return scene;
 }
 
@@ -246,7 +281,7 @@ function initPerspective(element: HTMLElement) {
     return mat;
 }
 
-function addDragListeners(div: HTMLElement, dragDetector: DragDetector, scene: Scene) {
+function addDragListeners(div: HTMLElement, dragDetector: DragDetector, scene: Scene, signal: AbortSignal) {
 
     const pointerdown = (offsetX: number, offsetY: number) => {
         if (!scene.dragEnabled) return;
@@ -271,23 +306,23 @@ function addDragListeners(div: HTMLElement, dragDetector: DragDetector, scene: S
     }
 
     const addPointerListeners = () => {
-        div.addEventListener("pointerdown", event => pointerdown(event.offsetX, event.offsetY));
-        div.addEventListener("pointermove", event => pointermove(event.offsetX, event.offsetY));
-        div.addEventListener("pointerup", () => pointerup());
+        div.addEventListener("pointerdown", event => pointerdown(event.offsetX, event.offsetY), {signal});
+        div.addEventListener("pointermove", event => pointermove(event.offsetX, event.offsetY), {signal});
+        div.addEventListener("pointerup", () => pointerup(), {signal});
     }
 
     const addTouchListeners = () => {
         div.addEventListener("touchstart", (event: TouchEvent) => {
             const {x, y} = calcOffset(event);
             pointerdown(x, y);
-        });
+        }, {signal});
         div.addEventListener("touchmove", event => {
             const {x, y} = calcOffset(event);
             pointermove(x, y);
-        });
+        }, {signal});
         div.addEventListener("touchend", () => {
             pointerup();
-        });
+        }, {signal});
     }
 
     if (window.PointerEvent) {
@@ -486,7 +521,7 @@ function render(newTime: number) {
         }
     }
 
-    requestAnimationFrame(render);
+    animationFrameHandle = requestAnimationFrame(render);
 }
 
 export {

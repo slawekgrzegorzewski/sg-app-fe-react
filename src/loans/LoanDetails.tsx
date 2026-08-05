@@ -9,17 +9,14 @@ import {RepaymentDayStrategyDisplay} from "./RepaymentDayStrategyDisplay";
 
 export type LoanDetailsProp = {
     loan: Loan
-    short: boolean
-    onClick: MouseEventHandler<any>
+    short?: boolean
+    onClick?: MouseEventHandler<any>
 }
 
-LoanDetails.defaultProps = {
-    short: false,
-    onClick: () => {
-    }
-}
+const noOp: MouseEventHandler<any> = () => {
+};
 
-export function LoanDetails({loan, short, onClick}: LoanDetailsProp) {
+export function LoanDetails({loan, short = false, onClick = noOp}: LoanDetailsProp) {
     if (short) {
         return (
             <Stack direction={"column"} key={loan.publicId} onClick={onClick}>

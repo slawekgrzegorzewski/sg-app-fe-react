@@ -13,7 +13,6 @@
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "@mui/x-date-pickers": "^8.27.0",
-    "@tanstack/react-query": "^5.90.20",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -34,10 +33,9 @@
     "graphql-scalars": "^1.22.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.13.0",
+    "react-router-dom": "^7.18.2",
     "react-scripts": "^5.0.1",
     "typescript": "5.1.6",
-    "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5",
     "yup": "^1.4.0"
   },
@@ -45,7 +43,7 @@
     "typescript": "5.1.6"
   },
   "devDependencies": {
-    "@babel/preset-typescript":"^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@graphql-codegen/add": "^6.0.0",
     "@graphql-codegen/cli": "^6.1.1",
@@ -56,22 +54,21 @@
     "@graphql-codegen/typescript-resolvers": "^5.1.5",
     "@types/base-64": "^1.0.2",
     "@types/file-saver": "^2.0.7",
-    "graphql-cli": "^4.1.0",
     "webpack-cli": "^6.0.1"
   },
   "scripts": {
     "codegen": "graphql-codegen --config codegen.ts",
     "watch": "graphql-codegen -w",
     "start-dev": "env-cmd -f .env react-scripts start",
+    "start-dev-macos": "env-cmd -f .env.macos react-scripts start",
     "start-prod": "env-cmd -f .env.production react-scripts start",
     "build": "env-cmd -f .env react-scripts build",
     "build-prod": "env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
+    "typecheck": "tsc --noEmit",
     "eject": "react-scripts eject",
     "predeploy to s3": "env-cmd -f .env.production react-scripts build",
-    "deploy to s3": "aws s3 sync build/ s3://sg-application",
-    "graphql:coverage": "graphql coverage",
-    "graphql:validate": "graphql validate"
+    "deploy to s3": "aws s3 sync build/ s3://sg-application"
   },
   "eslintConfig": {
     "extends": [

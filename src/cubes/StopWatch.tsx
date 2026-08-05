@@ -22,10 +22,6 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
     const [isRunning, setIsRunning] = useState(false);
 
     useEffect(() => {
-        console.log('Stop Watch loaded')
-    }, []);
-
-    useEffect(() => {
         if (startTrigger) {
             startTrigger.current = start;
         }
@@ -38,10 +34,17 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
     })
 
     useEffect(() => {
-        if (isRunning) {
-            setTimeout(() => setCurrentTime(dayjs().valueOf() - startTime!), 10);
+        if (!isRunning || startTime === null) {
+            return;
         }
-    }, [startTime, currentTime, isRunning]);
+
+        let frame = requestAnimationFrame(function tick() {
+            setCurrentTime(dayjs().valueOf() - startTime);
+            frame = requestAnimationFrame(tick);
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [isRunning, startTime]);
 
     const start = () => {
         if (!isRunning) {
@@ -62,7 +65,7 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
 
     const reset = () => {
         stop();
-        setTimeout(() => setCurrentTime(0), 10);
+        setCurrentTime(0);
     }
 
     return <Stack direction={'column'} alignItems={'center'} sx={sx}>

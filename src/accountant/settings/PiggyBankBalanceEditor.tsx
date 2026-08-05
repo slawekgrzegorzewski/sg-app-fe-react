@@ -49,8 +49,7 @@ export function PiggyBankBalanceEditor({type, piggyBank, onSave, onCancel}: Pigg
             <Form
                 {...FORM}
                 onSave={(v) => {
-                    piggyBank.balance = calculateNewBalance(piggyBank, v.balance)
-                    onSave(piggyBank);
+                    onSave({...piggyBank, balance: calculateNewBalance(piggyBank, v.balance)});
                 }}
                 onCancel={onCancel}
                 previewOfChange={(value) => {

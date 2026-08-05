@@ -1,10 +1,17 @@
 import * as React from "react";
 import getUserLocale from "get-user-locale";
-import {MonetaryAmount} from "../../types";
+import {CurrencyInfo} from "../../types";
+import Decimal from "decimal.js";
 
-export function CurrencyAmountDisplay({amount, currency}: MonetaryAmount) {
+export type CurrencyAmountDisplayProps = {
+    amount: Decimal | number;
+    currency: CurrencyInfo;
+};
 
-    return (<>{amount.toLocaleString(getUserLocale(), {
+export function CurrencyAmountDisplay({amount, currency}: CurrencyAmountDisplayProps) {
+    const value = Decimal.isDecimal(amount) ? (amount as Decimal).toNumber() : amount as number;
+
+    return (<>{value.toLocaleString(getUserLocale(), {
             style: "currency",
             currency: currency.code
         })}</>

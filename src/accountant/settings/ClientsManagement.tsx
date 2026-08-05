@@ -1,3 +1,4 @@
+import {ErrorDisplay, LoadingIndicator} from "../../application/components/QueryState";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     CreateClient,
@@ -73,9 +74,9 @@ export function ClientsManagement() {
     };
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         return <SimpleCrudList
             title={'ZARZĄDZAJ KLIENTAMI'}

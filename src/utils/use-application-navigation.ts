@@ -1,4 +1,4 @@
-import {redirect, useNavigate, useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 
 export function useApplicationNavigation() {
     const navigate = useNavigate();
@@ -27,9 +27,7 @@ export function useApplicationNavigation() {
     return {
         getPathWithoutSearchParameters: () => toParamsString(getDefinedParameters()),
         removeSearchParameters: () => {
-            let url = toParamsString(getDefinedParameters());
-            console.log(url);
-            redirect(url);
+            navigate(toParamsString(getDefinedParameters()));
         },
         changePage: (page: string, params: string[] = []) => navigate('/' + applicationId + '/' + domainPublicId + '/' + page + toParamsString(params)),
         getPagePathWithParams: (params: string[]) => getPagePath(params),

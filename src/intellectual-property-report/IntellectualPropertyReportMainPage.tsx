@@ -1,3 +1,5 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     AssignCategoryToTimeRecord,
@@ -50,16 +52,19 @@ export function IntellectualPropertyReportMainPage() {
         refetch();
     }
 
-    assignCategoryToTimeRecordMutationResult.called && assignCategoryToTimeRecordMutationResult.reset();
+    useResetMutationResults(assignCategoryToTimeRecordMutationResult);
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data && data.intellectualPropertiesReport) {
         const report = data.intellectualPropertiesReport?.report;
         const availableYearFilters = [...(data.intellectualPropertiesReport.availableYears || [yearFilter])].sort();
         const table = <>
             <table ref={tableRef} style={{textAlign: "left", borderCollapse: "collapse"}}>
+                <caption style={{captionSide: 'top', textAlign: 'left'}}>
+                    Raport własności intelektualnej za rok {report.year}
+                </caption>
                 <thead>
                 <tr style={headerBorders}>
                     <th colSpan={5}>
@@ -77,7 +82,7 @@ export function IntellectualPropertyReportMainPage() {
                 </tr>
                 <tr style={sideBorders}>
                     <th colSpan={5}>
-                        Liczba godzin: IP: {report?.ipHours | 0}, nie IP: {report.nonIPHours}
+                        Liczba godzin: IP: {report?.ipHours ?? 0}, nie IP: {report.nonIPHours}
                     </th>
                 </tr>
                 <tr style={footerBorders}>
@@ -98,52 +103,43 @@ export function IntellectualPropertyReportMainPage() {
                 <tbody>
                 {
                     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-                        .map(month => [month, report?.year.toString() + "-" + month.toString().padStart(2, "0")])
-                        .map(([month, yearMonth]) => {
-                                return report?.monthReports
-                                    .filter(monthReport => monthReport.yearMonth === yearMonth)
-                                    .flatMap(monthReport => {
-                                            return report?.monthReports
-                                                .filter(monthReport => monthReport.yearMonth === yearMonth)
-                                                .flatMap(monthReport =>
-                                                    [
-                                                        <tr style={month === 1 ? sideBorders : headerBorders}>
-                                                            <td><b>{monthReport.yearMonth}</b></td>
-                                                            <td><b>{monthReport.ipHours}</b></td>
-                                                            <td><b>{monthReport.nonIPHours}</b></td>
-                                                            <td><b>{monthReport.ipPercentage}</b></td>
-                                                        </tr>,
-                                                        ...(monthReport.timeRecordReports.map((timeRecordReport) =>
-                                                            (
-                                                                <tr style={sideBorders}>
-                                                                    <td>{timeRecordReport.description}</td>
-                                                                    <td>{timeRecordReport.ipHours === 0 ? '' : timeRecordReport.ipHours}</td>
-                                                                    <td>{timeRecordReport.nonIPHours === 0 ? '' : timeRecordReport.nonIPHours}</td>
-                                                                    <td></td>
-                                                                </tr>
-                                                            ))),
-                                                        ...(monthReport.nonCategorizedTimeRecords.map((timeRecordReport) =>
-                                                                (
-                                                                    <tr style={sideBorders}>
-                                                                        <td>{timeRecordReport.description} - {timeRecordReport.numberOfHours} godzin</td>
-                                                                        <td colSpan={3}>
-                                                                            <select
-                                                                                onChange={(event) => updateTimeRecordCategory(timeRecordReport.id, Number(event.target.value))}>
-                                                                                <option></option>
-                                                                                {data.intellectualPropertiesReport?.timeRecordCategories.map(rc => (
-                                                                                    <option value={rc.id}>
-                                                                                        {rc.name}
-                                                                                    </option>))}
-                                                                            </select>
-                                                                        </td>
-                                                                        <td></td>
-                                                                    </tr>
-                                                                ),
-                                                            <tr style={footerBorders}></tr>))]
-                                                );
-                                        }
-                                    );
-                            }
+                        .map(month => [month, report?.year.toString() + "-" + month.toString().padStart(2, "0")] as [number, string])
+                        .flatMap(([month, yearMonth]) =>
+                            (report?.monthReports ?? [])
+                                .filter(monthReport => monthReport.yearMonth === yearMonth)
+                                .flatMap(monthReport => [
+                                    <tr key={`${yearMonth}-summary`}
+                                        style={month === 1 ? sideBorders : headerBorders}>
+                                        <td><b>{monthReport.yearMonth}</b></td>
+                                        <td><b>{monthReport.ipHours}</b></td>
+                                        <td><b>{monthReport.nonIPHours}</b></td>
+                                        <td><b>{monthReport.ipPercentage}</b></td>
+                                    </tr>,
+                                    ...monthReport.timeRecordReports.map((timeRecordReport, index) =>
+                                        <tr key={`${yearMonth}-record-${index}`} style={sideBorders}>
+                                            <td>{timeRecordReport.description}</td>
+                                            <td>{timeRecordReport.ipHours === 0 ? '' : timeRecordReport.ipHours}</td>
+                                            <td>{timeRecordReport.nonIPHours === 0 ? '' : timeRecordReport.nonIPHours}</td>
+                                            <td></td>
+                                        </tr>),
+                                    ...monthReport.nonCategorizedTimeRecords.map(timeRecordReport =>
+                                        <tr key={`${yearMonth}-uncategorised-${timeRecordReport.id}`}
+                                            style={sideBorders}>
+                                            <td>{timeRecordReport.description} - {timeRecordReport.numberOfHours} godzin</td>
+                                            <td colSpan={3}>
+                                                <select
+                                                    aria-label={'Kategoria dla: ' + timeRecordReport.description}
+                                                    onChange={(event) => updateTimeRecordCategory(timeRecordReport.id, Number(event.target.value))}>
+                                                    <option value={''}></option>
+                                                    {data.intellectualPropertiesReport?.timeRecordCategories.map(rc => (
+                                                        <option key={rc.id} value={rc.id}>
+                                                            {rc.name}
+                                                        </option>))}
+                                                </select>
+                                            </td>
+                                            <td></td>
+                                        </tr>)
+                                ])
                         )
                 }
                 </tbody>

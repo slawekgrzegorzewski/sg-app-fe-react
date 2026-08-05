@@ -1,3 +1,4 @@
+import {ErrorDisplay, LoadingIndicator} from "../QueryState";
 import {useParams} from "react-router-dom";
 import {applications} from "../../../utils/applications/applications-access";
 import {Loans} from "../../../loans/Loans";
@@ -39,9 +40,10 @@ export function AccountantDispatcher() {
     } = useQuery<GetAccountantSettingsQuery>(GetAccountantSettings);
 
     if (accountantSettingsLoading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (accountantSettingsError) {
-        return <>Error...</>
+        return <ErrorDisplay error={accountantSettingsError}
+                             onRetry={() => accountantSettingsRefetch()}/>
     } else if (accountantSettingsData) {
         return <AccountantSettingsContext.Provider
             value={{...accountantSettingsData.settings, refreshSettings: accountantSettingsRefetch}}>

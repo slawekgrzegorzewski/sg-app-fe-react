@@ -2,13 +2,24 @@ import * as Yup from "yup";
 import Decimal from "decimal.js";
 import {DatePickerEditorField, EditorField} from "../../utils/forms/Form";
 import dayjs, {Dayjs} from "dayjs";
-import {Loan, MonetaryAmount} from "../../types";
+import {CurrencyInfo, Loan} from "../../types";
 import {RepaymentDayStrategyDisplay} from "../RepaymentDayStrategyDisplay";
 import {RateStrategyDisplay} from "../RateStrategyDisplay";
 
-export const remainingCapital = (loan: Loan): MonetaryAmount => {
+export type RemainingCapital = {
+    amount: Decimal;
+    currency: CurrencyInfo;
+};
+
+export const remainingCapital = (loan: Loan): RemainingCapital => {
+    const repaidTowardsCapital = loan.installments.reduce(
+        (total, installment) => total
+            .plus(installment.repaidAmount.amount)
+            .plus(installment.overpayment.amount),
+        new Decimal(0)
+    );
     return {
-        amount: loan.paidAmount.amount - loan.installments.map(installment => installment.repaidAmount.amount + installment.overpayment.amount).reduce((p, c) => p + c, 0),
+        amount: new Decimal(loan.paidAmount.amount).minus(repaidTowardsCapital),
         currency: loan.paidAmount.currency
     };
 }

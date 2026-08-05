@@ -1,3 +1,4 @@
+import {logDebug, logWarning} from "../../utils/logger";
 import {expandDoubleMoves} from "./alg";
 import {Shape} from "./buffers";
 import {KeyBindings, getKeyBindings} from "./keyBindings";
@@ -41,6 +42,15 @@ export abstract class Puzzle {
     abstract getHintType(gl: WebGLRenderingContext): WebGLBuffer;
 
     abstract getShapes(): Shape[];
+
+    dispose(gl: WebGLRenderingContext): void {
+        this.disposeShapes(gl);
+        this.animationQueue.length = 0;
+    }
+
+    protected disposeShapes(gl: WebGLRenderingContext): void {
+        this.getShapes().forEach(shape => shape.dispose(gl));
+    }
 
     abstract numStickers(): number;
 
@@ -374,17 +384,13 @@ export abstract class Puzzle {
         if (moveFunc) {
             moveFunc();
         } else {
-            console.log("Invalid move: " + move);
+            logWarning("Invalid move: " + move);
         }
     }
 
-    /**
-     * Perform alg without animating any of the moves.
-     * Returns the number of moves performed.
-     */
     performAlg(alg: string): number {
         if (!alg) {
-            console.log("Empty alg. Skipping.");
+            logDebug("Empty alg. Skipping.");
             return 0;
         }
 
@@ -399,19 +405,19 @@ export abstract class Puzzle {
         return moves.length;
     }
 
-    performAlgWithAnimation(alg: string, onFinish: () => void): NodeJS.Timer {
+    performAlgWithAnimation(alg: string, onFinish: () => void, delay: number = 800): ReturnType<typeof setInterval> {
         alg = expandDoubleMoves(alg);
-
-        const delay = 800;
         let moves = alg.split(" ");
         let i = 0;
-        return setInterval(() => {
+        const handle = setInterval(() => {
             if (i >= moves.length) {
+                clearInterval(handle);
                 onFinish();
                 return;
             }
             this.performMove(moves[i], true);
             i++;
         }, delay);
+        return handle;
     }
 }

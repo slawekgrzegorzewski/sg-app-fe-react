@@ -121,7 +121,7 @@ export type GQLTimeRecord = {
     __typename?: "TimeRecord";
     id: number;
     date: string;
-    numberOfHours: any;
+    numberOfHours: number;
     description?: string | null;
     timeRecordCategory?: GQLTimeRecordCategory | null;
     domain: GQLDomainSimple

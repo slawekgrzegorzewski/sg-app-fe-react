@@ -1,3 +1,4 @@
+import {logWarning} from "../../../utils/logger";
 import {Shape, Triangle, getBuffer} from "../buffers";
 import {BLUE, Color, GREEN, RED, YELLOW} from "../colors";
 import {Puzzle} from "../puzzle";
@@ -118,6 +119,14 @@ export class Pyraminx extends Puzzle {
         return this.shapes;
     }
 
+    dispose(gl: WebGLRenderingContext): void {
+        super.dispose(gl);
+        if (this.hintType) {
+            gl.deleteBuffer(this.hintType);
+            this.hintType = null;
+        }
+    }
+
     // Implement abstract method
     numStickers(): number {
         return 36;
@@ -194,7 +203,7 @@ export class Pyraminx extends Puzzle {
 
     // Implement abstract method
     Uw(_: boolean): void {
-        console.log("Uw not implemented for pyraminx.");
+        logWarning("Uw not implemented for pyraminx.");
     }
 
     // Implement abstract method
@@ -206,7 +215,7 @@ export class Pyraminx extends Puzzle {
 
     // Implement abstract method
     Dw(_: boolean): void {
-        console.log("Dw not implemented for pyraminx.");
+        logWarning("Dw not implemented for pyraminx.");
     }
 
     // Implement abstract method
@@ -218,7 +227,7 @@ export class Pyraminx extends Puzzle {
 
     // Implement abstract method
     Fw(_: boolean): void {
-        console.log("Fw not implemented for pyraminx.");
+        logWarning("Fw not implemented for pyraminx.");
     }
 
     // Implement abstract method
@@ -233,7 +242,7 @@ export class Pyraminx extends Puzzle {
 
     // Implement abstract method
     Bw(_: boolean): void {
-        console.log("Bw not implemented for pyraminx.");
+        logWarning("Bw not implemented for pyraminx.");
     }
 
     // Implement abstract method
@@ -272,12 +281,12 @@ export class Pyraminx extends Puzzle {
 
     // Implement abstract method
     M(_: boolean): void {
-        console.log("M not implemented for pyraminx.");
+        logWarning("M not implemented for pyraminx.");
     }
 
     // Implement abstract method
     E(_: boolean): void {
-        console.log("E not implemented for pyraminx.");
+        logWarning("E not implemented for pyraminx.");
     }
 
     // Implement abstract method

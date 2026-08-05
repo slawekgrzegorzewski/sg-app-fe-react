@@ -1,5 +1,6 @@
+import {clickableProps} from "../application/components/clickable";
 import * as React from "react";
-import {JSX, useState} from "react";
+import {JSX, useMemo, useState} from "react";
 import {GQLAccount, GQLBankTransactionToImport, GQLBillingCategory, GQLPiggyBank} from "./model/types";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
 import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
@@ -38,7 +39,10 @@ export function CreateCustomImportForm({
     const [editBillingElement, setEditBillingElement] = useState<BillingElementDTO | null>(null);
     const [transfers, setTransfers] = useState<TransferDTO[]>([]);
     const [editTransfer, setEditTransfer] = useState<TransferDTO | null>(null);
-    const transactionToCustomImportSummaries = transactionCustomImportSummary(bankTransactions, accountsWithAssignedBankAccounts, billingElements, transfers);
+    const transactionToCustomImportSummaries = useMemo(
+        () => transactionCustomImportSummary(bankTransactions, accountsWithAssignedBankAccounts, billingElements, transfers),
+        [bankTransactions, accountsWithAssignedBankAccounts, billingElements, transfers]
+    );
     const canCreateCustomImport = transactionToCustomImportSummaries.length > 0 &&
         transactionToCustomImportSummaries.map(t => t.balanceAfterImport.isZero()).reduce((p, c) => p && c, true);
     const findAccount = (accountPublicId: string) => {
@@ -90,11 +94,10 @@ export function CreateCustomImportForm({
                              transactionToCustomImportSummaries={transactionToCustomImportSummaries}/>
         <Typography>Elementy do stworzenia</Typography>
         {
-            billingElements.map(be => {
-                    return <Stack direction={'row'} justifyContent={'flex-start'} alignItems={'center'} width={'100%'}
-                                  onClick={() => {
-                                      setEditBillingElement(be);
-                                  }}>
+            billingElements.map((be, index) => {
+                    return <Stack key={`billing-element-${index}`}
+                                  direction={'row'} justifyContent={'flex-start'} alignItems={'center'} width={'100%'}
+                                  {...clickableProps(() => setEditBillingElement(be), 'Edytuj element rozliczeniowy')}>
                         {billingElementDescription(be)}
                         <Button
                             onClick={(e) => {
@@ -108,9 +111,10 @@ export function CreateCustomImportForm({
             )
         }
         {
-            transfers.map(transfer => {
-                return <Stack direction={'row'} justifyContent={'flex-start'} alignItems={'center'} width={'100%'}
-                              onClick={() => setEditTransfer(transfer)}>
+            transfers.map((transfer, index) => {
+                return <Stack key={`transfer-${index}`}
+                              direction={'row'} justifyContent={'flex-start'} alignItems={'center'} width={'100%'}
+                              {...clickableProps(() => setEditTransfer(transfer), 'Edytuj transfer')}>
                     {transferDescription(transfer)}
                     <Button
                         onClick={(e) => {
@@ -150,7 +154,6 @@ export function CreateCustomImportForm({
                         onClose={(transfer) => {
                             if (transfer) {
                                 setTransfers([transfer, ...transfers.filter(t => t !== editTransfer)]);
-                                console.log(JSON.stringify(transfer));
                             }
                             setEditTransfer(null);
                         }}
@@ -164,7 +167,7 @@ export function CreateCustomImportForm({
                 <Button variant="text"
                         type="submit"
                         sx={{flexGrow: 1}}
-                        onClick={e => {
+                        onClick={() => {
                             const be = {
                                 billingElementType: 'Income',
                                 publicId: '',
@@ -183,7 +186,7 @@ export function CreateCustomImportForm({
                 <Button variant="text"
                         type="submit"
                         sx={{flexGrow: 1}}
-                        onClick={e => {
+                        onClick={() => {
                             const be = {
                                 billingElementType: 'Expense',
                                 publicId: '',
@@ -202,7 +205,7 @@ export function CreateCustomImportForm({
                 <Button variant="text"
                         type="submit"
                         sx={{flexGrow: 1}}
-                        onClick={e => {
+                        onClick={() => {
                             const transfer = {
                                 day: null,
                                 fromAmount: new Decimal(0),
@@ -220,7 +223,7 @@ export function CreateCustomImportForm({
             <Button variant="text"
                     type="submit"
                     sx={{flexGrow: 1}}
-                    onClick={e => onClose({
+                    onClick={() => onClose({
                         billingElements: billingElements,
                         transfers: transfers
                     })}
@@ -230,7 +233,7 @@ export function CreateCustomImportForm({
             </Button>
             <Button
                 variant="text" sx={{flexGrow: 1}}
-                onClick={(e) => onClose(null)}>
+                onClick={() => onClose(null)}>
                 Anuluj
             </Button>
         </Stack>

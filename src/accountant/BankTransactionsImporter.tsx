@@ -1,4 +1,5 @@
-import React, {JSX, useContext, useState} from "react";
+import {ErrorDisplay} from "../application/components/QueryState";
+import React, {JSX, useContext, useMemo, useState} from "react";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     BankTransactionsToImport,
@@ -16,6 +17,7 @@ import {
 } from "../types";
 import Button from "@mui/material/Button";
 import {
+    GQLAccount,
     GQLBankTransactionToImport,
     mapAccount,
     mapBankTransactionToImport,
@@ -42,6 +44,31 @@ export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
 }
 
+function currencyOfAccount(accounts: GQLAccount[], accountPublicId: string): string {
+    const account = accounts.find(candidate => candidate.publicId === accountPublicId);
+    if (!account) {
+        throw new Error(`Nie można zaimportować: konto ${accountPublicId} nie jest dostępne.`);
+    }
+    return account.currentBalance.currency.code;
+}
+
+function billingElementVariables(
+    billingElement: BillingElementDTO,
+    accounts: GQLAccount[],
+    bankTransactionPublicIds: string[]
+) {
+    return {
+        accountPublicId: billingElement.affectedAccountPublicId!,
+        description: billingElement.description!,
+        amount: billingElement.amount!,
+        currency: currencyOfAccount(accounts, billingElement.affectedAccountPublicId!),
+        categoryPublicId: billingElement.category!.publicId,
+        date: billingElement.date!.format("YYYY-MM-DD"),
+        piggyBankPublicId: billingElement.piggyBank?.publicId ?? null,
+        bankTransactionPublicIds: bankTransactionPublicIds
+    };
+}
+
 export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterProps): JSX.Element {
 
     const {loading, error, data} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
@@ -57,6 +84,12 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     const [transactionsToMutuallyCancelPublicId, setTransactionsToMutuallyCancelPublicId] = useState<string[] | null>(null);
     const [transactionsToCustomImport, setTransactionsToCustomImport] = useState<GQLBankTransactionToImport[] | null>(null);
     const {setShowBackdrop} = useContext(ShowBackdropContext);
+
+   const mappedAccounts = useMemo(
+        () => data?.financeManagement.accounts.map(mapAccount) ?? [],
+        [data]
+    );
+
     const reset = () => {
         setShowDialog(false);
         setBillingElementToCreate(null);
@@ -72,10 +105,12 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             : transactionsCount + " transakcji do zaimportowania";
     }
 
-    if (loading || error || !data || data.bankTransactionsToImport.length <= 0) {
+    if (error) {
+        return <ErrorDisplay error={error} title={'Nie udało się sprawdzić transakcji do zaimportowania'}/>;
+    }
+    if (loading || !data || data.bankTransactionsToImport.length <= 0) {
         return <></>
     } else {
-        const mappedAccounts = data.financeManagement.accounts.map(mapAccount);
         if (!showDialog) {
             return <Button
                 onClick={() => setShowDialog(true)}>
@@ -114,16 +149,11 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                 if (!billingElementDTO) reset();
                                 else {
                                     const variables = {
-                                        variables: {
-                                            accountPublicId: billingElementDTO.affectedAccountPublicId!,
-                                            description: billingElementDTO.description!,
-                                            amount: billingElementDTO.amount!,
-                                            currency: mappedAccounts.find(account => account.publicId === billingElementDTO.affectedAccountPublicId!)!.currentBalance.currency.code,
-                                            categoryPublicId: billingElementDTO.category!.publicId,
-                                            date: billingElementDTO.date!.format("YYYY-MM-DD"),
-                                            piggyBankPublicId: billingElementDTO.piggyBank?.publicId ? billingElementDTO.piggyBank!.publicId : null,
-                                            bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
-                                        }
+                                        variables: billingElementVariables(
+                                            billingElementDTO,
+                                            mappedAccounts,
+                                            selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
+                                        )
                                     };
                                     setShowBackdrop(true);
                                     (billingElementDTO.billingElementType === 'Income'
@@ -202,32 +232,18 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                             bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId),
                                             expenses: customImportResult.billingElements
                                                 .filter(billingElementToCreate => billingElementToCreate.billingElementType === 'Expense')
-                                                .map(billingElementToCreate => {
-                                                    return {
-                                                        accountPublicId: billingElementToCreate.affectedAccountPublicId!,
-                                                        description: billingElementToCreate.description!,
-                                                        amount: billingElementToCreate.amount!,
-                                                        currency: mappedAccounts.find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
-                                                        categoryPublicId: billingElementToCreate.category!.publicId,
-                                                        date: billingElementToCreate.date!.format("YYYY-MM-DD"),
-                                                        piggyBankPublicId: billingElementToCreate.piggyBank?.publicId ? billingElementToCreate.piggyBank!.publicId : null,
-                                                        bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
-                                                    };
-                                                }),
+                                                .map(billingElementToCreate => billingElementVariables(
+                                                    billingElementToCreate,
+                                                    mappedAccounts,
+                                                    selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
+                                                )),
                                             incomes: customImportResult.billingElements
                                                 .filter(billingElementToCreate => billingElementToCreate.billingElementType === 'Income')
-                                                .map(billingElementToCreate => {
-                                                    return {
-                                                        accountPublicId: billingElementToCreate.affectedAccountPublicId!,
-                                                        description: billingElementToCreate.description!,
-                                                        amount: billingElementToCreate.amount!,
-                                                        currency: mappedAccounts.find(account => account.publicId === billingElementToCreate.affectedAccountPublicId!)!.currentBalance.currency.code,
-                                                        categoryPublicId: billingElementToCreate.category!.publicId,
-                                                        date: billingElementToCreate.date!.format("YYYY-MM-DD"),
-                                                        piggyBankPublicId: billingElementToCreate.piggyBank?.publicId ? billingElementToCreate.piggyBank!.publicId : null,
-                                                        bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
-                                                    };
-                                                }),
+                                                .map(billingElementToCreate => billingElementVariables(
+                                                    billingElementToCreate,
+                                                    mappedAccounts,
+                                                    selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
+                                                )),
                                             transfers: customImportResult.transfers.map(transferToCreate => {
                                                 return {
                                                     fromAccountPublicId: transferToCreate.fromAccountPublicId!,

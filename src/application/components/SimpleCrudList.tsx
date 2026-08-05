@@ -161,7 +161,7 @@ export function SimpleCrudList<T>({
                                              ? {
                                                  aboveId: i === 0 ? null : idExtractor(list[i - 1]),
                                                  belowId: i === list.length - 1 ? null : idExtractor(list[i + 1]),
-                                                 dndLabel: Math.random().toString(),
+                                                 dndLabel: idExtractor(list[i]),
                                                  onReorder: onReorder
                                              }
                                              : undefined}

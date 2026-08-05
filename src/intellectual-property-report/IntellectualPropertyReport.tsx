@@ -1,3 +1,4 @@
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation} from "@apollo/client/react";
 import {
     DeleteIntellectualPropertyReport,
@@ -44,21 +45,36 @@ export function IntellectualPropertyReport(properties: {
         return refetchDataCallback();
     };
 
-    updateIntellectualPropertyReportMutationResult.called && updateIntellectualPropertyReportMutationResult.reset();
-    deleteIntellectualPropertyReportMutationResult.called && deleteIntellectualPropertyReportMutationResult.reset();
+    useResetMutationResults(updateIntellectualPropertyReportMutationResult, deleteIntellectualPropertyReportMutationResult);
 
     return (
         <Accordion key={ipr.id} expanded={expanded}
                    onChange={() => onExpandCallback(ipr.id)}
-                   disableGutters
-        >
+                   disableGutters>
             <AccordionSummary expandIcon={<ExpandMore fontSize='inherit'/>} sx={{fontWeight: 'bolder'}}>
                 <Stack direction="row" sx={{width: '100%'}}>
                     {ipr.description}
                     <Box sx={{flexGrow: 1}}/>
                     <FormDialogButton
                         title={dialogOptions.title}
-                        buttonContent={<IconButton size="small"><Edit fontSize='inherit'/></IconButton>}
+                        buttonContent={
+                            <Box
+                                component="span"
+                                role="button"
+                                tabIndex={0}
+                                aria-label="Edytuj"
+                                sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    borderRadius: '50%',
+                                    padding: '4px',
+                                    '&:hover': {backgroundColor: 'action.hover'},
+                                }}
+                            >
+                                <Edit fontSize="inherit"/>
+                            </Box>}
                         onConfirm={(value) => performEdit(value)}
                         onCancel={() => {
                             return Promise.resolve();
@@ -73,7 +89,9 @@ export function IntellectualPropertyReport(properties: {
                         (ipr.tasks || []).length === 0 && (
                             <DeleteButton
                                 confirmationMessage={'Na pewno usunąć ' + ipr!.id + ' - ' + ipr!.description + '?'}
-                                buttonContent={<IconButton size="small"><Delete fontSize='inherit'/></IconButton>}
+                                buttonContent={<IconButton size="small" aria-label={'Usuń'}>
+                                    <Delete fontSize='inherit'/>
+                                </IconButton>}
                                 object={ipr!.id}
                                 onDelete={performDelete}
                                 onCancel={() => {

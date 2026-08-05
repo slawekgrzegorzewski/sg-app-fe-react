@@ -1,3 +1,4 @@
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {Stack} from "@mui/material";
 import * as React from "react";
 import {EditorField} from "../utils/forms/Form";
@@ -58,14 +59,13 @@ export function TimeRecord(properties: {
         return refetchDataCallback();
     }
 
-    updateTimeRecordMutationResult.called && updateTimeRecordMutationResult.reset();
-    deleteTimeRecordMutationResult.called && deleteTimeRecordMutationResult.reset();
+    useResetMutationResults(updateTimeRecordMutationResult, deleteTimeRecordMutationResult);
 
     return (
         <Stack direction="row">
             <FormDialogButton
                 title={title}
-                buttonContent={<IconButton size="small"><Edit fontSize='inherit'/></IconButton>}
+                buttonContent={<IconButton size="small" aria-label={'Edytuj'}><Edit fontSize='inherit'/></IconButton>}
                 onConfirm={(value) => {
                     let taskId: number | null = value.task?.id;
                     if (taskId === NON_EXISTING_ID)
@@ -96,7 +96,7 @@ export function TimeRecord(properties: {
             />
             <DeleteButton
                 confirmationMessage={'Na pewno usunąć ' + timeRecord!.id + ' - ' + timeRecord!.description + '?'}
-                buttonContent={<IconButton size="small"><Delete fontSize='inherit'/></IconButton>}
+                buttonContent={<IconButton size="small" aria-label={'Usuń'}><Delete fontSize='inherit'/></IconButton>}
                 object={timeRecord!.id}
                 onDelete={deleteTimeRecord}
                 onCancel={() => {

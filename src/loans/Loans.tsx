@@ -1,3 +1,5 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     CreateConstantForNFirstInstallmentRateStrategyConfig,
@@ -95,17 +97,19 @@ export function Loans() {
         return refetch();
     }
 
-    createLoanMutationResult.called && createLoanMutationResult.reset();
-    deleteLoanMutationResult.called && deleteLoanMutationResult.reset();
-    createConstantForNFirstInstallmentRateStrategyConfigResult.called && createConstantForNFirstInstallmentRateStrategyConfigResult.reset();
-    deleteRateStrategyConfigResult.called && deleteRateStrategyConfigResult.reset();
-    createNthDayOfMonthRepaymentDayStrategyConfigResult.called && createNthDayOfMonthRepaymentDayStrategyConfigResult.reset();
-    deleteRepaymentDayStrategyConfigResult.called && deleteRepaymentDayStrategyConfigResult.reset();
+    useResetMutationResults(
+        createLoanMutationResult,
+        deleteLoanMutationResult,
+        createConstantForNFirstInstallmentRateStrategyConfigResult,
+        deleteRateStrategyConfigResult,
+        createNthDayOfMonthRepaymentDayStrategyConfigResult,
+        deleteRepaymentDayStrategyConfigResult
+    );
 
     if (loading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (error) {
-        return <>Error...</>
+        return <ErrorDisplay error={error}/>
     } else if (data) {
         return (
             <Grid container spacing={2}>

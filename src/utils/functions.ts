@@ -10,20 +10,14 @@ export const trimDateToMonth = (date: Date | Dayjs) => {
     return dayjs(date).startOf('month').toDate();
 }
 
-export const compareDates = (d1: Date, d2: Date) => {
-    return d1.getDate() - d2.getDate();
-};
-
-export const maxDate = (dates: Date[]) => {
+export const maxDate = (dates: Date[]): Date => {
     if (dates.length === 0) return new Date();
-    if (dates.length === 1) return dates[0];
     return dates.reduce((d1, d2) => d1 > d2 ? d1 : d2);
 }
 
-export const minDate = (dates: Dayjs[]) => {
-    if (dates.length === 0) return new Date();
-    if (dates.length === 1) return dates[0];
-    return dates.reduce((d1, d2) => d1 > d2 ? d2 : d1);
+export const minDate = (dates: Dayjs[]): Dayjs => {
+    if (dates.length === 0) return dayjs();
+    return dates.reduce((d1, d2) => d1.isBefore(d2) ? d1 : d2);
 }
 
 export const formatMonetaryAmount = (monetaryAmount: GQLMonetaryAmount) => {

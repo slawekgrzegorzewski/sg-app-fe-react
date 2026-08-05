@@ -1,3 +1,4 @@
+import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation} from "@apollo/client/react";
 import {
     DeleteTask,
@@ -114,14 +115,17 @@ export function Task(properties: {
         return refetchDataCallback();
     };
 
-    updateTaskMutationResult.called && updateTaskMutationResult.reset();
-    deleteTaskMutationResult.called && deleteTaskMutationResult.reset();
-    uploadTaskAttachmentMutationResult.called && uploadTaskAttachmentMutationResult.reset();
-    deleteTaskAttachmentMutationResult.called && deleteTaskAttachmentMutationResult.reset();
+    useResetMutationResults(
+        updateTaskMutationResult,
+        deleteTaskMutationResult,
+        uploadTaskAttachmentMutationResult,
+        deleteTaskAttachmentMutationResult
+    );
 
     const datesAsNumbers = task.timeRecords.map(timeRecord => timeRecord.date.getTime());
-    const minDate = new Date(Math.min(...datesAsNumbers));
-    const maxDate = new Date(Math.max(...datesAsNumbers));
+    const hasTimeRecords = datesAsNumbers.length > 0;
+    const minDate = hasTimeRecords ? new Date(Math.min(...datesAsNumbers)) : null;
+    const maxDate = hasTimeRecords ? new Date(Math.max(...datesAsNumbers)) : null;
     const hours = task.timeRecords.map(timeRecord => timeRecord.numberOfHours).reduce((hours1, hours2) => hours1 + hours2, 0);
 
     return (
@@ -134,7 +138,7 @@ export function Task(properties: {
                     <FormDialogButton
                         title={dialogOptions.title}
                         buttonContent={
-                            <IconButton size={'small'}>
+                            <IconButton size={'small'} aria-label={'Edytuj zadanie'}>
                                 <Edit fontSize='inherit'/>
                             </IconButton>
                         }
@@ -152,7 +156,7 @@ export function Task(properties: {
                         (task.timeRecords || []).length === 0 && (
                             <DeleteButton
                                 confirmationMessage={'Na pewno usunąć ' + task!.id + ' - ' + task!.description + '?'}
-                                buttonContent={<IconButton size={'small'}><Delete fontSize='inherit'/></IconButton>}
+                                buttonContent={<IconButton size={'small'} aria-label={'Usuń'}><Delete fontSize='inherit'/></IconButton>}
                                 object={task!.id}
                                 onDelete={deleteTask}
                                 onCancel={() => {
@@ -176,9 +180,11 @@ export function Task(properties: {
                         (hours > 0) && (
                             <Stack direction="row" justifyContent="space-between">
                                 <div>Zarejestrowany czas:</div>
-                                <div>{dayjs(minDate).format("YYYY-MM-DD")} - {dayjs(maxDate).format("YYYY-MM-DD")} - {hours} godzin</div>
+                                <div>{minDate && maxDate
+                                    ? `${dayjs(minDate).format("YYYY-MM-DD")} - ${dayjs(maxDate).format("YYYY-MM-DD")} - `
+                                    : ''}{hours} godzin</div>
                                 <ShowInformationButton title={'Szczegóły zadania'} onClose={() => Promise.resolve()}
-                                                       buttonContent={<IconButton size={'small'}><Loupe fontSize='inherit'/></IconButton>}>
+                                                       buttonContent={<IconButton size={'small'} aria-label={'Szczegóły'}><Loupe fontSize='inherit'/></IconButton>}>
                                     <Stack direction="column">
                                         <b>{task.description}</b>
                                         {
@@ -198,7 +204,8 @@ export function Task(properties: {
                         <div>{task.attachments.length === 0 ? 'Brak załączników' : 'Załączniki:'}</div>
                         <IconButton
                             component="label"
-                            size="small">
+                            size="small"
+                            aria-label={'Dodaj załączniki'}>
                             <Upload fontSize='inherit'/>
                             <VisuallyHiddenInput
                                 type="file"
@@ -214,14 +221,15 @@ export function Task(properties: {
                                 <Stack direction="row">
                                     <DeleteButton
                                         confirmationMessage={'Na pewno usunąć \'' + attachmentName + '\'?'}
-                                        buttonContent={<IconButton size={'small'}><Delete
+                                        buttonContent={<IconButton size={'small'} aria-label={'Usuń'}><Delete
                                             fontSize='inherit'/></IconButton>}
                                         object={{fileName: attachmentName, taskId: task.id}}
                                         onDelete={deleteTaskAttachment}
                                         onCancel={() => {
                                             return Promise.resolve();
                                         }}/>
-                                    <IconButton onClick={() => downloadAttachment(attachmentName)} size="small">
+                                    <IconButton onClick={() => downloadAttachment(attachmentName)} size="small"
+                                                aria-label={'Pobierz ' + attachmentName}>
                                         <Download fontSize='inherit'/>
                                     </IconButton>
                                 </Stack>

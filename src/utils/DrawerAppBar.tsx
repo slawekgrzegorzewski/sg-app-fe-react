@@ -1,3 +1,4 @@
+import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
 import * as React from 'react';
 import {useState} from 'react';
 import AppBar from '@mui/material/AppBar';
@@ -85,9 +86,9 @@ export default function DrawerAppBar(props: Props) {
     const hideWhenXS = {display: {xs: 'none', sm: 'block'}};
 
     if (domainsDataLoading) {
-        return <>Loading...</>
+        return <LoadingIndicator/>
     } else if (domainsDataError) {
-        return <>Error...</>
+        return <ErrorDisplay error={domainsDataError}/>
     } else if (domainsData) {
         return (
             <DomainsContext.Provider

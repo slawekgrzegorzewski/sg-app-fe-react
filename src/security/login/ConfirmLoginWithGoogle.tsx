@@ -1,37 +1,49 @@
 import './loginWithGoogle'
 import {useMutation} from "@apollo/client/react";
 import {LoginWithGoogle, LoginWithGoogleMutation} from "../../types";
-import React from "react";
+import React, {useEffect, useRef} from "react";
 import {useCurrentUser} from "../../utils/users/use-current-user";
-import getUserApplications, {Application} from "../../utils/applications/applications-access";
+import getUserApplications from "../../utils/applications/applications-access";
 import {Navigate} from "react-router-dom";
+import {logError} from "../../utils/logger";
 
 export function ConfirmLoginWithGoogle({googleToken}: { googleToken: string }) {
-    const [loginWithGoogleGraphqlMutation, loginWithGoogleGraphqlMutationResult] = useMutation<LoginWithGoogleMutation>(LoginWithGoogle);
+    const [loginWithGoogleGraphqlMutation] = useMutation<LoginWithGoogleMutation>(LoginWithGoogle);
     const {user, setCurrentUser} = useCurrentUser();
 
+    const exchangedToken = useRef<string | null>(null);
 
-    if (loginWithGoogleGraphqlMutationResult.called || loginWithGoogleGraphqlMutationResult.loading) {
-        return <></>;
-    } else if (user) {
-        return <Navigate to={'/'}></Navigate>;
-    } else {
+    useEffect(() => {
+        if (!googleToken || exchangedToken.current === googleToken) {
+            return;
+        }
+        exchangedToken.current = googleToken;
+
+        let cancelled = false;
         loginWithGoogleGraphqlMutation({variables: {token: googleToken}})
-            .catch((error) =>
-                console.log(error)
-            )
             .then(value => {
-                if (!value || !value.data) return;
-                const {jwt, user} = value!.data!.loginWithGoogleToken!
-                const applications: Application[] = getUserApplications(user);
+                const loggedIn = value.data?.loginWithGoogleToken;
+                if (cancelled || !loggedIn) {
+                    return;
+                }
                 setCurrentUser({
-                    jwtToken: jwt,
-                    user: user,
-                    applications: applications
+                    jwtToken: loggedIn.jwt,
+                    user: loggedIn.user,
+                    applications: getUserApplications(loggedIn.user)
                 });
-
+            })
+            .catch(error => {
+                exchangedToken.current = null;
+                logError('Google login failed', error);
             });
 
-        return <></>;
+        return () => {
+            cancelled = true;
+        };
+    }, [googleToken, loginWithGoogleGraphqlMutation, setCurrentUser]);
+
+    if (user) {
+        return <Navigate to={'/'}/>;
     }
+    return <></>;
 }
