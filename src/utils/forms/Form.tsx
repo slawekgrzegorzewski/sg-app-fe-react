@@ -314,6 +314,7 @@ export default function Form<T>({
                     {(showControlButtons) &&
                         <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
                             <Button variant="text"
+                                    color="secondary"
                                     type="submit"
                                     sx={{flexGrow: 1}}
                                     onClick={e => e.stopPropagation()}

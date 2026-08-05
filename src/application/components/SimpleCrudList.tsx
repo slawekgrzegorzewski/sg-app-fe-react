@@ -180,7 +180,7 @@ export function SimpleCrudList<T>({
                         return Promise.resolve();
                     }}
                     buttonContent={
-                        <IconButton color="primary" size={'small'}>
+                        <IconButton color="secondary" size={'small'}>
                             <Add/>
                         </IconButton>}
                     formProps={formSupplier()}/>

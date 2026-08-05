@@ -246,8 +246,8 @@ export function CubesMainPage() {
                            userSelect: 'none',
                        }}>
                     <Stack sx={{
-                        backgroundColor: '#c6efce',
-                        color: '#006100',
+                        backgroundColor: 'success.light',
+                        color: 'success.dark',
                         width: '50%',
                         justifyContent: 'center',
                         alignItems: 'center'
@@ -256,8 +256,8 @@ export function CubesMainPage() {
                         <b>ZAPISZ</b>
                     </Stack>
                     <Stack sx={{
-                        backgroundColor: '#ffc7ce',
-                        color: '#9c0006',
+                        backgroundColor: 'error.light',
+                        color: 'error.dark',
                         width: '50%',
                         justifyContent: 'center',
                         alignItems: 'center'

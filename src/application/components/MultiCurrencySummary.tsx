@@ -1,6 +1,6 @@
 import React from "react";
 import Decimal from "decimal.js";
-import {Stack, Theme, useTheme} from "@mui/material";
+import {Stack, Theme} from "@mui/material";
 import {formatCurrency} from "../../utils/functions";
 import {SxProps} from "@mui/system";
 import Typography from "@mui/material/Typography";
@@ -21,8 +21,6 @@ export function MultiCurrencySummary<T>({
                                             sx
                                         }: MultiCurrencySummaryProps<T>) {
 
-    const theme = useTheme();
-
     const accountBalancePerCurrency = data.reduce((collector, account) => {
         const currency = currencyExtractor(account);
         collector.set(currency, (collector.get(currency) || new Decimal(0)).add(amountExtractor(account)));
@@ -35,7 +33,7 @@ export function MultiCurrencySummary<T>({
                 {
                     [(index === 0 && header) ?
                         <Typography key={'leftColumn' + index}
-                                    sx={{paddingRight: '20px', color: theme.palette.grey['600']}}>
+                                    sx={{paddingRight: '20px', color: 'text.secondary'}}>
                             {header}
                         </Typography>
                         : null,

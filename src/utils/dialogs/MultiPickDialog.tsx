@@ -65,7 +65,7 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
                 <Button variant="text" sx={halfWidth} onClick={() => onCancel?.()}>
                     Anuluj
                 </Button>
-                <Button variant="text" sx={halfWidth} onClick={() => onClose?.(selectedValue)}>
+                <Button variant="text" sx={halfWidth} color="secondary" onClick={() => onClose?.(selectedValue)}>
                     Potwierdź
                 </Button>
             </Stack>

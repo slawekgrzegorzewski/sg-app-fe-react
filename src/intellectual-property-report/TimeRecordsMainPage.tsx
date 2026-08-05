@@ -77,7 +77,7 @@ export function TimeRecordsMainPage() {
                     <FormDialogButton
                         title={TIME_RECORD_DIALOG_TITLE}
                         buttonContent={
-                            <Button variant={'text'} size={'small'}>
+                            <Button variant={'text'} size={'small'} color="secondary">
                                 stwórz raport czasowy
                             </Button>
                         }

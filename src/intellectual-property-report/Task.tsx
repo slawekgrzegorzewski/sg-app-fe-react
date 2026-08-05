@@ -168,7 +168,7 @@ export function Task(properties: {
             </Stack>
             <Stack direction="row" justifyContent="space-between">
                 <Stack direction="column"
-                       sx={{width: '50%', borderRight: '#8e8e8e dotted', ...sidePadding}}>
+                       sx={{width: '50%', borderRight: (theme) => `1px dotted ${theme.palette.divider}`, ...sidePadding}}>
                     {
                         task.coAuthors && (
                             <div>

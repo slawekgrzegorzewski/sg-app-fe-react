@@ -157,14 +157,14 @@ export function SimpleCrudListRow<T>({
         {
             '&:hover': highlightRowOnHover
                 ? {
-                    color: theme.palette.primary.contrastText,
-                    backgroundColor: theme.palette.primary.main,
+                    color: 'primary.contrastText',
+                    backgroundColor: 'primary.main',
                 }
                 : {},
             ...(draggingInfo.mouseDirection === 'up'
-                ? {borderTop: '2px solid ' + theme.palette.primary.main}
+                ? {borderTop: `2px solid ${theme.palette.primary.main}`}
                 : draggingInfo.mouseDirection === 'down'
-                    ? {borderBottom: '2px solid ' + theme.palette.primary.main}
+                    ? {borderBottom: `2px solid ${theme.palette.primary.main}`}
                     : {}),
             ...(rowStyle?.(entity, index) || {}),
         },

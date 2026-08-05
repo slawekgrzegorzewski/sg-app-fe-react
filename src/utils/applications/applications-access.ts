@@ -39,7 +39,7 @@ export const applications = new Map<ApplicationId, Application>([
             ['BILLING_PERIODS', {
                 id: 'BILLING_PERIODS',
                 links: ['', '/', 'home'],
-                label: 'Okresy rozliczeniowe'
+                label: 'Miesiące'
             } as ApplicationPage],
             ['ACCOUNTS', {id: 'ACCOUNTS', links: ['accounts'], label: 'Konta'} as ApplicationPage],
             ['LOANS', {id: 'LOANS', links: ['loans'], label: 'Pożyczki'} as ApplicationPage],

@@ -145,7 +145,7 @@ export function BillingPeriods() {
                     {
                         !data.billingPeriod.billingPeriod && billingPeriodCreationBlocker && noCreationBlockers(billingPeriodCreationBlocker) && (
                             <Stack direction={'row'}>
-                                <Button onClick={async () => {
+                                <Button color="secondary" onClick={async () => {
                                     await client.clearStore()
                                         .then(() => setShowFinishBillingPeriodConfirmationDialog(false))
                                         .then(() => createBillingPeriodMutation({variables: {yearMonth: dayjs(yearMonth).format(YEAR_MONTH_FORMAT)}}))
@@ -183,8 +183,8 @@ export function BillingPeriods() {
                 </Stack>
                 <ConfirmationDialog
                     companionObject={billingPeriod}
-                    title={'Czy na pewno zakończyć ten okres rozliczeniowy?'}
-                    message={'Czy na pewno zakończyć ten okres rozliczeniowy?'}
+                    title={'Czy na pewno zakończyć ten miesiąc?'}
+                    message={'Czy na pewno zakończyć ten miesiąc?'}
                     open={showFinishBillingPeriodConfirmationDialog}
                     onConfirm={async () => {
                         await client.clearStore()

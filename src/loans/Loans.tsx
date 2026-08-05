@@ -122,7 +122,7 @@ export function Loans() {
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
-                                buttonContent={<Button size={'small'} variant={'text'}>stwórz pożyczkę</Button>}
+                                buttonContent={<Button size={'small'} variant={'text'} color="secondary">stwórz pożyczkę</Button>}
                                 formProps={CREATE_LOAN_FORM_PROPS(['PLN'], data.loans.rateStrategyConfigs, data.loans.repaymentDayStrategyConfigs)}
                             />
                         </Stack>
@@ -159,7 +159,7 @@ export function Loans() {
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
-                                buttonContent={<Button size={'small'} variant={'text'}>Stwórz nowy</Button>}
+                                buttonContent={<Button size={'small'} variant={'text'} color="secondary">Stwórz nowy</Button>}
                                 formProps={CREATE_RATE_STRATEGY_CONFIG()}
                             />
 

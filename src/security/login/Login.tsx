@@ -82,6 +82,7 @@ export function Login() {
                     <Stack direction={'row'} justifyContent={'center'} spacing={4} alignItems={"center"}>
                         <Button
                             variant="outlined"
+                            color="secondary"
                             onClick={performLogin}
                             disabled={!validateLoginForm()}>
                             Zaloguj się

@@ -98,7 +98,7 @@ export function Register() {
                                })}
                                sx={{width: '100%'}}
                                required/>
-                    <Button variant="outlined" onClick={setupMFA} disabled={!validateMFASetupForm()}>
+                    <Button variant="outlined" color="secondary" onClick={setupMFA} disabled={!validateMFASetupForm()}>
                         Zapisz
                     </Button>
                 </Stack>
@@ -173,7 +173,7 @@ export function Register() {
                                })}
                                sx={{width: '100%'}}
                                required/>
-                    <Button variant="outlined" onClick={performRegistration} disabled={!validateRegistrationForm()}>
+                    <Button variant="outlined" color="secondary" onClick={performRegistration} disabled={!validateRegistrationForm()}>
                         Zarejestruj się
                     </Button>
                     <p>Masz już konto? <Link href="/login">Zaloguj się tutaj</Link></p>

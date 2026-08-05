@@ -11,12 +11,16 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from "../application/components/CurrentUserDisplay";
-import ApplicationAndDomainPicker from "./ApplicationAndDomainPicker";
 import {useCurrentUser} from "./users/use-current-user";
 import {Backdrop, CircularProgress, Link, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 import {useApplication} from "./applications/use-application";
-import {applications} from "./applications/applications-access";
+import {applications, ApplicationId} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
+import {useApplicationAndDomain} from "./use-application-and-domain";
+import {useThemeMode, ThemeMode} from "./ThemeContext";
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     AcceptInvitationToDomain,
@@ -59,15 +63,34 @@ export const ShowBackdropContext = React.createContext<{
 export default function DrawerAppBar(props: Props) {
     const {changePage} = useApplicationNavigation();
     const {currentApplicationId} = useApplication();
+    const {currentDomainPublicId, changeCurrentSettings} = useApplicationAndDomain();
     const theme = useTheme();
+    const {mode, setMode} = useThemeMode();
     const {window, children} = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
-    const {deleteCurrentUser} = useCurrentUser();
+    const {user, deleteCurrentUser} = useCurrentUser();
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const [appMenuAnchor, setAppMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const [domainMenuAnchor, setDomainMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const [drawerAppExpanded, setDrawerAppExpanded] = useState(false);
+    const [drawerDomainExpanded, setDrawerDomainExpanded] = useState(false);
+    const [drawerUserExpanded, setDrawerUserExpanded] = useState(false);
     const [showInfiniteBackdrop, setShowInfiniteBackdrop] = useState(false);
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
+
+    const cycleThemeMode = () => {
+        const modes: ThemeMode[] = ['light', 'dark', 'auto'];
+        const currentIndex = modes.indexOf(mode);
+        setMode(modes[(currentIndex + 1) % modes.length]);
+    };
+
+    const themeIcon = mode === 'light'
+        ? <LightModeIcon/>
+        : mode === 'dark'
+            ? <DarkModeIcon/>
+            : <BrightnessAutoIcon/>;
 
     const {
         loading: domainsDataLoading,
@@ -98,7 +121,7 @@ export default function DrawerAppBar(props: Props) {
                 }}>
                 <Stack direction="column" sx={{width: '100dvw', height: '100dvh'}}>
                     <Backdrop
-                        sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                        sx={{color: 'common.white', zIndex: (theme) => theme.zIndex.drawer + 1}}
                         open={showInfiniteBackdrop}>
                         <CircularProgress color="inherit"/>
                     </Backdrop>
@@ -149,14 +172,69 @@ export default function DrawerAppBar(props: Props) {
                             >
                                 <MenuIcon/>
                             </IconButton>
+                            <Box sx={{display: {xs: 'none', sm: 'flex'}, flexWrap: 'wrap', gap: 0.5, alignItems: 'center'}}>
+                            <Button
+                                onClick={(e) => setAppMenuAnchor(e.currentTarget)}
+                                sx={(t) => ({
+                                    color: t.palette.secondary.light,
+                                    backgroundColor: `${t.palette.secondary.light}22`,
+                                    whiteSpace: 'nowrap',
+                                    px: 2,
+                                    py: 0.5,
+                                    '&:hover': {
+                                        backgroundColor: `${t.palette.secondary.light}40`,
+                                    },
+                                })}
+                            >
+                                {applications.get(currentApplicationId)?.name || currentApplicationId}
+                            </Button>
+                            <Menu
+                                anchorEl={appMenuAnchor}
+                                open={Boolean(appMenuAnchor)}
+                                onClose={() => setAppMenuAnchor(null)}
+                            >
+                                {user!.applications.map(app => (
+                                    <MenuItem
+                                        key={app.id}
+                                        selected={app.id === currentApplicationId}
+                                        onClick={() => {
+                                            changeCurrentSettings(app.id as ApplicationId, currentDomainPublicId!);
+                                            setAppMenuAnchor(null);
+                                        }}
+                                    >
+                                        {app.name}
+                                    </MenuItem>
+                                ))}
+                            </Menu>
                             {
                                 Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
-                                    <Button color="inherit" onClick={() => changePage(page.links[0])} key={page.id}>
+                                    <Button
+                                        onClick={() => changePage(page.links[0])}
+                                        key={page.id}
+                                        sx={(t) => ({
+                                            color: t.palette.secondary.light,
+                                            backgroundColor: `${t.palette.secondary.light}22`,
+                                            whiteSpace: 'nowrap',
+                                            px: 2,
+                                            py: 0.5,
+                                            '&:hover': {
+                                                backgroundColor: `${t.palette.secondary.light}40`,
+                                            },
+                                        })}
+                                    >
                                         {page.label}
                                     </Button>))
                             }
+                            </Box>
                             <Box sx={{flexGrow: 1}}/>
-                            <ApplicationAndDomainPicker sx={hideWhenXS}/>
+                            <IconButton
+                                color="inherit"
+                                onClick={cycleThemeMode}
+                                aria-label="Toggle theme"
+                                title={`Theme: ${mode}`}
+                            >
+                                {themeIcon}
+                            </IconButton>
                             <Button key="account"
                                     variant="text"
                                     onClick={(event) => setMenuAnchor(event.currentTarget)}
@@ -188,7 +266,47 @@ export default function DrawerAppBar(props: Props) {
                                 </MenuItem>
                             </Menu>
                             <Link href={process.env.REACT_APP_OLD_APP_URL}
-                                  sx={{color: theme.palette.primary.contrastText, ...hideWhenXS}}>STARA APLIKACJA</Link>
+                                  sx={{color: 'primary.contrastText', ...hideWhenXS}}>STARA APLIKACJA</Link>
+                            {(() => {
+                                const domains = [...domainsData.settings.domains].map(mapDomain).filter(d => d.name !== '');
+                                const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
+                                return domains.length > 0 ? <>
+                                    <Button
+                                        onClick={(e) => setDomainMenuAnchor(e.currentTarget)}
+                                        sx={(t) => ({
+                                            ...hideWhenXS,
+                                            color: t.palette.secondary.light,
+                                            backgroundColor: `${t.palette.secondary.light}22`,
+                                            ml: 1,
+                                            px: 2,
+                                            py: 0.5,
+                                            '&:hover': {
+                                                backgroundColor: `${t.palette.secondary.light}40`,
+                                            },
+                                        })}
+                                    >
+                                        {currentDomain?.name || 'Domena'}
+                                    </Button>
+                                    <Menu
+                                        anchorEl={domainMenuAnchor}
+                                        open={Boolean(domainMenuAnchor)}
+                                        onClose={() => setDomainMenuAnchor(null)}
+                                    >
+                                        {domains.map(domain => (
+                                            <MenuItem
+                                                key={domain.publicId}
+                                                selected={domain.publicId === currentDomainPublicId}
+                                                onClick={() => {
+                                                    changeCurrentSettings(currentApplicationId, domain.publicId);
+                                                    setDomainMenuAnchor(null);
+                                                }}
+                                            >
+                                                {domain.name}
+                                            </MenuItem>
+                                        ))}
+                                    </Menu>
+                                </> : null;
+                            })()}
                         </Toolbar>
                     </AppBar>
                     <Drawer
@@ -199,23 +317,107 @@ export default function DrawerAppBar(props: Props) {
                     >
                         {(
                             <Box
-                                sx={{textAlign: 'center', backgroundColor: theme.palette.primary.main}}>
-                                <Button key="logout" onClick={(event) => {
-                                    setMenuAnchor(event.currentTarget);
-                                    handleDrawerToggle();
-                                }}
-                                        sx={{color: theme.palette.primary.contrastText}}>
+                                sx={{textAlign: 'center', backgroundColor: 'primary.main', minWidth: 250}}>
+                                <Button onClick={() => setDrawerUserExpanded(!drawerUserExpanded)}
+                                        sx={{color: 'primary.contrastText', width: '100%', py: 1.5}}>
                                     <Typography>
                                         <CurrentUserDisplay/>
                                     </Typography>
                                 </Button>
-                                <Divider/>
-                                <ApplicationAndDomainPicker onClose={handleDrawerToggle}
-                                                            sx={{color: theme.palette.primary.contrastText}}/>
-                                <Divider/>
+                                {drawerUserExpanded &&
+                                    <Button
+                                        onClick={() => {
+                                            deleteCurrentUser();
+                                            handleDrawerToggle();
+                                        }}
+                                        sx={{
+                                            color: 'primary.contrastText',
+                                            width: '100%',
+                                            py: 0.5,
+                                            pl: 4,
+                                            opacity: 0.7,
+                                        }}
+                                    >
+                                        Wyloguj
+                                    </Button>
+                                }
+                                <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}}/>
+                                <Button
+                                    onClick={() => setDrawerAppExpanded(!drawerAppExpanded)}
+                                    sx={{color: 'primary.contrastText', width: '100%', py: 1}}
+                                >
+                                    Aplikacja: {applications.get(currentApplicationId)?.name || currentApplicationId}
+                                </Button>
+                                {drawerAppExpanded && user!.applications.map(app => (
+                                    <Button
+                                        key={app.id}
+                                        onClick={() => {
+                                            changeCurrentSettings(app.id as ApplicationId, currentDomainPublicId!);
+                                            setDrawerAppExpanded(false);
+                                            handleDrawerToggle();
+                                        }}
+                                        sx={{
+                                            color: 'primary.contrastText',
+                                            width: '100%',
+                                            py: 0.5,
+                                            pl: 4,
+                                            opacity: app.id === currentApplicationId ? 1 : 0.7,
+                                            fontWeight: app.id === currentApplicationId ? 700 : 400,
+                                        }}
+                                    >
+                                        {app.name}
+                                    </Button>
+                                ))}
+                                <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}}/>
+                                {Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
+                                    <Button
+                                        key={page.id}
+                                        onClick={() => {
+                                            changePage(page.links[0]);
+                                            handleDrawerToggle();
+                                        }}
+                                        sx={{color: 'primary.contrastText', width: '100%', py: 1}}
+                                    >
+                                        {page.label}
+                                    </Button>
+                                ))}
+                                <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}}/>
                                 <Link href={process.env.REACT_APP_OLD_APP_URL}
-                                      sx={{color: theme.palette.primary.contrastText}}>STARA
+                                      sx={{color: 'primary.contrastText', display: 'block', py: 1}}>STARA
                                     APLIKACJA</Link>
+                                {(() => {
+                                    const domains = [...domainsData.settings.domains].map(mapDomain).filter(d => d.name !== '');
+                                    const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
+                                    return domains.length > 0 ? <>
+                                        <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}}/>
+                                        <Button
+                                            onClick={() => setDrawerDomainExpanded(!drawerDomainExpanded)}
+                                            sx={{color: 'primary.contrastText', width: '100%', py: 1}}
+                                        >
+                                            Domena: {currentDomain?.name || '—'}
+                                        </Button>
+                                        {drawerDomainExpanded && domains.map(domain => (
+                                            <Button
+                                                key={domain.publicId}
+                                                onClick={() => {
+                                                    changeCurrentSettings(currentApplicationId, domain.publicId);
+                                                    setDrawerDomainExpanded(false);
+                                                    handleDrawerToggle();
+                                                }}
+                                                sx={{
+                                                    color: 'primary.contrastText',
+                                                    width: '100%',
+                                                    py: 0.5,
+                                                    pl: 4,
+                                                    opacity: domain.publicId === currentDomainPublicId ? 1 : 0.7,
+                                                    fontWeight: domain.publicId === currentDomainPublicId ? 700 : 400,
+                                                }}
+                                            >
+                                                {domain.name}
+                                            </Button>
+                                        ))}
+                                    </> : null;
+                                })()}
                             </Box>
                         )}
                     </Drawer>

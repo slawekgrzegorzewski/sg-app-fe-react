@@ -9,7 +9,7 @@
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@fontsource/roboto": "^5.0.8",
+    "@fontsource/inter": "^5.3.0",
     "@mui/icons-material": "^7.3.7",
     "@mui/material": "^7.3.7",
     "@mui/x-date-pickers": "^8.27.0",
@@ -43,8 +43,8 @@
     "typescript": "5.1.6"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.28.5",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/preset-typescript": "^7.28.5",
     "@graphql-codegen/add": "^6.0.0",
     "@graphql-codegen/cli": "^6.1.1",
     "@graphql-codegen/typed-document-node": "^6.1.5",

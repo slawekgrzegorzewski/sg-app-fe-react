@@ -42,7 +42,7 @@ export default function ApplicationAndDomainPicker(properties: {
     return (<>
         <Button sx={{...properties.sx}} variant="text" onClick={() => {
             setDialogOpen(true);
-        }} color="inherit">
+        }}>
             <Stack direction="column">
                 <Typography sx={{textAlign: 'left'}}>Aplikacja: {application.name}</Typography>
                 {domain && <Typography sx={{textAlign: 'left'}}>Domena: {domain.name}</Typography>}

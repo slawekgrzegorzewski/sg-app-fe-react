@@ -7,7 +7,6 @@ export function LoginWithGoogleButton() {
 
     const navigate = useNavigate();
     const {googleToken} = useParams();
-
     useEffect(() => {
         window.handleCredentialResponse = (response: { credential: string; }) => {
             navigate('/login/' + response.credential);

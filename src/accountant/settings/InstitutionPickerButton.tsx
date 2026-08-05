@@ -13,7 +13,7 @@ export function InstitutionPickerButton({onPick}: InstitutionPickerButtonProps):
     const [showPickInstitutionDialog, setShowPickInstitutionDialog] = useState(false);
 
     return <>
-        <Button onClick={() => setShowPickInstitutionDialog(true)}>Dodaj</Button>
+        <Button color="secondary" onClick={() => setShowPickInstitutionDialog(true)}>Dodaj</Button>
         {
             showPickInstitutionDialog && (
                 <InstitutionPicker

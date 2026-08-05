@@ -6,39 +6,27 @@ import {Authenticated} from "./security/Authenticated";
 import {Login} from "./security/login/Login";
 import {ApolloClient, HttpLink, InMemoryCache} from "@apollo/client";
 import {ApolloProvider} from "@apollo/client/react";
-import '@fontsource/roboto/300.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/700.css';
+import '@fontsource/inter/300.css';
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
 import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
 import {Dispatcher} from "./application/components/dispatchers/Dispatcher";
+import {Alert, AlertTitle, Button, Stack} from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
-import {Alert, AlertTitle, Button, createTheme, Stack, ThemeProvider} from "@mui/material";
+import {AppThemeProvider} from "./utils/ThemeContext";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {logError} from "./utils/logger";
 import 'dayjs/locale/pl'
 
-const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
+const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/auth/graphql'});
 
 const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
     link: httpLink
-});
-
-const theme = createTheme({
-    // palette: {
-    //     mode: 'dark',
-    // },
-    palette: {
-        primary: {
-            main: "#2a9461"
-        },
-        secondary: {
-            main: "#494c7d"
-        }
-    },
 });
 
 const router = createBrowserRouter([
@@ -61,7 +49,7 @@ const router = createBrowserRouter([
     {
         path: "/:applicationId/:domainPublicId?/:page?/:param1?",
         element:
-            <ThemeProvider theme={theme}>
+            <AppThemeProvider>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <CssBaseline/>
                     <Authenticated>
@@ -70,7 +58,7 @@ const router = createBrowserRouter([
                         </DrawerAppBar>
                     </Authenticated>
                 </LocalizationProvider>
-            </ThemeProvider>,
+            </AppThemeProvider>,
         errorElement: <ErrorBoundary/>
     }
 ], {

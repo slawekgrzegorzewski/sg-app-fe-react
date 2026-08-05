@@ -82,7 +82,7 @@ export function IntellectualPropertiesMainPage() {
                     <FormDialogButton
                         title={IPR_DIALOG_TITLE}
                         buttonContent={
-                            <Button variant={'text'} size={'small'}>
+                            <Button variant={'text'} size={'small'} color="secondary">
                                 stwórz własność intelektualną
                             </Button>
                         }

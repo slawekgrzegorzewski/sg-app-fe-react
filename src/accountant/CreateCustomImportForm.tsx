@@ -58,15 +58,15 @@ export function CreateCustomImportForm({
         return <Typography>
             <span>Transfer </span>
             {(fromAccount && toAccount && fromAccount.length > 0 && toAccount.length > 0) && <>
-                <Box component="span" sx={{fontWeight: 900}}>
+                <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
                     {formatCurrency(fromAccount[0].currentBalance.currency.code, new Decimal(transfer.fromAmount))}
                 </Box>
                 <span> z </span>
-                <Box component="span" sx={{fontWeight: 900}}>
+                <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
                     {fromAccount[0].name}
                 </Box>
                 <span> na </span>
-                <Box component="span" sx={{fontWeight: 900}}>
+                <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
                     {toAccount[0].name}
                 </Box>
             </>}
@@ -77,13 +77,13 @@ export function CreateCustomImportForm({
         const affectedAccount = findAccount(be.affectedAccountPublicId);
         return <Typography>
             {(be.billingElementType === 'Expense' ? 'Wydatek ' : 'Przychód ')}
-            <Box component="span" sx={{fontWeight: 900}}>
+            <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
                 {affectedAccount.map(account =>
                     formatCurrency(account.currentBalance.currency.code, new Decimal(be.amount))
                 )}
             </Box>
             {(be.billingElementType === 'Expense' ? ' z ' : ' na ')}
-            <Box component="span" sx={{fontWeight: 900}}>
+            <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
                 {affectedAccount.map(account => account.name)}
             </Box>
         </Typography>;
@@ -165,6 +165,7 @@ export function CreateCustomImportForm({
             !editBillingElement && !editTransfer &&
             <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
                 <Button variant="text"
+                        color="secondary"
                         type="submit"
                         sx={{flexGrow: 1}}
                         onClick={() => {
@@ -184,6 +185,7 @@ export function CreateCustomImportForm({
                     Dodaj przychód
                 </Button>
                 <Button variant="text"
+                        color="secondary"
                         type="submit"
                         sx={{flexGrow: 1}}
                         onClick={() => {
@@ -203,6 +205,7 @@ export function CreateCustomImportForm({
                     Dodaj wydatek
                 </Button>
                 <Button variant="text"
+                        color="secondary"
                         type="submit"
                         sx={{flexGrow: 1}}
                         onClick={() => {
@@ -221,6 +224,7 @@ export function CreateCustomImportForm({
         }
         <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
             <Button variant="text"
+                    color="secondary"
                     type="submit"
                     sx={{flexGrow: 1}}
                     onClick={() => onClose({

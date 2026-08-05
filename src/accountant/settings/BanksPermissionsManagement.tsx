@@ -121,7 +121,7 @@ export function BanksPermissionsManagement() {
                                         {bankPermission.institution.name}
                                     </Typography>
 
-                                    <Button
+                                    <Button color="secondary"
                                         onClick={() => window.location.replace(bankPermission.confirmationLink)}>Autoryzuj</Button>
                                 </Stack>
                             </CardContent>
@@ -160,7 +160,7 @@ export function BanksPermissionsManagement() {
                                     <Typography variant="body1">
                                         BIC: {institution.bic}
                                     </Typography>
-                                    <Button
+                                    <Button color="secondary"
                                         onClick={() => startConfirmationProcess(institution)}>Odnów</Button>
                                 </Stack>
                             </CardContent>

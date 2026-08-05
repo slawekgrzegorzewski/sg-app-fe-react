@@ -7,7 +7,7 @@ import {
     GQLCurrencyInfo,
     GQLMonetaryAmount
 } from "./model/types";
-import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
+import {Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import {formatCurrency, minDate, trimDateToDay} from "../utils/functions";
@@ -110,7 +110,6 @@ export function BankTransactionsToImportPicker({
         transfer: null,
         ignore: null,
     });
-    const theme = useTheme();
 
     function onBankTransactionToImportClicked(accounts: GQLAccount[], bankTransactionToImport: GQLBankTransactionToImport) {
 
@@ -326,8 +325,8 @@ export function BankTransactionsToImportPicker({
                                               cursor: 'pointer',
                                               ...(selected
                                                   ? {
-                                                      color: theme.palette.primary.contrastText,
-                                                      backgroundColor: theme.palette.primary.main,
+                                                      color: 'primary.contrastText',
+                                                      backgroundColor: 'primary.main',
                                                   }
                                                   : {})
                                           }}

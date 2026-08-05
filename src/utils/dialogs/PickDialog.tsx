@@ -53,12 +53,12 @@ export default function PickDialog<T>({
             <IconButton
                 aria-label="close"
                 onClick={() => onClose()}
-                sx={(theme) => ({
+                sx={{
                     position: 'absolute',
                     right: 8,
                     top: 8,
-                    color: theme.palette.grey[500],
-                })}
+                    color: 'text.secondary',
+                }}
             >
                 <CloseIcon/>
             </IconButton>

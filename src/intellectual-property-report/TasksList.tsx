@@ -32,7 +32,7 @@ export function TasksList(properties: {
 }) {
     const {intellectualProperty, refetchDataCallback} = properties;
     const theme = useTheme();
-    const oddStyle = {backgroundColor: theme.palette.grey["300"]};
+    const oddStyle = {backgroundColor: theme.palette.action.hover};
     const [createTaskMutation, createTaskMutationResult] = useMutation<CreateTaskMutation>(CreateTask);
 
     const createTask = async (taskDTO: TaskDTO): Promise<any> => {
@@ -55,7 +55,7 @@ export function TasksList(properties: {
                 <FormDialogButton
                     title={taskDialogTitle}
                     buttonContent={
-                        <Button variant={'text'} size={'small'}>
+                        <Button variant={'text'} size={'small'} color="secondary">
                             stwórz zadanie
                         </Button>
                     }
