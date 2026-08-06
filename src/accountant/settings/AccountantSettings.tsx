@@ -1,4 +1,4 @@
-import {ErrorDisplay, LoadingIndicator} from "../../application/components/QueryState";
+import {ErrorDisplay} from "../../application/components/QueryState";
 import React, {useContext} from "react";
 import {SuppliersManagement} from "./SuppliersManagement";
 import Grid from "@mui/material/Grid";
@@ -73,7 +73,7 @@ export function AccountantSettings() {
     }
 
     if (financeManagementLoading || settingsLoading) {
-        return <LoadingIndicator/>
+        return <></>
     } else if (financeManagementError || settingsError) {
         return <ErrorDisplay error={financeManagementError || settingsError}/>
     } else if (financeManagementData && settingsData) {

@@ -4,6 +4,7 @@ import {
     defaultDataIdFromObject,
     ErrorLike,
     InMemoryCache,
+    Observable,
     ServerError,
     ServerParseError
 } from "@apollo/client";
@@ -17,6 +18,7 @@ import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
 import {Institution, SwitchDomain, SwitchDomainMutation} from "../types";
 import getUserApplications from "../utils/applications/applications-access";
 import {logError} from "../utils/logger";
+import {backdropHandle} from "../utils/GlobalBackdropContext";
 
 const httpLink = new UploadHttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
 
@@ -33,6 +35,37 @@ const authMiddleware = new ApolloLink((operation, forward) => {
         };
     });
     return forward(operation);
+});
+
+const backdropLink = new ApolloLink((operation, forward) => {
+    const label = operation.operationName;
+    backdropHandle.show(label);
+    return new Observable(observer => {
+        let hidden = false;
+        const hide = () => {
+            if (!hidden) {
+                hidden = true;
+                backdropHandle.hide(label);
+            }
+        };
+        const subscription = forward(operation).subscribe({
+            next: result => {
+                observer.next(result);
+            },
+            error: err => {
+                hide();
+                observer.error(err);
+            },
+            complete: () => {
+                hide();
+                observer.complete();
+            }
+        });
+        return () => {
+            subscription.unsubscribe();
+            hide();
+        };
+    });
 });
 
 function isUnauthenticated(error: ErrorLike): boolean {
@@ -80,13 +113,10 @@ const cache = new InMemoryCache({
     }
 });
 
-/**
- * Created once for the lifetime of the page. Rebuilding it per render would discard
- * the normalized cache on every re-render of the authenticated tree.
- */
 const apolloClient = new ApolloClient({
     cache: cache,
     link: ApolloLink.from([
+        backdropLink,
         errorHandlerLink,
         authMiddleware,
         httpLink

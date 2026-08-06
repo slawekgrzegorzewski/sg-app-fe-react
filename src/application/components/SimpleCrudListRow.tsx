@@ -1,9 +1,8 @@
 import * as React from "react";
-import {useContext, useEffect, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {Stack, Theme, useTheme} from "@mui/material";
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
-import {ShowBackdropContext} from "../../utils/DrawerAppBar";
 import {SxProps} from "@mui/system";
 
 export interface SimpleCrudListRowProps<T> {
@@ -66,7 +65,6 @@ export function SimpleCrudListRow<T>({
     const ref = useRef(null);
     const [draggingInfo, setDraggingInfo] = useState<DraggingInfo>(init);
     const theme = useTheme();
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
 
     useEffect(() => {
             const el = ref.current!;
@@ -138,19 +136,17 @@ export function SimpleCrudListRow<T>({
                             return;
                         }
                         const defaultOnReorder = () => Promise.resolve();
-                        setShowBackdrop(true);
                         (reorderProps.onReorder || defaultOnReorder)({
                             id: source.data.id as string,
                             aboveId: source.data.mouseDirection === 'up' ? reorderProps.aboveId : entityId,
                             belowId: source.data.mouseDirection === 'down' ? reorderProps.belowId : entityId
                         }).finally(() => {
-                            setShowBackdrop(false);
                             setDraggingInfo(init);
                         });
                     }
                 }));
         },
-        [entity, idExtractor, reorderProps, setShowBackdrop]
+        [entity, idExtractor, reorderProps]
     );
     return (rowContainerProvider || ROW_CONTAINER_DEFAULT_PROVIDER)(
         idExtractor(entity),

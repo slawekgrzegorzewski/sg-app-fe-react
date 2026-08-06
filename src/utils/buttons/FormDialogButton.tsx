@@ -1,7 +1,6 @@
 import * as React from "react";
-import {useContext, useState} from "react";
+import {useState} from "react";
 import {Box} from "@mui/material";
-import {ShowBackdropContext} from "../DrawerAppBar";
 import {FormProps} from "../forms/Form";
 import {FormDialog} from "../dialogs/FormDialog";
 import {activateOnEnterOrSpace} from "../../application/components/clickable";
@@ -27,7 +26,6 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     } = props;
 
     const [formDialogOpen, setFormDialogOpen] = useState(false);
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
 
     const openFormClicked = (e?: React.SyntheticEvent) => {
         setFormDialogOpen(true);
@@ -40,14 +38,12 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
 
     function confirm(object: T) {
         setFormDialogOpen(false);
-        setShowBackdrop(true);
-        return onConfirm(object).finally(() => setShowBackdrop(false));
+        return onConfirm(object);
     }
 
     function cancel() {
         setFormDialogOpen(false);
-        setShowBackdrop(true);
-        return onCancel().finally(() => setShowBackdrop(false));
+        return onCancel();
     }
 
     return <>

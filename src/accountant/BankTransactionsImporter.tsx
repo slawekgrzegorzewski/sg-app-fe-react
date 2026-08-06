@@ -1,5 +1,5 @@
 import {ErrorDisplay} from "../application/components/QueryState";
-import React, {JSX, useContext, useMemo, useState} from "react";
+import React, {JSX, useMemo, useState} from "react";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     BankTransactionsToImport,
@@ -27,7 +27,6 @@ import {
 import Typography from "@mui/material/Typography";
 import {Dayjs} from "dayjs";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
-import {ShowBackdropContext} from "../utils/DrawerAppBar";
 import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
 import ConfirmationDialog from "../utils/dialogs/ConfirmationDialog";
 import {
@@ -83,7 +82,6 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     const [transferToCreate, setTransferToCreate] = useState<TransferDTO & { possibleDays: Dayjs[] } | null>(null);
     const [transactionsToMutuallyCancelPublicId, setTransactionsToMutuallyCancelPublicId] = useState<string[] | null>(null);
     const [transactionsToCustomImport, setTransactionsToCustomImport] = useState<GQLBankTransactionToImport[] | null>(null);
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
 
    const mappedAccounts = useMemo(
         () => data?.financeManagement.accounts.map(mapAccount) ?? [],
@@ -155,15 +153,13 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                             selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId)
                                         )
                                     };
-                                    setShowBackdrop(true);
                                     (billingElementDTO.billingElementType === 'Income'
                                         ? createIncomeMutation(variables)
                                         : createExpenseMutation(variables))
                                         .then(() => {
                                             reset();
                                             onRefetch();
-                                        })
-                                        .finally(() => setShowBackdrop(false));
+                                        });
                                 }
                             }}/>
                     </DialogContent>
@@ -187,10 +183,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                             bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(bankTransaction => bankTransaction.transactionPublicId!),
                                                         }
                                                     };
-                                                    setShowBackdrop(true);
                                                     createTransferMutation(variables)
-                                                        .then(() => onRefetch())
-                                                        .finally(() => setShowBackdrop(false));
+                                                        .then(() => onRefetch());
                                                 }
                                             }}/>
                     </DialogContent>
@@ -206,10 +200,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                        transactionsPublicId: entity
                                                    }
                                                };
-                                               setShowBackdrop(true);
                                                return mutuallyCancelMutation(variables)
-                                                   .then(() => onRefetch())
-                                                   .finally(() => setShowBackdrop(false));
+                                                   .then(() => onRefetch());
                                            }}
                                            onCancel={() => {
                                                reset();
@@ -257,13 +249,11 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                             })
                                         }
                                     };
-                                    setShowBackdrop(true);
                                     importBankTransactionsMutation(variables)
                                         .then(() => {
                                             reset();
                                             onRefetch();
-                                        })
-                                        .finally(() => setShowBackdrop(false));
+                                        });
                                 }
                             }}
                         />

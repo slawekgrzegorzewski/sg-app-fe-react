@@ -1,4 +1,4 @@
-import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {ErrorDisplay} from "../application/components/QueryState";
 import * as React from 'react';
 import {useState} from 'react';
 import AppBar from '@mui/material/AppBar';
@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from "../application/components/CurrentUserDisplay";
 import {useCurrentUser} from "./users/use-current-user";
-import {Backdrop, CircularProgress, Link, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
+import {Link, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 import {useApplication} from "./applications/use-application";
 import {applications, ApplicationId} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
@@ -55,11 +55,6 @@ export const DomainsContext = React.createContext<DomainsContextType>({
     }
 });
 
-export const ShowBackdropContext = React.createContext<{
-    showBackdrop: boolean,
-    setShowBackdrop: (value: (((prevState: boolean) => boolean) | boolean)) => void
-}>({showBackdrop: false, setShowBackdrop: () => false});
-
 export default function DrawerAppBar(props: Props) {
     const {changePage} = useApplicationNavigation();
     const {currentApplicationId} = useApplication();
@@ -75,7 +70,6 @@ export default function DrawerAppBar(props: Props) {
     const [drawerAppExpanded, setDrawerAppExpanded] = useState(false);
     const [drawerDomainExpanded, setDrawerDomainExpanded] = useState(false);
     const [drawerUserExpanded, setDrawerUserExpanded] = useState(false);
-    const [showInfiniteBackdrop, setShowInfiniteBackdrop] = useState(false);
     const handleDrawerToggle = () => {
         setMobileOpen((prevState) => !prevState);
     };
@@ -109,7 +103,7 @@ export default function DrawerAppBar(props: Props) {
     const hideWhenXS = {display: {xs: 'none', sm: 'block'}};
 
     if (domainsDataLoading) {
-        return <LoadingIndicator/>
+        return <></>
     } else if (domainsDataError) {
         return <ErrorDisplay error={domainsDataError}/>
     } else if (domainsData) {
@@ -120,11 +114,6 @@ export default function DrawerAppBar(props: Props) {
                     refreshDomains: domainsDataRefetch
                 }}>
                 <Stack direction="column" sx={{width: '100dvw', height: '100dvh'}}>
-                    <Backdrop
-                        sx={{color: 'common.white', zIndex: (theme) => theme.zIndex.drawer + 1}}
-                        open={showInfiniteBackdrop}>
-                        <CircularProgress color="inherit"/>
-                    </Backdrop>
                     <AppBar position="sticky">
                         {
                             domainsData.domainInvitations.length > 0 &&
@@ -143,18 +132,14 @@ export default function DrawerAppBar(props: Props) {
                                                     <Grid>{invitation.name}</Grid>
                                                     <Grid container direction={'row'}>
                                                         <Grid onClick={() => {
-                                                            setShowInfiniteBackdrop(true);
                                                             acceptInvitationToDomainMutation({variables: {domainPublicId: invitation.publicId}})
                                                                 .then(deleteCurrentUser)
-                                                                .finally(() => setShowInfiniteBackdrop(false))
                                                         }}>
                                                             <CheckIcon/>
                                                         </Grid>
                                                         <Grid onClick={() => {
-                                                            setShowInfiniteBackdrop(true);
                                                             rejectInvitationToDomainMutation({variables: {domainPublicId: invitation.publicId}})
                                                                 .then(domainsDataRefetch)
-                                                                .finally(() => setShowInfiniteBackdrop(false))
                                                         }}>
                                                             <CloseIcon/>
                                                         </Grid>
@@ -426,10 +411,7 @@ export default function DrawerAppBar(props: Props) {
                         )}
                     </Drawer>
                     <Offset sx={{flexGrow: 1}}>
-                        <ShowBackdropContext.Provider
-                            value={{showBackdrop: showInfiniteBackdrop, setShowBackdrop: setShowInfiniteBackdrop}}>
-                            {children}
-                        </ShowBackdropContext.Provider>
+                        {children}
                     </Offset>
                 </Stack>
             </DomainsContext.Provider>

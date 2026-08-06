@@ -1,7 +1,5 @@
 import * as React from "react";
-import {useContext} from "react";
 import {Dialog, DialogContent, DialogTitle} from "@mui/material";
-import {ShowBackdropContext} from "../DrawerAppBar";
 import Form, {FormProps} from "../forms/Form";
 
 export interface FormDialogProps<T> {
@@ -25,20 +23,6 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
         dialogOptions
     } = props;
 
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
-
-
-    function cancelEdit() {
-        setShowBackdrop(true);
-        onCancel().finally(() => setShowBackdrop(false));
-    }
-
-    function performEdit(object: T) {
-        setShowBackdrop(true);
-        onConfirm(object).finally(() => setShowBackdrop(false));
-
-    }
-
     const handleClick = (e: React.MouseEvent<HTMLElement>) => {
         e.stopPropagation();
     };
@@ -48,8 +32,8 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
         <DialogContent onClick={handleClick}>
             <>
                 <Form
-                    onSave={performEdit}
-                    onCancel={cancelEdit}
+                    onSave={onConfirm}
+                    onCancel={onCancel}
                     {...formProps}
                 />
                 {children && children}

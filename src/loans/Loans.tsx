@@ -1,4 +1,4 @@
-import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {ErrorDisplay} from "../application/components/QueryState";
 import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
@@ -107,7 +107,7 @@ export function Loans() {
     );
 
     if (loading) {
-        return <LoadingIndicator/>
+        return <></>
     } else if (error) {
         return <ErrorDisplay error={error}/>
     } else if (data) {

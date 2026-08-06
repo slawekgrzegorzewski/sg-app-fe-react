@@ -4,7 +4,7 @@ import * as React from "react";
 import {remainingCapital} from "./utils/loan-form";
 import Decimal from "decimal.js";
 import {InstallmentsTable, mapInstallmentsFromSimulation} from "./InstallmentsTable";
-import {ErrorDisplay, LoadingIndicator} from "../application/components/QueryState";
+import {ErrorDisplay} from "../application/components/QueryState";
 
 export type LoanSimulationProps = {
     loan: Loan
@@ -23,7 +23,7 @@ export function LoanSimulation({loan, monthlyBudget, yearlyBudget}: LoanSimulati
     });
 
     if (loading) {
-        return <LoadingIndicator/>
+        return <></>
     } else if (error) {
         return <ErrorDisplay error={error}/>
     } else if (data) {

@@ -201,7 +201,7 @@ export function CubesMainPage() {
             }
             {
                 !fullScreen && (<StopWatch
-                        sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : 'black'}}
+                        sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : theme.palette.text.primary}}
                         startTrigger={startTrigger}
                         stopTrigger={stopTrigger}
                         resetTrigger={resetTrigger}

@@ -13,6 +13,7 @@ import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
 import {Register} from "./security/register/Register";
 import DrawerAppBar from "./utils/DrawerAppBar";
+import {GlobalBackdropProvider} from "./utils/GlobalBackdropContext";
 import {Dispatcher} from "./application/components/dispatchers/Dispatcher";
 import {Alert, AlertTitle, Button, Stack} from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -52,11 +53,13 @@ const router = createBrowserRouter([
             <AppThemeProvider>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <CssBaseline/>
-                    <Authenticated>
-                        <DrawerAppBar>
-                            <Dispatcher/>
-                        </DrawerAppBar>
-                    </Authenticated>
+                    <GlobalBackdropProvider>
+                        <Authenticated>
+                            <DrawerAppBar>
+                                <Dispatcher/>
+                            </DrawerAppBar>
+                        </Authenticated>
+                    </GlobalBackdropProvider>
                 </LocalizationProvider>
             </AppThemeProvider>,
         errorElement: <ErrorBoundary/>

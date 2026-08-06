@@ -1,7 +1,5 @@
 import {Button, Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import * as React from "react";
-import {useContext} from "react";
-import {ShowBackdropContext} from "../DrawerAppBar";
 
 export interface ConfirmationDialogProps<T> {
     companionObject: T,
@@ -13,21 +11,15 @@ export interface ConfirmationDialogProps<T> {
 }
 
 export default function ConfirmationDialog<T>(props: ConfirmationDialogProps<T>) {
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
 
     const {title, message, open, onConfirm, onCancel, companionObject} = props;
-
-    const doButtonAction = (action: () => Promise<void>) => {
-        setShowBackdrop(true);
-        action().finally(() => setShowBackdrop(false));
-    };
 
     const handleClose = (e: React.MouseEvent<HTMLElement>, r: string) => {
         e.stopPropagation();
         if (!['backdropClick', 'escapeKeyDown', 'cancel'].includes(r)) {
-            doButtonAction(() => onConfirm(companionObject));
+            onConfirm(companionObject);
         } else {
-            doButtonAction(() => onCancel(companionObject));
+            onCancel(companionObject);
         }
     };
 

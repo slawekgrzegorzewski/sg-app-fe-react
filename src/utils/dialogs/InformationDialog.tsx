@@ -1,7 +1,5 @@
 import {Button, Dialog, DialogContent, DialogTitle, Stack, Theme} from "@mui/material";
 import * as React from "react";
-import {useContext} from "react";
-import {ShowBackdropContext} from "../DrawerAppBar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -18,22 +16,12 @@ export interface InformationDialogProps {
 }
 
 export default function InformationDialog(props: InformationDialogProps) {
-    const {setShowBackdrop} = useContext(ShowBackdropContext);
 
     const {title, message, children, open, onClose, dialogOptions} = props;
 
-    const doButtonAction = (action: () => Promise<void>) => {
-        setShowBackdrop(true);
-        action().finally(() => setShowBackdrop(false));
-    };
-
     const handleClose = (e: React.MouseEvent<HTMLElement>, r: string = '') => {
         e.stopPropagation();
-        if (!['backdropClick', 'escapeKeyDown', 'cancel'].includes(r)) {
-            doButtonAction(() => onClose());
-        } else {
-            doButtonAction(() => onClose());
-        }
+        onClose();
     };
 
     return (
