@@ -1,12 +1,6 @@
 import {clickableProps} from "../application/components/clickable";
 import React, {JSX, useState} from "react";
-import {
-    GQLAccount,
-    GQLBankTransactionToImport,
-    GQLBillingElementType,
-    GQLCurrencyInfo,
-    GQLMonetaryAmount
-} from "./model/types";
+import {BillingElementType} from "./model/types";
 import {Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
@@ -19,6 +13,7 @@ import {DebugDisplayObject} from "../utils/DebugDisplayObject";
 import Decimal from "decimal.js";
 import {BillingElementDTO} from "./CreateBillingElementForm";
 import {TransferDTO} from "./CreateTransferForm";
+import {Account, BankTransactionToImport, CurrencyInfo, MonetaryAmount} from "../types";
 
 type BillingElementImport = { importType: 'billingElement', data: BillingElementDTO };
 type TransferImport = { importType: 'transfer', data: TransferDTO & { possibleDays: Dayjs[] } };
@@ -27,7 +22,7 @@ type CustomImport = { importType: 'custom' };
 export type ImportDecision = BillingElementImport | TransferImport | MutuallyIgnoreImport | CustomImport
 
 export type PickOption = {
-    selectedBankTransactions: GQLBankTransactionToImport[],
+    selectedBankTransactions: BankTransactionToImport[],
     importDecision: ImportDecision
 }
 
@@ -48,33 +43,33 @@ export function isCustomImport(importDecision: ImportDecision): importDecision i
 }
 
 export interface BankTransactionsToImportPickerProps {
-    accounts: GQLAccount[];
-    bankTransactions: GQLBankTransactionToImport[];
+    accounts: Account[];
+    bankTransactions: BankTransactionToImport[];
     onClose: (pickOption: PickOption | null) => void;
 }
 
 export type BillingElementToImport = {
     description: string,
     amount: Decimal,
-    currency: GQLCurrencyInfo,
+    currency: CurrencyInfo,
     accountPublicId: string,
     date: Dayjs,
 };
 
 export type TransferToImport = {
     description: string,
-    currency: GQLCurrencyInfo,
+    currency: CurrencyInfo,
     possibleDates: Dayjs[],
     fromAccountPublicId?: string,
-    fromCurrency?: GQLCurrencyInfo,
+    fromCurrency?: CurrencyInfo,
     toAccountPublicId?: string,
-    toCurrency?: GQLCurrencyInfo,
+    toCurrency?: CurrencyInfo,
     fromAccountDebit: Decimal,
     toAccountCredit: Decimal
 };
 
 export type TransactionsToIgnore = {
-    balance: GQLMonetaryAmount
+    balance: MonetaryAmount
 };
 
 export type ImportType = 'debit' | 'credit' | 'transfer' | 'ignore';
@@ -103,7 +98,7 @@ export function BankTransactionsToImportPicker({
                                                    onClose
                                                }: BankTransactionsToImportPickerProps): JSX.Element {
 
-    const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<GQLBankTransactionToImport[]>([]);
+    const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<BankTransactionToImport[]>([]);
     const [possibleImports, setPossibleImports] = useState<PossibleImports>({
         debit: null,
         credit: null,
@@ -111,13 +106,13 @@ export function BankTransactionsToImportPicker({
         ignore: null,
     });
 
-    function onBankTransactionToImportClicked(accounts: GQLAccount[], bankTransactionToImport: GQLBankTransactionToImport) {
+    function onBankTransactionToImportClicked(accounts: Account[], bankTransactionToImport: BankTransactionToImport) {
 
         const addTransactionToBillingElement = (
-            billingElementType: GQLBillingElementType,
+            billingElementType: BillingElementType,
             billingElement: BillingElementToImport | "not possible" | null,
-            transaction: GQLBankTransactionToImport,
-            currency: GQLCurrencyInfo) => {
+            transaction: BankTransactionToImport,
+            currency: CurrencyInfo) => {
             if (billingElement === 'not possible') {
                 return billingElement;
             }
@@ -127,14 +122,14 @@ export function BankTransactionsToImportPicker({
                 return 'not possible';
             }
             const amount = transactionIsCredit
-                ? (billingElementType === 'Income' ? transaction.credit : transaction.credit.negated())
-                : (billingElementType === 'Expense' ? transaction.debit : transaction.debit.negated());
+                ? (billingElementType === 'Income' ? transaction.credit : -transaction.credit)
+                : (billingElementType === 'Expense' ? transaction.debit : -transaction.debit);
             const accountPublicId = transactionIdDebit ? transaction.sourceAccountPublicId : transaction.destinationAccountPublicId;
             if (!billingElement) {
                 billingElement = {
                     accountPublicId: accountPublicId,
                     description: transaction.description,
-                    amount: amount,
+                    amount: new Decimal(amount),
                     currency: currency,
                     date: dayjs(transaction.timeOfTransaction)
                 } as BillingElementToImport;
@@ -143,9 +138,9 @@ export function BankTransactionsToImportPicker({
                     billingElement = {
                         accountPublicId: accountPublicId,
                         description: transaction.description + '\n' + billingElement.description,
-                        amount: billingElement.amount.plus(amount),
+                        amount: billingElement.amount.plus(new Decimal(amount)),
                         currency: billingElement.currency,
-                        date: minDate([billingElement.date, dayjs(trimDateToDay(transaction.timeOfTransaction))])
+                        date: minDate([billingElement.date, dayjs(trimDateToDay(dayjs(transaction.timeOfTransaction)))])
                     } as BillingElementToImport;
                 } else {
                     billingElement = "not possible";
@@ -156,7 +151,7 @@ export function BankTransactionsToImportPicker({
 
         const addTransactionToTransfer = (
             transfer: TransferToImport | "not possible" | null,
-            transaction: GQLBankTransactionToImport) => {
+            transaction: BankTransactionToImport) => {
 
             if (transfer === 'not possible') {
                 return transfer;
@@ -178,9 +173,9 @@ export function BankTransactionsToImportPicker({
                     fromAccountPublicId: transaction.sourceAccountPublicId,
                     toAccountPublicId: transaction.destinationAccountPublicId,
                     description: transaction.description,
-                    fromAccountDebit: transaction.debit,
+                    fromAccountDebit: new Decimal(transaction.debit),
                     fromCurrency: fromCurrency,
-                    toAccountCredit: transaction.credit,
+                    toAccountCredit: new Decimal(transaction.credit),
                     toCurrency: toCurrency,
                     possibleDates: [transactionDate]
                 } as TransferToImport;
@@ -196,9 +191,9 @@ export function BankTransactionsToImportPicker({
                         fromAccountPublicId: transfer.fromAccountPublicId || transaction.sourceAccountPublicId,
                         toAccountPublicId: transfer.toAccountPublicId || transaction.destinationAccountPublicId,
                         description: transaction.description + '\n' + transfer.description,
-                        fromAccountDebit: transaction.debit.plus(transfer.fromAccountDebit),
+                        fromAccountDebit: new Decimal(transaction.debit).plus(transfer.fromAccountDebit),
                         fromCurrency: transfer.fromCurrency || fromCurrency,
-                        toAccountCredit: transaction.credit.plus(transfer.toAccountCredit),
+                        toAccountCredit: new Decimal(transaction.credit).plus(transfer.toAccountCredit),
                         toCurrency: transfer.toCurrency || toCurrency,
                         possibleDates: transfer.possibleDates,
                     } as TransferToImport;
@@ -209,13 +204,13 @@ export function BankTransactionsToImportPicker({
             return transfer;
         }
 
-        const addTransactionToIgnore = (ignore: TransactionsToIgnore | "not possible" | null, transaction: GQLBankTransactionToImport) => {
+        const addTransactionToIgnore = (ignore: TransactionsToIgnore | "not possible" | null, transaction: BankTransactionToImport) => {
             if (transaction.destinationAccountPublicId && transaction.sourceAccountPublicId) {
                 ignore = "not possible";
             } else if (!transaction.destinationAccountPublicId && !transaction.sourceAccountPublicId) {
                 ignore = "not possible";
             } else if (ignore !== "not possible") {
-                const amount = transaction.destinationAccountPublicId ? transaction.credit : transaction.debit.negated();
+                const amount = transaction.destinationAccountPublicId ? transaction.credit : -transaction.debit;
                 const currency = accounts
                     .filter(ba => ba.publicId === (transaction.destinationAccountPublicId || transaction.sourceAccountPublicId))
                     .map(ba => ba.currentBalance.currency)[0];
@@ -232,7 +227,7 @@ export function BankTransactionsToImportPicker({
                 } else if (currency.code === ignore.balance.currency.code) {
                     ignore = {
                         balance: {
-                            amount: ignore.balance.amount.plus(amount),
+                            amount: ignore.balance.amount + amount,
                             currency: ignore.balance.currency,
                         }
                     }
@@ -269,19 +264,19 @@ export function BankTransactionsToImportPicker({
             credit: (income === "not possible" || income === null || (income as BillingElementToImport).amount.lessThanOrEqualTo(new Decimal(0))) ? null : income,
             debit: (expense === "not possible" || expense === null || (expense as BillingElementToImport).amount.lessThanOrEqualTo(new Decimal(0))) ? null : expense,
             transfer: isValidTransfer(transfer) ? transfer : null,
-            ignore: (ignore === "not possible" || ignore === null || !(ignore as TransactionsToIgnore).balance.amount.equals(new Decimal(0))) ? null : ignore,
+            ignore: (ignore === "not possible" || ignore === null || (ignore as TransactionsToIgnore).balance.amount !== 0) ? null : ignore,
         });
     }
 
-    function isDebit(bankTransactionToImport: GQLBankTransactionToImport) {
-        return bankTransactionToImport.credit.toNumber() === 0 && bankTransactionToImport.debit.toNumber() > 0;
+    function isDebit(bankTransactionToImport: BankTransactionToImport) {
+        return bankTransactionToImport.credit === 0 && bankTransactionToImport.debit > 0;
     }
 
-    function isCredit(bankTransactionToImport: GQLBankTransactionToImport) {
-        return bankTransactionToImport.credit.toNumber() > 0 && bankTransactionToImport.debit.toNumber() === 0;
+    function isCredit(bankTransactionToImport: BankTransactionToImport) {
+        return bankTransactionToImport.credit > 0 && bankTransactionToImport.debit === 0;
     }
 
-    function findAccount(accounts: GQLAccount[], accountPublicId: string) {
+    function findAccount(accounts: Account[], accountPublicId: string) {
         return accounts.find(account => accountPublicId === account.publicId);
     }
 
@@ -300,10 +295,10 @@ export function BankTransactionsToImportPicker({
             <Stack>
                 {
                     ([...bankTransactions]
-                        .sort(ComparatorBuilder.comparingByDate<GQLBankTransactionToImport>(t => t.timeOfTransaction).build())
+                        .sort(ComparatorBuilder.comparingByDate<BankTransactionToImport>(t => dayjs(t.timeOfTransaction).toDate()).build())
                         .map(bankTransactionToImport => {
-                            const sourceAccount = findAccount(accounts, bankTransactionToImport.sourceAccountPublicId);
-                            const destinationAccount = findAccount(accounts, bankTransactionToImport.destinationAccountPublicId);
+                            const sourceAccount = findAccount(accounts, bankTransactionToImport.sourceAccountPublicId!);
+                            const destinationAccount = findAccount(accounts, bankTransactionToImport.destinationAccountPublicId!);
                             const selected = !!selectedBankAccountTransactionsToImport
                                 .find(t => t.id === bankTransactionToImport.id);
                             return (<Grid container

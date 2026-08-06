@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
-import {GQLMonetaryAmount} from "../accountant/model/types";
 import dayjs, {Dayjs} from "dayjs";
+import {MonetaryAmount} from "../types";
 
 export const trimDateToDay = (date: Date | Dayjs) => {
     return dayjs(date).startOf('day').toDate();
@@ -20,15 +20,15 @@ export const minDate = (dates: Dayjs[]): Dayjs => {
     return dates.reduce((d1, d2) => d1.isBefore(d2) ? d1 : d2);
 }
 
-export const formatMonetaryAmount = (monetaryAmount: GQLMonetaryAmount) => {
-    return formatCurrency(monetaryAmount.currency.code, monetaryAmount.amount);
+export const formatMonetaryAmount = (monetaryAmount: MonetaryAmount) => {
+    return formatCurrency(monetaryAmount.currency.code, new Decimal(monetaryAmount.amount));
 }
 
-export const formatCurrency = (currency: string, amount: Decimal) => {
+export const formatCurrency = (currency: string, amount: Decimal | number) => {
     return Intl.NumberFormat(navigator.language, {
         style: 'currency',
         currency: currency
-    }).format(amount.toNumber())
+    }).format(new Decimal(amount).toNumber());
 }
 
 export const formatBalance = (currency: string, amount: Decimal) => {

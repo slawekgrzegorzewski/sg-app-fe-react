@@ -8,13 +8,15 @@ import {Tab, Tabs} from "@mui/material";
 import {BillingCategoriesManagement} from "./BillingCategoriesManagement";
 import {useQuery} from "@apollo/client/react";
 import {
+    Account,
+    BankAccount,
+    BillingCategory,
     GetAccountantSettings,
     GetAccountantSettingsQuery,
     GetFinanceManagementWithNotAssignedBankAccounts,
     GetFinanceManagementWithNotAssignedBankAccountsQuery,
     PiggyBank
 } from "../../types";
-import {mapAccount, mapBankAccount, mapBillingCategory, mapCurrencyInfo} from "../model/types";
 import {PiggyBankDTO, PiggyBanksManagement} from "./PiggyBanksManagement";
 import Decimal from "decimal.js";
 import {AccountantSettingsManagement} from "./AccountantSettingsManagement";
@@ -98,10 +100,11 @@ export function AccountantSettings() {
                 }
                 {
                     activeTabIndex === ACCOUNTS_TAB_LABEL && <Grid size={columnSizing}>
-                        <AccountsManagement accounts={[...financeManagementData.financeManagement.accounts].map(mapAccount)}
-                                            notAssignedBankAccounts={[...financeManagementData.bankPermissions.bankAccountsNotAssignedToAccount.map(mapBankAccount)]}
-                                            supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies].map(mapCurrencyInfo)}
-                                            refetch={financeManagementRefetch}/>
+                        <AccountsManagement
+                            accounts={[...financeManagementData.financeManagement.accounts] as Account[]}
+                            notAssignedBankAccounts={[...financeManagementData.bankPermissions.bankAccountsNotAssignedToAccount as BankAccount[]]}
+                            supportedCurrencies={[...financeManagementData.financeManagement.supportedCurrencies]}
+                            refetch={financeManagementRefetch}/>
                     </Grid>
                 }
                 {
@@ -116,7 +119,7 @@ export function AccountantSettings() {
                         </Grid>
                         <Grid size={columnSizing2}>
                             <BillingCategoriesManagement
-                                billingCategories={[...financeManagementData.financeManagement.billingCategories].map(mapBillingCategory)}
+                                billingCategories={[...financeManagementData.financeManagement.billingCategories as BillingCategory[]]}
                                 refetch={financeManagementRefetch}/>
                         </Grid>
                         <Grid size={columnSizing2}>

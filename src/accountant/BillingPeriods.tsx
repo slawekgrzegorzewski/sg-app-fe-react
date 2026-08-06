@@ -1,21 +1,19 @@
 import {ErrorDisplay} from "../application/components/QueryState";
 import {useLazyQuery, useMutation} from "@apollo/client/react";
 import {
+    BillingPeriod,
+    BillingPeriodCreationBlockers,
     BillingPeriodQuery,
     BillingPeriodQueryQuery,
+    BillingPeriodResponse,
     CreateBillingPeriod,
     CreateBillingPeriodMutation,
+    Expense,
     FinishBillingPeriod,
-    FinishBillingPeriodMutation
+    FinishBillingPeriodMutation,
+    Income
 } from "../types";
 import React, {useEffect, useState} from "react";
-import {
-    GQLBillingPeriodCreationBlockers,
-    GQLExpense,
-    GQLIncome,
-    mapBillingPeriod,
-    mapBillingPeriodCreationBlockers
-} from "./model/types";
 import {Grid, Stack} from "@mui/material";
 import dayjs from "dayjs";
 import Button from "@mui/material/Button";
@@ -59,7 +57,7 @@ export function BillingPeriods() {
         setYearMonth(date);
     }
 
-    function noCreationBlockers(creationBlockers: GQLBillingPeriodCreationBlockers) {
+    function noCreationBlockers(creationBlockers: BillingPeriodCreationBlockers) {
         return !creationBlockers.alreadyExists && !creationBlockers.unfinishedBillingPeriods && !creationBlockers.notForCurrentMonth;
     }
 
@@ -68,20 +66,21 @@ export function BillingPeriods() {
     } else if (error) {
         return <ErrorDisplay error={error}/>
     } else if (data) {
-        const billingPeriod = data.billingPeriod.billingPeriod ? mapBillingPeriod(data.billingPeriod.billingPeriod) : null;
-        const billingPeriodCreationBlocker = data.billingPeriod.creationBlockers ? mapBillingPeriodCreationBlockers(data.billingPeriod.creationBlockers) : null;
+        const billingPeriodResponse = data.billingPeriod ? data.billingPeriod as BillingPeriodResponse : null;
+        const billingPeriod = billingPeriodResponse?.billingPeriod ? billingPeriodResponse.billingPeriod as BillingPeriod : null;
+        const billingPeriodCreationBlocker = billingPeriodResponse?.creationBlockers ? billingPeriodResponse.creationBlockers : null;
         const incomesByCategory = billingPeriod?.incomes.reduce((map, income) => {
             let incomes = map.get(income.category.name) || [];
             incomes.push(income);
             map.set(income.category.name, incomes);
             return map;
-        }, new Map<string, GQLIncome[]>()) || new Map<string, GQLIncome[]>();
+        }, new Map<string, Income[]>()) || new Map<string, Income[]>();
         const expensesByCategory = billingPeriod?.expenses.reduce((map, expense) => {
             let expenses = map.get(expense.category.name) || [];
             expenses.push(expense);
             map.set(expense.category.name, expenses);
             return map;
-        }, new Map<string, GQLExpense[]>()) || new Map<string, GQLExpense[]>();
+        }, new Map<string, Expense[]>()) || new Map<string, Expense[]>();
         const incomeCategories = Array.from(incomesByCategory.keys()).sort();
         const expensesCategories = Array.from(expensesByCategory.keys()).sort();
         return <Grid container={true} paddingLeft={2} paddingRight={2}>
@@ -116,7 +115,7 @@ export function BillingPeriods() {
                                     }
                                     {
                                         !data.billingPeriod.billingPeriod.monthSummary && (
-                                            <CreateBillingElementButton yearMonth={yearMonth} billingElementType={"Income"}/>
+                                            <CreateBillingElementButton billingElementType={"Income"}/>
                                         )
                                     }
                                 </Stack>
@@ -131,7 +130,7 @@ export function BillingPeriods() {
                                     }
                                     {
                                         !data.billingPeriod.billingPeriod.monthSummary && (
-                                            <CreateBillingElementButton yearMonth={yearMonth} billingElementType={"Expense"}/>
+                                            <CreateBillingElementButton billingElementType={"Expense"}/>
                                         )
                                     }
                                 </Stack>

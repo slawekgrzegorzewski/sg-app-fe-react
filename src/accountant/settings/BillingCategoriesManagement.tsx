@@ -1,5 +1,6 @@
 import {useMutation} from "@apollo/client/react";
 import {
+    BillingCategory,
     CreateBillingCategory,
     CreateBillingCategoryMutation,
     DeleteBillingCategory,
@@ -14,10 +15,9 @@ import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Box from "@mui/material/Box";
 import {Card, Theme, useTheme} from "@mui/material";
-import {GQLBillingCategory} from "../model/types";
 import {SxProps} from "@mui/system";
 
-const BILLING_CATEGORY_FORM = (billingCategory?: GQLBillingCategory) => {
+const BILLING_CATEGORY_FORM = (billingCategory?: BillingCategory) => {
         return {
             validationSchema: Yup.object({
                 publicId: billingCategory ? Yup.string().required() : Yup.string(),
@@ -28,7 +28,7 @@ const BILLING_CATEGORY_FORM = (billingCategory?: GQLBillingCategory) => {
                 publicId: billingCategory?.publicId || '',
                 name: billingCategory?.name || '',
                 description: billingCategory?.description || ''
-            } as GQLBillingCategory,
+            } as BillingCategory,
             fields:
                 [
                     {
@@ -55,7 +55,7 @@ const BILLING_CATEGORY_FORM = (billingCategory?: GQLBillingCategory) => {
 ;
 
 export interface BillingCategoriesManagementProps {
-    billingCategories: GQLBillingCategory[],
+    billingCategories: BillingCategory[],
     refetch: () => void
 }
 
@@ -67,7 +67,7 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
 
     const theme = useTheme();
 
-    const createBillingCategory = async (billingCategory: GQLBillingCategory): Promise<any> => {
+    const createBillingCategory = async (billingCategory: BillingCategory): Promise<any> => {
         return await createBillingCategoryMutation({
             variables: {
                 name: billingCategory.name,
@@ -77,7 +77,7 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
             .finally(() => refetch());
     };
 
-    const updateBillingCategory = async (billingCategory: GQLBillingCategory): Promise<any> => {
+    const updateBillingCategory = async (billingCategory: BillingCategory): Promise<any> => {
         return await updateBillingCategoryMutation({
             variables: {
                 publicId: billingCategory.publicId,
@@ -88,7 +88,7 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
             .finally(() => refetch());
     };
 
-    const deleteBillingCategory = async (billingCategory: GQLBillingCategory): Promise<any> => {
+    const deleteBillingCategory = async (billingCategory: BillingCategory): Promise<any> => {
         return await deleteBillingCategoryMutation({variables: {publicId: billingCategory.publicId}})
             .finally(() => refetch());
     };
@@ -109,7 +109,7 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
         }}
         list={
             billingCategories
-                .sort(ComparatorBuilder.comparing<GQLBillingCategory>(billingCategory => billingCategory.name).build())
+                .sort(ComparatorBuilder.comparing<BillingCategory>(billingCategory => billingCategory.name).build())
         }
         idExtractor={billingCategory => billingCategory.publicId}
         formSupplier={billingCategory => billingCategory ? BILLING_CATEGORY_FORM(billingCategory) : BILLING_CATEGORY_FORM()}

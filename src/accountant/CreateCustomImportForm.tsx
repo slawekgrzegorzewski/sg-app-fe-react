@@ -1,7 +1,6 @@
 import {clickableProps} from "../application/components/clickable";
 import * as React from "react";
 import {JSX, useMemo, useState} from "react";
-import {GQLAccount, GQLBankTransactionToImport, GQLBillingCategory, GQLPiggyBank} from "./model/types";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
 import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
 import {Box, Button, Dialog, DialogContent, Stack} from "@mui/material";
@@ -10,6 +9,7 @@ import {CustomImportSummary} from "./CustomImportSummary";
 import Typography from "@mui/material/Typography";
 import {formatCurrency} from "../utils/functions";
 import {transactionCustomImportSummary} from "./utils/customImportSummary";
+import {Account, BankTransactionToImport, BillingCategory, PiggyBank} from "../types";
 
 export type CustomImportResult = {
     billingElements: BillingElementDTO[];
@@ -17,11 +17,11 @@ export type CustomImportResult = {
 }
 
 export interface CreateCustomImportFormProps {
-    accountsWithAssignedBankAccounts: GQLAccount[],
-    accountsWithoutAssignedBankAccounts: GQLAccount[],
-    billingCategories: GQLBillingCategory[];
-    piggyBanks: GQLPiggyBank[];
-    bankTransactions: GQLBankTransactionToImport[];
+    accountsWithAssignedBankAccounts: Account[],
+    accountsWithoutAssignedBankAccounts: Account[],
+    billingCategories: BillingCategory[];
+    piggyBanks: PiggyBank[];
+    bankTransactions: BankTransactionToImport[];
     onClose: (importResult: CustomImportResult | null) => void;
 }
 
@@ -34,7 +34,8 @@ export function CreateCustomImportForm({
                                            onClose
                                        }: CreateCustomImportFormProps): JSX.Element {
     const accountsInvolvedInImportingTransactionPublicIds = new Set(bankTransactions.flatMap(bt => [bt.creditBankAccountPublicId, bt.debitBankAccountPublicId]));
-    const accountsInvolvedInImportingTransactions = accountsWithAssignedBankAccounts.filter(account => accountsInvolvedInImportingTransactionPublicIds.has(account.bankAccount.publicId));
+    const accountsInvolvedInImportingTransactions = accountsWithAssignedBankAccounts.filter(account =>
+        account.bankAccount && accountsInvolvedInImportingTransactionPublicIds.has(account.bankAccount.publicId));
     const [billingElements, setBillingElements] = useState<BillingElementDTO[]>([]);
     const [editBillingElement, setEditBillingElement] = useState<BillingElementDTO | null>(null);
     const [transfers, setTransfers] = useState<TransferDTO[]>([]);

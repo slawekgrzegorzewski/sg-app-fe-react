@@ -1,14 +1,14 @@
 import * as React from "react";
 import {useState} from "react";
-import {GQLBankAccount} from "../model/types";
 import Button from "@mui/material/Button";
 import PickDialog from "../../utils/dialogs/PickDialog";
+import {BankAccount} from "../../types";
 
 
 export interface PickBankAccountButtonProps {
-    bankAccounts: GQLBankAccount[],
+    bankAccounts: BankAccount[],
     text: string,
-    onPick: (bankAccount: GQLBankAccount) => void,
+    onPick: (bankAccount: BankAccount) => void,
     onClose: () => void
 }
 
@@ -38,10 +38,10 @@ export function PickBankAccountButton({
                 setPickNewInstitutionDialogOpen(false);
                 onPick(value);
             }}
-            idExtractor={function (bankAccount: GQLBankAccount | null): string {
+            idExtractor={function (bankAccount: BankAccount | null): string {
                 return bankAccount ? bankAccount.publicId : "";
             }}
-            descriptionExtractor={function (bankAccount: GQLBankAccount | null): string {
+            descriptionExtractor={function (bankAccount: BankAccount | null): string {
                 return bankAccount ? bankAccount.iban : "";
             }}
         />

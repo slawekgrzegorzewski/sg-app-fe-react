@@ -1,27 +1,28 @@
 import Form, {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
 import {JSX} from "react";
-import {GQLAccount, GQLBillingCategory, GQLBillingElementType, GQLPiggyBank} from "./model/types";
+import { BillingElementType} from "./model/types";
 import * as Yup from "yup";
 import dayjs, {Dayjs} from "dayjs";
 import Decimal from "decimal.js";
+import {Account, BillingCategory, PiggyBank} from "../types";
 
 export type Option = { id: string; name: string; }
 
 export const EMPTY_OPTION = {id: '', name: ''}
 
 export type BillingElementDTO = {
-    billingElementType: GQLBillingElementType;
+    billingElementType: BillingElementType;
     publicId: string;
     affectedAccountPublicId: string;
     amount: Decimal;
-    category: GQLBillingCategory | null;
+    category: BillingCategory | null;
     date: Dayjs | null;
     description: string;
-    piggyBank: GQLPiggyBank | null;
+    piggyBank: PiggyBank | null;
 }
 
-export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDTO, accounts: GQLAccount[], categories: GQLBillingCategory[], piggyBanks: GQLPiggyBank[], alwaysEditable: boolean = false) => {
+export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDTO, accounts: Account[], categories: BillingCategory[], piggyBanks: PiggyBank[], alwaysEditable: boolean = false) => {
     return {
         validationSchema: Yup.object({
             billingElementType: Yup.string(),
@@ -113,9 +114,9 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (billingElement: BillingElementDT
 };
 
 export interface CreateBillingElementFormProps {
-    accounts: GQLAccount[];
-    billingCategories: GQLBillingCategory[];
-    piggyBanks: GQLPiggyBank[];
+    accounts: Account[];
+    billingCategories: BillingCategory[];
+    piggyBanks: PiggyBank[];
     billingElementToCreate: BillingElementDTO;
     onClose: (billingElement: BillingElementDTO | null) => void;
     alwaysEditable?: boolean;

@@ -1,6 +1,5 @@
 import {clickableProps} from "../application/components/clickable";
 import {Box, Grid, Stack, useMediaQuery, useTheme} from "@mui/material";
-import {GQLExpense, GQLIncome} from "./model/types";
 import Typography from "@mui/material/Typography";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
 import {rowHover} from "../utils/theme";
@@ -9,10 +8,12 @@ import {formatCurrency} from "../utils/functions";
 import InformationDialog from "../utils/dialogs/InformationDialog";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import dayjs from "dayjs";
+import {Expense, Income} from "../types";
+import Decimal from "decimal.js";
 
 export interface BillingElementsInCategoryProps {
     categoryName: string;
-    billingElements: (GQLIncome | GQLExpense) [];
+    billingElements: (Income | Expense) [];
 }
 
 const GRID_SIDE_COLUMN_SIZE = {xs: 3, sm: 2}
@@ -29,8 +30,8 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
             <Typography variant={'body1'}>{categoryName}</Typography>
             <MultiCurrencySummary
                 data={billingElements}
-                currencyExtractor={be => be.currency.code}
-                amountExtractor={be => be.amount}/>
+                currencyExtractor={be => be.currency}
+                amountExtractor={be => new Decimal(be.amount)}/>
         </Stack>
         <InformationDialog title={categoryName}
                            open={expanded}
@@ -43,7 +44,7 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
             <Stack direction={'column'} justifyContent={'space-between'} sx={isXSBreakpoint ? {} : {minWidth: '550px'}}>
                 <Box>
                     {
-                        [...billingElements].sort(ComparatorBuilder.comparingByDate<GQLExpense | GQLIncome>(be => be.date).thenComparing(be => be.publicId).build()).map(be =>
+                        [...billingElements].sort(ComparatorBuilder.comparingByDate<Expense | Income>(be => new Date(be.date)).thenComparing(be => be.publicId).build()).map(be =>
                             <Grid key={be.publicId} container spacing={2} sx={{...rowHover(theme)}}>
                                 <Grid size={GRID_SIDE_COLUMN_SIZE}>
                                     <Typography variant={'body2'}>{dayjs(be.date).format('YYYY-MM-DD')}</Typography>
@@ -53,7 +54,7 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                                 </Grid>
                                 <Grid size={GRID_SIDE_COLUMN_SIZE}>
                                     <Typography
-                                        variant={'body2'}>{formatCurrency(be.currency.code, be.amount)}</Typography>
+                                        variant={'body2'}>{formatCurrency(be.currency, new Decimal(be.amount))}</Typography>
                                 </Grid>
                             </Grid>
                         )
@@ -62,8 +63,8 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                 <MultiCurrencySummary
                     data={billingElements}
                     header={'Suma:'}
-                    currencyExtractor={be => be.currency.code}
-                    amountExtractor={be => be.amount}/>
+                    currencyExtractor={be => be.currency}
+                    amountExtractor={be => new Decimal(be.amount)}/>
             </Stack>
         </InformationDialog>
     </Stack>;

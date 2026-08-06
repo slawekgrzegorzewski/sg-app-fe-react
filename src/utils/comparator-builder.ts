@@ -83,6 +83,10 @@ export class ComparatorBuilder<T> {
         this.lastExtractor = keyExtractor;
     }
 
+    private isNull(v: unknown) {
+        return v === null || v === undefined;
+    }
+
     /**
      * Creates a builder that compares <code>T</code> by the values extracted by the provided <code>keyExtractor</code>.
      * @param {KeyExtractor<T>} keyExtractor
@@ -203,13 +207,13 @@ export class ComparatorBuilder<T> {
             } else {
                 res = 0;
             }
-        } else if (!v1 && this.nullMode === NullMode.HIGHEST && !!v2) {
+        } else if (this.isNull(v1) && this.nullMode === NullMode.HIGHEST && !this.isNull(v2)) {
             res = -1 * extractor.order;
-        } else if (!v2 && this.nullMode === NullMode.HIGHEST && !!v1) {
+        } else if (this.isNull(v2) && this.nullMode === NullMode.HIGHEST && !this.isNull(v1)) {
             res = 1 * extractor.order;
-        } else if (!v1 && this.nullMode === NullMode.LOWEST && !!v2) {
+        } else if (this.isNull(v1) && this.nullMode === NullMode.LOWEST && !this.isNull(v2)) {
             res = 1 * extractor.order;
-        } else if (!v2 && this.nullMode === NullMode.LOWEST && !!v1) {
+        } else if (this.isNull(v2) && this.nullMode === NullMode.LOWEST && !this.isNull(v1)) {
             res = -1 * extractor.order;
         } else if (v1! > v2!) {
             res = 1 * extractor.order;

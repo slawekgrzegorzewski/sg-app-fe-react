@@ -1,14 +1,14 @@
 import {ErrorDisplay} from "../application/components/QueryState";
 import {useQuery} from "@apollo/client/react";
-import {GetFinanceManagement, GetFinanceManagementQuery} from "../types";
+import {Account, GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} from "../types";
 import React from "react";
-import {GQLAccount, GQLPiggyBank, mapAccount, mapPiggyBank} from "./model/types";
 import {Stack, useTheme} from "@mui/material";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
 import {formatMonetaryAmount} from "../utils/functions";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {rowHover} from "../utils/theme";
 import Typography from "@mui/material/Typography";
+import Decimal from "decimal.js";
 
 export function Accounts() {
     const {
@@ -25,12 +25,10 @@ export function Accounts() {
     } else if (error) {
         return <ErrorDisplay error={error}/>
     } else if (data) {
-        const accounts = data.financeManagement.accounts
-            .map(mapAccount)
-            .sort(ComparatorBuilder.comparing<GQLAccount>(a => a.order).build());
-        const piggyBanks = data.financeManagement.piggyBanks
-            .map(mapPiggyBank)
-            .sort(ComparatorBuilder.comparing<GQLPiggyBank>(pb => pb.name).build());
+        const accounts = [...(data.financeManagement.accounts as Account[])]
+            .sort(ComparatorBuilder.comparing<Account>(a => a.order).build());
+        const piggyBanks = [...(data.financeManagement.piggyBanks as PiggyBank[])]
+            .sort(ComparatorBuilder.comparing<PiggyBank>(pb => pb.name).build());
         return <Stack direction={{xs: 'column', sm: 'row'}}
                       spacing={{xs: 0, sm: 2}}
                       justifyContent={'center'}
@@ -38,7 +36,7 @@ export function Accounts() {
             <Stack direction={'column'}>
                 <Typography variant={'h4'} textAlign={'center'}>Twoje konta</Typography>
                 <MultiCurrencySummary data={accounts}
-                                      amountExtractor={account => account.currentBalance.amount}
+                                      amountExtractor={account => new Decimal(account.currentBalance.amount)}
                                       currencyExtractor={account => account.currentBalance.currency.code}
                                       header={'Suma:'}
                                       sx={{...rowHover(theme)}}

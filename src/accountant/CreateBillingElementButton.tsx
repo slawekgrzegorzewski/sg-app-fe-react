@@ -1,25 +1,20 @@
 import {useLazyQuery, useMutation} from "@apollo/client/react";
 import {
+    Account,
+    BillingCategory,
     CreateExpense,
     CreateExpenseMutation,
     CreateIncome,
     CreateIncomeMutation,
     GetFinanceManagement,
-    GetFinanceManagementQuery
+    GetFinanceManagementQuery,
+    PiggyBank
 } from "../types";
 import * as React from "react";
 import {useState} from "react";
 import Button from "@mui/material/Button";
 import PickDialog from "../utils/dialogs/PickDialog";
-import {
-    GQLAccount,
-    GQLBillingCategory,
-    GQLBillingElementType,
-    GQLPiggyBank,
-    mapAccount,
-    mapBillingCategory,
-    mapPiggyBank
-} from "./model/types";
+import {BillingElementType} from "./model/types";
 import {formatMonetaryAmount} from "../utils/functions";
 import {FormDialog} from "../utils/dialogs/FormDialog";
 import Typography from "@mui/material/Typography";
@@ -28,13 +23,12 @@ import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO} from "./CreateBillin
 import Decimal from "decimal.js";
 
 export interface CreateBillingElementButtonPros {
-    yearMonth: Date;
-    billingElementType: GQLBillingElementType;
+    billingElementType: BillingElementType;
 }
 
-export function CreateBillingElementButton({yearMonth, billingElementType}: CreateBillingElementButtonPros) {
+export function CreateBillingElementButton({billingElementType}: CreateBillingElementButtonPros) {
     const [showDialog, setShowDialog] = useState(false);
-    const [affectedAccount, setAffectedAccount] = useState<GQLAccount | null>(null);
+    const [affectedAccount, setAffectedAccount] = useState<Account | null>(null);
     const [fetchFinanceManagement, {
         client,
         called,
@@ -59,7 +53,7 @@ export function CreateBillingElementButton({yearMonth, billingElementType}: Crea
             }
         };
         return (billingElementType === 'Income' ? createIncomeMutation(variables) : createExpenseMutation(variables))
-            .then(result => {
+            .then(() => {
                 reset();
                 return Promise.resolve();
             })
@@ -75,8 +69,8 @@ export function CreateBillingElementButton({yearMonth, billingElementType}: Crea
         return <></>;
     }
     if (showDialog && !affectedAccount && financeManagementData) {
-        const accounts = financeManagementData.financeManagement.accounts.map(mapAccount)
-            .sort(ComparatorBuilder.comparing<GQLAccount>(a => a.order).build());
+        const accounts = [...(financeManagementData.financeManagement.accounts as Account[])]
+            .sort(ComparatorBuilder.comparing<Account>(a => a.order).build());
         return <PickDialog
             fullScreen={true}
             title={'Wybierz konto'}
@@ -86,24 +80,22 @@ export function CreateBillingElementButton({yearMonth, billingElementType}: Crea
             onPick={(value) => {
                 setAffectedAccount(value);
             }}
-            idExtractor={function (account: GQLAccount): string {
+            idExtractor={function (account): string {
                 return account ? account.publicId : "";
             }}
-            descriptionExtractor={function (account: GQLAccount): string {
+            descriptionExtractor={function (account): string {
                 return account ? (account.name + " " + formatMonetaryAmount(account.currentBalance)) : "";
             }}
         />;
     }
 
     if (showDialog && affectedAccount && financeManagementData) {
-        const accounts = financeManagementData.financeManagement.accounts.map(mapAccount)
-            .sort(ComparatorBuilder.comparing<GQLAccount>(a => a.order).build());
-        const billingCategories = financeManagementData.financeManagement.billingCategories
-            .map(mapBillingCategory)
-            .sort(ComparatorBuilder.comparing<GQLBillingCategory>(bc => bc.name).build());
-        const piggyBanks = financeManagementData.financeManagement.piggyBanks
-            .map(mapPiggyBank)
-            .sort(ComparatorBuilder.comparing<GQLPiggyBank>(pb => pb.name).build());
+        const accounts = [...(financeManagementData.financeManagement.accounts as Account[])]
+            .sort(ComparatorBuilder.comparing<Account>(a => a.order).build());
+        const billingCategories = [...(financeManagementData.financeManagement.billingCategories as BillingCategory[])]
+            .sort(ComparatorBuilder.comparing<BillingCategory>(bc => bc.name).build());
+        const piggyBanks = [...(financeManagementData.financeManagement.piggyBanks as PiggyBank[])]
+            .sort(ComparatorBuilder.comparing<PiggyBank>(pb => pb.name).build());
         return <FormDialog
             open={true}
             dialogTitle={<Typography>Stwórz {billingElementType === 'Income' ? 'dochód' : 'wydatek'}</Typography>}

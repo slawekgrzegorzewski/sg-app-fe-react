@@ -1,11 +1,11 @@
 import * as React from "react";
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
-import {GQLAccount} from "./model/types";
 import {formatCurrency} from "../utils/functions";
 import {GQLBankTransactionToCustomImportSummary} from "./utils/customImportSummary";
+import {Account} from "../types";
 
 type CustomImportSummaryProps = {
-    accountsWithAssignedBankAccounts: GQLAccount[],
+    accountsWithAssignedBankAccounts: Account[],
     transactionToCustomImportSummaries: GQLBankTransactionToCustomImportSummary[]
 };
 
@@ -28,7 +28,7 @@ export function CustomImportSummary({
                         <TableRow key={group.bankAccountPublicId}>
 
                             <TableCell>{accountsWithAssignedBankAccounts
-                                .find(a => a.bankAccount.publicId === group.bankAccountPublicId)?.name
+                                    .find(a => a.bankAccount?.publicId === group.bankAccountPublicId)?.name
                                 ?? group.bankAccountPublicId}</TableCell>
 
                             <TableCell align="right">

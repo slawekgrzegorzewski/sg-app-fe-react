@@ -1,10 +1,10 @@
 import Form, {DatePickerEditorField, RegularEditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
 import {JSX, useState} from "react";
-import {GQLAccount} from "./model/types";
 import * as Yup from "yup";
 import dayjs, {Dayjs} from "dayjs";
 import Decimal from "decimal.js";
+import {Account} from "../types";
 
 export type TransferDTO = {
     fromAccountPublicId?: string;
@@ -17,7 +17,7 @@ export type TransferDTO = {
     description: string;
 }
 
-export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAccount[], restrictToDates: Dayjs[], alwaysEditable: boolean = false) => {
+export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: Account[], restrictToDates: Dayjs[], alwaysEditable: boolean = false) => {
     const areAllCurrenciesSet = !!transfer.fromCurrency && !!transfer.toCurrency;
     const transferWithConversion = areAllCurrenciesSet && transfer.fromCurrency !== transfer.toCurrency;
     return {
@@ -102,7 +102,7 @@ export const TRANSFER_FORM_PROPERTIES = (transfer: TransferDTO, accounts: GQLAcc
 };
 
 export interface CreateTransferFormProps {
-    accounts: GQLAccount[];
+    accounts: Account[];
     transferToCreate: TransferDTO & { possibleDays: Dayjs[] };
     onClose: (transferToCreate: TransferDTO | null) => void;
     alwaysEditable?: boolean;

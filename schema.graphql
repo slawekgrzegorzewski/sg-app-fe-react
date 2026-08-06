@@ -429,9 +429,19 @@ type Account {
     currentBalance:MonetaryAmount!,
     creditLimit:MonetaryAmount!,
     balanceIndex:Int,
+    transactions(yearMonth: YearMonth): [AccountTransaction!]!
     visible:Boolean!,
     bankAccount:BankAccount,
     domain:DomainSimple,
+}
+
+type AccountTransaction {
+    description: String!
+    source: Account
+    destination: Account
+    debit: BigDecimal
+    credit: BigDecimal
+    timeOfTransaction: LocalDateTime
 }
 
 input AccountCreationInput {

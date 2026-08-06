@@ -10,6 +10,7 @@ const config: CodegenConfig = {
                 'typescript',
                 'typescript-resolvers',
                 'typescript-operations',
+                'named-operations-object',
                 'typescript-document-nodes'
             ],
             config: {

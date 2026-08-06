@@ -1,9 +1,12 @@
 import {useMutation} from "@apollo/client/react";
 import {
+    Account,
     AssignBankAccountToAccount,
     AssignBankAccountToAccountMutation,
+    BankAccount,
     CreateAccount,
     CreateAccountMutation,
+    CurrencyInfo,
     DeleteAccount,
     DeleteAccountMutation,
     DeleteBankAccountAssignment,
@@ -22,7 +25,6 @@ import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Decimal from "decimal.js";
 import {formatBalance} from "../../utils/functions";
 import {Card, Stack, Theme, useTheme} from "@mui/material";
-import {GQLAccount, GQLBankAccount, GQLCurrencyInfo} from "../model/types";
 import {SxProps} from "@mui/system";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
 import Button from "@mui/material/Button";
@@ -48,70 +50,70 @@ type BankAccountDTO = {
 }
 
 const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
-        return {
-            validationSchema: Yup.object({
-                publicId: account ? Yup.string().required() : Yup.string(),
-                name: Yup.string().required('Wymagana'),
-                visible: Yup.boolean().required(),
-                currency: Yup.string()
-                    .matches(
-                        new RegExp(currencies.map(currency => "^" + currency + "$").join("|")),
-                        "Waluta spoza dozwolonej listy")
-                    .required('Wymagana'),
-                creditLimitAmount: Yup.number().required()
-            }),
-            initialValues: {
-                publicId: account?.publicId || '',
-                name: account?.name || '',
-                visible: account?.visible || false,
-                currency: account?.currency || '',
-                creditLimitAmount: account?.creditLimitAmount || 0,
-            } as AccountDTO,
-            fields:
-                [
-                    {
-                        label: 'PublicId',
-                        type: 'HIDDEN',
-                        key: 'publicId',
-                        editable: true
-                    } as EditorField,
-                    {
-                        label: 'Nazwa',
-                        type: 'TEXT',
-                        key: 'name',
-                        editable: true
-                    } as EditorField,
-                    {
-                        label: 'Widoczne',
-                        type: 'CHECKBOX',
-                        key: 'visible',
-                        editable: true,
-                        icon: <VisibilityOff/>,
-                        checkedIcon: <Visibility/>,
-                    } as BooleanEditorField,
-                    {
-                        label: 'Waluta',
-                        type: 'AUTOCOMPLETE',
-                        options: currencies,
-                        getOptionLabel: (option: any) => option,
-                        isOptionEqualToValue: (option: any, value: any) => option === value,
-                        key: 'currency',
-                        editable: !account
-                    } as AutocompleteEditorField,
-                    {
-                        label: 'Limit kredytowy',
-                        type: 'NUMBER',
-                        key: 'creditLimitAmount',
-                        editable: true
-                    } as EditorField
-                ]
-        };
+    return {
+        validationSchema: Yup.object({
+            publicId: account ? Yup.string().required() : Yup.string(),
+            name: Yup.string().required('Wymagana'),
+            visible: Yup.boolean().required(),
+            currency: Yup.string()
+                .matches(
+                    new RegExp(currencies.map(currency => "^" + currency + "$").join("|")),
+                    "Waluta spoza dozwolonej listy")
+                .required('Wymagana'),
+            creditLimitAmount: Yup.number().required()
+        }),
+        initialValues: {
+            publicId: account?.publicId || '',
+            name: account?.name || '',
+            visible: account?.visible || false,
+            currency: account?.currency || '',
+            creditLimitAmount: account?.creditLimitAmount || 0,
+        } as AccountDTO,
+        fields:
+            [
+                {
+                    label: 'PublicId',
+                    type: 'HIDDEN',
+                    key: 'publicId',
+                    editable: true
+                } as EditorField,
+                {
+                    label: 'Nazwa',
+                    type: 'TEXT',
+                    key: 'name',
+                    editable: true
+                } as EditorField,
+                {
+                    label: 'Widoczne',
+                    type: 'CHECKBOX',
+                    key: 'visible',
+                    editable: true,
+                    icon: <VisibilityOff/>,
+                    checkedIcon: <Visibility/>,
+                } as BooleanEditorField,
+                {
+                    label: 'Waluta',
+                    type: 'AUTOCOMPLETE',
+                    options: currencies,
+                    getOptionLabel: (option: any) => option,
+                    isOptionEqualToValue: (option: any, value: any) => option === value,
+                    key: 'currency',
+                    editable: !account
+                } as AutocompleteEditorField,
+                {
+                    label: 'Limit kredytowy',
+                    type: 'NUMBER',
+                    key: 'creditLimitAmount',
+                    editable: true
+                } as EditorField
+            ]
     };
+};
 
 export interface AccountsManagementProps {
-    accounts: GQLAccount[],
-    notAssignedBankAccounts: GQLBankAccount[],
-    supportedCurrencies: GQLCurrencyInfo[],
+    accounts: Account[],
+    notAssignedBankAccounts: BankAccount[],
+    supportedCurrencies: CurrencyInfo[],
     refetch: () => void
 }
 
@@ -218,7 +220,7 @@ export function AccountsManagement({
             }}
             list={
                 accounts
-                    .sort(ComparatorBuilder.comparing<GQLAccount>(account => account.order).build())
+                    .sort(ComparatorBuilder.comparing<Account>(account => account.order).build())
                     .map(account => {
                         return {
                             publicId: account.publicId,
@@ -286,7 +288,8 @@ export function AccountsManagement({
                             <Button onClick={() => setDeleteDialogOptions({account: account})}>Usuń</Button>
                         </Stack>
                         {account.bankAccount &&
-                            <Button onClick={() => setDeleteBankAccountAssignmentDialogOptions({account: account})}>Usuń konto</Button>}
+                            <Button onClick={() => setDeleteBankAccountAssignmentDialogOptions({account: account})}>Usuń
+                                konto</Button>}
                         {!account.bankAccount && notAssignedBankAccounts.length > 0 &&
                             <PickBankAccountButton
                                 bankAccounts={notAssignedBankAccounts}

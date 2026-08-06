@@ -2,8 +2,11 @@ import {ErrorDisplay} from "../application/components/QueryState";
 import React, {JSX, useMemo, useState} from "react";
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
+    Account,
     BankTransactionsToImport,
     BankTransactionsToImportQuery,
+    BankTransactionToImport,
+    BillingCategory,
     CreateExpense,
     CreateExpenseMutation,
     CreateIncome,
@@ -13,17 +16,10 @@ import {
     ImportBankTransactions,
     ImportBankTransactionsMutation,
     MutuallyCancel,
-    MutuallyCancelMutation
+    MutuallyCancelMutation,
+    PiggyBank
 } from "../types";
 import Button from "@mui/material/Button";
-import {
-    GQLAccount,
-    GQLBankTransactionToImport,
-    mapAccount,
-    mapBankTransactionToImport,
-    mapBillingCategory,
-    mapPiggyBank
-} from "./model/types";
 import Typography from "@mui/material/Typography";
 import {Dayjs} from "dayjs";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
@@ -43,7 +39,7 @@ export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
 }
 
-function currencyOfAccount(accounts: GQLAccount[], accountPublicId: string): string {
+function currencyOfAccount(accounts: Account[], accountPublicId: string): string {
     const account = accounts.find(candidate => candidate.publicId === accountPublicId);
     if (!account) {
         throw new Error(`Nie można zaimportować: konto ${accountPublicId} nie jest dostępne.`);
@@ -53,7 +49,7 @@ function currencyOfAccount(accounts: GQLAccount[], accountPublicId: string): str
 
 function billingElementVariables(
     billingElement: BillingElementDTO,
-    accounts: GQLAccount[],
+    accounts: Account[],
     bankTransactionPublicIds: string[]
 ) {
     return {
@@ -72,7 +68,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
 
     const {loading, error, data} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
     const [showDialog, setShowDialog] = useState(false);
-    const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<GQLBankTransactionToImport[]>([]);
+    const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<BankTransactionToImport[]>([]);
     const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
     const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
     const [createTransferMutation] = useMutation<CreateTransferMutation>(CreateTransfer);
@@ -81,10 +77,10 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     const [billingElementToCreate, setBillingElementToCreate] = useState<BillingElementDTO | null>(null);
     const [transferToCreate, setTransferToCreate] = useState<TransferDTO & { possibleDays: Dayjs[] } | null>(null);
     const [transactionsToMutuallyCancelPublicId, setTransactionsToMutuallyCancelPublicId] = useState<string[] | null>(null);
-    const [transactionsToCustomImport, setTransactionsToCustomImport] = useState<GQLBankTransactionToImport[] | null>(null);
+    const [transactionsToCustomImport, setTransactionsToCustomImport] = useState<BankTransactionToImport[] | null>(null);
 
-   const mappedAccounts = useMemo(
-        () => data?.financeManagement.accounts.map(mapAccount) ?? [],
+    const mappedAccounts = useMemo(
+        () => data?.financeManagement.accounts as Account[] ?? [],
         [data]
     );
 
@@ -118,7 +114,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
             if (!billingElementToCreate && !transferToCreate && !transactionsToMutuallyCancelPublicId && !transactionsToCustomImport) {
                 return <BankTransactionsToImportPicker
                     accounts={mappedAccounts}
-                    bankTransactions={data.bankTransactionsToImport.map(mapBankTransactionToImport)}
+                    bankTransactions={data.bankTransactionsToImport as BankTransactionToImport[]}
                     onClose={(pickOption) => {
                         setSelectedBankAccountTransactionsToImport(pickOption?.selectedBankTransactions || []);
                         if (pickOption) {
@@ -140,8 +136,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                     <DialogContent>
                         <CreateBillingElementForm
                             accounts={mappedAccounts}
-                            billingCategories={data.financeManagement.billingCategories.map(mapBillingCategory)}
-                            piggyBanks={data.financeManagement.piggyBanks.map(mapPiggyBank)}
+                            billingCategories={data.financeManagement.billingCategories as BillingCategory[]}
+                            piggyBanks={data.financeManagement.piggyBanks as PiggyBank[]}
                             billingElementToCreate={billingElementToCreate}
                             onClose={(billingElementDTO) => {
                                 if (!billingElementDTO) reset();
@@ -213,8 +209,8 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                         <CreateCustomImportForm
                             accountsWithAssignedBankAccounts={mappedAccounts.filter(a => a.bankAccount)}
                             accountsWithoutAssignedBankAccounts={mappedAccounts.filter(a => !a.bankAccount)}
-                            billingCategories={data.financeManagement.billingCategories.map(mapBillingCategory)}
-                            piggyBanks={data.financeManagement.piggyBanks.map(mapPiggyBank)}
+                            billingCategories={data.financeManagement.billingCategories as BillingCategory[]}
+                            piggyBanks={data.financeManagement.piggyBanks as PiggyBank[]}
                             bankTransactions={transactionsToCustomImport}
                             onClose={(customImportResult) => {
                                 if (!customImportResult) reset();
