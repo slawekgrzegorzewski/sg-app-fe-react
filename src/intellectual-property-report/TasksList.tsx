@@ -1,13 +1,12 @@
 import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation} from "@apollo/client/react";
-import {CreateTask, CreateTaskMutation} from "../types";
+import {CreateTask, CreateTaskMutation, IntellectualProperty, Task} from "../types";
 import {Button, Stack, useTheme} from "@mui/material";
 import * as React from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
-import {emptyTaskProvider, IntellectualPropertyDTO, TaskDTO} from "./model/types";
-import {Task} from "./Task";
+import {TaskView} from "./TaskView";
 
 const taskEditorFields: EditorField[] = [
     {
@@ -27,7 +26,7 @@ const taskEditorFields: EditorField[] = [
 const taskDialogTitle = 'Dane zadania';
 
 export function TasksList(properties: {
-    intellectualProperty: IntellectualPropertyDTO,
+    intellectualProperty: IntellectualProperty,
     refetchDataCallback: () => void
 }) {
     const {intellectualProperty, refetchDataCallback} = properties;
@@ -35,12 +34,12 @@ export function TasksList(properties: {
     const oddStyle = {backgroundColor: theme.palette.action.hover};
     const [createTaskMutation, createTaskMutationResult] = useMutation<CreateTaskMutation>(CreateTask);
 
-    const createTask = async (taskDTO: TaskDTO): Promise<any> => {
+    const createTask = async (task: Task): Promise<any> => {
         await createTaskMutation({
             variables: {
-                intellectualPropertyId: taskDTO.intellectualPropertyId,
-                description: taskDTO.description,
-                coAuthors: taskDTO.coAuthors,
+                intellectualPropertyId: intellectualProperty.id,
+                description: task.description,
+                coAuthors: task.coAuthors,
             }
         });
         return refetchDataCallback();
@@ -51,7 +50,7 @@ export function TasksList(properties: {
     return (
         <Stack direction="column">
             <Stack direction="row" justifyContent="space-between">
-                <div>{intellectualProperty.tasks.length === 0 ? 'Brak zadań w ramach IP' : 'Zadania w ramach IP'}</div>
+                <div>{(intellectualProperty.tasks || []).length === 0 ? 'Brak zadań w ramach IP' : 'Zadania w ramach IP'}</div>
                 <FormDialogButton
                     title={taskDialogTitle}
                     buttonContent={
@@ -64,7 +63,14 @@ export function TasksList(properties: {
                         return Promise.resolve();
                     }}
                     formProps={{
-                        initialValues: emptyTaskProvider(intellectualProperty.id),
+                        initialValues: {
+                            intellectualPropertyId: -1,
+                            id: -1,
+                            description: '',
+                            coAuthors: '',
+                            attachments: [],
+                            timeRecords: []
+                        },
                         fields: taskEditorFields,
                         validationSchema: Yup.object({})
                     }}
@@ -73,14 +79,14 @@ export function TasksList(properties: {
             <Stack direction="column">
                 {(intellectualProperty.tasks || [])
                     .map((task, index) => (
-                        <Task key={task.id}
-                              task={task}
-                              sx={index % 2 === 0 ? oddStyle : {}}
-                              dialogOptions={{
-                                  title: taskDialogTitle,
-                                  editorFields: taskEditorFields
-                              }}
-                              refetchDataCallback={refetchDataCallback}/>
+                        <TaskView key={task.id}
+                                  task={task}
+                                  sx={index % 2 === 0 ? oddStyle : {}}
+                                  dialogOptions={{
+                                      title: taskDialogTitle,
+                                      editorFields: taskEditorFields
+                                  }}
+                                  refetchDataCallback={refetchDataCallback}/>
                     ))}
             </Stack>
         </Stack>

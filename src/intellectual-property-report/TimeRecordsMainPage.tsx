@@ -1,10 +1,17 @@
 import {ErrorDisplay} from "../application/components/QueryState";
 import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {useMutation, useQuery} from "@apollo/client/react";
-import {AssignmentAction, CreateTimeRecord, CreateTimeRecordMutation, TimeRecords, TimeRecordsQuery} from "../types";
+import {
+    AssignmentAction,
+    CreateTimeRecord,
+    CreateTimeRecordMutation,
+    Task,
+    TimeRecord,
+    TimeRecords,
+    TimeRecordsQuery
+} from "../types";
 import * as React from "react";
 import {useState} from "react";
-import {emptyTimeRecordEditorProvider, mapTask, mapTimeRecord, NON_EXISTING_ID} from "./model/types";
 import {Button, FormControl, InputLabel, MenuItem, Select, Stack} from "@mui/material";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import * as Yup from "yup";
@@ -65,11 +72,15 @@ export function TimeRecordsMainPage() {
             }
         }
 
-        const nonIpTimeRecords = data.timeRecords.nonIPTimeRecords!.map((timeRecord) => mapTimeRecord(NON_EXISTING_ID, timeRecord));
-        const ipTimeRecords = data.timeRecords.taskWithSelectedTimeRecords!.map(task => mapTask(NON_EXISTING_ID, task));
+        const nonIpTimeRecords = data.timeRecords.nonIPTimeRecords! as TimeRecord[];
+        const ipTimeRecords = data.timeRecords.taskWithSelectedTimeRecords! as Task[];
 
-        const sumOfHours = nonIpTimeRecords.map(tr => tr.numberOfHours).reduce((acc, curr) => acc + curr, 0)
-            + ipTimeRecords.flatMap(task => task.timeRecords).map(tr => tr.numberOfHours).reduce((acc, curr) => acc + curr, 0);
+        const sumOfHours =
+            nonIpTimeRecords.map(tr => tr.numberOfHours)
+                .reduce((acc, curr) => acc + curr, 0)
+            + ipTimeRecords.flatMap(task => task.timeRecords)
+                .map(tr => tr?.numberOfHours || 0)
+                .reduce((acc, curr) => acc + curr, 0);
 
         return (
             <Stack direction="column" sx={{width: 1000, m: 'auto'}}>
@@ -83,7 +94,7 @@ export function TimeRecordsMainPage() {
                         }
                         onConfirm={(value) => {
                             let taskId: number | null = value.task?.id;
-                            if (taskId === NON_EXISTING_ID)
+                            if (taskId === -1)
                                 taskId = null;
                             createTimeRecord(taskId ? AssignmentAction.Assign : AssignmentAction.Nop,
                                 value.date,
@@ -96,7 +107,16 @@ export function TimeRecordsMainPage() {
                             return Promise.resolve();
                         }}
                         formProps={{
-                            initialValues: emptyTimeRecordEditorProvider(),
+                            initialValues: {
+                                task: {
+                                    id: -1,
+                                    description: ''
+                                },
+                                id: -1,
+                                date: dayjs(),
+                                description: '',
+                                numberOfHours: 0
+                            },
                             fields: timeRecordEditorField(true),
                             validationSchema: Yup.object({
                                 task: Yup.object(),

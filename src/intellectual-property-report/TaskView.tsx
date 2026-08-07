@@ -5,6 +5,7 @@ import {
     DeleteTaskAttachment,
     DeleteTaskAttachmentMutation,
     DeleteTaskMutation,
+    Task,
     UpdateTask,
     UpdateTaskMutation,
     UploadTaskAttachment,
@@ -17,7 +18,6 @@ import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
 import * as Yup from "yup";
 import IconButton from "@mui/material/IconButton";
-import {TaskDTO} from "./model/types";
 import {EditorField} from "../utils/forms/Form";
 import {SxProps} from "@mui/system/styleFunctionSx";
 import dayjs from "dayjs";
@@ -42,8 +42,8 @@ const VisuallyHiddenInput = styled('input')({
     width: 1,
 });
 
-export function Task(properties: {
-    task: TaskDTO,
+export function TaskView(properties: {
+    task: Task,
     refetchDataCallback: () => void,
     dialogOptions: { title: string, editorFields: EditorField[] },
     sx?: SxProps<Theme>
@@ -99,12 +99,12 @@ export function Task(properties: {
     };
 
 
-    const updateTask = async (taskDTO: TaskDTO): Promise<any> => {
+    const updateTask = async (task: Task): Promise<any> => {
         await updateTaskMutation({
             variables: {
-                taskId: taskDTO.id,
-                description: taskDTO.description,
-                coAuthors: taskDTO.coAuthors,
+                taskId: task.id,
+                description: task.description,
+                coAuthors: task.coAuthors,
             }
         });
         return refetchDataCallback();
@@ -122,11 +122,11 @@ export function Task(properties: {
         deleteTaskAttachmentMutationResult
     );
 
-    const datesAsNumbers = task.timeRecords.map(timeRecord => timeRecord.date.getTime());
+    const datesAsNumbers = (task.timeRecords || []).map(timeRecord => dayjs(timeRecord.date).toDate().getTime());
     const hasTimeRecords = datesAsNumbers.length > 0;
     const minDate = hasTimeRecords ? new Date(Math.min(...datesAsNumbers)) : null;
     const maxDate = hasTimeRecords ? new Date(Math.max(...datesAsNumbers)) : null;
-    const hours = task.timeRecords.map(timeRecord => timeRecord.numberOfHours).reduce((hours1, hours2) => hours1 + hours2, 0);
+    const hours = (task.timeRecords || []).map(timeRecord => timeRecord.numberOfHours).reduce((hours1, hours2) => hours1 + hours2, 0);
 
     return (
         <Stack sx={sx || {}} direction="column">
@@ -156,7 +156,8 @@ export function Task(properties: {
                         (task.timeRecords || []).length === 0 && (
                             <DeleteButton
                                 confirmationMessage={'Na pewno usunąć ' + task!.id + ' - ' + task!.description + '?'}
-                                buttonContent={<IconButton size={'small'} aria-label={'Usuń'}><Delete fontSize='inherit'/></IconButton>}
+                                buttonContent={<IconButton size={'small'} aria-label={'Usuń'}><Delete
+                                    fontSize='inherit'/></IconButton>}
                                 object={task!.id}
                                 onDelete={deleteTask}
                                 onCancel={() => {
@@ -168,7 +169,10 @@ export function Task(properties: {
             </Stack>
             <Stack direction="row" justifyContent="space-between">
                 <Stack direction="column"
-                       sx={{width: '50%', borderRight: (theme) => `1px dotted ${theme.palette.divider}`, ...sidePadding}}>
+                       sx={{
+                           width: '50%',
+                           borderRight: (theme) => `1px dotted ${theme.palette.divider}`, ...sidePadding
+                       }}>
                     {
                         task.coAuthors && (
                             <div>
@@ -182,13 +186,16 @@ export function Task(properties: {
                                 <div>Zarejestrowany czas:</div>
                                 <div>{minDate && maxDate
                                     ? `${dayjs(minDate).format("YYYY-MM-DD")} - ${dayjs(maxDate).format("YYYY-MM-DD")} - `
-                                    : ''}{hours} godzin</div>
+                                    : ''}{hours} godzin
+                                </div>
                                 <ShowInformationButton title={'Szczegóły zadania'} onClose={() => Promise.resolve()}
-                                                       buttonContent={<IconButton size={'small'} aria-label={'Szczegóły'}><Loupe fontSize='inherit'/></IconButton>}>
+                                                       buttonContent={<IconButton size={'small'}
+                                                                                  aria-label={'Szczegóły'}><Loupe
+                                                           fontSize='inherit'/></IconButton>}>
                                     <Stack direction="column">
                                         <b>{task.description}</b>
                                         {
-                                            task.timeRecords.map(timeRecord => (
+                                            (task.timeRecords || []).map(timeRecord => (
                                                 <Box
                                                     key={timeRecord.id}>{dayjs(timeRecord.date).format("YYYY-MM-DD")}: {timeRecord.numberOfHours} godzin</Box>))
                                         }
@@ -201,7 +208,7 @@ export function Task(properties: {
                 </Stack>
                 <Stack direction="column" sx={{width: '50%', ...sidePadding}}>
                     <Stack direction="row" justifyContent="space-between">
-                        <div>{task.attachments.length === 0 ? 'Brak załączników' : 'Załączniki:'}</div>
+                        <div>{(task.attachments || []).length === 0 ? 'Brak załączników' : 'Załączniki:'}</div>
                         <IconButton
                             component="label"
                             size="small"
@@ -215,7 +222,7 @@ export function Task(properties: {
                         </IconButton>
                     </Stack>
                     {
-                        task.attachments.map(attachmentName => (
+                        (task.attachments || []).map(attachmentName => (
                             <Stack direction="row" key={attachmentName} justifyContent="space-between">
                                 <div>{attachmentName}</div>
                                 <Stack direction="row">

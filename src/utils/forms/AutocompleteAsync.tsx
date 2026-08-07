@@ -78,12 +78,24 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField, sx}:
         getOptionLabel={option => editorField.getOptionLabel!(option)}
         isOptionEqualToValue={editorField.isOptionEqualToValue!}
         options={options.options}
-        sx={sx || {}}
+        sx={sx || editorField.additionalProps?.sx || {}}
+
+        renderOption={(props, option: any) => (
+            <li {...props} key={option.id}>
+                {editorField.getOptionLabel!(option)}
+            </li>
+        )}
+
+        slotProps={{
+            popper: {
+                style: {width: 'fit-content'},
+                placement: 'bottom-start',
+            },
+        }}
 
         renderInput={(params) => (
             <TextField
                 {...params}
-                multiline={true}
                 label={editorField.label}
                 error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
                 helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}

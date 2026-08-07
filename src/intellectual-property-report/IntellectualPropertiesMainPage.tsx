@@ -5,12 +5,12 @@ import {
     CreateIntellectualPropertyReport,
     CreateIntellectualPropertyReportMutation,
     IntellectualPropertiesRecords,
-    IntellectualPropertiesRecordsQuery
+    IntellectualPropertiesRecordsQuery,
+    IntellectualProperty
 } from "../types";
 import * as React from "react";
-import {emptyIPRProvider, IntellectualPropertyDTO, mapIntellectualProperty} from "./model/types";
-import {IntellectualPropertiesList, IPR_DIALOG_TITLE, IPR_EDITOR_FIELDS} from "./IntellectualPropertiesList";
 import {useState} from "react";
+import {IntellectualPropertiesList, IPR_DIALOG_TITLE, IPR_EDITOR_FIELDS} from "./IntellectualPropertiesList";
 import {
     Button,
     FormControl,
@@ -25,6 +25,7 @@ import {
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import * as Yup from "yup";
 import dayjs from "dayjs";
+import {ComparatorBuilder} from "../utils/comparator-builder";
 
 type IntellectualPropertiesFilter = {
     yearMonthFilter: string;
@@ -42,8 +43,8 @@ export function IntellectualPropertiesMainPage() {
     const [ipFilter, setIpFilter] = useState<IntellectualPropertiesFilter>(intellectualPropertiesFilter);
     const [createIntellectualPropertyReportMutation, createIntellectualPropertyReportMutationResult] = useMutation<CreateIntellectualPropertyReportMutation>(CreateIntellectualPropertyReport);
 
-    const createIntellectualProperty = async (intellectualPropertyDTO: IntellectualPropertyDTO): Promise<any> => {
-        await createIntellectualPropertyReportMutation({variables: {description: intellectualPropertyDTO.description}});
+    const createIntellectualProperty = async (intellectualProperty: IntellectualProperty): Promise<any> => {
+        await createIntellectualPropertyReportMutation({variables: {description: intellectualProperty.description}});
         return refetch();
     };
 
@@ -91,7 +92,15 @@ export function IntellectualPropertiesMainPage() {
                             return Promise.resolve();
                         }}
                         formProps={{
-                            initialValues: emptyIPRProvider(),
+                            initialValues: {
+                                id: -1,
+                                description: '',
+                                tasks: [],
+                                domain: {
+                                    publicId: '',
+                                    name: ''
+                                }
+                            },
                             fields: IPR_EDITOR_FIELDS,
                             validationSchema: Yup.object({})
                         }}
@@ -146,9 +155,9 @@ export function IntellectualPropertiesMainPage() {
                     ? <>No data</>
                     : <IntellectualPropertiesList
                         intellectualProperties={
-                            [...data.intellectualPropertiesRecords!.reports!]
-                                .sort((ipr1, ipr2) => ipr2.id - ipr1.id)
-                                .map(ipr => mapIntellectualProperty(ipr))}
+                            [...data.intellectualPropertiesRecords!.reports! as IntellectualProperty[]]
+                                .sort(ComparatorBuilder.comparing<IntellectualProperty>(ip => ip.id).build())
+                        }
                         refetchDataCallback={refetch}/>}
             </Stack>);
     } else {

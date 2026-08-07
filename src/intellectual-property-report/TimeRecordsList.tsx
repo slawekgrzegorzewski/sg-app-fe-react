@@ -6,14 +6,13 @@ import {
     EditorField,
     RegularEditorField
 } from "../utils/forms/Form";
-import {TaskDTO, TimeRecordDTO} from "./model/types";
 import dayjs from "dayjs";
-import {SearchTasks, SearchTasksQuery} from "../types";
-import {TimeRecord} from "./TimeRecord";
+import {SearchTasks, SearchTasksQuery, Task, TimeRecord} from "../types";
+import {TimeRecordView} from "./TimeRecordView";
 
 export const TIME_RECORD_DIALOG_TITLE = 'Dane raportu czasowego';
 
-type Data = { task: TaskDTO | null, timeRecord: TimeRecordDTO }
+type Data = { task: Task | null, timeRecord: TimeRecord }
 
 export function timeRecordEditorField(descriptionEditable: boolean): EditorField[] {
     return [
@@ -24,7 +23,7 @@ export function timeRecordEditorField(descriptionEditable: boolean): EditorField
             editable: true,
             query: SearchTasks,
             additionalProps: {
-                sx: {width: '350px'},
+                sx: {width: '250px'},
             },
             queryToOptionsMapper: (data: SearchTasksQuery) => data.tasks.tasks.map((t: any) => {
                 return {
@@ -69,8 +68,8 @@ export function timeRecordEditorField(descriptionEditable: boolean): EditorField
 }
 
 export function TimeRecordsList(properties: {
-    taskWithTimeRecords: TaskDTO[]
-    nonIPTimeRecords: TimeRecordDTO[]
+    taskWithTimeRecords: Task[]
+    nonIPTimeRecords: TimeRecord[]
     refetchDataCallback: () => void
 }) {
     const {taskWithTimeRecords, nonIPTimeRecords, refetchDataCallback} = properties;
@@ -83,7 +82,7 @@ export function TimeRecordsList(properties: {
     }, Object.create(null));
 
     taskWithTimeRecords.forEach(taskWithTimeRecords => {
-        taskWithTimeRecords.timeRecords.forEach(timeRecord => {
+        (taskWithTimeRecords.timeRecords || []).forEach(timeRecord => {
             const dateKey = dayjs(timeRecord.date).format("YYYY-MM-DD");
             timeRecordsByDates[dateKey] = timeRecordsByDates[dateKey] || [];
             timeRecordsByDates[dateKey].push({
@@ -98,14 +97,14 @@ export function TimeRecordsList(properties: {
                 return (<Stack key={date}>
                     <b>{date}</b>
                     {timeRecordsByDates[date].sort((data1: Data, data2: Data) => data1.timeRecord.id - data2.timeRecord.id).map((data: Data) => {
-                        return (<TimeRecord key={data.timeRecord.id}
-                                            relatedTask={data.task}
-                                            timeRecord={data.timeRecord}
-                                            refetchDataCallback={refetchDataCallback}
-                                            dialogOptions={{
-                                                title: TIME_RECORD_DIALOG_TITLE,
-                                                editorFields: timeRecordEditorField(!data.task)
-                                            }}/>);
+                        return (<TimeRecordView key={data.timeRecord.id}
+                                                relatedTask={data.task}
+                                                timeRecord={data.timeRecord}
+                                                refetchDataCallback={refetchDataCallback}
+                                                dialogOptions={{
+                                                    title: TIME_RECORD_DIALOG_TITLE,
+                                                    editorFields: timeRecordEditorField(!data.task)
+                                                }}/>);
                     })}
                 </Stack>)
             })

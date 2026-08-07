@@ -2,8 +2,8 @@ import {Box} from "@mui/material";
 import * as React from "react";
 import {useState} from "react";
 import {EditorField} from "../utils/forms/Form";
-import {IntellectualPropertyDTO, NON_EXISTING_ID} from "./model/types";
 import {IntellectualPropertyReport} from "./IntellectualPropertyReport";
+import {IntellectualProperty} from "../types";
 
 const EXPANDED_INTELLECTUAL_PROPERTY_ID_LOCAL_STORAGE_KEY = "newApp_IPR_accordion_expandedId";
 
@@ -18,7 +18,7 @@ export const IPR_EDITOR_FIELDS: EditorField[] = [
 ];
 
 export function IntellectualPropertiesList(properties: {
-    intellectualProperties: IntellectualPropertyDTO[]
+    intellectualProperties: IntellectualProperty[]
     refetchDataCallback: () => void
 }) {
     const {intellectualProperties, refetchDataCallback} = properties;
@@ -29,15 +29,15 @@ export function IntellectualPropertiesList(properties: {
     }
 
     const changeTab = (intellectualPropertyId: number) => {
-        setExpandedIntellectualPropertyId(intellectualPropertyId === expandedIntellectualPropertyId ? NON_EXISTING_ID : intellectualPropertyId);
+        setExpandedIntellectualPropertyId(intellectualPropertyId === expandedIntellectualPropertyId ? -1 : intellectualPropertyId);
     };
 
     function expandedTabIdNotPresentInDataSet() {
         return !intellectualProperties.map(ipr => ipr.id).find(id => id === expandedIntellectualPropertyId);
     }
 
-    if (expandedIntellectualPropertyId !== NON_EXISTING_ID && expandedTabIdNotPresentInDataSet()) {
-        setExpandedIntellectualPropertyId(NON_EXISTING_ID);
+    if (expandedIntellectualPropertyId !== -1 && expandedTabIdNotPresentInDataSet()) {
+        setExpandedIntellectualPropertyId(-1);
     }
 
     return (

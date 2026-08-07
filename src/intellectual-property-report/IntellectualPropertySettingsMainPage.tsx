@@ -8,6 +8,7 @@ import {
     CreateTimeRecordMutation,
     DeleteTimeRecordCategory,
     DeleteTimeRecordMutation,
+    TimeRecordCategory,
     UpdateTimeRecordCategory,
     UpdateTimeRecordMutation
 } from "../types";
@@ -15,28 +16,25 @@ import * as React from "react";
 import {Stack} from "@mui/material";
 import {SimpleCrudList} from "../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../utils/comparator-builder";
-import {mapTimeRecordCategory, NON_EXISTING_ID, TimeRecordCategoryDTO} from "./model/types";
 import * as Yup from "yup";
 import {RegularEditorField} from "../utils/forms/Form";
 
-const TIME_RECORD_CATEGORY_FORM = (timeRecordCategory: TimeRecordCategoryDTO | null) => {
+type TimeRecordFormObject = {
+    id: number,
+    name: string
+}
+
+const TIME_RECORD_CATEGORY_FORM = (timeRecordCategory: TimeRecordFormObject | null) => {
         return {
             validationSchema: Yup.object({
                 name: Yup.string().required('Wymagana')
             }),
             initialValues: {
-                timeRecordId: timeRecordCategory?.timeRecordId || NON_EXISTING_ID,
-                id: timeRecordCategory?.id || NON_EXISTING_ID,
+                id: timeRecordCategory?.id || -1,
                 name: timeRecordCategory?.name || ''
-            } as TimeRecordCategoryDTO,
+            } as TimeRecordFormObject,
             fields:
                 [
-                    {
-                        label: 'timeRecordId',
-                        type: 'HIDDEN',
-                        key: 'timeRecordId',
-                        editable: false
-                    } as RegularEditorField,
                     {
                         label: 'id',
                         type: 'HIDDEN',
@@ -51,8 +49,7 @@ const TIME_RECORD_CATEGORY_FORM = (timeRecordCategory: TimeRecordCategoryDTO | n
                     } as RegularEditorField
                 ]
         };
-    }
-;
+    };
 
 export function IntellectualPropertySettingsMainPage() {
 
@@ -67,7 +64,7 @@ export function IntellectualPropertySettingsMainPage() {
     const [deleteTimeRecordMutation, deleteTimeRecordMutationResult] = useMutation<DeleteTimeRecordMutation>(DeleteTimeRecordCategory);
     const [createTimeRecordMutation, createTimeRecordMutationResult] = useMutation<CreateTimeRecordMutation>(CreateTimeRecordCategory);
 
-    const createTimeRecordCategory = async (timeRecordCategory: TimeRecordCategoryDTO): Promise<any> => {
+    const createTimeRecordCategory = async (timeRecordCategory: TimeRecordCategory): Promise<any> => {
         await createTimeRecordMutation({
             variables: {
                 name: timeRecordCategory.name
@@ -75,7 +72,7 @@ export function IntellectualPropertySettingsMainPage() {
         });
         return refetch();
     }
-    const deleteTimeRecordCategory = async (timeRecordCategory: TimeRecordCategoryDTO): Promise<any> => {
+    const deleteTimeRecordCategory = async (timeRecordCategory: TimeRecordCategory): Promise<any> => {
         await deleteTimeRecordMutation({
             variables: {
                 timeRecordCategoryId: timeRecordCategory.id
@@ -83,7 +80,7 @@ export function IntellectualPropertySettingsMainPage() {
         });
         return refetch();
     }
-    const updateTimeRecordCategory = async (timeRecordCategory: TimeRecordCategoryDTO): Promise<any> => {
+    const updateTimeRecordCategory = async (timeRecordCategory: TimeRecordCategory): Promise<any> => {
         await updateTimeRecordMutation({
             variables: {
                 timeRecordCategoryId: timeRecordCategory.id,
@@ -116,9 +113,14 @@ export function IntellectualPropertySettingsMainPage() {
                     onDelete: deleteTimeRecordCategory,
                 }}
                 list={
-                    [...data.allTimeRecordCategories]
-                        .map(timeRecordCategory => mapTimeRecordCategory(NON_EXISTING_ID, timeRecordCategory))
-                        .sort(ComparatorBuilder.comparing<TimeRecordCategoryDTO>(timeRecordCategory => timeRecordCategory.name).thenComparing(timeRecordCategory => timeRecordCategory.id).build())
+                    [...data.allTimeRecordCategories as TimeRecordCategory[]]
+                        .sort(ComparatorBuilder.comparing<TimeRecordCategory>(timeRecordCategory => timeRecordCategory.name).thenComparing(timeRecordCategory => timeRecordCategory.id).build())
+                        .map(timeRecordCategory => {
+                            return {
+                                id: timeRecordCategory.id,
+                                name: timeRecordCategory.name
+                            } as TimeRecordFormObject
+                        })
                 }
                 idExtractor={timeRecordCategory => timeRecordCategory.id.toString()}
                 formSupplier={timeRecordCategory => TIME_RECORD_CATEGORY_FORM(timeRecordCategory || null)}

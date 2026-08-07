@@ -3,6 +3,7 @@ import {useMutation} from "@apollo/client/react";
 import {
     DeleteIntellectualPropertyReport,
     DeleteIntellectualPropertyReportMutation,
+    IntellectualProperty,
     UpdateIntellectualPropertyReport,
     UpdateIntellectualPropertyReportMutation
 } from "../types";
@@ -14,11 +15,10 @@ import {DeleteButton} from "../utils/buttons/DeleteButton";
 import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
 import IconButton from "@mui/material/IconButton";
-import {IntellectualPropertyDTO} from "./model/types";
 import {TasksList} from "./TasksList";
 
 export function IntellectualPropertyReport(properties: {
-    ipr: IntellectualPropertyDTO,
+    ipr: IntellectualProperty,
     expanded: boolean,
     onExpandCallback: (intellectualPropertyId: number) => void,
     refetchDataCallback: () => void,
@@ -30,7 +30,7 @@ export function IntellectualPropertyReport(properties: {
     const [updateIntellectualPropertyReportMutation, updateIntellectualPropertyReportMutationResult] = useMutation<UpdateIntellectualPropertyReportMutation>(UpdateIntellectualPropertyReport);
     const [deleteIntellectualPropertyReportMutation, deleteIntellectualPropertyReportMutationResult] = useMutation<DeleteIntellectualPropertyReportMutation>(DeleteIntellectualPropertyReport);
 
-    const performEdit = async (iprDTO: IntellectualPropertyDTO): Promise<any> => {
+    const performEdit = async (iprDTO: IntellectualProperty): Promise<any> => {
         await updateIntellectualPropertyReportMutation({
             variables: {
                 intellectualPropertyId: iprDTO.id,

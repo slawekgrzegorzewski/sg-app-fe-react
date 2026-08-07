@@ -149,6 +149,14 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             defaultProps: {
                 size: 'small',
             },
+            styleOverrides: {
+                root: {
+                    color: mode === 'light' ? '#6B7280' : '#9CA3AF',
+                    '&.Mui-focused': {
+                        color: mode === 'light' ? '#334155' : '#E5C563',
+                    },
+                },
+            },
         },
         MuiCard: {
             defaultProps: {

@@ -2,7 +2,6 @@ import {useResetMutationResults} from "../utils/use-reset-mutation-results";
 import {Stack} from "@mui/material";
 import * as React from "react";
 import {EditorField} from "../utils/forms/Form";
-import {NON_EXISTING_ID, TaskDTO, TimeRecordDTO} from "./model/types";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import IconButton from "@mui/material/IconButton";
 import {Delete, Edit} from "@mui/icons-material";
@@ -12,15 +11,17 @@ import {
     AssignmentAction,
     DeleteTimeRecord,
     DeleteTimeRecordMutation,
+    Task,
+    TimeRecord,
     UpdateTimeRecord,
     UpdateTimeRecordMutation
 } from "../types";
 import dayjs, {Dayjs} from "dayjs";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
 
-export function TimeRecord(properties: {
-    relatedTask: TaskDTO | null,
-    timeRecord: TimeRecordDTO,
+export function TimeRecordView(properties: {
+    relatedTask: Task | null,
+    timeRecord: TimeRecord,
     refetchDataCallback: () => void,
     dialogOptions: { title: string, editorFields: EditorField[] }
 }) {
@@ -68,12 +69,12 @@ export function TimeRecord(properties: {
                 buttonContent={<IconButton size="small" aria-label={'Edytuj'}><Edit fontSize='inherit'/></IconButton>}
                 onConfirm={(value) => {
                     let taskId: number | null = value.task?.id;
-                    if (taskId === NON_EXISTING_ID)
+                    if (taskId === -1)
                         taskId = null;
                     return updateTimeRecord(
                         taskId ? AssignmentAction.Assign : AssignmentAction.Unassign,
                         value.date,
-                        value.description,
+                        value.description || '',
                         value.numberOfHours,
                         taskId,
                         value.id
@@ -84,7 +85,7 @@ export function TimeRecord(properties: {
                 }}
                 formProps={{
                     initialValues: {
-                        task: {id: relatedTask?.id || NON_EXISTING_ID, description: relatedTask?.description || '---'},
+                        task: {id: relatedTask?.id || -1, description: relatedTask?.description || '---'},
                         id: timeRecord.id,
                         date: dayjs(timeRecord.date),
                         description: timeRecord.description,
