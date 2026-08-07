@@ -21,6 +21,7 @@ import {useThemeMode, ThemeMode} from "./ThemeContext";
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
+import PaletteIcon from '@mui/icons-material/Palette';
 import {useMutation, useQuery} from "@apollo/client/react";
 import {
     AcceptInvitationToDomain,
@@ -60,13 +61,14 @@ export default function DrawerAppBar(props: Props) {
     const {currentApplicationId} = useApplication();
     const {currentDomainPublicId, changeCurrentSettings} = useApplicationAndDomain();
     const theme = useTheme();
-    const {mode, setMode} = useThemeMode();
+    const {mode, setMode, themeVariantId, setThemeVariant, availableVariants} = useThemeMode();
     const {window, children} = props;
     const [mobileOpen, setMobileOpen] = React.useState(false);
     const {user, deleteCurrentUser} = useCurrentUser();
     const [menuAnchor, setMenuAnchor] = React.useState<null | HTMLElement>(null);
     const [appMenuAnchor, setAppMenuAnchor] = React.useState<null | HTMLElement>(null);
     const [domainMenuAnchor, setDomainMenuAnchor] = React.useState<null | HTMLElement>(null);
+    const [themeVariantAnchor, setThemeVariantAnchor] = React.useState<null | HTMLElement>(null);
     const [drawerAppExpanded, setDrawerAppExpanded] = useState(false);
     const [drawerDomainExpanded, setDrawerDomainExpanded] = useState(false);
     const [drawerUserExpanded, setDrawerUserExpanded] = useState(false);
@@ -224,6 +226,32 @@ export default function DrawerAppBar(props: Props) {
                             >
                                 {themeIcon}
                             </IconButton>
+                            <IconButton
+                                color="inherit"
+                                onClick={(e) => setThemeVariantAnchor(e.currentTarget)}
+                                aria-label="Change theme variant"
+                                title={`Variant: ${availableVariants.find(v => v.id === themeVariantId)?.label}`}
+                            >
+                                <PaletteIcon/>
+                            </IconButton>
+                            <Menu
+                                anchorEl={themeVariantAnchor}
+                                open={Boolean(themeVariantAnchor)}
+                                onClose={() => setThemeVariantAnchor(null)}
+                            >
+                                {availableVariants.map(variant => (
+                                    <MenuItem
+                                        key={variant.id}
+                                        selected={variant.id === themeVariantId}
+                                        onClick={() => {
+                                            setThemeVariant(variant.id);
+                                            setThemeVariantAnchor(null);
+                                        }}
+                                    >
+                                        {variant.label}
+                                    </MenuItem>
+                                ))}
+                            </Menu>
                             <Button key="account"
                                     variant="text"
                                     onClick={(event) => setMenuAnchor(event.currentTarget)}
