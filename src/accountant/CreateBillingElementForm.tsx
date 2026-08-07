@@ -1,7 +1,7 @@
 import Form, {DatePickerEditorField, EditorField, SelectEditorField} from "../utils/forms/Form";
 import * as React from "react";
 import {JSX} from "react";
-import { BillingElementType} from "./model/types";
+import { BillingElementType} from "./model/BillingElementType";
 import * as Yup from "yup";
 import dayjs, {Dayjs} from "dayjs";
 import Decimal from "decimal.js";

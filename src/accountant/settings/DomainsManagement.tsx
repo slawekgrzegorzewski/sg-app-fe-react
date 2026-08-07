@@ -2,7 +2,9 @@ import {useMutation} from "@apollo/client/react";
 import {
     CreateDomain,
     CreateDomainMutation,
+    Domain,
     DomainAccessLevel,
+    DomainUser,
     InviteUserToDomain,
     InviteUserToDomainMutation,
     SetDomainAccessLevel,
@@ -15,7 +17,6 @@ import * as React from "react";
 import {useContext, useState} from "react";
 import * as Yup from "yup";
 import {EditorField} from "../../utils/forms/Form";
-import {GQLDomain, GQLDomainUser} from "../../application/model/types";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import {SxProps} from "@mui/system";
@@ -32,7 +33,7 @@ import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-const DOMAIN_FORM = (domain?: GQLDomain) => {
+const DOMAIN_FORM = (domain?: Domain) => {
     return {
         validationSchema: Yup.object({
             publicId: Yup.string().required(),
@@ -41,7 +42,7 @@ const DOMAIN_FORM = (domain?: GQLDomain) => {
         initialValues: {
             publicId: domain?.publicId || 'new id',
             name: domain?.name || ''
-        } as GQLDomain,
+        } as Domain,
         fields:
             [
                 {
@@ -110,8 +111,8 @@ type InviteUserToDomainData = {
 }
 
 export interface UserRowProps {
-    user: GQLDomainUser;
-    domain: GQLDomain;
+    user: DomainUser;
+    domain: Domain;
     showDomainAccessLevelButtons: boolean;
     setDomainAccessLevelDialogOptions: (data: DomainAccessLevelData) => void
 }
@@ -161,12 +162,12 @@ function DomainsManagement() {
 
     const {domains, refreshDomains} = useContext(DomainsContext);
 
-    const createDomain = async (domain: GQLDomain): Promise<any> => {
+    const createDomain = async (domain: Domain): Promise<any> => {
         await createDomainMutation({variables: {name: domain.name}});
         return refreshDomains();
     };
 
-    const updateDomain = async (domain: GQLDomain): Promise<any> => {
+    const updateDomain = async (domain: Domain): Promise<any> => {
         return await updateDomainMutation({
             variables: {
                 domainPublicId: domain.publicId,
@@ -219,7 +220,7 @@ function DomainsManagement() {
                 dialogTitle: 'Edytuj domenę',
                 onUpdate: updateDomain,
             }}
-            list={[...domains].filter(domain => domain.name !== '').sort(ComparatorBuilder.comparing<GQLDomain>(domain => domain.name).build())}
+            list={[...domains as Domain[]].filter(domain => domain.name !== '').sort(ComparatorBuilder.comparing<Domain>(domain => domain.name).build())}
             idExtractor={domain => domain.publicId}
             formSupplier={value => value ? DOMAIN_FORM(value) : DOMAIN_FORM()}
             rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {

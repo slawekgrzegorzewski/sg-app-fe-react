@@ -14,7 +14,7 @@ import * as React from "react";
 import {useState} from "react";
 import Button from "@mui/material/Button";
 import PickDialog from "../utils/dialogs/PickDialog";
-import {BillingElementType} from "./model/types";
+import {BillingElementType} from "./model/BillingElementType";
 import {formatMonetaryAmount} from "../utils/functions";
 import {FormDialog} from "../utils/dialogs/FormDialog";
 import Typography from "@mui/material/Typography";

@@ -14,10 +14,10 @@ import {CurrentUserDisplay} from "../application/components/CurrentUserDisplay";
 import {useCurrentUser} from "./users/use-current-user";
 import {Link, Menu, MenuItem, Stack, styled, useTheme} from "@mui/material";
 import {useApplication} from "./applications/use-application";
-import {applications, ApplicationId} from "./applications/applications-access";
+import {ApplicationId, applications} from "./applications/applications-access";
 import {useApplicationNavigation} from "./use-application-navigation";
 import {useApplicationAndDomain} from "./use-application-and-domain";
-import {useThemeMode, ThemeMode} from "./ThemeContext";
+import {ThemeMode, useThemeMode} from "./ThemeContext";
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import BrightnessAutoIcon from '@mui/icons-material/BrightnessAuto';
@@ -26,13 +26,13 @@ import {useMutation, useQuery} from "@apollo/client/react";
 import {
     AcceptInvitationToDomain,
     AcceptInvitationToDomainMutation,
+    Domain,
     DomainsData,
     DomainsDataQuery,
     RejectInvitationToDomain,
     RejectInvitationToDomainMutation
 } from "../types";
 import Grid from "@mui/material/Grid";
-import {GQLDomain, mapDomain} from "../application/model/types";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -46,7 +46,7 @@ interface Props {
 }
 
 type DomainsContextType = {
-    domains: GQLDomain[],
+    domains: Domain[],
     refreshDomains: () => void
 }
 
@@ -112,7 +112,7 @@ export default function DrawerAppBar(props: Props) {
         return (
             <DomainsContext.Provider
                 value={{
-                    domains: [...domainsData.settings.domains].map(mapDomain),
+                    domains: [...domainsData.settings.domains as Domain[]],
                     refreshDomains: domainsDataRefetch
                 }}>
                 <Stack direction="column" sx={{width: '100dvw', height: '100dvh'}}>
@@ -285,7 +285,7 @@ export default function DrawerAppBar(props: Props) {
                             <Link href={process.env.REACT_APP_OLD_APP_URL}
                                   sx={{color: 'primary.contrastText', ...hideWhenXS}}>STARA APLIKACJA</Link>
                             {(() => {
-                                const domains = [...domainsData.settings.domains].map(mapDomain).filter(d => d.name !== '');
+                                const domains = [...domainsData.settings.domains as Domain[]].filter(d => d.name !== '');
                                 const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
                                 return domains.length > 0 ? <>
                                     <Button
@@ -403,7 +403,7 @@ export default function DrawerAppBar(props: Props) {
                                       sx={{color: 'primary.contrastText', display: 'block', py: 1}}>STARA
                                     APLIKACJA</Link>
                                 {(() => {
-                                    const domains = [...domainsData.settings.domains].map(mapDomain).filter(d => d.name !== '');
+                                    const domains = [...domainsData.settings.domains as Domain[]].filter(d => d.name !== '');
                                     const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
                                     return domains.length > 0 ? <>
                                         <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}}/>

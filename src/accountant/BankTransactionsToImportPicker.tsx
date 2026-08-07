@@ -1,6 +1,6 @@
 import {clickableProps} from "../application/components/clickable";
 import React, {JSX, useState} from "react";
-import {BillingElementType} from "./model/types";
+import {BillingElementType} from "./model/BillingElementType";
 import {Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
