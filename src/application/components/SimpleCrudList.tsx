@@ -3,13 +3,14 @@ import React, {useEffect, useRef, useState} from "react";
 import Stack from "@mui/material/Stack";
 import Box from "@mui/material/Box";
 import {Add, Delete} from "@mui/icons-material";
-import {styled, Theme} from "@mui/material";
+import {Theme} from "@mui/material";
 import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import IconButton from "@mui/material/IconButton";
 import {FormProps} from "../../utils/forms/Form";
 import {ReorderEvent, SimpleCrudListRow} from "./SimpleCrudListRow";
 import {ResponsiveStyleValue, SxProps} from "@mui/system";
+import {StandOutText} from "./StandOutText";
 
 export interface SimpleCrudListProps<T> {
     title: string,
@@ -136,12 +137,6 @@ export function SimpleCrudList<T>({
         }
     </Stack>;
 
-    const TitleBox = styled(Box)(({theme}) => ({
-        color: theme.palette.secondary.main,
-        fontSize: theme.typography.pxToRem(18),
-        fontWeight: 600,
-    }));
-
     const elements = [];
 
     for (let i = 0; i < list.length; i++) {
@@ -172,7 +167,12 @@ export function SimpleCrudList<T>({
     return <>
         <Stack direction={'column'}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{mb: 1}}>
-                <TitleBox>{title}</TitleBox>
+                <StandOutText
+                    standOutBy="both"
+                    sx={{fontSize: theme => theme.typography.pxToRem(18)}}
+                >
+                    {title}
+                </StandOutText>
                 {onCreate && formSupplier && showCreateControl && <FormDialogButton
                     clickTrigger={editButtonClick}
                     title={createDialogTitle}

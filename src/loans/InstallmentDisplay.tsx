@@ -3,6 +3,7 @@ import * as React from "react";
 import {MouseEventHandler} from "react";
 import Box from "@mui/material/Box";
 import {CurrencyAmountDisplay} from "../application/components/CurrencyAmountDisplay";
+import {StandOutText} from "../application/components/StandOutText";
 
 export type InstallmentDisplayProps = {
     installment: Installment
@@ -17,21 +18,21 @@ export function InstallmentDisplay({installment, onClick = noOp}: InstallmentDis
 
     function repaidInstallment() {
         if (installment.repaidInterest.amount > 0) {
-            return (<><b><CurrencyAmountDisplay {...installment.repaidInterest}/></b> odsetek, </>);
+            return (<><StandOutText><CurrencyAmountDisplay {...installment.repaidInterest}/></StandOutText> odsetek, </>);
         }
         return (<></>);
     }
 
     function repaidAmount() {
         if (installment.repaidAmount.amount > 0) {
-            return (<><b><CurrencyAmountDisplay {...installment.repaidAmount}/></b> kapitału, </>);
+            return (<><StandOutText><CurrencyAmountDisplay {...installment.repaidAmount}/></StandOutText> kapitału, </>);
         }
         return (<></>);
     }
 
     function overpayment() {
         if (installment.overpayment.amount > 0) {
-            return (<>nadpłacono <b><CurrencyAmountDisplay {...installment.overpayment}/></b>, </>);
+            return (<>nadpłacono <StandOutText><CurrencyAmountDisplay {...installment.overpayment}/></StandOutText>, </>);
         }
         return (<></>);
     }
@@ -39,7 +40,7 @@ export function InstallmentDisplay({installment, onClick = noOp}: InstallmentDis
     return (
         <Box onClick={onClick}
              sx={{px: 1.5, py: 0.65, borderBottom: '1px solid', borderColor: 'divider', '&:hover': {bgcolor: 'action.hover'}}}>
-            Spłacona dnia <b>{installment.paidAt}</b>,
+            Spłacona dnia <StandOutText>{installment.paidAt}</StandOutText>,
             {repaidInstallment()}
             {repaidAmount()}
             {overpayment()}

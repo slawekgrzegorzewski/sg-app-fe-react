@@ -3,6 +3,7 @@ import * as React from "react";
 import {MouseEventHandler} from "react";
 import {PercentDisplay} from "../application/components/PercentDisplay";
 import Box from "@mui/material/Box";
+import {StandOutText} from "../application/components/StandOutText";
 
 export type RateStrategyDisplayProps = {
     rateStrategyConfig: RateStrategyConfig
@@ -24,9 +25,13 @@ export function RateStrategyDisplay({rateStrategyConfig, onClick = noOp}: RateSt
     function convertToElement() {
         if (isConstantForNFirstInstallment(rateStrategyConfig)) {
             return <>
-                Oprocentowanie stałe <b><PercentDisplay rate={rateStrategyConfig.constantRate}/></b>,
-                po <b>{rateStrategyConfig.becomesVariableRateAfterNInstallments} miesiącach</b>
-                zmienne z marżą <b><PercentDisplay rate={rateStrategyConfig.variableRateMargin}/></b>
+                Oprocentowanie stałe <StandOutText>
+                    <PercentDisplay rate={rateStrategyConfig.constantRate}/>
+                </StandOutText>, po <StandOutText>
+                    {rateStrategyConfig.becomesVariableRateAfterNInstallments} miesiącach
+                </StandOutText> zmienne z marżą <StandOutText>
+                    <PercentDisplay rate={rateStrategyConfig.variableRateMargin}/>
+                </StandOutText>
             </>;
         }
         return <></>;

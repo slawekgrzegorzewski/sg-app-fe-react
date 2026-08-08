@@ -12,6 +12,7 @@ import {useRef, useState} from "react";
 import dayjs from "dayjs";
 import {FormControl, InputLabel, MenuItem, Select, Stack} from "@mui/material";
 import TableToExcelExport from "../utils/ExportExcel";
+import {StandOutText} from "../application/components/StandOutText";
 
 
 const borderTop = {borderTop: "2px solid black"};
@@ -68,36 +69,40 @@ export function IntellectualPropertyReportMainPage() {
                 <thead>
                 <tr style={headerBorders}>
                     <th colSpan={5}>
-                        <>
+                        <StandOutText>
                             Raporty ze świadczenia usług programistycznych na podstawie umowy z dnia 20-07-2020 z Satago
                             Software
                             Solutions spółka z o.o. w roku {report.year}
-                        </>
+                        </StandOutText>
                     </th>
                 </tr>
                 <tr style={sideBorders}>
                     <th colSpan={5}>
-                        Łączna ilość prac autorskich: {report.countOfDifferentIPs}
+                        <StandOutText>
+                            Łączna ilość prac autorskich: {report.countOfDifferentIPs}
+                        </StandOutText>
                     </th>
                 </tr>
                 <tr style={sideBorders}>
                     <th colSpan={5}>
-                        Liczba godzin: IP: {report?.ipHours ?? 0}, nie IP: {report.nonIPHours}
+                        <StandOutText>
+                            Liczba godzin: IP: {report?.ipHours ?? 0}, nie IP: {report.nonIPHours}
+                        </StandOutText>
                     </th>
                 </tr>
                 <tr style={footerBorders}>
                     <th colSpan={5}>
-                        <>
+                        <StandOutText>
                             Wynagrodzenie z tytułu przeniesienia praw autorskich
                             stanowi {report?.ipPercentage}% wynagrodzenia
-                        </>
+                        </StandOutText>
                     </th>
                 </tr>
                 <tr style={headerBorders}>
-                    <th>Opis zadania</th>
-                    <th>Ilość godzin IP</th>
-                    <th>Ilość godzin zwykłych</th>
-                    <th>Procent IP</th>
+                    <th><StandOutText>Opis zadania</StandOutText></th>
+                    <th><StandOutText>Ilość godzin IP</StandOutText></th>
+                    <th><StandOutText>Ilość godzin zwykłych</StandOutText></th>
+                    <th><StandOutText>Procent IP</StandOutText></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -110,10 +115,10 @@ export function IntellectualPropertyReportMainPage() {
                                 .flatMap(monthReport => [
                                     <tr key={`${yearMonth}-summary`}
                                         style={month === 1 ? sideBorders : headerBorders}>
-                                        <td><b>{monthReport.yearMonth}</b></td>
-                                        <td><b>{monthReport.ipHours}</b></td>
-                                        <td><b>{monthReport.nonIPHours}</b></td>
-                                        <td><b>{monthReport.ipPercentage}</b></td>
+                                        <td><StandOutText>{monthReport.yearMonth}</StandOutText></td>
+                                        <td><StandOutText>{monthReport.ipHours}</StandOutText></td>
+                                        <td><StandOutText>{monthReport.nonIPHours}</StandOutText></td>
+                                        <td><StandOutText>{monthReport.ipPercentage}</StandOutText></td>
                                     </tr>,
                                     ...monthReport.timeRecordReports.map((timeRecordReport, index) =>
                                         <tr key={`${yearMonth}-record-${index}`} style={sideBorders}>

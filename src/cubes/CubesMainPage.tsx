@@ -14,6 +14,7 @@ import dayjs from "dayjs";
 import {useWakeLock} from "../utils/use-wake-lock";
 import {StopWatchDisplay} from "./StopWatchDisplay";
 import {useIsTouchDevice} from "../utils/use-is-touch-screen";
+import {StandOutText} from "../application/components/StandOutText";
 
 export function CubesMainPage() {
     const [, forceUpdate] = useReducer(x => x + 1, 0);
@@ -253,7 +254,7 @@ export function CubesMainPage() {
                         alignItems: 'center'
                     }}
                            {...clickableProps(() => save.current(), 'Zapisz wynik')}>
-                        <b>ZAPISZ</b>
+                        <StandOutText standOutBy="bold">ZAPISZ</StandOutText>
                     </Stack>
                     <Stack sx={{
                         backgroundColor: 'error.light',
@@ -263,7 +264,7 @@ export function CubesMainPage() {
                         alignItems: 'center'
                     }}
                            {...clickableProps(() => reset.current(), 'Odrzuć wynik')}>
-                        <b>ODRZUĆ</b>
+                        <StandOutText standOutBy="bold">ODRZUĆ</StandOutText>
                     </Stack>
                 </Stack>
             }

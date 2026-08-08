@@ -13,6 +13,7 @@ import * as Yup from "yup";
 import {EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
+import {StandOutText} from "../../application/components/StandOutText";
 import {Stack, Typography} from "@mui/material";
 
 const BILLING_CATEGORY_FORM = (billingCategory?: BillingCategory) => {
@@ -111,7 +112,7 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
         formSupplier={billingCategory => billingCategory ? BILLING_CATEGORY_FORM(billingCategory) : BILLING_CATEGORY_FORM()}
         entityDisplay={(billingCategory) => {
             return <Stack direction="column" key={billingCategory.publicId} sx={{minWidth: 0}}>
-                <Typography sx={{fontWeight: 600}}>{billingCategory.name}</Typography>
+                <Typography><StandOutText standOutBy="bold">{billingCategory.name}</StandOutText></Typography>
                 <Typography variant="body2" color="text.secondary">{billingCategory.description}</Typography>
             </Stack>;
         }}

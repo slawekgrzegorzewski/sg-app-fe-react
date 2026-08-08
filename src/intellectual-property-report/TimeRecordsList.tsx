@@ -9,6 +9,7 @@ import {
 import dayjs from "dayjs";
 import {SearchTasks, SearchTasksQuery, Task, TimeRecord} from "../types";
 import {TimeRecordView} from "./TimeRecordView";
+import {StandOutText} from "../application/components/StandOutText";
 
 export const TIME_RECORD_DIALOG_TITLE = 'Dane raportu czasowego';
 
@@ -95,7 +96,7 @@ export function TimeRecordsList(properties: {
         {
             Object.keys(timeRecordsByDates).sort().map(date => {
                 return (<Stack key={date}>
-                    <b>{date}</b>
+                    <StandOutText>{date}</StandOutText>
                     {timeRecordsByDates[date].sort((data1: Data, data2: Data) => data1.timeRecord.id - data2.timeRecord.id).map((data: Data) => {
                         return (<TimeRecordView key={data.timeRecord.id}
                                                 relatedTask={data.task}

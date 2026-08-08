@@ -18,6 +18,7 @@ import {formatBalance} from "../../utils/functions";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import {PiggyBankBalanceEditor, Type} from "./PiggyBankBalanceEditor";
+import {StandOutText} from "../../application/components/StandOutText";
 
 export type PiggyBankDTO = {
     publicId: string,
@@ -174,13 +175,14 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
                 return <Grid container width="100%" alignItems="flex-start" spacing={1}>
                     <Grid size={8}>
                         <Stack direction="column" key={piggyBank.publicId} sx={{minWidth: 0}}>
-                            <Typography sx={{fontWeight: 600}}>{piggyBank.name}</Typography>
+                            <Typography><StandOutText standOutBy="bold">{piggyBank.name}</StandOutText></Typography>
                             <Typography variant="body2" color="text.secondary">{piggyBank.description}</Typography>
                             <Typography variant="body2" sx={{
                                 color: piggyBank.balance.toNumber() < 0 ? 'error.main' : 'text.secondary',
-                                fontWeight: 500,
                                 fontVariantNumeric: 'tabular-nums',
-                            }}>Stan: {formatBalance(piggyBank.currency, piggyBank.balance)}</Typography>
+                            }}><StandOutText standOutBy="bold">
+                                Stan: {formatBalance(piggyBank.currency, piggyBank.balance)}
+                            </StandOutText></Typography>
                             {
                                 piggyBank.monthlyTopUp.toNumber() > 0 &&
                                 <Typography variant="body2" color="text.secondary">

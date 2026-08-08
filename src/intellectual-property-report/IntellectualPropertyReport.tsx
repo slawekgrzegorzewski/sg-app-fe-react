@@ -16,6 +16,7 @@ import * as Yup from "yup";
 import {EditorField} from "../utils/forms/Form";
 import IconButton from "@mui/material/IconButton";
 import {TasksList} from "./TasksList";
+import {StandOutText} from "../application/components/StandOutText";
 
 export function IntellectualPropertyReport(properties: {
     ipr: IntellectualProperty,
@@ -51,9 +52,9 @@ export function IntellectualPropertyReport(properties: {
         <Accordion key={ipr.id} expanded={expanded}
                    onChange={() => onExpandCallback(ipr.id)}
                    disableGutters>
-            <AccordionSummary expandIcon={<ExpandMore fontSize='inherit'/>} sx={{fontWeight: 'bolder'}}>
+            <AccordionSummary expandIcon={<ExpandMore fontSize='inherit'/>}>
                 <Stack direction="row" sx={{width: '100%'}}>
-                    {ipr.description}
+                    <StandOutText standOutBy="both">{ipr.description}</StandOutText>
                     <Box sx={{flexGrow: 1}}/>
                     <FormDialogButton
                         title={dialogOptions.title}

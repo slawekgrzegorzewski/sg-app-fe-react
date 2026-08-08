@@ -36,6 +36,7 @@ import Grid from "@mui/material/Grid";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import {useApplicationFavicon} from "./applications/use-application-favicon";
+import {StandOutText} from "../application/components/StandOutText";
 
 interface Props {
     /**
@@ -179,7 +180,6 @@ export default function DrawerAppBar(props: Props) {
                                          backgroundColor: themeVariantId === 'aurora'
                                              ? 'transparent'
                                              : `${t.palette.secondary.light}50`,
-                                         fontWeight: themeVariantId === 'aurora' ? 700 : undefined,
                                          whiteSpace: 'nowrap',
                                          px: 2,
                                          py: 0.5,
@@ -191,7 +191,11 @@ export default function DrawerAppBar(props: Props) {
                                              textUnderlineOffset: '4px',
                                          },
                                      })}>
-                                    {applications.get(currentApplicationId)?.name || currentApplicationId}
+                                    {themeVariantId === 'aurora'
+                                        ? <StandOutText standOutBy="bold">
+                                            {applications.get(currentApplicationId)?.name || currentApplicationId}
+                                        </StandOutText>
+                                        : applications.get(currentApplicationId)?.name || currentApplicationId}
                                 </Button>
                                 <Menu anchorEl={appMenuAnchor}
                                       open={Boolean(appMenuAnchor)}
@@ -406,10 +410,11 @@ export default function DrawerAppBar(props: Props) {
                                             py: 0.5,
                                             pl: 4,
                                             opacity: app.id === currentApplicationId ? 1 : 0.7,
-                                            fontWeight: app.id === currentApplicationId ? 700 : 400,
                                         }}
                                     >
-                                        {app.name}
+                                        {app.id === currentApplicationId
+                                            ? <StandOutText standOutBy="bold">{app.name}</StandOutText>
+                                            : app.name}
                                     </Button>
                                 ))}
                                 <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}}/>
@@ -454,10 +459,11 @@ export default function DrawerAppBar(props: Props) {
                                                     py: 0.5,
                                                     pl: 4,
                                                     opacity: domain.publicId === currentDomainPublicId ? 1 : 0.7,
-                                                    fontWeight: domain.publicId === currentDomainPublicId ? 700 : 400,
                                                 }}
                                             >
-                                                {domain.name}
+                                                {domain.publicId === currentDomainPublicId
+                                                    ? <StandOutText standOutBy="bold">{domain.name}</StandOutText>
+                                                    : domain.name}
                                             </Button>
                                         ))}
                                     </> : null;

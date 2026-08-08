@@ -16,6 +16,7 @@ import {TransferDTO} from "./CreateTransferForm";
 import {Account, BankTransactionToImport, CurrencyInfo, MonetaryAmount} from "../types";
 import {almostFullHeightDialog, compactListRow} from "../utils/theme/utils";
 import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
+import {StandOutText} from "../application/components/StandOutText";
 
 type BillingElementImport = { importType: 'billingElement', data: BillingElementDTO };
 type TransferImport = { importType: 'transfer', data: TransferDTO & { possibleDays: Dayjs[] } };
@@ -443,8 +444,8 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
-                            Przychód
+                        })}>
+                            <StandOutText standOutBy="both">Przychód</StandOutText>
                         </Typography>
                         <DebugDisplayObject object={possibleImports.credit}/>
                     </Stack>
@@ -468,8 +469,8 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
-                            Wydatek
+                        })}>
+                            <StandOutText standOutBy="both">Wydatek</StandOutText>
                         </Typography>
                         <DebugDisplayObject object={possibleImports.debit}/>
                     </Stack>
@@ -493,8 +494,10 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
-                            {possibleImports.transfer.fromCurrency!.code === possibleImports.transfer.toCurrency!.code ? 'Transfer bez wymiany walut' : 'Transfer z wymianą walut'}
+                        })}>
+                            <StandOutText standOutBy="both">
+                                {possibleImports.transfer.fromCurrency!.code === possibleImports.transfer.toCurrency!.code ? 'Transfer bez wymiany walut' : 'Transfer z wymianą walut'}
+                            </StandOutText>
                         </Typography>
                         <DebugDisplayObject object={possibleImports.transfer}/>
                     </Stack>
@@ -508,8 +511,8 @@ export function BankTransactionsToImportPicker({
                                     importType: 'mutuallyIgnore'
                                 }
                             })
-                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
-                            Wzajemnie ignoruj
+                        })}>
+                            <StandOutText standOutBy="both">Wzajemnie ignoruj</StandOutText>
                         </Typography>
                         <DebugDisplayObject object={possibleImports.ignore}/>
                     </Stack>
@@ -522,8 +525,8 @@ export function BankTransactionsToImportPicker({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {importType: 'custom'}
                             })
-                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
-                            Własny import
+                        })}>
+                            <StandOutText standOutBy="both">Własny import</StandOutText>
                         </Typography>
                     </Stack>
                 }

@@ -39,13 +39,23 @@ const authMiddleware = new ApolloLink((operation, forward) => {
 
 const backdropLink = new ApolloLink((operation, forward) => {
     const label = operation.operationName;
-    backdropHandle.show(label);
     return new Observable(observer => {
-        let hidden = false;
+        let finished = false;
+        let backdropShown = false;
+        queueMicrotask(() => {
+            if (!finished) {
+                backdropShown = true;
+                backdropHandle.show(label);
+            }
+        });
+
         const hide = () => {
-            if (!hidden) {
-                hidden = true;
-                backdropHandle.hide(label);
+            if (finished) {
+                return;
+            }
+            finished = true;
+            if (backdropShown) {
+                queueMicrotask(() => backdropHandle.hide(label));
             }
         };
         const subscription = forward(operation).subscribe({

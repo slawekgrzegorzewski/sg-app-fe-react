@@ -23,6 +23,7 @@ import {IconButton, Stack, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
+import {StandOutText} from "../../application/components/StandOutText";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import {DomainsContext} from "../../utils/DrawerAppBar";
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
@@ -110,15 +111,18 @@ type InviteUserToDomainData = {
 export interface UserRowProps {
     user: DomainUser;
     domain: Domain;
+    standOut: boolean;
     showDomainAccessLevelButtons: boolean;
     setDomainAccessLevelDialogOptions: (data: DomainAccessLevelData) => void
 }
 
-function UserRow({user, domain, showDomainAccessLevelButtons, setDomainAccessLevelDialogOptions}: UserRowProps) {
+function UserRow({user, domain, standOut, showDomainAccessLevelButtons, setDomainAccessLevelDialogOptions}: UserRowProps) {
     return <Stack direction="row" alignItems="center"
                   flexWrap="nowrap" gap={0.5} sx={{width: 'fit-content', maxWidth: '100%', minWidth: 0}}>
-        <Typography component="span" sx={{fontWeight: 'inherit', minWidth: 0, overflowWrap: 'anywhere'}}>
-            {user.login}
+        <Typography component="span" sx={{minWidth: 0, overflowWrap: 'anywhere'}}>
+            {standOut
+                ? <StandOutText standOutBy="bold">{user.login}</StandOutText>
+                : user.login}
         </Typography>
         {showDomainAccessLevelButtons && (
             <Stack direction="row" flexWrap="nowrap" sx={{flexShrink: 0}}>
@@ -233,8 +237,8 @@ function DomainsManagement() {
                     return <Stack direction="column" spacing={0.5} sx={{width: '100%', minWidth: 0}}>
                         <Stack direction="row" alignItems="center" justifyContent="space-between"
                                flexWrap="nowrap" gap={1}>
-                            <Typography sx={{fontWeight: 600, minWidth: 0}}>
-                                {domain.name}
+                            <Typography sx={{minWidth: 0}}>
+                                <StandOutText standOutBy="bold">{domain.name}</StandOutText>
                             </Typography>
                             <IconButton size="small" aria-label="Zaproś użytkownika" onClick={(event) => {
                                 setInviteUserToDomainDataDialogOptions({
@@ -250,22 +254,18 @@ function DomainsManagement() {
                         <Stack direction="column" sx={{pl: {xs: 1.5, sm: 3}}}>
                             <Typography color="text.secondary">Administratorzy</Typography>
                             {
-                                admins.map(user => <Box key={user.login} sx={{
-                                    pl: 1.5,
-                                    fontWeight: user.login === currentUser!.user.login ? 'bold' : 'normal'
-                                }}>
+                                admins.map(user => <Box key={user.login} sx={{pl: 1.5}}>
                                     <UserRow user={user} domain={domain}
+                                             standOut={user.login === currentUser!.user.login}
                                              showDomainAccessLevelButtons={isCurrentUserAdmin}
                                              setDomainAccessLevelDialogOptions={setDomainAccessLevelDialogOptions}/>
                                 </Box>)
                             }
                             {members.length > 0 && <Typography color="text.secondary" sx={{mt: 0.5}}>Członkowie</Typography>}
                             {
-                                members.map(user => <Box key={user.login} sx={{
-                                    pl: 1.5,
-                                    fontWeight: user.login === currentUser!.user.login ? 'bold' : 'normal'
-                                }}>
+                                members.map(user => <Box key={user.login} sx={{pl: 1.5}}>
                                     <UserRow user={user} domain={domain}
+                                             standOut={user.login === currentUser!.user.login}
                                              showDomainAccessLevelButtons={isCurrentUserAdmin}
                                              setDomainAccessLevelDialogOptions={setDomainAccessLevelDialogOptions}/>
                                 </Box>)

@@ -11,6 +11,7 @@ import {almostFullHeightDialog} from "../utils/theme/utils";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {OverflowTooltip} from "../utils/OverflowTooltip";
 import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
+import {StandOutText} from "../application/components/StandOutText";
 
 const BY_DATE = (account: Account) => ComparatorBuilder
     .comparingByDate<AccountTransactionShortFragment>(t => dayjs(t.timeOfTransaction).toDate())
@@ -72,9 +73,10 @@ export function AccountTransactions({account, onClose}: AccountTransactionsProps
                     </Button>
 
                     <Typography
-                        variant="subtitle1"
-                        fontWeight="bold">
-                        {yearMonth.locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
+                        variant="subtitle1">
+                        <StandOutText standOutBy="bold">
+                            {yearMonth.locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
+                        </StandOutText>
                     </Typography>
 
                     <Button onClick={() => setYearMonth(yearMonth.add(1, 'month'))}

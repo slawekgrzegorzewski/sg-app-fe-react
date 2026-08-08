@@ -7,6 +7,7 @@ import {ComparatorBuilder} from "../utils/comparator-builder";
 import {Table, TableBody, TableCell, TableContainer, TableFooter, TableHead, TableRow} from "@mui/material";
 import Box from "@mui/material/Box";
 import Decimal from "decimal.js";
+import {StandOutText} from "../application/components/StandOutText";
 
 export type Installment = {
     paidAt: Dayjs;
@@ -72,11 +73,11 @@ const sum = (values: Decimal[]) => values.reduce((total, value) => total.plus(va
 export function InstallmentsTable({currency, installments}: InstallmentsTableProps) {
 
     function sumRow(extractor: (installment: Installment) => Decimal) {
-        return <b>
+        return <StandOutText standOutBy="both">
             <CurrencyAmountDisplay
                 amount={sum(installments.map(extractor))}
                 currency={currency}/>
-        </b>;
+        </StandOutText>;
     }
 
     function amountOrDash(amount: Decimal) {
@@ -120,13 +121,13 @@ export function InstallmentsTable({currency, installments}: InstallmentsTablePro
                     )}
                 </TableBody>
                 <TableFooter>
-                    <TableRow sx={{'& td': {fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}}>
+                    <TableRow sx={{'& td': {fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}}>
                         <TableCell>-</TableCell>
                         <TableCell align="right">{sumRow(installment => installment.repaidInterest.plus(installment.repaidAmount))}</TableCell>
                         <TableCell align="right">{sumRow(installment => installment.repaidInterest)}</TableCell>
                         <TableCell align="right">{sumRow(installment => installment.repaidAmount)}</TableCell>
                         <TableCell align="right">{sumRow(installment => installment.overpayment)}</TableCell>
-                        <TableCell align="right">Suma: {sumRow(installment => installment.repaidInterest
+                        <TableCell align="right"><StandOutText standOutBy="bold">Suma:</StandOutText> {sumRow(installment => installment.repaidInterest
                             .plus(installment.repaidAmount)
                             .plus(installment.overpayment))}</TableCell>
                     </TableRow>

@@ -3,7 +3,7 @@ import * as React from "react";
 import {JSX, useMemo, useState} from "react";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
 import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
-import {Box, Button, Dialog, DialogContent, Stack, useMediaQuery} from "@mui/material";
+import {Button, Dialog, DialogContent, Stack, useMediaQuery} from "@mui/material";
 import Decimal from "decimal.js";
 import {CustomImportSummary} from "./CustomImportSummary";
 import Typography from "@mui/material/Typography";
@@ -11,6 +11,7 @@ import {formatCurrency} from "../utils/functions";
 import {transactionCustomImportSummary} from "./utils/customImportSummary";
 import {Account, BankTransactionToImport, BillingCategory, PiggyBank} from "../types";
 import {almostFullHeightDialog} from "../utils/theme/utils";
+import {StandOutText} from "../application/components/StandOutText";
 
 export type CustomImportResult = {
     billingElements: BillingElementDTO[];
@@ -61,17 +62,17 @@ export function CreateCustomImportForm({
         return <Typography>
             <span>Transfer </span>
             {(fromAccount && toAccount && fromAccount.length > 0 && toAccount.length > 0) && <>
-                <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
+                <StandOutText>
                     {formatCurrency(fromAccount[0].currentBalance.currency.code, new Decimal(transfer.fromAmount))}
-                </Box>
+                </StandOutText>
                 <span> z </span>
-                <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
+                <StandOutText>
                     {fromAccount[0].name}
-                </Box>
+                </StandOutText>
                 <span> na </span>
-                <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
+                <StandOutText>
                     {toAccount[0].name}
-                </Box>
+                </StandOutText>
             </>}
         </Typography>;
     }
@@ -80,15 +81,15 @@ export function CreateCustomImportForm({
         const affectedAccount = findAccount(be.affectedAccountPublicId);
         return <Typography>
             {(be.billingElementType === 'Expense' ? 'Wydatek ' : 'Przychód ')}
-            <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
+            <StandOutText>
                 {affectedAccount.map(account =>
                     formatCurrency(account.currentBalance.currency.code, new Decimal(be.amount))
                 )}
-            </Box>
+            </StandOutText>
             {(be.billingElementType === 'Expense' ? ' z ' : ' na ')}
-            <Box component="span" sx={{fontWeight: 700, color: 'secondary.main'}}>
+            <StandOutText>
                 {affectedAccount.map(account => account.name)}
-            </Box>
+            </StandOutText>
         </Typography>;
     }
 

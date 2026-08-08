@@ -8,6 +8,7 @@ import {
     SetupMfaMutation
 } from "../../types";
 import {Button, Link, Paper, Stack, TextField} from "@mui/material";
+import {StandOutText} from "../../application/components/StandOutText";
 
 
 export function Register() {
@@ -83,7 +84,7 @@ export function Register() {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p style={{fontWeight: 700}}>Konfigurowanie MFA</p>
+                    <p><StandOutText standOutBy="bold">Konfigurowanie MFA</StandOutText></p>
                     <img src={setupMfaParams.qrLink} alt={''}></img>
                     <TextField label="Kod"
                                variant="standard"
@@ -110,7 +111,7 @@ export function Register() {
         return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
             <Paper elevation={6} sx={{width: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p style={{fontWeight: 700}}>REJESTRACJA</p>
+                    <p><StandOutText standOutBy="bold">REJESTRACJA</StandOutText></p>
                     <TextField label="Imię"
                                variant="standard"
                                onChange={event => setRegistrationParams({

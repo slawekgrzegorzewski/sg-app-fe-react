@@ -6,6 +6,7 @@ import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
 import getUserApplications, {Application} from "../../utils/applications/applications-access";
 import {Navigate} from "react-router-dom";
 import {LoginWithGoogleButton} from "./LoginWithGoogleButton";
+import {StandOutText} from "../../application/components/StandOutText";
 
 export function Login() {
     const {user, setCurrentUser} = useCurrentUser();
@@ -53,7 +54,7 @@ export function Login() {
         return <Stack alignItems={"center"} justifyContent={{xs: 'flex-start', sm: 'center'}} height={{sm: '100vh'}}>
             <Paper elevation={6} sx={{maxWidth: 400, padding: 5}}>
                 <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p style={{fontWeight: 700}}>LOGOWANIE</p>
+                    <p><StandOutText standOutBy="bold">LOGOWANIE</StandOutText></p>
                     <TextField label="Login"
                                variant="standard"
                                onChange={event => setLoginData({

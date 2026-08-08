@@ -25,6 +25,7 @@ import {styled} from "@mui/system";
 import {useCurrentUser} from "../utils/users/use-current-user";
 import {ShowInformationButton} from "../utils/buttons/ShowInformationButton";
 import {useParams} from "react-router-dom";
+import {StandOutText} from "../application/components/StandOutText";
 
 const sidePadding = {
     paddingLeft: '5px', paddingRight: '5px'
@@ -193,7 +194,7 @@ export function TaskView(properties: {
                                                                                   aria-label={'Szczegóły'}><Loupe
                                                            fontSize='inherit'/></IconButton>}>
                                     <Stack direction="column">
-                                        <b>{task.description}</b>
+                                        <StandOutText>{task.description}</StandOutText>
                                         {
                                             (task.timeRecords || []).map(timeRecord => (
                                                 <Box

@@ -32,6 +32,7 @@ import {PickBankAccountButton} from "./PickBankAccountButton";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 import {FormattedMoneyText} from "../../application/components/FormattedMoneyText";
+import {StandOutText} from "../../application/components/StandOutText";
 
 type AccountDTO = {
     publicId: string,
@@ -243,7 +244,7 @@ export function AccountsManagement({
                 return <Stack direction="row" key={account.publicId} width="100%"
                               justifyContent="space-between" alignItems="flex-start" gap={2}>
                     <Stack direction="column" alignItems="flex-start" sx={{minWidth: 0}}>
-                        <Typography variant="body1" sx={{fontWeight: 600}}>{account.name}</Typography>
+                        <Typography variant="body1"><StandOutText standOutBy="bold">{account.name}</StandOutText></Typography>
                         <Stack direction="column">
                             {account.bankAccount && (
                                 <Typography variant={'body2'}
