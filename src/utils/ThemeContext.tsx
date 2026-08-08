@@ -2,6 +2,8 @@ import React, {createContext, useCallback, useContext, useEffect, useMemo, useSt
 import {PaletteMode, ThemeProvider, useMediaQuery} from "@mui/material";
 import {buildTheme as buildDefaultTheme} from "./theme/theme";
 import {buildTheme as buildPlumTheme} from "./theme/theme2";
+import {buildTheme as buildMidnightLedgerTheme} from "./theme/theme3";
+import {buildTheme as buildAuroraTheme} from "./theme/theme4";
 import {Theme} from "@mui/material/styles";
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
@@ -15,6 +17,8 @@ export interface ThemeVariantDef {
 export const themeVariants: ThemeVariantDef[] = [
     {id: 'default', label: 'Slate', buildTheme: buildDefaultTheme},
     {id: 'plum', label: 'Plum', buildTheme: buildPlumTheme},
+    {id: 'midnight-ledger', label: 'Midnight Ledger', buildTheme: buildMidnightLedgerTheme},
+    {id: 'aurora', label: 'Aurora', buildTheme: buildAuroraTheme},
 ];
 
 interface ThemeModeContextType {

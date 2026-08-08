@@ -171,17 +171,26 @@ export default function DrawerAppBar(props: Props) {
                                 alignItems: 'center'
                             }}>
                                 <Button
-                                    onClick={(e) => setAppMenuAnchor(e.currentTarget)}
-                                    sx={(t) => ({
-                                        color: t.palette.secondary.light,
-                                        backgroundColor: `${t.palette.secondary.light}50`,
-                                        whiteSpace: 'nowrap',
-                                        px: 2,
-                                        py: 0.5,
-                                        '&:hover': {
-                                            backgroundColor: `${t.palette.secondary.light}40`,
-                                        },
-                                    })}>
+                                     onClick={(e) => setAppMenuAnchor(e.currentTarget)}
+                                     sx={(t) => ({
+                                         color: themeVariantId === 'aurora'
+                                             ? t.palette.secondary.main
+                                             : t.palette.secondary.light,
+                                         backgroundColor: themeVariantId === 'aurora'
+                                             ? 'transparent'
+                                             : `${t.palette.secondary.light}50`,
+                                         fontWeight: themeVariantId === 'aurora' ? 700 : undefined,
+                                         whiteSpace: 'nowrap',
+                                         px: 2,
+                                         py: 0.5,
+                                         '&:hover': {
+                                             backgroundColor: themeVariantId === 'aurora'
+                                                 ? 'transparent'
+                                                 : `${t.palette.secondary.light}40`,
+                                             textDecoration: themeVariantId === 'aurora' ? 'underline' : 'none',
+                                             textUnderlineOffset: '4px',
+                                         },
+                                     })}>
                                     {applications.get(currentApplicationId)?.name || currentApplicationId}
                                 </Button>
                                 <Menu anchorEl={appMenuAnchor}
@@ -203,17 +212,25 @@ export default function DrawerAppBar(props: Props) {
                                     Array.from(applications.get(currentApplicationId)?.pages?.values() || []).map(page => (
                                         <Button
                                             onClick={() => changePage(page.links[0])}
-                                            key={page.id}
-                                            sx={(t) => ({
-                                                color: t.palette.secondary.light,
-                                                backgroundColor: `${t.palette.secondary.light}25`,
-                                                whiteSpace: 'nowrap',
-                                                px: 2,
-                                                py: 0.5,
-                                                '&:hover': {
-                                                    backgroundColor: `${t.palette.secondary.light}50`,
-                                                },
-                                            })}
+                                             key={page.id}
+                                             sx={(t) => ({
+                                                 color: themeVariantId === 'aurora'
+                                                     ? t.palette.secondary.main
+                                                     : t.palette.secondary.light,
+                                                 backgroundColor: themeVariantId === 'aurora'
+                                                     ? 'transparent'
+                                                     : `${t.palette.secondary.light}25`,
+                                                 whiteSpace: 'nowrap',
+                                                 px: 2,
+                                                 py: 0.5,
+                                                 '&:hover': {
+                                                     backgroundColor: themeVariantId === 'aurora'
+                                                         ? 'transparent'
+                                                         : `${t.palette.secondary.light}50`,
+                                                     textDecoration: themeVariantId === 'aurora' ? 'underline' : 'none',
+                                                     textUnderlineOffset: '4px',
+                                                 },
+                                             })}
                                         >
                                             {page.label}
                                         </Button>))
@@ -291,18 +308,26 @@ export default function DrawerAppBar(props: Props) {
                                 const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
                                 return domains.length > 0 ? <>
                                     <Button
-                                        onClick={(e) => setDomainMenuAnchor(e.currentTarget)}
-                                        sx={(t) => ({
-                                            ...hideWhenXS,
-                                            color: t.palette.secondary.light,
-                                            backgroundColor: `${t.palette.secondary.light}22`,
-                                            ml: 1,
-                                            px: 2,
-                                            py: 0.5,
-                                            '&:hover': {
-                                                backgroundColor: `${t.palette.secondary.light}40`,
-                                            },
-                                        })}
+                                         onClick={(e) => setDomainMenuAnchor(e.currentTarget)}
+                                         sx={(t) => ({
+                                             ...hideWhenXS,
+                                             color: themeVariantId === 'aurora'
+                                                 ? t.palette.secondary.main
+                                                 : t.palette.secondary.light,
+                                             backgroundColor: themeVariantId === 'aurora'
+                                                 ? 'transparent'
+                                                 : `${t.palette.secondary.light}22`,
+                                             ml: 1,
+                                             px: 2,
+                                             py: 0.5,
+                                             '&:hover': {
+                                                 backgroundColor: themeVariantId === 'aurora'
+                                                     ? 'transparent'
+                                                     : `${t.palette.secondary.light}40`,
+                                                 textDecoration: themeVariantId === 'aurora' ? 'underline' : 'none',
+                                                 textUnderlineOffset: '4px',
+                                             },
+                                         })}
                                     >
                                         {currentDomain?.name || 'Domena'}
                                     </Button>
