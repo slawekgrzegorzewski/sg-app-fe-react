@@ -6,19 +6,19 @@ import {
     InMemoryCache,
     Observable,
     ServerError,
-    ServerParseError
-} from "@apollo/client";
-import {ApolloProvider, useMutation} from "@apollo/client/react";
-import {ErrorLink} from "@apollo/client/link/error";
-import {CombinedGraphQLErrors} from "@apollo/client/errors";
-import React, {useEffect, useRef} from "react";
-import {Navigate, useParams} from "react-router-dom";
-import {logOut, readJwtToken, useCurrentUser} from "../utils/users/use-current-user";
-import UploadHttpLink from "apollo-upload-client/UploadHttpLink.mjs";
-import {Institution, SwitchDomain, SwitchDomainMutation} from "../types";
-import getUserApplications from "../utils/applications/applications-access";
-import {logError} from "../utils/logger";
-import {backdropHandle} from "../utils/GlobalBackdropContext";
+    ServerParseError,
+} from '@apollo/client';
+import {ApolloProvider, useMutation} from '@apollo/client/react';
+import {ErrorLink} from '@apollo/client/link/error';
+import {CombinedGraphQLErrors} from '@apollo/client/errors';
+import React, {useEffect, useRef} from 'react';
+import {Navigate, useParams} from 'react-router-dom';
+import {logOut, readJwtToken, useCurrentUser} from '../utils/users/use-current-user';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
+import {Institution, SwitchDomain, SwitchDomainMutation} from '../types';
+import getUserApplications from '../utils/applications/applications-access';
+import {logError} from '../utils/logger';
+import {backdropHandle} from '../utils/GlobalBackdropContext';
 
 const httpLink = new UploadHttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
 
@@ -30,8 +30,8 @@ const authMiddleware = new ApolloLink((operation, forward) => {
                 ...headers,
                 ...(jwtToken ? {authorization: 'Bearer ' + jwtToken} : {}),
                 locale: navigator.language,
-                'Apollo-Require-Preflight': 'true'
-            }
+                'Apollo-Require-Preflight': 'true',
+            },
         };
     });
     return forward(operation);
@@ -69,7 +69,7 @@ const backdropLink = new ApolloLink((operation, forward) => {
             complete: () => {
                 hide();
                 observer.complete();
-            }
+            },
         });
         return () => {
             subscription.unsubscribe();
@@ -103,12 +103,12 @@ const cache = new InMemoryCache({
     dataIdFromObject: object => {
         switch (object.__typename) {
             case 'Task': {
-                const timeRecords = (object.timeRecords ?? []) as { __ref?: string }[];
+                const timeRecords = (object.timeRecords ?? []) as {__ref?: string}[];
                 if (timeRecords.length > 0) {
                     const datesPart = timeRecords
                         .map(timeRecord => timeRecord.__ref)
                         .sort()
-                        .join(":");
+                        .join(':');
                     return `Task:${object.id}:${timeRecords.length}:${datesPart}`;
                 }
                 return `Task:${object.id}:0`;
@@ -120,20 +120,15 @@ const cache = new InMemoryCache({
             default:
                 return defaultDataIdFromObject(object);
         }
-    }
+    },
 });
 
 const apolloClient = new ApolloClient({
     cache: cache,
-    link: ApolloLink.from([
-        backdropLink,
-        errorHandlerLink,
-        authMiddleware,
-        httpLink
-    ])
+    link: ApolloLink.from([backdropLink, errorHandlerLink, authMiddleware, httpLink]),
 });
 
-function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
+function AssureCorrectDomainJWT({children}: {children: React.JSX.Element}) {
     const [switchDomainMutation] = useMutation<SwitchDomainMutation>(SwitchDomain);
     const {user, setCurrentUser} = useCurrentUser();
     const {domainPublicId} = useParams();
@@ -162,7 +157,7 @@ function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
                 setCurrentUser({
                     jwtToken: switched.jwt,
                     user: switched.user,
-                    applications: getUserApplications(switched.user)
+                    applications: getUserApplications(switched.user),
                 });
             })
             .catch(error => {
@@ -179,19 +174,21 @@ function AssureCorrectDomainJWT({children}: { children: React.JSX.Element }) {
     return <>{children}</>;
 }
 
-export function Authenticated({children}: { children: React.JSX.Element }) {
+export function Authenticated({children}: {children: React.JSX.Element}) {
     const {user} = useCurrentUser();
     const {applicationId, domainPublicId} = useParams();
 
     if (!user) {
-        return <Navigate to={"/login"}/>;
+        return <Navigate to={'/login'} />;
     }
 
     if (!domainPublicId) {
-        return <Navigate to={`/${applicationId}/${user.user.domainPublicId}`}/>;
+        return <Navigate to={`/${applicationId}/${user.user.domainPublicId}`} />;
     }
 
-    return <ApolloProvider client={apolloClient}>
-        <AssureCorrectDomainJWT>{children}</AssureCorrectDomainJWT>
-    </ApolloProvider>;
+    return (
+        <ApolloProvider client={apolloClient}>
+            <AssureCorrectDomainJWT>{children}</AssureCorrectDomainJWT>
+        </ApolloProvider>
+    );
 }

@@ -1,29 +1,27 @@
-import {ErrorDisplay} from "../QueryState";
-import {useParams} from "react-router-dom";
-import {applications} from "../../../utils/applications/applications-access";
-import {Loans} from "../../../loans/Loans";
-import React from "react";
-import {Loan} from "../../../loans/Loan";
-import {AccountantSettings} from "../../../accountant/settings/AccountantSettings";
-import {useApplicationAndDomain} from "../../../utils/use-application-and-domain";
-import {useQuery} from "@apollo/client/react";
-import {GetAccountantSettings, GetAccountantSettingsQuery} from "../../../types";
-import {Accounts} from "../../../accountant/Accounts";
-import {BillingPeriods} from "../../../accountant/BillingPeriods";
+import {ErrorDisplay} from '../QueryState';
+import {useParams} from 'react-router-dom';
+import {applications} from '../../../utils/applications/applications-access';
+import {Loans} from '../../../loans/Loans';
+import React from 'react';
+import {Loan} from '../../../loans/Loan';
+import {AccountantSettings} from '../../../accountant/settings/AccountantSettings';
+import {useApplicationAndDomain} from '../../../utils/use-application-and-domain';
+import {useQuery} from '@apollo/client/react';
+import {GetAccountantSettings, GetAccountantSettingsQuery} from '../../../types';
+import {Accounts} from '../../../accountant/Accounts';
+import {BillingPeriods} from '../../../accountant/BillingPeriods';
 
 type AccountantSettingsContextType = {
-    accountantSettings: { isCompany: boolean },
-    refreshSettings: () => void
-}
+    accountantSettings: {isCompany: boolean};
+    refreshSettings: () => void;
+};
 
 export const AccountantSettingsContext = React.createContext<AccountantSettingsContextType>({
     accountantSettings: {isCompany: false},
-    refreshSettings: () => {
-    }
+    refreshSettings: () => {},
 });
 
 export function AccountantDispatcher() {
-
     let {page, param1} = useParams();
     const {currentApplicationId} = useApplicationAndDomain();
     const application = applications.get(currentApplicationId!)!;
@@ -36,22 +34,24 @@ export function AccountantDispatcher() {
         loading: accountantSettingsLoading,
         error: accountantSettingsError,
         data: accountantSettingsData,
-        refetch: accountantSettingsRefetch
+        refetch: accountantSettingsRefetch,
     } = useQuery<GetAccountantSettingsQuery>(GetAccountantSettings);
 
     if (accountantSettingsLoading) {
-        return <></>
+        return <></>;
     } else if (accountantSettingsError) {
-        return <ErrorDisplay error={accountantSettingsError}
-                             onRetry={() => accountantSettingsRefetch()}/>
+        return <ErrorDisplay error={accountantSettingsError} onRetry={() => accountantSettingsRefetch()} />;
     } else if (accountantSettingsData) {
-        return <AccountantSettingsContext.Provider
-            value={{...accountantSettingsData.settings, refreshSettings: accountantSettingsRefetch}}>
-            {(!page || isRequestForPage('BILLING_PERIODS')) && <BillingPeriods/>}
-            {isRequestForPage('ACCOUNTS') && <Accounts/>}
-            {isRequestForPage('LOANS') && !param1 && <Loans/>}
-            {isRequestForPage('LOANS') && param1 && <Loan/>}
-            {isRequestForPage('SETTINGS') && <AccountantSettings/>}
-        </AccountantSettingsContext.Provider>
+        return (
+            <AccountantSettingsContext.Provider
+                value={{...accountantSettingsData.settings, refreshSettings: accountantSettingsRefetch}}
+            >
+                {(!page || isRequestForPage('BILLING_PERIODS')) && <BillingPeriods />}
+                {isRequestForPage('ACCOUNTS') && <Accounts />}
+                {isRequestForPage('LOANS') && !param1 && <Loans />}
+                {isRequestForPage('LOANS') && param1 && <Loan />}
+                {isRequestForPage('SETTINGS') && <AccountantSettings />}
+            </AccountantSettingsContext.Provider>
+        );
     } else return <></>;
 }

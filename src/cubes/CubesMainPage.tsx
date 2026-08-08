@@ -1,20 +1,20 @@
-import {clickableProps} from "../application/components/clickable";
-import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from "./phase";
-import * as React from "react";
-import {useCallback, useEffect, useReducer, useRef, useState} from "react";
-import {Box, Dialog, Stack, useMediaQuery, useTheme} from "@mui/material";
-import {newCube} from "./visualizer";
-import {scramble as generateScramble} from "./cube-scrambler";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import {StopWatch} from "./StopWatch";
-import {useMutation, useQuery} from "@apollo/client/react";
-import {GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMutation} from "../types";
-import dayjs from "dayjs";
-import {useWakeLock} from "../utils/use-wake-lock";
-import {StopWatchDisplay} from "./StopWatchDisplay";
-import {useIsTouchDevice} from "../utils/use-is-touch-screen";
-import {StandOutText} from "../application/components/StandOutText";
+import {clickableProps} from '../application/components/clickable';
+import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from './phase';
+import * as React from 'react';
+import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
+import {Box, Dialog, Stack, useMediaQuery, useTheme} from '@mui/material';
+import {newCube} from './visualizer';
+import {scramble as generateScramble} from './cube-scrambler';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import {StopWatch} from './StopWatch';
+import {useMutation, useQuery} from '@apollo/client/react';
+import {GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMutation} from '../types';
+import dayjs from 'dayjs';
+import {useWakeLock} from '../utils/use-wake-lock';
+import {StopWatchDisplay} from './StopWatchDisplay';
+import {useIsTouchDevice} from '../utils/use-is-touch-screen';
+import {StandOutText} from '../application/components/StandOutText';
 
 export function CubesMainPage() {
     const [, forceUpdate] = useReducer(x => x + 1, 0);
@@ -22,7 +22,7 @@ export function CubesMainPage() {
     const isTouchDevice = useIsTouchDevice();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md')) || isTouchDevice;
     const [wakeLock, requestWakeLock, releaseWakeLock] = useWakeLock();
-    const [scramble, setScramble] = useState("");
+    const [scramble, setScramble] = useState('');
     const [phase, setPhase] = useState<Phase>('IDLE');
     const result = useRef(0);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
@@ -36,9 +36,12 @@ export function CubesMainPage() {
     }, []);
 
     const beginInspection = useCallback(() => {
-        setPhase("INSPECTION_EARLY");
+        setPhase('INSPECTION_EARLY');
         if (!becomeLateInspectionTimeOutId.current) {
-            becomeLateInspectionTimeOutId.current = setTimeout(() => setPhase("INSPECTION_LATE"), INSPECTION_ALLOWANCE_MILLIS);
+            becomeLateInspectionTimeOutId.current = setTimeout(
+                () => setPhase('INSPECTION_LATE'),
+                INSPECTION_ALLOWANCE_MILLIS
+            );
         }
     }, []);
 
@@ -46,8 +49,8 @@ export function CubesMainPage() {
         result.current = 0;
         resetTrigger.current();
         releaseWakeLock();
-        setScramble("");
-        setPhase("IDLE");
+        setScramble('');
+        setPhase('IDLE');
         forceUpdate();
     });
     const save = useRef(() => {
@@ -55,44 +58,38 @@ export function CubesMainPage() {
         reset.current();
         storeCubeResultMutation({
             variables: {
-                cubeType: "THREE_BY_THREE",
-                timestampOfSolve: dayjs().format("YYYY-MM-DD HH:mm:ss.SSS"),
-                timeInMillis: resultCopy
-            }
-        })
-            .then(() => refetch());
+                cubeType: 'THREE_BY_THREE',
+                timestampOfSolve: dayjs().format('YYYY-MM-DD HH:mm:ss.SSS'),
+                timeInMillis: resultCopy,
+            },
+        }).then(() => refetch());
     });
 
-    const {
-        data,
-        refetch
-    } = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType: "THREE_BY_THREE"}})
+    const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType: 'THREE_BY_THREE'}});
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
 
-    const startTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
-    });
+    const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});
 
-    const start: React.RefObject<(() => void)> = useRef<() => void>(() => {
+    const start: React.RefObject<() => void> = useRef<() => void>(() => {
         requestWakeLock();
         startTrigger.current();
     });
 
-    const stopTrigger: React.RefObject<(() => number)> = useRef<() => number>(() => {
+    const stopTrigger: React.RefObject<() => number> = useRef<() => number>(() => {
         return 0;
     });
 
-    const stop: React.RefObject<(() => number)> = useRef<() => number>(() => {
+    const stop: React.RefObject<() => number> = useRef<() => number>(() => {
         releaseWakeLock();
         return stopTrigger.current();
     });
 
-    const resetTrigger: React.RefObject<(() => void)> = useRef<() => void>(() => {
-    });
+    const resetTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});
 
     useEffect(() => {
         const keyDownListener = (e: KeyboardEvent) => {
             if (e.code === 'Space') {
-                if (phase === "IDLE" && result.current === 0) {
+                if (phase === 'IDLE' && result.current === 0) {
                     beginInspection();
                 } else if (phase === 'SOLVING') {
                     result.current = stop.current();
@@ -100,7 +97,7 @@ export function CubesMainPage() {
                 }
             }
             if (e.code === 'KeyS' && phase === 'IDLE') {
-                setScramble(generateScramble({turns: 30}).join(" "));
+                setScramble(generateScramble({turns: 30}).join(' '));
             }
             if (e.code === 'KeyR') {
                 reset.current();
@@ -117,17 +114,17 @@ export function CubesMainPage() {
             }
             clearInspectionTimeout();
             if (isInspection(phase)) {
-                setPhase("SOLVING");
+                setPhase('SOLVING');
                 start.current();
             }
         };
 
-        document.addEventListener("keydown", keyDownListener);
-        document.addEventListener("keyup", keyUpListener);
+        document.addEventListener('keydown', keyDownListener);
+        document.addEventListener('keyup', keyUpListener);
         return () => {
-            document.removeEventListener("keydown", keyDownListener);
-            document.removeEventListener("keyup", keyUpListener);
-        }
+            document.removeEventListener('keydown', keyDownListener);
+            document.removeEventListener('keyup', keyUpListener);
+        };
     }, [phase, clearInspectionTimeout, beginInspection]);
 
     useEffect(() => clearInspectionTimeout, [clearInspectionTimeout]);
@@ -140,7 +137,7 @@ export function CubesMainPage() {
             return;
         }
         const scene = newCube(container, 3);
-        scene.enableKey = (_) => false;
+        scene.enableKey = _ => false;
         if (scramble) {
             scene.puzzle.performAlg(scramble);
         }
@@ -150,45 +147,43 @@ export function CubesMainPage() {
     }, [scramble, hasCubeResults]);
 
     if (data) {
-        return <Stack
-            sx={{
-                height: '100%',
-                width: '100%',
-            }}
-            direction={'column'}
-            alignItems={'center'}>
-            {
-                wakeLock && <Typography>Wake lock on</Typography>
-            }
-            {
-                !wakeLock && <Typography>Wake lock off</Typography>
-            }
-            <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
-            <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
-            <Stack direction={'row'}>
-                <Button onClick={() => setScramble(generateScramble({turns: 30}).join(" "))}>Scramble</Button>
-                <Button onClick={reset.current}>Reset</Button>
-            </Stack>
-            <Typography variant={'h5'}>{scramble}</Typography>
-            <Box component="div" ref={cubeVisualizationContainerRef}
-                 id="scenesContainer"
-                 sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}>
-            </Box>
-            {
-                fullScreen && (<Dialog open={fullScreen && phase === 'SOLVING'}
-                                       fullScreen={true}
-                                       keepMounted={true}
-                                       onTouchStart={() => {
-                                           result.current = stop.current();
-                                           setPhase('IDLE');
-                                       }}>
+        return (
+            <Stack
+                sx={{
+                    height: '100%',
+                    width: '100%',
+                }}
+                direction={'column'}
+                alignItems={'center'}
+            >
+                {wakeLock && <Typography>Wake lock on</Typography>}
+                {!wakeLock && <Typography>Wake lock off</Typography>}
+                <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
+                <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
+                <Stack direction={'row'}>
+                    <Button onClick={() => setScramble(generateScramble({turns: 30}).join(' '))}>Scramble</Button>
+                    <Button onClick={reset.current}>Reset</Button>
+                </Stack>
+                <Typography variant={'h5'}>{scramble}</Typography>
+                <Box
+                    component="div"
+                    ref={cubeVisualizationContainerRef}
+                    id="scenesContainer"
+                    sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}
+                ></Box>
+                {fullScreen && (
+                    <Dialog
+                        open={fullScreen && phase === 'SOLVING'}
+                        fullScreen={true}
+                        keepMounted={true}
+                        onTouchStart={() => {
+                            result.current = stop.current();
+                            setPhase('IDLE');
+                        }}
+                    >
                         <Stack style={{width: '100%', height: '100%'}} justifyContent={'center'} alignItems={'center'}>
-                            {
-                                wakeLock && <Typography variant={'h5'}>Wake lock on</Typography>
-                            }
-                            {
-                                !wakeLock && <Typography>Wake lock off</Typography>
-                            }
+                            {wakeLock && <Typography variant={'h5'}>Wake lock on</Typography>}
+                            {!wakeLock && <Typography>Wake lock off</Typography>}
                             <StopWatch
                                 variant={'h2'}
                                 showControls={false}
@@ -198,77 +193,86 @@ export function CubesMainPage() {
                             />
                         </Stack>
                     </Dialog>
-                )
-            }
-            {
-                !fullScreen && (<StopWatch
-                        sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : (phase === 'INSPECTION_LATE') ? 'red' : theme.palette.text.primary}}
+                )}
+                {!fullScreen && (
+                    <StopWatch
+                        sx={{
+                            color:
+                                phase === 'INSPECTION_EARLY'
+                                    ? 'green'
+                                    : phase === 'INSPECTION_LATE'
+                                      ? 'red'
+                                      : theme.palette.text.primary,
+                        }}
                         startTrigger={startTrigger}
                         stopTrigger={stopTrigger}
                         resetTrigger={resetTrigger}
                     />
-                )
-            }
-            <Typography>{phase}</Typography>
-            {
-                fullScreen
-                && (result.current === 0 || phase !== 'IDLE')
-                && <Stack direction={'column'}
-                          sx={{
-                              flexGrow: 1,
-                              alignSelf: 'stretch',
-                              userSelect: 'none',
-                          }}
-                          onTouchStart={() => {
-                              if (phase === "IDLE" && result.current === 0) {
-                                  beginInspection();
-                              }
-                          }}
-                          onTouchEnd={() => {
-                              clearInspectionTimeout();
-                              if (isInspection(phase)) {
-                                  setPhase("SOLVING");
-                                  start.current();
-                              }
-                          }}>
-
-                </Stack>
-            }
-            {
-                fullScreen && result.current > 0 && phase === 'IDLE' &&
-                <StopWatchDisplay currentTimeInMillis={result.current}/>
-            }
-            {
-                fullScreen && result.current > 0 && phase === 'IDLE' &&
-                <Stack direction={'row'} justifyContent={'stretch'}
-                       sx={{
-                           flexGrow: 1,
-                           alignSelf: 'stretch',
-                           userSelect: 'none',
-                       }}>
-                    <Stack sx={{
-                        backgroundColor: 'success.light',
-                        color: 'success.dark',
-                        width: '50%',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                           {...clickableProps(() => save.current(), 'Zapisz wynik')}>
-                        <StandOutText standOutBy="bold">ZAPISZ</StandOutText>
+                )}
+                <Typography>{phase}</Typography>
+                {fullScreen && (result.current === 0 || phase !== 'IDLE') && (
+                    <Stack
+                        direction={'column'}
+                        sx={{
+                            flexGrow: 1,
+                            alignSelf: 'stretch',
+                            userSelect: 'none',
+                        }}
+                        onTouchStart={() => {
+                            if (phase === 'IDLE' && result.current === 0) {
+                                beginInspection();
+                            }
+                        }}
+                        onTouchEnd={() => {
+                            clearInspectionTimeout();
+                            if (isInspection(phase)) {
+                                setPhase('SOLVING');
+                                start.current();
+                            }
+                        }}
+                    ></Stack>
+                )}
+                {fullScreen && result.current > 0 && phase === 'IDLE' && (
+                    <StopWatchDisplay currentTimeInMillis={result.current} />
+                )}
+                {fullScreen && result.current > 0 && phase === 'IDLE' && (
+                    <Stack
+                        direction={'row'}
+                        justifyContent={'stretch'}
+                        sx={{
+                            flexGrow: 1,
+                            alignSelf: 'stretch',
+                            userSelect: 'none',
+                        }}
+                    >
+                        <Stack
+                            sx={{
+                                backgroundColor: 'success.light',
+                                color: 'success.dark',
+                                width: '50%',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                            {...clickableProps(() => save.current(), 'Zapisz wynik')}
+                        >
+                            <StandOutText standOutBy="bold">ZAPISZ</StandOutText>
+                        </Stack>
+                        <Stack
+                            sx={{
+                                backgroundColor: 'error.light',
+                                color: 'error.dark',
+                                width: '50%',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                            {...clickableProps(() => reset.current(), 'Odrzuć wynik')}
+                        >
+                            <StandOutText standOutBy="bold">ODRZUĆ</StandOutText>
+                        </Stack>
                     </Stack>
-                    <Stack sx={{
-                        backgroundColor: 'error.light',
-                        color: 'error.dark',
-                        width: '50%',
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }}
-                           {...clickableProps(() => reset.current(), 'Odrzuć wynik')}>
-                        <StandOutText standOutBy="bold">ODRZUĆ</StandOutText>
-                    </Stack>
-                </Stack>
-            }
-        </Stack>;
+                )}
+            </Stack>
+        );
     } else {
         return <></>;
     }

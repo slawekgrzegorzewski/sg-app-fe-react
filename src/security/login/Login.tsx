@@ -1,12 +1,12 @@
-import React, {useState} from "react";
-import {useMutation} from "@apollo/client/react";
-import {PerformLogin, PerformLoginMutation} from "../../types";
-import {useCurrentUser} from "../../utils/users/use-current-user";
-import {Button, Link, Paper, Skeleton, Stack, TextField} from "@mui/material";
-import getUserApplications, {Application} from "../../utils/applications/applications-access";
-import {Navigate} from "react-router-dom";
-import {LoginWithGoogleButton} from "./LoginWithGoogleButton";
-import {StandOutText} from "../../application/components/StandOutText";
+import React, {useState} from 'react';
+import {useMutation} from '@apollo/client/react';
+import {PerformLogin, PerformLoginMutation} from '../../types';
+import {useCurrentUser} from '../../utils/users/use-current-user';
+import {Button, Link, Paper, Skeleton, Stack, TextField} from '@mui/material';
+import getUserApplications, {Application} from '../../utils/applications/applications-access';
+import {Navigate} from 'react-router-dom';
+import {LoginWithGoogleButton} from './LoginWithGoogleButton';
+import {StandOutText} from '../../application/components/StandOutText';
 
 export function Login() {
     const {user, setCurrentUser} = useCurrentUser();
@@ -14,11 +14,11 @@ export function Login() {
     const [loginData, setLoginData] = useState({
         login: '',
         password: '',
-        otp: ''
+        otp: '',
     });
 
     const [loginGraphqlMutation, {called}] = useMutation<PerformLoginMutation>(PerformLogin, {
-        variables: loginData
+        variables: loginData,
     });
 
     function performLogin() {
@@ -28,9 +28,9 @@ export function Login() {
             setCurrentUser({
                 jwtToken: jwt,
                 user: user,
-                applications: applications
+                applications: applications,
             });
-        })
+        });
     }
 
     function validateLoginForm() {
@@ -38,61 +38,80 @@ export function Login() {
             return value !== null && value.length > 0;
         }
 
-        return stringNotEmpty(loginData.login)
-            && stringNotEmpty(loginData.password)
-            && stringNotEmpty(loginData.otp);
+        return stringNotEmpty(loginData.login) && stringNotEmpty(loginData.password) && stringNotEmpty(loginData.otp);
     }
 
     if (user) {
         return <Navigate to={'/'}></Navigate>;
     }
     if (called) {
-        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
-            <Skeleton variant="rectangular" width={400} height={400}/>
-        </Stack>;
+        return (
+            <Stack alignItems={'center'} justifyContent={'center'} height={'100vh'}>
+                <Skeleton variant="rectangular" width={400} height={400} />
+            </Stack>
+        );
     } else {
-        return <Stack alignItems={"center"} justifyContent={{xs: 'flex-start', sm: 'center'}} height={{sm: '100vh'}}>
-            <Paper elevation={6} sx={{maxWidth: 400, padding: 5}}>
-                <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p><StandOutText standOutBy="bold">LOGOWANIE</StandOutText></p>
-                    <TextField label="Login"
-                               variant="standard"
-                               onChange={event => setLoginData({
-                                   ...loginData,
-                                   login: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="Hasło"
-                               variant="standard"
-                               type="password"
-                               onChange={event => setLoginData({
-                                   ...loginData,
-                                   password: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="OTP"
-                               variant="standard"
-                               onChange={event => setLoginData({
-                                   ...loginData,
-                                   otp: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <Stack direction={'row'} justifyContent={'center'} spacing={4} alignItems={"center"}>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={performLogin}
-                            disabled={!validateLoginForm()}>
-                            Zaloguj się
-                        </Button>
-                        <LoginWithGoogleButton/>
+        return (
+            <Stack alignItems={'center'} justifyContent={{xs: 'flex-start', sm: 'center'}} height={{sm: '100vh'}}>
+                <Paper elevation={6} sx={{maxWidth: 400, padding: 5}}>
+                    <Stack direction={'column'} spacing={4} alignItems={'center'}>
+                        <p>
+                            <StandOutText standOutBy="bold">LOGOWANIE</StandOutText>
+                        </p>
+                        <TextField
+                            label="Login"
+                            variant="standard"
+                            onChange={event =>
+                                setLoginData({
+                                    ...loginData,
+                                    login: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="Hasło"
+                            variant="standard"
+                            type="password"
+                            onChange={event =>
+                                setLoginData({
+                                    ...loginData,
+                                    password: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="OTP"
+                            variant="standard"
+                            onChange={event =>
+                                setLoginData({
+                                    ...loginData,
+                                    otp: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <Stack direction={'row'} justifyContent={'center'} spacing={4} alignItems={'center'}>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={performLogin}
+                                disabled={!validateLoginForm()}
+                            >
+                                Zaloguj się
+                            </Button>
+                            <LoginWithGoogleButton />
+                        </Stack>
+                        <p>
+                            Nie masz jeszcze konta? <Link href="/register">Zarejestruj się tutaj</Link>
+                        </p>
                     </Stack>
-                    <p>Nie masz jeszcze konta? <Link href="/register">Zarejestruj się tutaj</Link></p>
-                </Stack>
-            </Paper>
-        </Stack>
+                </Paper>
+            </Stack>
+        );
     }
 }

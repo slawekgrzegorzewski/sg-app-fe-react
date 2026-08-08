@@ -1,22 +1,21 @@
-import {Autocomplete, CircularProgress, debounce, TextField, Theme} from "@mui/material";
-import * as React from "react";
-import {AutocompleteAsyncEditorField} from "./Form";
-import {useLazyQuery} from "@apollo/client/react";
-import {SxProps} from "@mui/system";
+import {Autocomplete, CircularProgress, debounce, TextField, Theme} from '@mui/material';
+import * as React from 'react';
+import {AutocompleteAsyncEditorField} from './Form';
+import {useLazyQuery} from '@apollo/client/react';
+import {SxProps} from '@mui/system';
 
 export type AutocompleteAsyncProps = {
-    formik: any,
-    autoSubmit?: boolean,
-    editorField: AutocompleteAsyncEditorField,
-    sx?: SxProps<Theme>
-}
+    formik: any;
+    autoSubmit?: boolean;
+    editorField: AutocompleteAsyncEditorField;
+    sx?: SxProps<Theme>;
+};
 
 export default function AutocompleteAsync({formik, autoSubmit, editorField, sx}: AutocompleteAsyncProps) {
-
-    const [options, setOptions] = React.useState<{ open: boolean, loaded: boolean, options: any[] }>({
+    const [options, setOptions] = React.useState<{open: boolean; loaded: boolean; options: any[]}>({
         open: false,
         loaded: false,
-        options: []
+        options: [],
     });
 
     const [performSearch, {loading, error, data}] = useLazyQuery(editorField.query);
@@ -25,7 +24,7 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField, sx}:
         setOptions({
             open: true,
             loaded: true,
-            options: editorField.queryToOptionsMapper(data)
+            options: editorField.queryToOptionsMapper(data),
         });
     }
 
@@ -34,16 +33,16 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField, sx}:
             setOptions({
                 open: true,
                 loaded: false,
-                options: []
+                options: [],
             });
             performSearch({
-                variables: {descriptionLike: event.target.value}
+                variables: {descriptionLike: event.target.value},
             });
         } else {
             setOptions({
                 open: true,
                 loaded: true,
-                options: []
+                options: [],
             });
         }
     }, 500);
@@ -52,66 +51,68 @@ export default function AutocompleteAsync({formik, autoSubmit, editorField, sx}:
         setOptions({
             open: false,
             loaded: true,
-            options: options.options
+            options: options.options,
         });
     };
 
-    return <Autocomplete
-        {...editorField.additionalProps}
+    return (
+        <Autocomplete
+            {...editorField.additionalProps}
 
-        filterOptions={(x: any) => x}
-        open={options.open}
-        onClose={handleClose}
-        loading={loading}
+            filterOptions={(x: any) => x}
+            open={options.open}
+            onClose={handleClose}
+            loading={loading}
 
-        disabled={!editorField.editable}
-        id={editorField.key}
-        key={editorField.key}
-        value={formik.values[editorField.key]}
-        onBlur={formik.handleBlur}
-        onChange={(e, newValue) => {
-            formik.setFieldValue(editorField.key, newValue, true)
-            if (autoSubmit) {
-                formik.submitForm();
-            }
-        }}
-        getOptionLabel={option => editorField.getOptionLabel!(option)}
-        isOptionEqualToValue={editorField.isOptionEqualToValue!}
-        options={options.options}
-        sx={sx || editorField.additionalProps?.sx || {}}
+            disabled={!editorField.editable}
+            id={editorField.key}
+            key={editorField.key}
+            value={formik.values[editorField.key]}
+            onBlur={formik.handleBlur}
+            onChange={(e, newValue) => {
+                formik.setFieldValue(editorField.key, newValue, true);
+                if (autoSubmit) {
+                    formik.submitForm();
+                }
+            }}
+            getOptionLabel={option => editorField.getOptionLabel!(option)}
+            isOptionEqualToValue={editorField.isOptionEqualToValue!}
+            options={options.options}
+            sx={sx || editorField.additionalProps?.sx || {}}
 
-        renderOption={(props, option: any) => (
-            <li {...props} key={option.id}>
-                {editorField.getOptionLabel!(option)}
-            </li>
-        )}
+            renderOption={(props, option: any) => (
+                <li {...props} key={option.id}>
+                    {editorField.getOptionLabel!(option)}
+                </li>
+            )}
 
-        slotProps={{
-            popper: {
-                style: {width: 'fit-content'},
-                placement: 'bottom-start',
-            },
-        }}
+            slotProps={{
+                popper: {
+                    style: {width: 'fit-content'},
+                    placement: 'bottom-start',
+                },
+            }}
 
-        renderInput={(params) => (
-            <TextField
-                {...params}
-                label={editorField.label}
-                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-                helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-                onChange={handleInputChange}
-                slotProps={{
-                    input: {
-                        ...params.InputProps,
-                        endAdornment: (
-                            <React.Fragment>
-                                {loading ? <CircularProgress color="inherit" size={20}/> : null}
-                                {params.InputProps.endAdornment}
-                            </React.Fragment>
-                        ),
-                    },
-                }}
-            />
-        )}
-    />
+            renderInput={params => (
+                <TextField
+                    {...params}
+                    label={editorField.label}
+                    error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                    helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+                    onChange={handleInputChange}
+                    slotProps={{
+                        input: {
+                            ...params.InputProps,
+                            endAdornment: (
+                                <React.Fragment>
+                                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                </React.Fragment>
+                            ),
+                        },
+                    }}
+                />
+            )}
+        />
+    );
 }

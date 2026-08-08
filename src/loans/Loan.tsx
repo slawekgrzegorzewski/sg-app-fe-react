@@ -1,6 +1,6 @@
-import {ErrorDisplay} from "../application/components/QueryState";
-import {useResetMutationResults} from "../utils/use-reset-mutation-results";
-import {useMutation, useQuery} from "@apollo/client/react";
+import {ErrorDisplay} from '../application/components/QueryState';
+import {useResetMutationResults} from '../utils/use-reset-mutation-results';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {
     CreateInstallment,
     CreateInstallmentMutation,
@@ -10,52 +10,60 @@ import {
     SingleLoanQuery,
     UpdateLoan,
     UpdateLoanMutation,
-} from "../types";
-import {Button, Stack} from "@mui/material";
-import * as React from "react";
-import {useState} from "react";
-import {FormDialogButton} from "../utils/buttons/FormDialogButton";
-import {DeleteButton} from "../utils/buttons/DeleteButton";
-import {ArrowLeft, Delete, Edit} from "@mui/icons-material";
-import {useApplicationNavigation} from "../utils/use-application-navigation";
-import {CREATE_INSTALLMENT_FORM_PROPS, EDIT_LOAN_FORM_PROPS} from "./utils/loan-form";
-import {useParams} from "react-router-dom";
-import {LoanDetails} from "./LoanDetails";
-import Decimal from "decimal.js";
-import {InstallmentsTable, mapInstallments} from "./InstallmentsTable";
-import * as Yup from "yup";
-import {EditorField} from "../utils/forms/Form";
-import {LoanSimulation} from "./LoanSimulation";
-import IconButton from "@mui/material/IconButton";
-import {Dayjs} from "dayjs";
+} from '../types';
+import {Button, Stack} from '@mui/material';
+import * as React from 'react';
+import {useState} from 'react';
+import {FormDialogButton} from '../utils/buttons/FormDialogButton';
+import {DeleteButton} from '../utils/buttons/DeleteButton';
+import {ArrowLeft, Delete, Edit} from '@mui/icons-material';
+import {useApplicationNavigation} from '../utils/use-application-navigation';
+import {CREATE_INSTALLMENT_FORM_PROPS, EDIT_LOAN_FORM_PROPS} from './utils/loan-form';
+import {useParams} from 'react-router-dom';
+import {LoanDetails} from './LoanDetails';
+import Decimal from 'decimal.js';
+import {InstallmentsTable, mapInstallments} from './InstallmentsTable';
+import * as Yup from 'yup';
+import {EditorField} from '../utils/forms/Form';
+import {LoanSimulation} from './LoanSimulation';
+import IconButton from '@mui/material/IconButton';
+import {Dayjs} from 'dayjs';
 
 export function Loan() {
     const {setPageParams} = useApplicationNavigation();
     const {param1} = useParams();
     const {loading, error, data, refetch} = useQuery<SingleLoanQuery>(SingleLoan, {
         variables: {
-            loanId: param1
-        }
+            loanId: param1,
+        },
     });
     const [updateLoanMutation, updateLoanMutationResult] = useMutation<UpdateLoanMutation>(UpdateLoan);
     const [deleteLoanMutation, deleteLoanMutationResult] = useMutation<DeleteLoanMutation>(DeleteLoan);
-    const [createInstallmentMutation, createInstallmentMutationResult] = useMutation<CreateInstallmentMutation>(CreateInstallment);
+    const [createInstallmentMutation, createInstallmentMutationResult] =
+        useMutation<CreateInstallmentMutation>(CreateInstallment);
 
     const [simulationParams, setSimulationParams] = useState<{
         monthlyBudget: Decimal;
         yearlyBudget: Decimal;
-    } | null>(null)
+    } | null>(null);
 
     const updateLoan = async (loanId: string, name: string): Promise<any> => {
         await updateLoanMutation({variables: {loanId: loanId, name: name}});
         return refetch();
-    }
+    };
     const deleteLoan = async (loanId: string): Promise<any> => {
         await deleteLoanMutation({variables: {loanId: loanId}});
-        setPageParams([])
-        return Promise.resolve("");
-    }
-    const createInstallment = async (loanId: string, loanCurrency: string, paidAt: Dayjs, repaidInterest: Decimal, repaidAmount: Decimal, overpayment: Decimal): Promise<any> => {
+        setPageParams([]);
+        return Promise.resolve('');
+    };
+    const createInstallment = async (
+        loanId: string,
+        loanCurrency: string,
+        paidAt: Dayjs,
+        repaidInterest: Decimal,
+        repaidAmount: Decimal,
+        overpayment: Decimal
+    ): Promise<any> => {
         await createInstallmentMutation({
             variables: {
                 loanId: loanId,
@@ -64,7 +72,7 @@ export function Loan() {
                 repaidAmount: repaidAmount,
                 overpayment: overpayment,
                 currency: loanCurrency,
-            }
+            },
         });
         return refetch();
     };
@@ -72,108 +80,126 @@ export function Loan() {
     useResetMutationResults(updateLoanMutationResult, deleteLoanMutationResult, createInstallmentMutationResult);
 
     if (loading) {
-        return <></>
+        return <></>;
     } else if (error) {
-        return <ErrorDisplay error={error}/>
+        return <ErrorDisplay error={error} />;
     } else if (data) {
         const loan = data!.singleLoan!;
         return (
             <Stack component="section" alignItems="center" sx={{px: {xs: 1, sm: 2}, py: 2}}>
                 {
-                    (<Stack direction="row" alignItems="flex-start" sx={{width: '100%', maxWidth: 1200}}>
-                        <Button variant="text" onClick={() => setPageParams([])}
-                                aria-label="Wróć do listy pożyczek" sx={{flexShrink: 0}}>
-                            <ArrowLeft/>
+                    <Stack direction="row" alignItems="flex-start" sx={{width: '100%', maxWidth: 1200}}>
+                        <Button
+                            variant="text"
+                            onClick={() => setPageParams([])}
+                            aria-label="Wróć do listy pożyczek"
+                            sx={{flexShrink: 0}}
+                        >
+                            <ArrowLeft />
                         </Button>
                         <Stack direction="column" spacing={2} key={loan.publicId} sx={{flex: 1, minWidth: 0}}>
-                            <LoanDetails loan={loan} short={false}/>
+                            <LoanDetails loan={loan} short={false} />
                             <Stack direction="row" flexWrap="wrap" gap={1}>
                                 <FormDialogButton
-                                    title='Dane raty'
+                                    title="Dane raty"
                                     onConfirm={value => {
-                                        return createInstallment(loan.publicId, loan.paidAmount.currency.code, value.paidAt, value.repaidInterest, value.repaidAmount, value.overpayment);
+                                        return createInstallment(
+                                            loan.publicId,
+                                            loan.paidAmount.currency.code,
+                                            value.paidAt,
+                                            value.repaidInterest,
+                                            value.repaidAmount,
+                                            value.overpayment
+                                        );
                                     }}
                                     onCancel={() => {
                                         return Promise.resolve();
                                     }}
-                                    buttonContent={<Button size={'small'} variant={'text'}>zarejestruj ratę</Button>}
+                                    buttonContent={
+                                        <Button size={'small'} variant={'text'}>
+                                            zarejestruj ratę
+                                        </Button>
+                                    }
                                     formProps={CREATE_INSTALLMENT_FORM_PROPS()}
                                 />
                                 <FormDialogButton
-                                    title='Parametry symulacji'
+                                    title="Parametry symulacji"
                                     onConfirm={value => {
                                         setSimulationParams({
                                             monthlyBudget: value.monthlyBudget,
-                                            yearlyBudget: value.yearlyBudget
+                                            yearlyBudget: value.yearlyBudget,
                                         });
                                         return Promise.resolve();
                                     }}
                                     onCancel={() => {
                                         return Promise.resolve();
                                     }}
-                                    buttonContent={<Button size={'small'} variant={'text'}>Symuluj spłatę</Button>}
+                                    buttonContent={
+                                        <Button size={'small'} variant={'text'}>
+                                            Symuluj spłatę
+                                        </Button>
+                                    }
                                     formProps={{
                                         validationSchema: Yup.object({
-                                            monthlyBudget: Yup.number()
-                                                .min(0)
-                                                .required('Wymagana'),
-                                            yearlyBudget: Yup.number()
-                                                .min(0)
-                                                .required('Wymagana')
+                                            monthlyBudget: Yup.number().min(0).required('Wymagana'),
+                                            yearlyBudget: Yup.number().min(0).required('Wymagana'),
                                         }),
                                         initialValues: {
                                             monthlyBudget: new Decimal(0),
-                                            yearlyBudget: new Decimal(0)
+                                            yearlyBudget: new Decimal(0),
                                         },
-                                        fields:
-                                            [
-                                                {
-                                                    label: 'Miesięczny budżet',
-                                                    type: 'NUMBER',
-                                                    key: 'monthlyBudget',
-                                                    editable: true
-                                                } as EditorField,
-                                                {
-                                                    label: 'Roczny budżet',
-                                                    type: 'NUMBER',
-                                                    key: 'yearlyBudget',
-                                                    editable: true
-                                                } as EditorField,
-                                            ]
+                                        fields: [
+                                            {
+                                                label: 'Miesięczny budżet',
+                                                type: 'NUMBER',
+                                                key: 'monthlyBudget',
+                                                editable: true,
+                                            } as EditorField,
+                                            {
+                                                label: 'Roczny budżet',
+                                                type: 'NUMBER',
+                                                key: 'yearlyBudget',
+                                                editable: true,
+                                            } as EditorField,
+                                        ],
                                     }}
                                 />
                             </Stack>
-                            <InstallmentsTable installments={mapInstallments(loan.paidAmount.amount, loan.installments)}
-                                               currency={loan.paidAmount.currency}/>
-                            {simulationParams && <LoanSimulation loan={loan} {...simulationParams}/>}
+                            <InstallmentsTable
+                                installments={mapInstallments(loan.paidAmount.amount, loan.installments)}
+                                currency={loan.paidAmount.currency}
+                            />
+                            {simulationParams && <LoanSimulation loan={loan} {...simulationParams} />}
                         </Stack>
                         <Stack direction="row" sx={{flexShrink: 0}}>
                             <FormDialogButton
-                            title='Dane pożyczki'
-                            onConfirm={value => {
-                                return updateLoan(loan.publicId, value.name);
-                            }}
-                            onCancel={() => {
-                                return Promise.resolve();
-                            }}
-                            buttonContent={
-                                <IconButton size={'small'}>
-                                    <Edit/>
-                                </IconButton>
-                            }
-                            formProps={EDIT_LOAN_FORM_PROPS(loan.name)}
+                                title="Dane pożyczki"
+                                onConfirm={value => {
+                                    return updateLoan(loan.publicId, value.name);
+                                }}
+                                onCancel={() => {
+                                    return Promise.resolve();
+                                }}
+                                buttonContent={
+                                    <IconButton size={'small'}>
+                                        <Edit />
+                                    </IconButton>
+                                }
+                                formProps={EDIT_LOAN_FORM_PROPS(loan.name)}
                             />
                             <DeleteButton
-                            object={loan.publicId}
-                            confirmationMessage={'Na pewno usunąć?'}
-                            buttonContent={<Delete/>}
-                            onDelete={deleteLoan}
-                            onCancel={() => {
-                                return Promise.resolve();
-                                }}/>
+                                object={loan.publicId}
+                                confirmationMessage={'Na pewno usunąć?'}
+                                buttonContent={<Delete />}
+                                onDelete={deleteLoan}
+                                onCancel={() => {
+                                    return Promise.resolve();
+                                }}
+                            />
                         </Stack>
-                    </Stack>)
-                }</Stack>
+                    </Stack>
+                }
+            </Stack>
         );
     } else {
         return <></>;

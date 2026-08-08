@@ -1,116 +1,114 @@
-import {useMutation} from "@apollo/client/react";
+import {useMutation} from '@apollo/client/react';
 import {
     CreatePiggyBank,
     CreatePiggyBankMutation,
     DeletePiggyBank,
     DeletePiggyBankMutation,
     UpdatePiggyBank,
-    UpdatePiggyBankMutation
-} from "../../types";
-import * as React from "react";
-import * as Yup from "yup";
-import {AutocompleteEditorField, BooleanEditorField, EditorField} from "../../utils/forms/Form";
-import {SimpleCrudList} from "../../application/components/SimpleCrudList";
-import {ComparatorBuilder} from "../../utils/comparator-builder";
-import {Chip, Stack, Typography} from "@mui/material";
-import Decimal from "decimal.js";
-import {formatBalance} from "../../utils/functions";
-import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
-import {PiggyBankBalanceEditor, Type} from "./PiggyBankBalanceEditor";
-import {StandOutText} from "../../application/components/StandOutText";
+    UpdatePiggyBankMutation,
+} from '../../types';
+import * as React from 'react';
+import * as Yup from 'yup';
+import {AutocompleteEditorField, BooleanEditorField, EditorField} from '../../utils/forms/Form';
+import {SimpleCrudList} from '../../application/components/SimpleCrudList';
+import {ComparatorBuilder} from '../../utils/comparator-builder';
+import {Chip, Stack, Typography} from '@mui/material';
+import Decimal from 'decimal.js';
+import {formatBalance} from '../../utils/functions';
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import {PiggyBankBalanceEditor, Type} from './PiggyBankBalanceEditor';
+import {StandOutText} from '../../application/components/StandOutText';
 
 export type PiggyBankDTO = {
-    publicId: string,
-    name: string,
-    balance: Decimal,
-    monthlyTopUp: Decimal,
-    description: string,
-    currency: string,
-    savings: boolean,
-}
+    publicId: string;
+    name: string;
+    balance: Decimal;
+    monthlyTopUp: Decimal;
+    description: string;
+    currency: string;
+    savings: boolean;
+};
 
 const PIGGY_BANK_FORM = (currencies: string[], piggyBank?: PiggyBankDTO) => {
-        return {
-            validationSchema: Yup.object({
-                publicId: piggyBank ? Yup.string().required() : Yup.string(),
-                name: Yup.string().required('Wymagana'),
-                description: Yup.string(),
-                currency: Yup.string()
-                    .matches(
-                        new RegExp(currencies.map(currency => "^" + currency + "$").join("|")),
-                        "Waluta spoza dozwolonej listy")
-                    .required('Wymagana'),
-                monthlyTopUp: Yup.number().required(),
-                balance: Yup.number().required(),
-                savings: Yup.boolean().required()
-            }),
-            initialValues: {
-                publicId: piggyBank?.publicId || '',
-                name: piggyBank?.name || '',
-                description: piggyBank?.description || '',
-                currency: piggyBank?.currency || '',
-                monthlyTopUp: piggyBank?.monthlyTopUp || 0,
-                balance: piggyBank?.balance || 0,
-                savings: piggyBank?.savings || false
-            } as PiggyBankDTO,
-            fields:
-                [
-                    {
-                        label: 'PublicId',
-                        type: 'HIDDEN',
-                        key: 'publicId',
-                        editable: false
-                    } as EditorField,
-                    {
-                        label: 'Nazwa',
-                        type: 'TEXT',
-                        key: 'name',
-                        editable: true
-                    } as EditorField,
-                    {
-                        label: 'Opis',
-                        type: 'TEXTAREA',
-                        key: 'description',
-                        editable: true
-                    } as EditorField,
-                    {
-                        label: 'Waluta',
-                        type: 'AUTOCOMPLETE',
-                        options: currencies,
-                        getOptionLabel: (option: any) => option,
-                        isOptionEqualToValue: (option: any, value: any) => option === value,
-                        key: 'currency',
-                        editable: !piggyBank
-                    } as AutocompleteEditorField,
-                    {
-                        label: 'Comiesięczne odkładanie',
-                        type: 'NUMBER',
-                        key: 'monthlyTopUp',
-                        editable: true
-                    } as EditorField,
-                    {
-                        label: 'Oszczędnościowa',
-                        type: 'CHECKBOX',
-                        key: 'savings',
-                        editable: true
-                    } as BooleanEditorField,
-                ]
-        };
-    }
-;
+    return {
+        validationSchema: Yup.object({
+            publicId: piggyBank ? Yup.string().required() : Yup.string(),
+            name: Yup.string().required('Wymagana'),
+            description: Yup.string(),
+            currency: Yup.string()
+                .matches(
+                    new RegExp(currencies.map(currency => '^' + currency + '$').join('|')),
+                    'Waluta spoza dozwolonej listy'
+                )
+                .required('Wymagana'),
+            monthlyTopUp: Yup.number().required(),
+            balance: Yup.number().required(),
+            savings: Yup.boolean().required(),
+        }),
+        initialValues: {
+            publicId: piggyBank?.publicId || '',
+            name: piggyBank?.name || '',
+            description: piggyBank?.description || '',
+            currency: piggyBank?.currency || '',
+            monthlyTopUp: piggyBank?.monthlyTopUp || 0,
+            balance: piggyBank?.balance || 0,
+            savings: piggyBank?.savings || false,
+        } as PiggyBankDTO,
+        fields: [
+            {
+                label: 'PublicId',
+                type: 'HIDDEN',
+                key: 'publicId',
+                editable: false,
+            } as EditorField,
+            {
+                label: 'Nazwa',
+                type: 'TEXT',
+                key: 'name',
+                editable: true,
+            } as EditorField,
+            {
+                label: 'Opis',
+                type: 'TEXTAREA',
+                key: 'description',
+                editable: true,
+            } as EditorField,
+            {
+                label: 'Waluta',
+                type: 'AUTOCOMPLETE',
+                options: currencies,
+                getOptionLabel: (option: any) => option,
+                isOptionEqualToValue: (option: any, value: any) => option === value,
+                key: 'currency',
+                editable: !piggyBank,
+            } as AutocompleteEditorField,
+            {
+                label: 'Comiesięczne odkładanie',
+                type: 'NUMBER',
+                key: 'monthlyTopUp',
+                editable: true,
+            } as EditorField,
+            {
+                label: 'Oszczędnościowa',
+                type: 'CHECKBOX',
+                key: 'savings',
+                editable: true,
+            } as BooleanEditorField,
+        ],
+    };
+};
 
 export interface PiggyBanksManagementProps {
-    piggyBanks: PiggyBankDTO[],
-    supportedCurrencies: string[],
-    refetch: () => void
+    piggyBanks: PiggyBankDTO[];
+    supportedCurrencies: string[];
+    refetch: () => void;
 }
 
 export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}: PiggyBanksManagementProps) {
-
     const [piggyBankBalanceDialogOptions, setPiggyBankBalanceDialogOptions] = React.useState<{
-        type: Type,
-        piggyBank: PiggyBankDTO
+        type: Type;
+        piggyBank: PiggyBankDTO;
     } | null>(null);
 
     const [createPiggyBankMutation] = useMutation<CreatePiggyBankMutation>(CreatePiggyBank);
@@ -124,10 +122,9 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
                 description: piggyBank.description,
                 monthlyTopUp: piggyBank.monthlyTopUp,
                 currency: piggyBank.currency,
-                savings: piggyBank.savings
-            }
-        })
-            .finally(() => refetch());
+                savings: piggyBank.savings,
+            },
+        }).finally(() => refetch());
     };
 
     const updatePiggyBank = async (piggyBank: PiggyBankDTO): Promise<any> => {
@@ -139,92 +136,115 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
                 balance: piggyBank.balance,
                 monthlyTopUp: piggyBank.monthlyTopUp,
                 currency: piggyBank.currency,
-                savings: piggyBank.savings
-            }
-        })
-            .finally(() => refetch());
+                savings: piggyBank.savings,
+            },
+        }).finally(() => refetch());
     };
 
     const deletePiggyBank = async (piggyBank: PiggyBankDTO): Promise<any> => {
-        return await deletePiggyBankMutation({variables: {publicId: piggyBank.publicId}})
-            .finally(() => refetch());
+        return await deletePiggyBankMutation({variables: {publicId: piggyBank.publicId}}).finally(() => refetch());
     };
 
-    return <>
-        <SimpleCrudList
-            title={'SKARBONKI'}
-            editSettings={{
-                dialogTitle: 'Edytuj',
-                onUpdate: updatePiggyBank,
-            }}
-            createSettings={{
-                dialogTitle: 'Dodaj',
-                onCreate: createPiggyBank,
-            }}
-            deleteSettings={{
-                showControl: true,
-                onDelete: deletePiggyBank,
-            }}
-            list={
-                piggyBanks
-                    .sort(ComparatorBuilder.comparing<PiggyBankDTO>(piggyBank => piggyBank.name).build())
-            }
-            idExtractor={piggyBank => piggyBank.publicId}
-            formSupplier={piggyBank => piggyBank ? PIGGY_BANK_FORM(supportedCurrencies, piggyBank) : PIGGY_BANK_FORM(supportedCurrencies)}
-            entityDisplay={(piggyBank) => {
-                return <Grid container width="100%" alignItems="flex-start" spacing={1}>
-                    <Grid size={8}>
-                        <Stack direction="column" key={piggyBank.publicId} sx={{minWidth: 0}}>
-                            <Typography><StandOutText standOutBy="bold">{piggyBank.name}</StandOutText></Typography>
-                            <Typography variant="body2" color="text.secondary">{piggyBank.description}</Typography>
-                            <Typography variant="body2" sx={{
-                                color: piggyBank.balance.toNumber() < 0 ? 'error.main' : 'text.secondary',
-                                fontVariantNumeric: 'tabular-nums',
-                            }}><StandOutText standOutBy="bold">
-                                Stan: {formatBalance(piggyBank.currency, piggyBank.balance)}
-                            </StandOutText></Typography>
-                            {
-                                piggyBank.monthlyTopUp.toNumber() > 0 &&
-                                <Typography variant="body2" color="text.secondary">
-                                    Miesięczne uznania: {formatBalance(piggyBank.currency, piggyBank.monthlyTopUp)}
-                                </Typography>
-                            }
-                            {
-                                piggyBank.savings &&
-                                <Chip size="small" variant="outlined" color="secondary"
-                                      label="Do przechowywania oszczędności" sx={{mt: 0.5, alignSelf: 'flex-start'}}/>
-                            }
-                        </Stack>
-                    </Grid>
-                    <Grid size={4} sx={{textAlign: 'right'}}>
-                        <Button variant="text" onClick={(event) => {
-                            event.stopPropagation();
-                            setPiggyBankBalanceDialogOptions({type: 'CREDIT', piggyBank: piggyBank});
-                        }} color="inherit">
-                            Uznaj
-                        </Button>
-                        <Button variant="text" onClick={(event) => {
-                            event.stopPropagation();
-                            setPiggyBankBalanceDialogOptions({type: 'DEBIT', piggyBank: piggyBank});
-                        }} color="inherit">
-                            Obciąż
-                        </Button>
-                    </Grid>
-                </Grid>;
-            }}
-            enableDndReorder={false}
-        />
-        {piggyBankBalanceDialogOptions?.piggyBank && (
-            <PiggyBankBalanceEditor
-                type={piggyBankBalanceDialogOptions.type}
-                piggyBank={piggyBankBalanceDialogOptions.piggyBank}
-                onSave={(piggyBank) => {
-                    updatePiggyBank(piggyBank);
-                    setPiggyBankBalanceDialogOptions(null);
+    return (
+        <>
+            <SimpleCrudList
+                title={'SKARBONKI'}
+                editSettings={{
+                    dialogTitle: 'Edytuj',
+                    onUpdate: updatePiggyBank,
                 }}
-                onCancel={() => {
-                    setPiggyBankBalanceDialogOptions(null)
+                createSettings={{
+                    dialogTitle: 'Dodaj',
+                    onCreate: createPiggyBank,
                 }}
-            />)}
-    </>
+                deleteSettings={{
+                    showControl: true,
+                    onDelete: deletePiggyBank,
+                }}
+                list={piggyBanks.sort(ComparatorBuilder.comparing<PiggyBankDTO>(piggyBank => piggyBank.name).build())}
+                idExtractor={piggyBank => piggyBank.publicId}
+                formSupplier={piggyBank =>
+                    piggyBank ? PIGGY_BANK_FORM(supportedCurrencies, piggyBank) : PIGGY_BANK_FORM(supportedCurrencies)
+                }
+                entityDisplay={piggyBank => {
+                    return (
+                        <Grid container width="100%" alignItems="flex-start" spacing={1}>
+                            <Grid size={8}>
+                                <Stack direction="column" key={piggyBank.publicId} sx={{minWidth: 0}}>
+                                    <Typography>
+                                        <StandOutText standOutBy="bold">{piggyBank.name}</StandOutText>
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {piggyBank.description}
+                                    </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            color: piggyBank.balance.toNumber() < 0 ? 'error.main' : 'text.secondary',
+                                            fontVariantNumeric: 'tabular-nums',
+                                        }}
+                                    >
+                                        <StandOutText standOutBy="bold">
+                                            Stan: {formatBalance(piggyBank.currency, piggyBank.balance)}
+                                        </StandOutText>
+                                    </Typography>
+                                    {piggyBank.monthlyTopUp.toNumber() > 0 && (
+                                        <Typography variant="body2" color="text.secondary">
+                                            Miesięczne uznania:{' '}
+                                            {formatBalance(piggyBank.currency, piggyBank.monthlyTopUp)}
+                                        </Typography>
+                                    )}
+                                    {piggyBank.savings && (
+                                        <Chip
+                                            size="small"
+                                            variant="outlined"
+                                            color="secondary"
+                                            label="Do przechowywania oszczędności"
+                                            sx={{mt: 0.5, alignSelf: 'flex-start'}}
+                                        />
+                                    )}
+                                </Stack>
+                            </Grid>
+                            <Grid size={4} sx={{textAlign: 'right'}}>
+                                <Button
+                                    variant="text"
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        setPiggyBankBalanceDialogOptions({type: 'CREDIT', piggyBank: piggyBank});
+                                    }}
+                                    color="inherit"
+                                >
+                                    Uznaj
+                                </Button>
+                                <Button
+                                    variant="text"
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        setPiggyBankBalanceDialogOptions({type: 'DEBIT', piggyBank: piggyBank});
+                                    }}
+                                    color="inherit"
+                                >
+                                    Obciąż
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    );
+                }}
+                enableDndReorder={false}
+            />
+            {piggyBankBalanceDialogOptions?.piggyBank && (
+                <PiggyBankBalanceEditor
+                    type={piggyBankBalanceDialogOptions.type}
+                    piggyBank={piggyBankBalanceDialogOptions.piggyBank}
+                    onSave={piggyBank => {
+                        updatePiggyBank(piggyBank);
+                        setPiggyBankBalanceDialogOptions(null);
+                    }}
+                    onCancel={() => {
+                        setPiggyBankBalanceDialogOptions(null);
+                    }}
+                />
+            )}
+        </>
+    );
 }

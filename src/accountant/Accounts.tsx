@@ -1,22 +1,18 @@
-import {ErrorDisplay} from "../application/components/QueryState";
-import {useQuery} from "@apollo/client/react";
-import {Account, GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} from "../types";
-import React from "react";
-import {Stack, useTheme} from "@mui/material";
-import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
-import {ComparatorBuilder} from "../utils/comparator-builder";
-import Typography from "@mui/material/Typography";
-import Decimal from "decimal.js";
-import {AccountView} from "./AccountView";
-import {compactListRow} from "../utils/theme/utils";
-import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
+import {ErrorDisplay} from '../application/components/QueryState';
+import {useQuery} from '@apollo/client/react';
+import {Account, GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} from '../types';
+import React from 'react';
+import {Stack, useTheme} from '@mui/material';
+import {MultiCurrencySummary} from '../application/components/MultiCurrencySummary';
+import {ComparatorBuilder} from '../utils/comparator-builder';
+import Typography from '@mui/material/Typography';
+import Decimal from 'decimal.js';
+import {AccountView} from './AccountView';
+import {compactListRow} from '../utils/theme/utils';
+import {FormattedMoneyText} from '../application/components/FormattedMoneyText';
 
 export function Accounts() {
-    const {
-        loading,
-        error,
-        data
-    } = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
+    const {loading, error, data} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
     const theme = useTheme();
 
     if (loading) {
@@ -24,24 +20,17 @@ export function Accounts() {
     }
 
     if (error) {
-        return <ErrorDisplay error={error}/>;
+        return <ErrorDisplay error={error} />;
     }
 
     if (data) {
         const accounts = [...(data.financeManagement.accounts as Account[])]
             .filter(a => a.visible)
-            .sort(
-                ComparatorBuilder
-                    .comparing<Account>(a => a.order)
-                    .build()
-            );
+            .sort(ComparatorBuilder.comparing<Account>(a => a.order).build());
 
-        const piggyBanks = [...(data.financeManagement.piggyBanks as PiggyBank[])]
-            .sort(
-                ComparatorBuilder
-                    .comparing<PiggyBank>(pb => pb.name)
-                    .build()
-            );
+        const piggyBanks = [...(data.financeManagement.piggyBanks as PiggyBank[])].sort(
+            ComparatorBuilder.comparing<PiggyBank>(pb => pb.name).build()
+        );
 
         return (
             <Stack
@@ -74,12 +63,8 @@ export function Accounts() {
 
                     <MultiCurrencySummary
                         data={accounts}
-                        amountExtractor={account =>
-                            new Decimal(account.currentBalance.amount)
-                        }
-                        currencyExtractor={account =>
-                            account.currentBalance.currency.code
-                        }
+                        amountExtractor={account => new Decimal(account.currentBalance.amount)}
+                        currencyExtractor={account => account.currentBalance.currency.code}
                         header="Suma:"
                         sx={{
                             mb: 1,
@@ -89,10 +74,7 @@ export function Accounts() {
 
                     <Stack direction="column">
                         {accounts.map(account => (
-                            <AccountView
-                                key={'av' + account.publicId}
-                                account={account}
-                            />
+                            <AccountView key={'av' + account.publicId} account={account} />
                         ))}
                     </Stack>
                 </Stack>
@@ -124,9 +106,7 @@ export function Accounts() {
                                 justifyContent="space-between"
                                 sx={compactListRow(theme)}
                             >
-                                <Typography>
-                                    {piggyBank.name}
-                                </Typography>
+                                <Typography>{piggyBank.name}</Typography>
                                 <FormattedMoneyText
                                     money={{
                                         amount: piggyBank.balance.amount,

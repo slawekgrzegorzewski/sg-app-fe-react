@@ -1,23 +1,28 @@
-import * as React from "react";
-import {useMutation} from "@apollo/client/react";
-import {BankAccount, TriggerFetchBankAccountData, TriggerFetchBankAccountDataMutation} from "../../types";
-import {Button} from "@mui/material";
+import * as React from 'react';
+import {useMutation} from '@apollo/client/react';
+import {BankAccount, TriggerFetchBankAccountData, TriggerFetchBankAccountDataMutation} from '../../types';
+import {Button} from '@mui/material';
 
 export interface FetchBankAccountDataButtonProps {
     bankAccount: BankAccount;
 }
 
 export function FetchBankAccountDataButton({bankAccount}: FetchBankAccountDataButtonProps) {
+    const [triggerFetchBankAccountDataMutation] =
+        useMutation<TriggerFetchBankAccountDataMutation>(TriggerFetchBankAccountData);
 
-    const [triggerFetchBankAccountDataMutation] = useMutation<TriggerFetchBankAccountDataMutation>(TriggerFetchBankAccountData);
-
-    return <Button
-        size="small"
-        onClick={() => triggerFetchBankAccountDataMutation({
-            variables: {
-                bankAccountPublicId: bankAccount.publicId
+    return (
+        <Button
+            size="small"
+            onClick={() =>
+                triggerFetchBankAccountDataMutation({
+                    variables: {
+                        bankAccountPublicId: bankAccount.publicId,
+                    },
+                })
             }
-        })}>
-        Pobierz dane
-    </Button>
+        >
+            Pobierz dane
+        </Button>
+    );
 }

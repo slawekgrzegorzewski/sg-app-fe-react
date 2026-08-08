@@ -1,7 +1,7 @@
-import * as React from "react";
-import getUserLocale from "get-user-locale";
-import {CurrencyInfo} from "../../types";
-import Decimal from "decimal.js";
+import * as React from 'react';
+import getUserLocale from 'get-user-locale';
+import {CurrencyInfo} from '../../types';
+import Decimal from 'decimal.js';
 
 export type CurrencyAmountDisplayProps = {
     amount: Decimal | number;
@@ -9,11 +9,14 @@ export type CurrencyAmountDisplayProps = {
 };
 
 export function CurrencyAmountDisplay({amount, currency}: CurrencyAmountDisplayProps) {
-    const value = Decimal.isDecimal(amount) ? (amount as Decimal).toNumber() : amount as number;
+    const value = Decimal.isDecimal(amount) ? (amount as Decimal).toNumber() : (amount as number);
 
-    return (<>{value.toLocaleString(getUserLocale(), {
-            style: "currency",
-            currency: currency.code
-        })}</>
+    return (
+        <>
+            {value.toLocaleString(getUserLocale(), {
+                style: 'currency',
+                currency: currency.code,
+            })}
+        </>
     );
 }

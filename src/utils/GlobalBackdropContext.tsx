@@ -1,5 +1,5 @@
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react";
-import {Backdrop, CircularProgress, Stack} from "@mui/material";
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import {Backdrop, CircularProgress, Stack} from '@mui/material';
 
 interface GlobalBackdropContextType {
     showBackdrop: (label?: string) => void;
@@ -7,20 +7,16 @@ interface GlobalBackdropContextType {
 }
 
 const GlobalBackdropContext = createContext<GlobalBackdropContextType>({
-    showBackdrop: () => {
-    },
-    hideBackdrop: () => {
-    },
+    showBackdrop: () => {},
+    hideBackdrop: () => {},
 });
 
-export const backdropHandle: { show: (label?: string) => void; hide: (label?: string) => void } = {
-    show: () => {
-    },
-    hide: () => {
-    },
+export const backdropHandle: {show: (label?: string) => void; hide: (label?: string) => void} = {
+    show: () => {},
+    hide: () => {},
 };
 
-export function GlobalBackdropProvider({children}: { children: React.ReactNode }) {
+export function GlobalBackdropProvider({children}: {children: React.ReactNode}) {
     const [count, setCount] = useState(0);
     const [labels, setLabels] = useState<string[]>([]);
     const countRef = useRef(0);
@@ -52,10 +48,8 @@ export function GlobalBackdropProvider({children}: { children: React.ReactNode }
         backdropHandle.show = showBackdrop;
         backdropHandle.hide = hideBackdrop;
         return () => {
-            backdropHandle.show = () => {
-            };
-            backdropHandle.hide = () => {
-            };
+            backdropHandle.show = () => {};
+            backdropHandle.hide = () => {};
         };
     }, [showBackdrop, hideBackdrop]);
 
@@ -64,13 +58,12 @@ export function GlobalBackdropProvider({children}: { children: React.ReactNode }
     return (
         <GlobalBackdropContext.Provider value={value}>
             {children}
-            <Backdrop
-                sx={{color: 'common.white', zIndex: (theme) => theme.zIndex.modal + 1}}
-                open={count > 0}
-            >
+            <Backdrop sx={{color: 'common.white', zIndex: theme => theme.zIndex.modal + 1}} open={count > 0}>
                 <Stack direction={'column'} alignItems={'center'}>
-                    <CircularProgress color="inherit"/>
-                    {labels.map((label, index) => <div key={index}>{label}</div>)}
+                    <CircularProgress color="inherit" />
+                    {labels.map((label, index) => (
+                        <div key={index}>{label}</div>
+                    ))}
                 </Stack>
             </Backdrop>
         </GlobalBackdropContext.Provider>

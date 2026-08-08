@@ -1,9 +1,9 @@
-import * as React from "react";
-import getUserLocale from "get-user-locale";
+import * as React from 'react';
+import getUserLocale from 'get-user-locale';
 
 export type OrdinalDisplayProps = {
     value: number;
-}
+};
 
 export function OrdinalDisplay({value}: OrdinalDisplayProps) {
     const userLocale = getUserLocale();
@@ -15,71 +15,70 @@ export function OrdinalDisplay({value}: OrdinalDisplayProps) {
         function convertBase(value: number) {
             switch (value) {
                 case 1:
-                    return "pierwszy";
+                    return 'pierwszy';
                 case 2:
-                    return "drugi";
+                    return 'drugi';
                 case 3:
-                    return "trzeci";
+                    return 'trzeci';
                 case 4:
-                    return "czwarty";
+                    return 'czwarty';
                 case 5:
-                    return "piąty";
+                    return 'piąty';
                 case 6:
-                    return "szósty";
+                    return 'szósty';
                 case 7:
-                    return "siódmy";
+                    return 'siódmy';
                 case 8:
-                    return "ósmy";
+                    return 'ósmy';
                 case 9:
-                    return "dziewiąty";
+                    return 'dziewiąty';
                 case 0:
-                    return "dziesiąty";
+                    return 'dziesiąty';
                 case 11:
-                    return "jedenasty";
+                    return 'jedenasty';
                 case 12:
-                    return "dwunasty";
+                    return 'dwunasty';
                 case 13:
-                    return "trzynasty";
+                    return 'trzynasty';
                 case 14:
-                    return "czternasty";
+                    return 'czternasty';
                 case 15:
-                    return "piętnasty";
+                    return 'piętnasty';
                 case 16:
-                    return "szesnasty";
+                    return 'szesnasty';
                 case 17:
-                    return "siedemnasty";
+                    return 'siedemnasty';
                 case 18:
-                    return "osiemnasty";
+                    return 'osiemnasty';
                 case 19:
-                    return "dziewiętnasty";
+                    return 'dziewiętnasty';
             }
         }
 
         function convertTenths(value: number) {
             switch (value) {
                 case 20:
-                    return "dwudziesty";
+                    return 'dwudziesty';
                 case 30:
-                    return "trzydziesty";
+                    return 'trzydziesty';
                 case 40:
-                    return "czterdziesty";
+                    return 'czterdziesty';
                 case 50:
-                    return "pięćdziesiąty";
+                    return 'pięćdziesiąty';
                 case 60:
-                    return "sześćdziesiąty";
+                    return 'sześćdziesiąty';
                 case 70:
-                    return "siedemdziesiąty";
+                    return 'siedemdziesiąty';
                 case 80:
-                    return "ósiemdziesiąty";
+                    return 'ósiemdziesiąty';
                 case 90:
-                    return "dziewięćdziesiąty";
+                    return 'dziewięćdziesiąty';
             }
         }
 
         const value1 = Math.floor(value / 10) * 10;
-        return (value < 20) ? convertBase(value) : convertTenths(value1) + " " + convertBase(value % 10);
+        return value < 20 ? convertBase(value) : convertTenths(value1) + ' ' + convertBase(value % 10);
     }
 
-    return (<>{convertPL(value)}</>
-    );
+    return <>{convertPL(value)}</>;
 }

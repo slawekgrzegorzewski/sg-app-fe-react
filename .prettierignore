@@ -1,0 +1,5 @@
+build/
+coverage/
+node_modules/
+src/__generated__/
+src/types.ts

@@ -1,13 +1,13 @@
 import React from 'react';
 import * as XLSX from 'xlsx';
-import {saveAs} from "file-saver";
-import {Button} from "@mui/material";
+import {saveAs} from 'file-saver';
+import {Button} from '@mui/material';
 
 export type TableToExcelExportProps = {
     buttonText: string;
     dataGetter: () => any;
     fileName: string;
-}
+};
 
 export default function TableToExcelExport({buttonText, dataGetter, fileName}: TableToExcelExportProps) {
     const exportToExcel = () => {

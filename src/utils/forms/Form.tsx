@@ -7,20 +7,20 @@ import {
     FormHelperText,
     MenuItem,
     Stack,
-    TextField
-} from "@mui/material";
-import * as React from "react";
-import {Formik} from "../../application/components/Formik";
-import {FormikHelpers} from "formik/dist/types";
-import {FormikValues} from "formik";
-import * as Yup from "yup";
-import AutocompleteAsync from "./AutocompleteAsync";
-import {DocumentNode} from "graphql/language";
-import {DatePicker} from "@mui/x-date-pickers";
-import {Dayjs} from "dayjs";
+    TextField,
+} from '@mui/material';
+import * as React from 'react';
+import {Formik} from '../../application/components/Formik';
+import {FormikHelpers} from 'formik/dist/types';
+import {FormikValues} from 'formik';
+import * as Yup from 'yup';
+import AutocompleteAsync from './AutocompleteAsync';
+import {DocumentNode} from 'graphql/language';
+import {DatePicker} from '@mui/x-date-pickers';
+import {Dayjs} from 'dayjs';
 
 export type EditorFieldType =
-    'NUMBER'
+    | 'NUMBER'
     | 'DATEPICKER'
     | 'TEXT'
     | 'TEXTAREA'
@@ -33,7 +33,7 @@ export type EditorFieldType =
 export type SelectOption = {
     key: string;
     displayElement: React.JSX.Element;
-}
+};
 
 function isEditorFieldKind(object: object, type: string) {
     return !!object && 'type' in object && typeof object.type === 'string' && object.type === type;
@@ -69,7 +69,7 @@ export type RegularEditorField = {
 
 export type DatePickerEditorField = Omit<RegularEditorField, 'type'> & {
     type: 'DATEPICKER';
-    restrictToDates?: Dayjs[]
+    restrictToDates?: Dayjs[];
 };
 
 export type BooleanEditorField = Omit<RegularEditorField, 'type'> & {
@@ -92,12 +92,12 @@ export type AutocompleteEditorField = Omit<RegularEditorField, 'type'> & {
 
 export type AutocompleteAsyncEditorField = Omit<AutocompleteEditorField, 'type' | 'options'> & {
     type: 'AUTOCOMPLETE_ASYNC';
-    query: DocumentNode,
-    queryToOptionsMapper: (data: any) => any,
+    query: DocumentNode;
+    queryToOptionsMapper: (data: any) => any;
 };
 
 export type EditorField =
-    RegularEditorField
+    | RegularEditorField
     | SelectEditorField
     | AutocompleteEditorField
     | AutocompleteAsyncEditorField
@@ -112,52 +112,52 @@ export type FormProps<T> = {
     autoSubmit?: boolean;
     showControlButtons?: boolean;
     onSave: (value: T) => void;
-    onCancel: () => void
+    onCancel: () => void;
     onChange?(value: T): void;
-}
+};
 
 export default function Form<T>({
-                                    fields,
-                                    initialValues,
-                                    validationSchema,
-                                    previewOfChange,
-                                    autoSubmit,
-                                    showControlButtons,
-                                    onSave,
-                                    onCancel,
-                                    onChange,
-                                }: FormProps<T>) {
+    fields,
+    initialValues,
+    validationSchema,
+    previewOfChange,
+    autoSubmit,
+    showControlButtons,
+    onSave,
+    onCancel,
+    onChange,
+}: FormProps<T>) {
     if (showControlButtons === undefined) {
         showControlButtons = true;
     }
 
     function getFieldUniqueProps(editorField: EditorField) {
         switch (editorField.type) {
-            case "TEXT":
+            case 'TEXT':
                 return {
                     disabled: !editorField.editable,
-                    type: "text"
+                    type: 'text',
                 };
             case 'TEXTAREA':
                 return {
                     disabled: !editorField.editable,
-                    type: "text",
-                    multiline: true
+                    type: 'text',
+                    multiline: true,
                 };
             case 'DATEPICKER':
                 return {
                     disabled: !editorField.editable,
-                    type: "date"
+                    type: 'date',
                 };
             case 'NUMBER':
                 return {
                     disabled: !editorField.editable,
-                    type: "number"
+                    type: 'number',
                 };
             case 'SELECT':
                 return {
                     disabled: !editorField.editable,
-                    select: true
+                    select: true,
                 };
             default:
                 throw new Error('not known field type ' + editorField.type);
@@ -165,183 +165,201 @@ export default function Form<T>({
     }
 
     function createTextField(editorField: EditorField, formik: any) {
-        return <TextField
-            {...getFieldUniqueProps(editorField)}
-            {...(editorField.additionalProps || {})}
-            fullWidth
-            variant="standard"
-            id={editorField.key}
-            name={editorField.key}
-            key={editorField.key}
-            label={editorField.label}
-            value={formik.values[editorField.key]}
-            onChange={(e) => {
-                formik.handleChange(e);
-                if (autoSubmit) {
-                    formik.submitForm();
-                }
-            }}
-            onBlur={formik.handleBlur}
-            error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-            helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-        >
-            {
-                isSelectEditorField(editorField) && editorField.selectOptions.map(option => (
-                    <MenuItem key={option.key}
-                              value={option.key}>{option.displayElement}</MenuItem>
-                ))
-            }
-        </TextField>
+        return (
+            <TextField
+                {...getFieldUniqueProps(editorField)}
+                {...(editorField.additionalProps || {})}
+                fullWidth
+                variant="standard"
+                id={editorField.key}
+                name={editorField.key}
+                key={editorField.key}
+                label={editorField.label}
+                value={formik.values[editorField.key]}
+                onChange={e => {
+                    formik.handleChange(e);
+                    if (autoSubmit) {
+                        formik.submitForm();
+                    }
+                }}
+                onBlur={formik.handleBlur}
+                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+            >
+                {isSelectEditorField(editorField) &&
+                    editorField.selectOptions.map(option => (
+                        <MenuItem key={option.key} value={option.key}>
+                            {option.displayElement}
+                        </MenuItem>
+                    ))}
+            </TextField>
+        );
     }
 
     function createDatePicker(editorField: DatePickerEditorField, formik: any) {
-        return <DatePicker
-            {...getFieldUniqueProps(editorField)}
-            {...(editorField.additionalProps || {})}
-            fullWidth
-            variant="standard"
-            id={editorField.key}
-            name={editorField.key}
-            key={editorField.key}
-            label={editorField.label}
-            value={formik.values[editorField.key]}
-            format={'YYYY-MM-DD'}
-            onChange={(newValue: Dayjs) => {
-                formik.setFieldValue(editorField.key, newValue, true);
-                if (autoSubmit) {
-                    formik.submitForm();
-                }
-            }}
-            onBlur={formik.handleBlur}
-            error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-            helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-            shouldDisableDate={day => {
-                const restrictedDays = editorField.restrictToDates || [];
-                return restrictedDays.length > 0
-                    && restrictedDays.filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0;
-            }}
-        />
+        return (
+            <DatePicker
+                {...getFieldUniqueProps(editorField)}
+                {...(editorField.additionalProps || {})}
+                fullWidth
+                variant="standard"
+                id={editorField.key}
+                name={editorField.key}
+                key={editorField.key}
+                label={editorField.label}
+                value={formik.values[editorField.key]}
+                format={'YYYY-MM-DD'}
+                onChange={(newValue: Dayjs) => {
+                    formik.setFieldValue(editorField.key, newValue, true);
+                    if (autoSubmit) {
+                        formik.submitForm();
+                    }
+                }}
+                onBlur={formik.handleBlur}
+                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+                shouldDisableDate={day => {
+                    const restrictedDays = editorField.restrictToDates || [];
+                    return (
+                        restrictedDays.length > 0 &&
+                        restrictedDays.filter(date => day.startOf('day').isSame(date.startOf('day'))).length === 0
+                    );
+                }}
+            />
+        );
     }
 
     function createAutocomplete(editorField: AutocompleteEditorField, formik: any) {
-        return <Autocomplete
-            fullWidth
-            disabled={!editorField.editable}
-            id={editorField.key}
-            key={editorField.key}
-            value={formik.values[editorField.key]}
-            onBlur={formik.handleBlur}
-            onChange={(e, newValue) => {
-                formik.setFieldValue(editorField.key, newValue, true)
-                if (autoSubmit) {
-                    formik.submitForm();
-                }
-            }}
-            getOptionLabel={option => editorField.getOptionLabel(option)}
-            isOptionEqualToValue={editorField.isOptionEqualToValue}
-            options={editorField.options}
-            renderInput={(params) => <TextField
-                {...params}
-                variant="standard"
-                label={editorField.label}
-                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-                helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
-            />}
-        />
+        return (
+            <Autocomplete
+                fullWidth
+                disabled={!editorField.editable}
+                id={editorField.key}
+                key={editorField.key}
+                value={formik.values[editorField.key]}
+                onBlur={formik.handleBlur}
+                onChange={(e, newValue) => {
+                    formik.setFieldValue(editorField.key, newValue, true);
+                    if (autoSubmit) {
+                        formik.submitForm();
+                    }
+                }}
+                getOptionLabel={option => editorField.getOptionLabel(option)}
+                isOptionEqualToValue={editorField.isOptionEqualToValue}
+                options={editorField.options}
+                renderInput={params => (
+                    <TextField
+                        {...params}
+                        variant="standard"
+                        label={editorField.label}
+                        error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
+                        helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
+                    />
+                )}
+            />
+        );
     }
 
     function createCheckbox(editorField: BooleanEditorField, formik: any) {
-        return <FormControl key={editorField.key}>
-            <FormHelperText
-                error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
-            >
-                {formik.touched[editorField.key] && formik.errors[editorField.key]}
-            </FormHelperText>
-            <FormControlLabel label={editorField.label}
-                              id={editorField.key}
-                              name={editorField.key}
-                              key={editorField.key}
-                              onChange={(e) => {
-                                  formik.handleChange(e);
-                                  if (autoSubmit) {
-                                      formik.submitForm();
-                                  }
-                              }}
-                              onBlur={formik.handleBlur}
-                              {...(editorField.additionalProps || {})}
-                              control={<Checkbox
-                                  disabled={!editorField.editable}
-                                  checked={formik.values[editorField.key]}
-                                  size={'small'}
-                                  icon={editorField.icon}
-                                  checkedIcon={editorField.checkedIcon}
-                              />}
-            />
-        </FormControl>;
+        return (
+            <FormControl key={editorField.key}>
+                <FormHelperText error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}>
+                    {formik.touched[editorField.key] && formik.errors[editorField.key]}
+                </FormHelperText>
+                <FormControlLabel
+                    label={editorField.label}
+                    id={editorField.key}
+                    name={editorField.key}
+                    key={editorField.key}
+                    onChange={e => {
+                        formik.handleChange(e);
+                        if (autoSubmit) {
+                            formik.submitForm();
+                        }
+                    }}
+                    onBlur={formik.handleBlur}
+                    {...(editorField.additionalProps || {})}
+                    control={
+                        <Checkbox
+                            disabled={!editorField.editable}
+                            checked={formik.values[editorField.key]}
+                            size={'small'}
+                            icon={editorField.icon}
+                            checkedIcon={editorField.checkedIcon}
+                        />
+                    }
+                />
+            </FormControl>
+        );
     }
 
     const Form = (formik: any) => {
-
         React.useEffect(() => {
             onChange?.(formik.values as T);
         }, [formik.values]);
 
         return (
             <form onSubmit={formik.handleSubmit}>
-                <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    {
-                        fields
-                            .filter(field => field.type !== 'HIDDEN')
-                            .map(editorField => {
-                                if (isDatepickerEditorField(editorField)) {
-                                    return createDatePicker(editorField, formik);
-                                } else if (isCheckboxEditorField(editorField)) {
-                                    return createCheckbox(editorField, formik);
-                                } else if (isAutocompleteEditorField(editorField)) {
-                                    return createAutocomplete(editorField, formik);
-                                } else if (isAutocompleteAsyncEditorField(editorField)) {
-                                    return AutocompleteAsync({
-                                        formik: formik,
-                                        editorField: editorField,
-                                    });
-                                } else {
-                                    return createTextField(editorField, formik);
-                                }
-                            })}
-                    {
-                        previewOfChange?.(formik.values)
-                    }
-                    {(showControlButtons) &&
-                        <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
-                            <Button variant="text"
-                                    color="secondary"
-                                    type="submit"
-                                    sx={{flexGrow: 1}}
-                                    onClick={e => e.stopPropagation()}
-                            >Potwierdź</Button>
+                <Stack direction={'column'} spacing={4} alignItems={'center'}>
+                    {fields
+                        .filter(field => field.type !== 'HIDDEN')
+                        .map(editorField => {
+                            if (isDatepickerEditorField(editorField)) {
+                                return createDatePicker(editorField, formik);
+                            } else if (isCheckboxEditorField(editorField)) {
+                                return createCheckbox(editorField, formik);
+                            } else if (isAutocompleteEditorField(editorField)) {
+                                return createAutocomplete(editorField, formik);
+                            } else if (isAutocompleteAsyncEditorField(editorField)) {
+                                return AutocompleteAsync({
+                                    formik: formik,
+                                    editorField: editorField,
+                                });
+                            } else {
+                                return createTextField(editorField, formik);
+                            }
+                        })}
+                    {previewOfChange?.(formik.values)}
+                    {showControlButtons && (
+                        <Stack direction={'row'} spacing={4} alignItems={'center'} justifyContent={'space-evenly'}>
                             <Button
-                                variant="text" sx={{flexGrow: 1}}
-                                onClick={(e) => {
+                                variant="text"
+                                color="secondary"
+                                type="submit"
+                                sx={{flexGrow: 1}}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                Potwierdź
+                            </Button>
+                            <Button
+                                variant="text"
+                                sx={{flexGrow: 1}}
+                                onClick={e => {
                                     e.stopPropagation();
                                     onCancel();
-                                }}>Anuluj</Button>
+                                }}
+                            >
+                                Anuluj
+                            </Button>
                         </Stack>
-                    }
+                    )}
                 </Stack>
             </form>
         );
-    }
+    };
 
-    return <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={(values: T, {setSubmitting}: FormikHelpers<FormikValues>) => {
-            setTimeout(() => {
-                setSubmitting(false);
-                onSave(values)
-            }, 400);
-        }}
-    >
-        {Form}
-    </Formik>
+    return (
+        <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={(values: T, {setSubmitting}: FormikHelpers<FormikValues>) => {
+                setTimeout(() => {
+                    setSubmitting(false);
+                    onSave(values);
+                }, 400);
+            }}
+        >
+            {Form}
+        </Formik>
+    );
 }

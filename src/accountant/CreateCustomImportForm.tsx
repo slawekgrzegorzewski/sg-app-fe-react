@@ -1,26 +1,26 @@
-import {clickableProps} from "../application/components/clickable";
-import * as React from "react";
-import {JSX, useMemo, useState} from "react";
-import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
-import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
-import {Button, Dialog, DialogContent, Stack, useMediaQuery} from "@mui/material";
-import Decimal from "decimal.js";
-import {CustomImportSummary} from "./CustomImportSummary";
-import Typography from "@mui/material/Typography";
-import {formatCurrency} from "../utils/functions";
-import {transactionCustomImportSummary} from "./utils/customImportSummary";
-import {Account, BankTransactionToImport, BillingCategory, PiggyBank} from "../types";
-import {almostFullHeightDialog} from "../utils/theme/utils";
-import {StandOutText} from "../application/components/StandOutText";
+import {clickableProps} from '../application/components/clickable';
+import * as React from 'react';
+import {JSX, useMemo, useState} from 'react';
+import {BillingElementDTO, CreateBillingElementForm} from './CreateBillingElementForm';
+import {CreateTransferForm, TransferDTO} from './CreateTransferForm';
+import {Button, Dialog, DialogContent, Stack, useMediaQuery} from '@mui/material';
+import Decimal from 'decimal.js';
+import {CustomImportSummary} from './CustomImportSummary';
+import Typography from '@mui/material/Typography';
+import {formatCurrency} from '../utils/functions';
+import {transactionCustomImportSummary} from './utils/customImportSummary';
+import {Account, BankTransactionToImport, BillingCategory, PiggyBank} from '../types';
+import {almostFullHeightDialog} from '../utils/theme/utils';
+import {StandOutText} from '../application/components/StandOutText';
 
 export type CustomImportResult = {
     billingElements: BillingElementDTO[];
     transfers: TransferDTO[];
-}
+};
 
 export interface CreateCustomImportFormProps {
-    accountsWithAssignedBankAccounts: Account[],
-    accountsWithoutAssignedBankAccounts: Account[],
+    accountsWithAssignedBankAccounts: Account[];
+    accountsWithoutAssignedBankAccounts: Account[];
     billingCategories: BillingCategory[];
     piggyBanks: PiggyBank[];
     bankTransactions: BankTransactionToImport[];
@@ -28,191 +28,233 @@ export interface CreateCustomImportFormProps {
 }
 
 export function CreateCustomImportForm({
-                                           accountsWithAssignedBankAccounts,
-                                           accountsWithoutAssignedBankAccounts,
-                                           billingCategories,
-                                           piggyBanks,
-                                           bankTransactions,
-                                           onClose
-                                       }: CreateCustomImportFormProps): JSX.Element {
+    accountsWithAssignedBankAccounts,
+    accountsWithoutAssignedBankAccounts,
+    billingCategories,
+    piggyBanks,
+    bankTransactions,
+    onClose,
+}: CreateCustomImportFormProps): JSX.Element {
     const isTouchDevice = useMediaQuery('(pointer: coarse)');
-    const accountsInvolvedInImportingTransactionPublicIds = new Set(bankTransactions.flatMap(bt => [bt.creditBankAccountPublicId, bt.debitBankAccountPublicId]));
-    const accountsInvolvedInImportingTransactions = accountsWithAssignedBankAccounts.filter(account =>
-        account.bankAccount && accountsInvolvedInImportingTransactionPublicIds.has(account.bankAccount.publicId));
+    const accountsInvolvedInImportingTransactionPublicIds = new Set(
+        bankTransactions.flatMap(bt => [bt.creditBankAccountPublicId, bt.debitBankAccountPublicId])
+    );
+    const accountsInvolvedInImportingTransactions = accountsWithAssignedBankAccounts.filter(
+        account =>
+            account.bankAccount && accountsInvolvedInImportingTransactionPublicIds.has(account.bankAccount.publicId)
+    );
     const [billingElements, setBillingElements] = useState<BillingElementDTO[]>([]);
     const [editBillingElement, setEditBillingElement] = useState<BillingElementDTO | null>(null);
     const [transfers, setTransfers] = useState<TransferDTO[]>([]);
     const [editTransfer, setEditTransfer] = useState<TransferDTO | null>(null);
     const transactionToCustomImportSummaries = useMemo(
-        () => transactionCustomImportSummary(bankTransactions, accountsWithAssignedBankAccounts, billingElements, transfers),
+        () =>
+            transactionCustomImportSummary(
+                bankTransactions,
+                accountsWithAssignedBankAccounts,
+                billingElements,
+                transfers
+            ),
         [bankTransactions, accountsWithAssignedBankAccounts, billingElements, transfers]
     );
-    const canCreateCustomImport = transactionToCustomImportSummaries.length > 0 &&
+    const canCreateCustomImport =
+        transactionToCustomImportSummaries.length > 0 &&
         transactionToCustomImportSummaries.map(t => t.balanceAfterImport.isZero()).reduce((p, c) => p && c, true);
     const findAccount = (accountPublicId: string) => {
         let found = accountsWithAssignedBankAccounts.filter(account => account.publicId === accountPublicId);
         if (!found || found.length === 0)
             found = accountsWithoutAssignedBankAccounts.filter(account => account.publicId === accountPublicId);
         return found;
-    }
+    };
 
     function transferDescription(transfer: TransferDTO) {
         const fromAccount = findAccount(transfer.fromAccountPublicId || '');
         const toAccount = findAccount(transfer.toAccountPublicId || '');
-        return <Typography>
-            <span>Transfer </span>
-            {(fromAccount && toAccount && fromAccount.length > 0 && toAccount.length > 0) && <>
-                <StandOutText>
-                    {formatCurrency(fromAccount[0].currentBalance.currency.code, new Decimal(transfer.fromAmount))}
-                </StandOutText>
-                <span> z </span>
-                <StandOutText>
-                    {fromAccount[0].name}
-                </StandOutText>
-                <span> na </span>
-                <StandOutText>
-                    {toAccount[0].name}
-                </StandOutText>
-            </>}
-        </Typography>;
+        return (
+            <Typography>
+                <span>Transfer </span>
+                {fromAccount && toAccount && fromAccount.length > 0 && toAccount.length > 0 && (
+                    <>
+                        <StandOutText>
+                            {formatCurrency(
+                                fromAccount[0].currentBalance.currency.code,
+                                new Decimal(transfer.fromAmount)
+                            )}
+                        </StandOutText>
+                        <span> z </span>
+                        <StandOutText>{fromAccount[0].name}</StandOutText>
+                        <span> na </span>
+                        <StandOutText>{toAccount[0].name}</StandOutText>
+                    </>
+                )}
+            </Typography>
+        );
     }
 
     function billingElementDescription(be: BillingElementDTO) {
         const affectedAccount = findAccount(be.affectedAccountPublicId);
-        return <Typography>
-            {(be.billingElementType === 'Expense' ? 'Wydatek ' : 'Przychód ')}
-            <StandOutText>
-                {affectedAccount.map(account =>
-                    formatCurrency(account.currentBalance.currency.code, new Decimal(be.amount))
-                )}
-            </StandOutText>
-            {(be.billingElementType === 'Expense' ? ' z ' : ' na ')}
-            <StandOutText>
-                {affectedAccount.map(account => account.name)}
-            </StandOutText>
-        </Typography>;
+        return (
+            <Typography>
+                {be.billingElementType === 'Expense' ? 'Wydatek ' : 'Przychód '}
+                <StandOutText>
+                    {affectedAccount.map(account =>
+                        formatCurrency(account.currentBalance.currency.code, new Decimal(be.amount))
+                    )}
+                </StandOutText>
+                {be.billingElementType === 'Expense' ? ' z ' : ' na '}
+                <StandOutText>{affectedAccount.map(account => account.name)}</StandOutText>
+            </Typography>
+        );
     }
 
-    return <Stack direction={"column"} spacing={4} alignItems={"center"}>
-        <CustomImportSummary accountsWithAssignedBankAccounts={accountsWithAssignedBankAccounts}
-                             transactionToCustomImportSummaries={transactionToCustomImportSummaries}/>
-        <Typography>Elementy do stworzenia</Typography>
-        {
-            billingElements.map((be, index) => {
-                    return <Stack key={`billing-element-${index}`}
-                                  direction={'row'} justifyContent={'space-between'} alignItems={'center'} width={'100%'}
-                                  gap={1}
-                                  sx={{
-                                      px: 2,
-                                      py: 1.25,
-                                      backgroundColor: 'background.paper',
-                                      border: '1px solid',
-                                      borderColor: 'divider',
-                                      borderRadius: 1,
-                                  }}
-                                  {...clickableProps(() => setEditBillingElement(be), 'Edytuj element rozliczeniowy')}>
+    return (
+        <Stack direction={'column'} spacing={4} alignItems={'center'}>
+            <CustomImportSummary
+                accountsWithAssignedBankAccounts={accountsWithAssignedBankAccounts}
+                transactionToCustomImportSummaries={transactionToCustomImportSummaries}
+            />
+            <Typography>Elementy do stworzenia</Typography>
+            {billingElements.map((be, index) => {
+                return (
+                    <Stack
+                        key={`billing-element-${index}`}
+                        direction={'row'}
+                        justifyContent={'space-between'}
+                        alignItems={'center'}
+                        width={'100%'}
+                        gap={1}
+                        sx={{
+                            px: 2,
+                            py: 1.25,
+                            backgroundColor: 'background.paper',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                        }}
+                        {...clickableProps(() => setEditBillingElement(be), 'Edytuj element rozliczeniowy')}
+                    >
                         {billingElementDescription(be)}
                         <Button
-                            onClick={(e) => {
+                            onClick={e => {
                                 e.stopPropagation();
-                                setBillingElements([...billingElements.filter(billingElement => billingElement !== be)]);
-                            }}>
+                                setBillingElements([
+                                    ...billingElements.filter(billingElement => billingElement !== be),
+                                ]);
+                            }}
+                        >
                             usuń
                         </Button>
-                    </Stack>;
-                }
-            )
-        }
-        {
-            transfers.map((transfer, index) => {
-                return <Stack key={`transfer-${index}`}
-                              direction={'row'} justifyContent={'space-between'} alignItems={'center'} width={'100%'}
-                              gap={1}
-                              sx={{
-                                  px: 2,
-                                  py: 1.25,
-                                  backgroundColor: 'background.paper',
-                                  border: '1px solid',
-                                  borderColor: 'divider',
-                                  borderRadius: 1,
-                              }}
-                              {...clickableProps(() => setEditTransfer(transfer), 'Edytuj transfer')}>
-                    {transferDescription(transfer)}
-                    <Button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setTransfers([...transfers.filter(t => t !== transfer)]);
-                        }}>
-                        usuń
-                    </Button>
-                </Stack>;
-            })
-        }
-        {
-            editBillingElement &&
-            <Dialog
-                open={true}
-                fullScreen={isTouchDevice}
-                maxWidth={false}
-                sx={[
-                    almostFullHeightDialog,
-                    {
-                        '& .MuiDialog-paper': {
-                            width: isTouchDevice ? '100%' : '800px',
-                            maxWidth: isTouchDevice ? '100%' : '800px',
-                        },
-                    },
-                ]}
-            >
-                <DialogContent>
-                    <CreateBillingElementForm accounts={accountsInvolvedInImportingTransactions}
-                                              billingCategories={billingCategories}
-                                              piggyBanks={piggyBanks}
-                                              billingElementToCreate={editBillingElement}
-                                              onClose={(be) => {
-                                                  if (be) {
-                                                      setBillingElements([be, ...billingElements.filter(billingElement => billingElement !== editBillingElement)]);
-                                                  }
-                                                  setEditBillingElement(null);
-                                              }}
-                                              alwaysEditable={true}/>
-                </DialogContent>
-            </Dialog>
-        }
-        {
-            editTransfer &&
-            <Dialog
-                open={true}
-                fullScreen={isTouchDevice}
-                maxWidth={false}
-                sx={[
-                    almostFullHeightDialog,
-                    {
-                        '& .MuiDialog-paper': {
-                            width: isTouchDevice ? '100%' : '800px',
-                            maxWidth: isTouchDevice ? '100%' : '800px',
-                        },
-                    },
-                ]}
-            >
-                <DialogContent>
-                    <CreateTransferForm
-                        accounts={[...accountsInvolvedInImportingTransactions, ...accountsWithoutAssignedBankAccounts]}
-                        transferToCreate={{...editTransfer, possibleDays: editTransfer.day ? [editTransfer.day] : []}}
-                        onClose={(transfer) => {
-                            if (transfer) {
-                                setTransfers([transfer, ...transfers.filter(t => t !== editTransfer)]);
-                            }
-                            setEditTransfer(null);
+                    </Stack>
+                );
+            })}
+            {transfers.map((transfer, index) => {
+                return (
+                    <Stack
+                        key={`transfer-${index}`}
+                        direction={'row'}
+                        justifyContent={'space-between'}
+                        alignItems={'center'}
+                        width={'100%'}
+                        gap={1}
+                        sx={{
+                            px: 2,
+                            py: 1.25,
+                            backgroundColor: 'background.paper',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
                         }}
-                        alwaysEditable={true}/>
-                </DialogContent>
-            </Dialog>
-        }
-        {
-            !editBillingElement && !editTransfer &&
-            <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
-                <Button variant="text"
+                        {...clickableProps(() => setEditTransfer(transfer), 'Edytuj transfer')}
+                    >
+                        {transferDescription(transfer)}
+                        <Button
+                            onClick={e => {
+                                e.stopPropagation();
+                                setTransfers([...transfers.filter(t => t !== transfer)]);
+                            }}
+                        >
+                            usuń
+                        </Button>
+                    </Stack>
+                );
+            })}
+            {editBillingElement && (
+                <Dialog
+                    open={true}
+                    fullScreen={isTouchDevice}
+                    maxWidth={false}
+                    sx={[
+                        almostFullHeightDialog,
+                        {
+                            '& .MuiDialog-paper': {
+                                width: isTouchDevice ? '100%' : '800px',
+                                maxWidth: isTouchDevice ? '100%' : '800px',
+                            },
+                        },
+                    ]}
+                >
+                    <DialogContent>
+                        <CreateBillingElementForm
+                            accounts={accountsInvolvedInImportingTransactions}
+                            billingCategories={billingCategories}
+                            piggyBanks={piggyBanks}
+                            billingElementToCreate={editBillingElement}
+                            onClose={be => {
+                                if (be) {
+                                    setBillingElements([
+                                        be,
+                                        ...billingElements.filter(
+                                            billingElement => billingElement !== editBillingElement
+                                        ),
+                                    ]);
+                                }
+                                setEditBillingElement(null);
+                            }}
+                            alwaysEditable={true}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
+            {editTransfer && (
+                <Dialog
+                    open={true}
+                    fullScreen={isTouchDevice}
+                    maxWidth={false}
+                    sx={[
+                        almostFullHeightDialog,
+                        {
+                            '& .MuiDialog-paper': {
+                                width: isTouchDevice ? '100%' : '800px',
+                                maxWidth: isTouchDevice ? '100%' : '800px',
+                            },
+                        },
+                    ]}
+                >
+                    <DialogContent>
+                        <CreateTransferForm
+                            accounts={[
+                                ...accountsInvolvedInImportingTransactions,
+                                ...accountsWithoutAssignedBankAccounts,
+                            ]}
+                            transferToCreate={{
+                                ...editTransfer,
+                                possibleDays: editTransfer.day ? [editTransfer.day] : [],
+                            }}
+                            onClose={transfer => {
+                                if (transfer) {
+                                    setTransfers([transfer, ...transfers.filter(t => t !== editTransfer)]);
+                                }
+                                setEditTransfer(null);
+                            }}
+                            alwaysEditable={true}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
+            {!editBillingElement && !editTransfer && (
+                <Stack direction={'row'} spacing={4} alignItems={'center'} justifyContent={'space-evenly'}>
+                    <Button
+                        variant="text"
                         color="secondary"
                         type="submit"
                         sx={{flexGrow: 1}}
@@ -229,10 +271,12 @@ export function CreateCustomImportForm({
                             } as BillingElementDTO;
                             setBillingElements([be, ...billingElements]);
                             setEditBillingElement(be);
-                        }}>
-                    Dodaj przychód
-                </Button>
-                <Button variant="text"
+                        }}
+                    >
+                        Dodaj przychód
+                    </Button>
+                    <Button
+                        variant="text"
                         color="secondary"
                         type="submit"
                         sx={{flexGrow: 1}}
@@ -249,10 +293,12 @@ export function CreateCustomImportForm({
                             } as BillingElementDTO;
                             setBillingElements([be, ...billingElements]);
                             setEditBillingElement(be);
-                        }}>
-                    Dodaj wydatek
-                </Button>
-                <Button variant="text"
+                        }}
+                    >
+                        Dodaj wydatek
+                    </Button>
+                    <Button
+                        variant="text"
                         color="secondary"
                         type="submit"
                         sx={{flexGrow: 1}}
@@ -261,33 +307,36 @@ export function CreateCustomImportForm({
                                 day: null,
                                 fromAmount: new Decimal(0),
                                 toAmount: new Decimal(0),
-                                description: ''
+                                description: '',
                             } as TransferDTO;
                             setTransfers([transfer, ...transfers]);
                             setEditTransfer(transfer);
-                        }}>
-                    Dodaj transfer
-                </Button>
-            </Stack>
-        }
-        <Stack direction={"row"} spacing={4} alignItems={"center"} justifyContent={"space-evenly"}>
-            <Button variant="text"
+                        }}
+                    >
+                        Dodaj transfer
+                    </Button>
+                </Stack>
+            )}
+            <Stack direction={'row'} spacing={4} alignItems={'center'} justifyContent={'space-evenly'}>
+                <Button
+                    variant="text"
                     color="secondary"
                     type="submit"
                     sx={{flexGrow: 1}}
-                    onClick={() => onClose({
-                        billingElements: billingElements,
-                        transfers: transfers
-                    })}
+                    onClick={() =>
+                        onClose({
+                            billingElements: billingElements,
+                            transfers: transfers,
+                        })
+                    }
                     disabled={!canCreateCustomImport}
-            >
-                Potwierdź
-            </Button>
-            <Button
-                variant="text" sx={{flexGrow: 1}}
-                onClick={() => onClose(null)}>
-                Anuluj
-            </Button>
+                >
+                    Potwierdź
+                </Button>
+                <Button variant="text" sx={{flexGrow: 1}} onClick={() => onClose(null)}>
+                    Anuluj
+                </Button>
+            </Stack>
         </Stack>
-    </Stack>;
+    );
 }

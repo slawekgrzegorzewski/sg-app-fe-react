@@ -1,18 +1,11 @@
-import React, {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {useMutation} from "@apollo/client/react";
-import {
-    PerformRegistration,
-    PerformRegistrationMutation,
-    SetupMfa,
-    SetupMfaMutation
-} from "../../types";
-import {Button, Link, Paper, Stack, TextField} from "@mui/material";
-import {StandOutText} from "../../application/components/StandOutText";
-
+import React, {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useMutation} from '@apollo/client/react';
+import {PerformRegistration, PerformRegistrationMutation, SetupMfa, SetupMfaMutation} from '../../types';
+import {Button, Link, Paper, Stack, TextField} from '@mui/material';
+import {StandOutText} from '../../application/components/StandOutText';
 
 export function Register() {
-
     const navigate = useNavigate();
 
     const [registrationParams, setRegistrationParams] = useState({
@@ -21,7 +14,7 @@ export function Register() {
         login: '',
         email: '',
         password: '',
-        repeatedPassword: ''
+        repeatedPassword: '',
     });
 
     const [setupMfaParams, setSetupMfaParams] = useState({
@@ -29,15 +22,15 @@ export function Register() {
         password: '',
         otp: '',
         qrLink: '',
-        mfaSecret: ''
+        mfaSecret: '',
     });
 
     const [registerGraphqlMutation, registerResult] = useMutation<PerformRegistrationMutation>(PerformRegistration, {
-        variables: registrationParams
+        variables: registrationParams,
     });
 
     const [setupMFArGraphqlMutation, setupMFAResult] = useMutation<SetupMfaMutation>(SetupMfa, {
-        variables: setupMfaParams
+        variables: setupMfaParams,
     });
 
     function stringNotEmpty(value: string) {
@@ -45,19 +38,23 @@ export function Register() {
     }
 
     function validateRegistrationForm() {
-        return stringNotEmpty(registrationParams.firstName)
-            && stringNotEmpty(registrationParams.lastName)
-            && stringNotEmpty(registrationParams.login)
-            && stringNotEmpty(registrationParams.email)
-            && stringNotEmpty(registrationParams.password)
-            && stringNotEmpty(registrationParams.repeatedPassword)
-            && registrationParams.password === registrationParams.repeatedPassword;
+        return (
+            stringNotEmpty(registrationParams.firstName) &&
+            stringNotEmpty(registrationParams.lastName) &&
+            stringNotEmpty(registrationParams.login) &&
+            stringNotEmpty(registrationParams.email) &&
+            stringNotEmpty(registrationParams.password) &&
+            stringNotEmpty(registrationParams.repeatedPassword) &&
+            registrationParams.password === registrationParams.repeatedPassword
+        );
     }
 
     function validateMFASetupForm() {
-        return stringNotEmpty(setupMfaParams.login)
-            && stringNotEmpty(setupMfaParams.password)
-            && stringNotEmpty(setupMfaParams.otp);
+        return (
+            stringNotEmpty(setupMfaParams.login) &&
+            stringNotEmpty(setupMfaParams.password) &&
+            stringNotEmpty(setupMfaParams.otp)
+        );
     }
 
     function performRegistration() {
@@ -65,121 +62,167 @@ export function Register() {
             setSetupMfaParams({
                 ...setupMfaParams,
                 mfaSecret: value.data?.register?.mfaCode!,
-                qrLink: value.data?.register?.qrLink!
+                qrLink: value.data?.register?.qrLink!,
             });
-        })
+        });
     }
 
     function setupMFA() {
         setupMFArGraphqlMutation().then(value => {
             if (value.data?.setupMFA!) {
-                navigate("/login");
+                navigate('/login');
             }
-        })
+        });
     }
 
     if (setupMFAResult.called) {
         return <></>;
     } else if (setupMfaParams.qrLink) {
-        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
-            <Paper elevation={6} sx={{width: 400, padding: 5}}>
-                <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p><StandOutText standOutBy="bold">Konfigurowanie MFA</StandOutText></p>
-                    <img src={setupMfaParams.qrLink} alt={''}></img>
-                    <TextField label="Kod"
-                               variant="standard"
-                               value={setupMfaParams.mfaSecret}
-                               sx={{width: '100%'}}
-                               disabled={true}/>
-                    <TextField label="Przepisz kod z aplikacji"
-                               variant="standard"
-                               onChange={event => setSetupMfaParams({
-                                   ...setupMfaParams,
-                                   otp: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <Button variant="outlined" color="secondary" onClick={setupMFA} disabled={!validateMFASetupForm()}>
-                        Zapisz
-                    </Button>
-                </Stack>
-            </Paper>
-        </Stack>
+        return (
+            <Stack alignItems={'center'} justifyContent={'center'} height={'100vh'}>
+                <Paper elevation={6} sx={{width: 400, padding: 5}}>
+                    <Stack direction={'column'} spacing={4} alignItems={'center'}>
+                        <p>
+                            <StandOutText standOutBy="bold">Konfigurowanie MFA</StandOutText>
+                        </p>
+                        <img src={setupMfaParams.qrLink} alt={''}></img>
+                        <TextField
+                            label="Kod"
+                            variant="standard"
+                            value={setupMfaParams.mfaSecret}
+                            sx={{width: '100%'}}
+                            disabled={true}
+                        />
+                        <TextField
+                            label="Przepisz kod z aplikacji"
+                            variant="standard"
+                            onChange={event =>
+                                setSetupMfaParams({
+                                    ...setupMfaParams,
+                                    otp: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={setupMFA}
+                            disabled={!validateMFASetupForm()}
+                        >
+                            Zapisz
+                        </Button>
+                    </Stack>
+                </Paper>
+            </Stack>
+        );
     } else if (registerResult.called) {
-        return <></>
+        return <></>;
     } else {
-        return <Stack alignItems={"center"} justifyContent={"center"} height={'100vh'}>
-            <Paper elevation={6} sx={{width: 400, padding: 5}}>
-                <Stack direction={"column"} spacing={4} alignItems={"center"}>
-                    <p><StandOutText standOutBy="bold">REJESTRACJA</StandOutText></p>
-                    <TextField label="Imię"
-                               variant="standard"
-                               onChange={event => setRegistrationParams({
-                                   ...registrationParams,
-                                   firstName: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="Nazwisko"
-                               variant="standard"
-                               onChange={event => setRegistrationParams({
-                                   ...registrationParams,
-                                   lastName: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="e-mail"
-                               variant="standard"
-                               onChange={event => setRegistrationParams({
-                                   ...registrationParams,
-                                   email: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="Login"
-                               variant="standard"
-                               onChange={event => {
-                                   setRegistrationParams({
-                                       ...registrationParams,
-                                       login: event.target.value
-                                   });
-                                   setSetupMfaParams({
-                                       ...setupMfaParams,
-                                       login: event.target.value
-                                   });
-                               }}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="Hasło"
-                               variant="standard"
-                               type="password"
-                               onChange={event => {
-                                   setRegistrationParams({
-                                       ...registrationParams,
-                                       password: event.target.value
-                                   });
-                                   setSetupMfaParams({
-                                       ...setupMfaParams,
-                                       password: event.target.value
-                                   });
-                               }}
-                               sx={{width: '100%'}}
-                               required/>
-                    <TextField label="Powtórz hasło"
-                               variant="standard"
-                               type="password"
-                               onChange={event => setRegistrationParams({
-                                   ...registrationParams,
-                                   repeatedPassword: event.target.value
-                               })}
-                               sx={{width: '100%'}}
-                               required/>
-                    <Button variant="outlined" color="secondary" onClick={performRegistration} disabled={!validateRegistrationForm()}>
-                        Zarejestruj się
-                    </Button>
-                    <p>Masz już konto? <Link href="/login">Zaloguj się tutaj</Link></p>
-                </Stack>
-            </Paper>
-        </Stack>
+        return (
+            <Stack alignItems={'center'} justifyContent={'center'} height={'100vh'}>
+                <Paper elevation={6} sx={{width: 400, padding: 5}}>
+                    <Stack direction={'column'} spacing={4} alignItems={'center'}>
+                        <p>
+                            <StandOutText standOutBy="bold">REJESTRACJA</StandOutText>
+                        </p>
+                        <TextField
+                            label="Imię"
+                            variant="standard"
+                            onChange={event =>
+                                setRegistrationParams({
+                                    ...registrationParams,
+                                    firstName: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="Nazwisko"
+                            variant="standard"
+                            onChange={event =>
+                                setRegistrationParams({
+                                    ...registrationParams,
+                                    lastName: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="e-mail"
+                            variant="standard"
+                            onChange={event =>
+                                setRegistrationParams({
+                                    ...registrationParams,
+                                    email: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="Login"
+                            variant="standard"
+                            onChange={event => {
+                                setRegistrationParams({
+                                    ...registrationParams,
+                                    login: event.target.value,
+                                });
+                                setSetupMfaParams({
+                                    ...setupMfaParams,
+                                    login: event.target.value,
+                                });
+                            }}
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="Hasło"
+                            variant="standard"
+                            type="password"
+                            onChange={event => {
+                                setRegistrationParams({
+                                    ...registrationParams,
+                                    password: event.target.value,
+                                });
+                                setSetupMfaParams({
+                                    ...setupMfaParams,
+                                    password: event.target.value,
+                                });
+                            }}
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <TextField
+                            label="Powtórz hasło"
+                            variant="standard"
+                            type="password"
+                            onChange={event =>
+                                setRegistrationParams({
+                                    ...registrationParams,
+                                    repeatedPassword: event.target.value,
+                                })
+                            }
+                            sx={{width: '100%'}}
+                            required
+                        />
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={performRegistration}
+                            disabled={!validateRegistrationForm()}
+                        >
+                            Zarejestruj się
+                        </Button>
+                        <p>
+                            Masz już konto? <Link href="/login">Zaloguj się tutaj</Link>
+                        </p>
+                    </Stack>
+                </Paper>
+            </Stack>
+        );
     }
 }

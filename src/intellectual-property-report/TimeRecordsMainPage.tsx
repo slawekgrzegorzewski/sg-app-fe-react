@@ -1,6 +1,6 @@
-import {ErrorDisplay} from "../application/components/QueryState";
-import {useResetMutationResults} from "../utils/use-reset-mutation-results";
-import {useMutation, useQuery} from "@apollo/client/react";
+import {ErrorDisplay} from '../application/components/QueryState';
+import {useResetMutationResults} from '../utils/use-reset-mutation-results';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {
     AssignmentAction,
     CreateTimeRecord,
@@ -8,66 +8,68 @@ import {
     Task,
     TimeRecord,
     TimeRecords,
-    TimeRecordsQuery
-} from "../types";
-import * as React from "react";
-import {useState} from "react";
-import {Button, FormControl, InputLabel, MenuItem, Select, Stack} from "@mui/material";
-import {FormDialogButton} from "../utils/buttons/FormDialogButton";
-import * as Yup from "yup";
-import dayjs, {Dayjs} from "dayjs";
-import {TIME_RECORD_DIALOG_TITLE, timeRecordEditorField, TimeRecordsList} from "./TimeRecordsList";
+    TimeRecordsQuery,
+} from '../types';
+import * as React from 'react';
+import {useState} from 'react';
+import {Button, FormControl, InputLabel, MenuItem, Select, Stack} from '@mui/material';
+import {FormDialogButton} from '../utils/buttons/FormDialogButton';
+import * as Yup from 'yup';
+import dayjs, {Dayjs} from 'dayjs';
+import {TIME_RECORD_DIALOG_TITLE, timeRecordEditorField, TimeRecordsList} from './TimeRecordsList';
 
 type TimeRecordsFilter = {
     yearMonthFilter: string;
-}
+};
 
 export function TimeRecordsMainPage() {
     const noYearMonthFilterLabel = 'wszystkie';
     const timeRecordsFilter: TimeRecordsFilter = {
-        yearMonthFilter: dayjs().format("YYYY-MM")
-    }
+        yearMonthFilter: dayjs().format('YYYY-MM'),
+    };
     const [trFilter, setTrFilter] = useState<TimeRecordsFilter>(timeRecordsFilter);
 
-    const {
-        loading,
-        error,
-        data,
-        refetch
-    } = useQuery<TimeRecordsQuery>(TimeRecords, {
+    const {loading, error, data, refetch} = useQuery<TimeRecordsQuery>(TimeRecords, {
         variables: {
-            yearMonthFilter: trFilter.yearMonthFilter === noYearMonthFilterLabel ? null : trFilter.yearMonthFilter
-        }
+            yearMonthFilter: trFilter.yearMonthFilter === noYearMonthFilterLabel ? null : trFilter.yearMonthFilter,
+        },
     });
 
-    const [createTimeRecordMutation, createTimeRecordMutationResult] = useMutation<CreateTimeRecordMutation>(CreateTimeRecord);
+    const [createTimeRecordMutation, createTimeRecordMutationResult] =
+        useMutation<CreateTimeRecordMutation>(CreateTimeRecord);
 
-    const createTimeRecord = async (assignmentAction: AssignmentAction, date: Dayjs, description: string, numberOfHours: number, taskId: number | null): Promise<any> => {
+    const createTimeRecord = async (
+        assignmentAction: AssignmentAction,
+        date: Dayjs,
+        description: string,
+        numberOfHours: number,
+        taskId: number | null
+    ): Promise<any> => {
         await createTimeRecordMutation({
             variables: {
                 assignmentAction: assignmentAction,
-                date: date.format("YYYY-MM-DD"),
+                date: date.format('YYYY-MM-DD'),
                 description: description,
                 numberOfHours: numberOfHours,
                 taskId: taskId,
-            }
+            },
         });
         return refetch();
-    }
+    };
 
     useResetMutationResults(createTimeRecordMutationResult);
 
     if (loading) {
-        return <></>
+        return <></>;
     } else if (error) {
-        return <ErrorDisplay error={error}/>
+        return <ErrorDisplay error={error} />;
     } else if (data) {
         const yearMonthFilters = [];
         if (data.timeRecords?.stats.firstTimeRecord) {
             const fromDate = new Date(data.timeRecords!.stats.firstTimeRecord);
             const now = new Date();
             while (fromDate.getTime() < now.getTime()) {
-                yearMonthFilters.push(dayjs(fromDate).format("YYYY-MM"));
+                yearMonthFilters.push(dayjs(fromDate).format('YYYY-MM'));
                 fromDate.setMonth(fromDate.getMonth() + 1);
             }
         }
@@ -76,9 +78,9 @@ export function TimeRecordsMainPage() {
         const ipTimeRecords = data.timeRecords.taskWithSelectedTimeRecords! as Task[];
 
         const sumOfHours =
-            nonIpTimeRecords.map(tr => tr.numberOfHours)
-                .reduce((acc, curr) => acc + curr, 0)
-            + ipTimeRecords.flatMap(task => task.timeRecords)
+            nonIpTimeRecords.map(tr => tr.numberOfHours).reduce((acc, curr) => acc + curr, 0) +
+            ipTimeRecords
+                .flatMap(task => task.timeRecords)
                 .map(tr => tr?.numberOfHours || 0)
                 .reduce((acc, curr) => acc + curr, 0);
 
@@ -92,15 +94,16 @@ export function TimeRecordsMainPage() {
                                 stwórz raport czasowy
                             </Button>
                         }
-                        onConfirm={(value) => {
+                        onConfirm={value => {
                             let taskId: number | null = value.task?.id;
-                            if (taskId === -1)
-                                taskId = null;
-                            createTimeRecord(taskId ? AssignmentAction.Assign : AssignmentAction.Nop,
+                            if (taskId === -1) taskId = null;
+                            createTimeRecord(
+                                taskId ? AssignmentAction.Assign : AssignmentAction.Nop,
                                 value.date,
                                 value.description,
                                 value.numberOfHours,
-                                taskId);
+                                taskId
+                            );
                             return Promise.resolve();
                         }}
                         onCancel={() => {
@@ -110,18 +113,18 @@ export function TimeRecordsMainPage() {
                             initialValues: {
                                 task: {
                                     id: -1,
-                                    description: ''
+                                    description: '',
                                 },
                                 id: -1,
                                 date: dayjs(),
                                 description: '',
-                                numberOfHours: 0
+                                numberOfHours: 0,
                             },
                             fields: timeRecordEditorField(true),
                             validationSchema: Yup.object({
                                 task: Yup.object(),
-                                description: Yup.string()
-                            })
+                                description: Yup.string(),
+                            }),
                         }}
                     />
                     <FormControl variant="standard" sx={{m: 1, minWidth: 120}}>
@@ -137,8 +140,11 @@ export function TimeRecordsMainPage() {
                             label={sumOfHours + ' godzin w'}
                         >
                             <MenuItem value={noYearMonthFilterLabel}>{noYearMonthFilterLabel}</MenuItem>
-                            {yearMonthFilters.map((yearMonthFilter) => (
-                                <MenuItem key={yearMonthFilter} value={yearMonthFilter}>{yearMonthFilter}</MenuItem>))}
+                            {yearMonthFilters.map(yearMonthFilter => (
+                                <MenuItem key={yearMonthFilter} value={yearMonthFilter}>
+                                    {yearMonthFilter}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </FormControl>
                 </Stack>
@@ -146,9 +152,10 @@ export function TimeRecordsMainPage() {
                 <TimeRecordsList
                     nonIPTimeRecords={nonIpTimeRecords}
                     taskWithTimeRecords={ipTimeRecords}
-                    refetchDataCallback={refetch}/>
-
-            </Stack>);
+                    refetchDataCallback={refetch}
+                />
+            </Stack>
+        );
     } else {
         return <></>;
     }

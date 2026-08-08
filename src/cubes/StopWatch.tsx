@@ -1,19 +1,19 @@
-import * as React from "react";
-import {useEffect, useState} from "react";
-import {Stack, Theme} from "@mui/material";
-import Button from "@mui/material/Button";
-import dayjs from "dayjs";
-import {StopWatchDisplay} from "./StopWatchDisplay";
-import {SxProps} from "@mui/system";
-import {TypographyVariant} from "@mui/material/styles/createTypography";
+import * as React from 'react';
+import {useEffect, useState} from 'react';
+import {Stack, Theme} from '@mui/material';
+import Button from '@mui/material/Button';
+import dayjs from 'dayjs';
+import {StopWatchDisplay} from './StopWatchDisplay';
+import {SxProps} from '@mui/system';
+import {TypographyVariant} from '@mui/material/styles/createTypography';
 
 interface StopWatchProps {
     showControls?: boolean;
     variant?: TypographyVariant;
-    sx?: SxProps<Theme>,
-    startTrigger?: React.RefObject<() => void>,
-    stopTrigger?: React.RefObject<() => number>,
-    resetTrigger?: React.RefObject<() => void>,
+    sx?: SxProps<Theme>;
+    startTrigger?: React.RefObject<() => void>;
+    stopTrigger?: React.RefObject<() => number>;
+    resetTrigger?: React.RefObject<() => void>;
 }
 
 export function StopWatch({showControls = true, variant, sx, startTrigger, stopTrigger, resetTrigger}: StopWatchProps) {
@@ -31,7 +31,7 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
         if (resetTrigger) {
             resetTrigger.current = reset;
         }
-    })
+    });
 
     useEffect(() => {
         if (!isRunning || startTime === null) {
@@ -51,7 +51,7 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
             setIsRunning(true);
             setStartTime(dayjs().valueOf());
         }
-    }
+    };
 
     const stop = () => {
         let time = 0;
@@ -61,24 +61,22 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
             setStartTime(null);
         }
         return time;
-    }
+    };
 
     const reset = () => {
         stop();
         setCurrentTime(0);
-    }
+    };
 
-    return <Stack direction={'column'} alignItems={'center'} sx={sx}>
-        {
-            showControls && <Stack direction={'row'}>
-                <Button onClick={start}>
-                    Start
-                </Button>
-                <Button onClick={stop}>
-                    Stop
-                </Button>
-            </Stack>
-        }
-        <StopWatchDisplay currentTimeInMillis={currentTime} variant={variant}/>
-    </Stack>;
+    return (
+        <Stack direction={'column'} alignItems={'center'} sx={sx}>
+            {showControls && (
+                <Stack direction={'row'}>
+                    <Button onClick={start}>Start</Button>
+                    <Button onClick={stop}>Stop</Button>
+                </Stack>
+            )}
+            <StopWatchDisplay currentTimeInMillis={currentTime} variant={variant} />
+        </Stack>
+    );
 }

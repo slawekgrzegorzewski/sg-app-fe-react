@@ -1,19 +1,20 @@
-import * as React from "react";
-import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
-import {formatCurrency} from "../utils/functions";
-import {GQLBankTransactionToCustomImportSummary} from "./utils/customImportSummary";
-import {Account} from "../types";
+import * as React from 'react';
+import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from '@mui/material';
+import {formatCurrency} from '../utils/functions';
+import {GQLBankTransactionToCustomImportSummary} from './utils/customImportSummary';
+import {Account} from '../types';
 
 type CustomImportSummaryProps = {
-    accountsWithAssignedBankAccounts: Account[],
-    transactionToCustomImportSummaries: GQLBankTransactionToCustomImportSummary[]
+    accountsWithAssignedBankAccounts: Account[];
+    transactionToCustomImportSummaries: GQLBankTransactionToCustomImportSummary[];
 };
 
 export function CustomImportSummary({
-                                        accountsWithAssignedBankAccounts,
-                                        transactionToCustomImportSummaries
-                                    }: CustomImportSummaryProps) {
-    return (<TableContainer component={Paper}>
+    accountsWithAssignedBankAccounts,
+    transactionToCustomImportSummaries,
+}: CustomImportSummaryProps) {
+    return (
+        <TableContainer component={Paper}>
             <Table>
                 <TableHead>
                     <TableRow>
@@ -24,12 +25,13 @@ export function CustomImportSummary({
                 </TableHead>
 
                 <TableBody>
-                    {transactionToCustomImportSummaries.map((group) => (
+                    {transactionToCustomImportSummaries.map(group => (
                         <TableRow key={group.bankAccountPublicId}>
-
-                            <TableCell>{accountsWithAssignedBankAccounts
-                                    .find(a => a.bankAccount?.publicId === group.bankAccountPublicId)?.name
-                                ?? group.bankAccountPublicId}</TableCell>
+                            <TableCell>
+                                {accountsWithAssignedBankAccounts.find(
+                                    a => a.bankAccount?.publicId === group.bankAccountPublicId
+                                )?.name ?? group.bankAccountPublicId}
+                            </TableCell>
 
                             <TableCell align="right">
                                 {formatCurrency(group.currency, group.balanceFromImportingTransactions)}
@@ -38,12 +40,10 @@ export function CustomImportSummary({
                             <TableCell align="right">
                                 {formatCurrency(group.currency, group.balanceAfterImport)}
                             </TableCell>
-
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
         </TableContainer>
-    )
-        ;
+    );
 }

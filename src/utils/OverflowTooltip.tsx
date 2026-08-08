@@ -18,10 +18,7 @@ export function OverflowTooltip({children}: OverflowTooltipProps) {
     }, [children]);
 
     return (
-        <Tooltip
-            title={overflow ? children : ''}
-            arrow
-            disableHoverListener={!overflow}>
+        <Tooltip title={overflow ? children : ''} arrow disableHoverListener={!overflow}>
             <Typography
                 ref={textRef}
                 sx={{
@@ -30,7 +27,8 @@ export function OverflowTooltip({children}: OverflowTooltipProps) {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
-                }}>
+                }}
+            >
                 {children}
             </Typography>
         </Tooltip>

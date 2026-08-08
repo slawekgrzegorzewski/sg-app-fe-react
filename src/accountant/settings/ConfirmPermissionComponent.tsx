@@ -1,10 +1,10 @@
-import {useEffect, useRef} from "react";
-import {useMutation} from "@apollo/client/react";
-import {ConfirmPermission, ConfirmPermissionMutation} from "../../types";
-import {useApplicationNavigation} from "../../utils/use-application-navigation";
-import {logError} from "../../utils/logger";
+import {useEffect, useRef} from 'react';
+import {useMutation} from '@apollo/client/react';
+import {ConfirmPermission, ConfirmPermissionMutation} from '../../types';
+import {useApplicationNavigation} from '../../utils/use-application-navigation';
+import {logError} from '../../utils/logger';
 
-export function ConfirmPermissionComponent({reference}: { reference: string }) {
+export function ConfirmPermissionComponent({reference}: {reference: string}) {
     const [confirmPermissionMutation] = useMutation<ConfirmPermissionMutation>(ConfirmPermission);
     const {setPageParams} = useApplicationNavigation();
 

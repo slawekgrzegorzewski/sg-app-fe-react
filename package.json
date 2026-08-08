@@ -55,6 +55,7 @@
     "@graphql-codegen/typescript-resolvers": "^5.1.5",
     "@types/base-64": "^1.0.2",
     "@types/file-saver": "^2.0.7",
+    "prettier": "3.9.6",
     "webpack-cli": "^6.0.1"
   },
   "scripts": {
@@ -67,6 +68,8 @@
     "build-prod": "env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
     "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.tsx\"",
+    "format:check": "prettier --check \"src/**/*.tsx\"",
     "eject": "react-scripts eject",
     "predeploy to s3": "env-cmd -f .env.production react-scripts build",
     "deploy to s3": "aws s3 sync build/ s3://sg-application"

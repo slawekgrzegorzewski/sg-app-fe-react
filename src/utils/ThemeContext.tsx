@@ -1,10 +1,10 @@
-import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
-import {PaletteMode, ThemeProvider, useMediaQuery} from "@mui/material";
-import {buildTheme as buildDefaultTheme} from "./theme/theme";
-import {buildTheme as buildPlumTheme} from "./theme/theme2";
-import {buildTheme as buildMidnightLedgerTheme} from "./theme/theme3";
-import {buildTheme as buildAuroraTheme} from "./theme/theme4";
-import {Theme} from "@mui/material/styles";
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
+import {PaletteMode, ThemeProvider, useMediaQuery} from '@mui/material';
+import {buildTheme as buildDefaultTheme} from './theme/theme';
+import {buildTheme as buildPlumTheme} from './theme/theme2';
+import {buildTheme as buildMidnightLedgerTheme} from './theme/theme3';
+import {buildTheme as buildAuroraTheme} from './theme/theme4';
+import {Theme} from '@mui/material/styles';
 
 export type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -70,7 +70,7 @@ function getStoredVariant(): string {
     return 'default';
 }
 
-export function AppThemeProvider({children}: { children: React.ReactNode }) {
+export function AppThemeProvider({children}: {children: React.ReactNode}) {
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
     const [mode, setModeState] = useState<ThemeMode>(getStoredMode);
     const [themeVariantId, setThemeVariantIdState] = useState<string>(getStoredVariant);
@@ -116,17 +116,17 @@ export function AppThemeProvider({children}: { children: React.ReactNode }) {
     }, [theme]);
 
     return (
-        <ThemeModeContext.Provider value={{
-            mode,
-            setMode,
-            resolvedMode,
-            themeVariantId,
-            setThemeVariant,
-            availableVariants: themeVariants,
-        }}>
-            <ThemeProvider theme={theme}>
-                {children}
-            </ThemeProvider>
+        <ThemeModeContext.Provider
+            value={{
+                mode,
+                setMode,
+                resolvedMode,
+                themeVariantId,
+                setThemeVariant,
+                availableVariants: themeVariants,
+            }}
+        >
+            <ThemeProvider theme={theme}>{children}</ThemeProvider>
         </ThemeModeContext.Provider>
     );
 }

@@ -1,20 +1,20 @@
-import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText, Stack} from "@mui/material";
-import * as React from "react";
-import {useState} from "react";
-import Button from "@mui/material/Button";
+import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText, Stack} from '@mui/material';
+import * as React from 'react';
+import {useState} from 'react';
+import Button from '@mui/material/Button';
 
 export type Option = {
     id: string;
     value: string;
-}
+};
 export type MultiPickDialogProps = {
     options: Option[][];
     open: boolean;
     selectedValue: string[];
     onClose?: (value: string[]) => void;
     onCancel?: () => void;
-    fullScreen?: boolean
-}
+    fullScreen?: boolean;
+};
 
 export default function MultiPickDialog(props: MultiPickDialogProps) {
     const {onClose, onCancel, selectedValue, open, options, fullScreen} = props;
@@ -23,10 +23,10 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
         const notSelected: Option[][] = [];
         for (let i = 0; i < options.length; i++) {
             selected[i] = options[i].find(option => option.id === selectedValue[i])!;
-            notSelected[i] = options[i].filter(option => option.id !== selectedValue[i])
+            notSelected[i] = options[i].filter(option => option.id !== selectedValue[i]);
         }
         return {selected: selected, notSelected: notSelected};
-    }
+    };
 
     const o = populateOptions();
     const [selectedOptions, setSelectedOptions] = useState<Option[]>(o.selected);
@@ -43,24 +43,21 @@ export default function MultiPickDialog(props: MultiPickDialogProps) {
     return (
         <Dialog onClose={() => onCancel?.()} open={open} fullScreen={fullScreen || false}>
             {options.map((option, i) => {
-                    return (
-                        <div key={i}>
-                            <DialogTitle>
-                                {selectedOptions ? selectedOptions[i].value : 'Wybierz aplikację'}
-                            </DialogTitle>
-                            <List sx={{pt: 0}}>
-                                {notSelectedOptions[i].map((option) => (
-                                    <ListItem disableGutters key={option.id}>
-                                        <ListItemButton onClick={() => handleListItemClick(i, option.id)}>
-                                            <ListItemText primary={option.value}/>
-                                        </ListItemButton>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </div>
-                    );
-                }
-            )}
+                return (
+                    <div key={i}>
+                        <DialogTitle>{selectedOptions ? selectedOptions[i].value : 'Wybierz aplikację'}</DialogTitle>
+                        <List sx={{pt: 0}}>
+                            {notSelectedOptions[i].map(option => (
+                                <ListItem disableGutters key={option.id}>
+                                    <ListItemButton onClick={() => handleListItemClick(i, option.id)}>
+                                        <ListItemText primary={option.value} />
+                                    </ListItemButton>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </div>
+                );
+            })}
             <Stack direction="row">
                 <Button variant="text" sx={halfWidth} onClick={() => onCancel?.()}>
                     Anuluj

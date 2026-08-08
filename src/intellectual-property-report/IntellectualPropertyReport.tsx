@@ -1,42 +1,43 @@
-import {useResetMutationResults} from "../utils/use-reset-mutation-results";
-import {useMutation} from "@apollo/client/react";
+import {useResetMutationResults} from '../utils/use-reset-mutation-results';
+import {useMutation} from '@apollo/client/react';
 import {
     DeleteIntellectualPropertyReport,
     DeleteIntellectualPropertyReportMutation,
     IntellectualProperty,
     UpdateIntellectualPropertyReport,
-    UpdateIntellectualPropertyReportMutation
-} from "../types";
-import {Accordion, AccordionDetails, AccordionSummary, Box, Stack} from "@mui/material";
-import {Delete, Edit, ExpandMore} from "@mui/icons-material";
-import * as React from "react";
-import {FormDialogButton} from "../utils/buttons/FormDialogButton";
-import {DeleteButton} from "../utils/buttons/DeleteButton";
-import * as Yup from "yup";
-import {EditorField} from "../utils/forms/Form";
-import IconButton from "@mui/material/IconButton";
-import {TasksList} from "./TasksList";
-import {StandOutText} from "../application/components/StandOutText";
+    UpdateIntellectualPropertyReportMutation,
+} from '../types';
+import {Accordion, AccordionDetails, AccordionSummary, Box, Stack} from '@mui/material';
+import {Delete, Edit, ExpandMore} from '@mui/icons-material';
+import * as React from 'react';
+import {FormDialogButton} from '../utils/buttons/FormDialogButton';
+import {DeleteButton} from '../utils/buttons/DeleteButton';
+import * as Yup from 'yup';
+import {EditorField} from '../utils/forms/Form';
+import IconButton from '@mui/material/IconButton';
+import {TasksList} from './TasksList';
+import {StandOutText} from '../application/components/StandOutText';
 
 export function IntellectualPropertyReport(properties: {
-    ipr: IntellectualProperty,
-    expanded: boolean,
-    onExpandCallback: (intellectualPropertyId: number) => void,
-    refetchDataCallback: () => void,
-    dialogOptions: { title: string, editorFields: EditorField[] }
+    ipr: IntellectualProperty;
+    expanded: boolean;
+    onExpandCallback: (intellectualPropertyId: number) => void;
+    refetchDataCallback: () => void;
+    dialogOptions: {title: string; editorFields: EditorField[]};
 }) {
-
     const {ipr, expanded, onExpandCallback, refetchDataCallback, dialogOptions} = properties;
 
-    const [updateIntellectualPropertyReportMutation, updateIntellectualPropertyReportMutationResult] = useMutation<UpdateIntellectualPropertyReportMutation>(UpdateIntellectualPropertyReport);
-    const [deleteIntellectualPropertyReportMutation, deleteIntellectualPropertyReportMutationResult] = useMutation<DeleteIntellectualPropertyReportMutation>(DeleteIntellectualPropertyReport);
+    const [updateIntellectualPropertyReportMutation, updateIntellectualPropertyReportMutationResult] =
+        useMutation<UpdateIntellectualPropertyReportMutation>(UpdateIntellectualPropertyReport);
+    const [deleteIntellectualPropertyReportMutation, deleteIntellectualPropertyReportMutationResult] =
+        useMutation<DeleteIntellectualPropertyReportMutation>(DeleteIntellectualPropertyReport);
 
     const performEdit = async (iprDTO: IntellectualProperty): Promise<any> => {
         await updateIntellectualPropertyReportMutation({
             variables: {
                 intellectualPropertyId: iprDTO.id,
-                description: iprDTO.description
-            }
+                description: iprDTO.description,
+            },
         });
         return refetchDataCallback();
     };
@@ -46,16 +47,17 @@ export function IntellectualPropertyReport(properties: {
         return refetchDataCallback();
     };
 
-    useResetMutationResults(updateIntellectualPropertyReportMutationResult, deleteIntellectualPropertyReportMutationResult);
+    useResetMutationResults(
+        updateIntellectualPropertyReportMutationResult,
+        deleteIntellectualPropertyReportMutationResult
+    );
 
     return (
-        <Accordion key={ipr.id} expanded={expanded}
-                   onChange={() => onExpandCallback(ipr.id)}
-                   disableGutters>
-            <AccordionSummary expandIcon={<ExpandMore fontSize='inherit'/>}>
+        <Accordion key={ipr.id} expanded={expanded} onChange={() => onExpandCallback(ipr.id)} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMore fontSize="inherit" />}>
                 <Stack direction="row" sx={{width: '100%'}}>
                     <StandOutText standOutBy="both">{ipr.description}</StandOutText>
-                    <Box sx={{flexGrow: 1}}/>
+                    <Box sx={{flexGrow: 1}} />
                     <FormDialogButton
                         title={dialogOptions.title}
                         buttonContent={
@@ -74,38 +76,39 @@ export function IntellectualPropertyReport(properties: {
                                     '&:hover': {backgroundColor: 'action.hover'},
                                 }}
                             >
-                                <Edit fontSize="inherit"/>
-                            </Box>}
-                        onConfirm={(value) => performEdit(value)}
+                                <Edit fontSize="inherit" />
+                            </Box>
+                        }
+                        onConfirm={value => performEdit(value)}
                         onCancel={() => {
                             return Promise.resolve();
                         }}
                         formProps={{
                             initialValues: ipr,
                             fields: dialogOptions.editorFields,
-                            validationSchema: Yup.object({})
+                            validationSchema: Yup.object({}),
                         }}
                     />
-                    {
-                        (ipr.tasks || []).length === 0 && (
-                            <DeleteButton
-                                confirmationMessage={'Na pewno usunąć ' + ipr!.id + ' - ' + ipr!.description + '?'}
-                                buttonContent={<IconButton size="small" aria-label={'Usuń'}>
-                                    <Delete fontSize='inherit'/>
-                                </IconButton>}
-                                object={ipr!.id}
-                                onDelete={performDelete}
-                                onCancel={() => {
-                                    return Promise.resolve();
-                                }}/>
-                        )
-                    }
+                    {(ipr.tasks || []).length === 0 && (
+                        <DeleteButton
+                            confirmationMessage={'Na pewno usunąć ' + ipr!.id + ' - ' + ipr!.description + '?'}
+                            buttonContent={
+                                <IconButton size="small" aria-label={'Usuń'}>
+                                    <Delete fontSize="inherit" />
+                                </IconButton>
+                            }
+                            object={ipr!.id}
+                            onDelete={performDelete}
+                            onCancel={() => {
+                                return Promise.resolve();
+                            }}
+                        />
+                    )}
                 </Stack>
             </AccordionSummary>
             <AccordionDetails>
-                <TasksList intellectualProperty={ipr} refetchDataCallback={refetchDataCallback}/>
+                <TasksList intellectualProperty={ipr} refetchDataCallback={refetchDataCallback} />
             </AccordionDetails>
         </Accordion>
-
     );
 }
