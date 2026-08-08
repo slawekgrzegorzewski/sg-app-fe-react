@@ -40,8 +40,8 @@ export function BanksPermissionsManagement() {
         return <></>;
     else
         return <>
-            <Stack direction="row" spacing={2} justifyContent="space-between">
-                <Typography variant={'h6'}>
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{mb: 2}}>
+                <Typography variant="h4" sx={{color: 'secondary.main'}}>
                     Dostępy do kont bankowych
                 </Typography>
 

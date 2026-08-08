@@ -12,7 +12,12 @@ import {almostFullHeightDialog} from "../utils/theme/utils";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {OverflowTooltip} from "../utils/OverflowTooltip";
 
-const BY_DATE = ComparatorBuilder.comparingByDate<AccountTransactionShortFragment>(t => dayjs(t.timeOfTransaction).toDate()).build();
+const BY_DATE = (account: Account) => ComparatorBuilder
+    .comparingByDate<AccountTransactionShortFragment>(t => dayjs(t.timeOfTransaction).toDate())
+    .thenComparing(({source, debit, credit}) =>
+        (source?.publicId === account.publicId ? debit : credit)?.amount ?? 0
+    )
+    .build();
 const YEAR_MONTH_GRAPHQL_FORMAT = "YYYY-MM";
 const YEAR_MONTH_DISPLAY_FORMAT = "MMMM YYYY";
 
@@ -80,7 +85,7 @@ export function AccountTransactions({account, onClose}: AccountTransactionsProps
 
                 <Stack>
                     {data.financeManagement.accounts.length === 0 ? [] : [...data.financeManagement.accounts[0].transactions]
-                        .sort(BY_DATE)
+                        .sort(BY_DATE(account))
                         .map(
                             (transaction) => (
                                 <Stack

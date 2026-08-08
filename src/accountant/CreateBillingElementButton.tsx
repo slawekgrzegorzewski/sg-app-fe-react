@@ -98,7 +98,11 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
             .sort(ComparatorBuilder.comparing<PiggyBank>(pb => pb.name).build());
         return <FormDialog
             open={true}
-            dialogTitle={<Typography>Stwórz {billingElementType === 'Income' ? 'dochód' : 'wydatek'}</Typography>}
+            dialogTitle={
+                <Typography variant="h4" sx={{color: 'secondary.main'}}>
+                    Stwórz {billingElementType === 'Income' ? 'dochód' : 'wydatek'}
+                </Typography>
+            }
             onConfirm={save}
             onCancel={() => {
                 reset();
@@ -122,7 +126,7 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
     }
 
     if (!showDialog) {
-        return <Button onClick={() => {
+        return <Button sx={{alignSelf: 'center', mt: 1}} onClick={() => {
             setShowDialog(true);
             client.cache.evict({id: 'a'})
             if (called) {

@@ -4,7 +4,7 @@ import {SuppliersManagement} from "./SuppliersManagement";
 import Grid from "@mui/material/Grid";
 import {ClientsManagement} from "./ClientsManagement";
 import {AccountsManagement} from "./AccountsManagement";
-import {Tab, Tabs} from "@mui/material";
+import {Stack, Tab, Tabs} from "@mui/material";
 import {BillingCategoriesManagement} from "./BillingCategoriesManagement";
 import {useQuery} from "@apollo/client/react";
 import {
@@ -81,9 +81,14 @@ export function AccountantSettings() {
     } else if (financeManagementData && settingsData) {
         const columnSizing = {xs: 12, sm: 8, md: 6, lg: 6, xl: 4};
         const columnSizing2 = {xs: 12, sm: 8, md: 6, lg: 5, xl: 4};
-        return (<>
+        return (<Stack direction="column" sx={{px: {xs: 1, sm: 2}, py: 2}}>
             <Tabs
                 value={activeTabIndex}
+                variant="scrollable"
+                scrollButtons="auto"
+                textColor="secondary"
+                indicatorColor="secondary"
+                sx={{mb: 3, borderBottom: '1px solid', borderColor: 'divider'}}
                 onChange={(event: React.SyntheticEvent, newValue: string) => {
                     setAndStoreActiveTab(newValue)
                 }}>
@@ -91,7 +96,7 @@ export function AccountantSettings() {
                     tabs.map((tab) => (<Tab label={tab} key={tab} value={tab}/>))
                 }
             </Tabs>
-            <Grid container dir={'row'} justifyContent={'space-evenly'}>
+            <Grid container spacing={3} justifyContent="center" sx={{width: '100%', maxWidth: 1440, mx: 'auto'}}>
                 {
                     activeTabIndex === COMPANY_MANAGEMENT_TAB_LABEL && <>
                         <Grid size={columnSizing}><ClientsManagement></ClientsManagement></Grid>
@@ -110,7 +115,7 @@ export function AccountantSettings() {
                 {
                     activeTabIndex === EXPENSES_MANAGEMENT_TAB_LABEL && <>
                         <Grid size={12}>
-                            <Box sx={{width: '120px'}}>
+                            <Box sx={{width: '100%', maxWidth: 240}}>
                                 <AccountantSettingsManagement
                                     accountantSettings={{isCompany: accountantSettingsContext.accountantSettings.isCompany}}
                                     refetch={settingsRefetch}
@@ -141,7 +146,7 @@ export function AccountantSettings() {
                     </Grid>
                 }
             </Grid>
-        </>);
+        </Stack>);
     } else {
         return <></>;
     }

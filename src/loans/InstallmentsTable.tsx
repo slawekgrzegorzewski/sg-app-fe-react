@@ -86,16 +86,16 @@ export function InstallmentsTable({currency, installments}: InstallmentsTablePro
     }
 
     return (
-        <TableContainer component={Box}>
-            <Table size={'small'} stickyHeader>
+        <TableContainer component={Box} sx={{width: '100%', overflowX: 'auto'}}>
+            <Table size="small" stickyHeader sx={{minWidth: 720}}>
                 <TableHead>
                     <TableRow>
-                        <TableCell>data</TableCell>
-                        <TableCell>rata</TableCell>
-                        <TableCell>odsetki</TableCell>
-                        <TableCell>kapitał</TableCell>
-                        <TableCell>nadpłata</TableCell>
-                        <TableCell>pozostały kapitał</TableCell>
+                        <TableCell sx={{color: 'secondary.main'}}>Data</TableCell>
+                        <TableCell align="right" sx={{color: 'secondary.main'}}>Rata</TableCell>
+                        <TableCell align="right" sx={{color: 'secondary.main'}}>Odsetki</TableCell>
+                        <TableCell align="right" sx={{color: 'secondary.main'}}>Kapitał</TableCell>
+                        <TableCell align="right" sx={{color: 'secondary.main'}}>Nadpłata</TableCell>
+                        <TableCell align="right" sx={{color: 'secondary.main'}}>Pozostały kapitał</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -103,28 +103,30 @@ export function InstallmentsTable({currency, installments}: InstallmentsTablePro
                         <TableRow
                             key={`${installment.paidAt.valueOf()}-${index}`}
                             sx={{
-                                backgroundColor: installment.paidAt.get('month') % 2 === 0
-                                    ? 'action.hover'
-                                    : 'transparent'
+                                '&:hover': {backgroundColor: 'action.hover'},
+                                '& td:not(:first-of-type)': {
+                                    fontVariantNumeric: 'tabular-nums',
+                                    whiteSpace: 'nowrap',
+                                },
                             }}>
                             <TableCell>{installment.paidAt.format("YYYY-MM-DD")}</TableCell>
-                            <TableCell>{amountOrDash(installment.repaidInterest.plus(installment.repaidAmount))}</TableCell>
-                            <TableCell>{amountOrDash(installment.repaidInterest)}</TableCell>
-                            <TableCell>{amountOrDash(installment.repaidAmount)}</TableCell>
-                            <TableCell>{amountOrDash(installment.overpayment)}</TableCell>
-                            <TableCell><CurrencyAmountDisplay currency={currency}
+                            <TableCell align="right">{amountOrDash(installment.repaidInterest.plus(installment.repaidAmount))}</TableCell>
+                            <TableCell align="right">{amountOrDash(installment.repaidInterest)}</TableCell>
+                            <TableCell align="right">{amountOrDash(installment.repaidAmount)}</TableCell>
+                            <TableCell align="right">{amountOrDash(installment.overpayment)}</TableCell>
+                            <TableCell align="right"><CurrencyAmountDisplay currency={currency}
                                                               amount={installment.leftToRepayAfter}/></TableCell>
                         </TableRow>
                     )}
                 </TableBody>
                 <TableFooter>
-                    <TableRow>
+                    <TableRow sx={{'& td': {fontWeight: 600, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}}>
                         <TableCell>-</TableCell>
-                        <TableCell>{sumRow(installment => installment.repaidInterest.plus(installment.repaidAmount))}</TableCell>
-                        <TableCell>{sumRow(installment => installment.repaidInterest)}</TableCell>
-                        <TableCell>{sumRow(installment => installment.repaidAmount)}</TableCell>
-                        <TableCell>{sumRow(installment => installment.overpayment)}</TableCell>
-                        <TableCell>suma: {sumRow(installment => installment.repaidInterest
+                        <TableCell align="right">{sumRow(installment => installment.repaidInterest.plus(installment.repaidAmount))}</TableCell>
+                        <TableCell align="right">{sumRow(installment => installment.repaidInterest)}</TableCell>
+                        <TableCell align="right">{sumRow(installment => installment.repaidAmount)}</TableCell>
+                        <TableCell align="right">{sumRow(installment => installment.overpayment)}</TableCell>
+                        <TableCell align="right">Suma: {sumRow(installment => installment.repaidInterest
                             .plus(installment.repaidAmount)
                             .plus(installment.overpayment))}</TableCell>
                     </TableRow>

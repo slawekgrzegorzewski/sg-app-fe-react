@@ -4,6 +4,7 @@ import {Stack, Theme, useTheme} from "@mui/material";
 import {draggable, dropTargetForElements} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import {combine} from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {SxProps} from "@mui/system";
+import {compactListRow} from "../../utils/theme/utils";
 
 export interface SimpleCrudListRowProps<T> {
     index: number;
@@ -46,9 +47,6 @@ const init: DraggingInfo = {
     mouseDirection: 'unknown',
     previousVerticalLocation: 0
 };
-
-const ROW_CONTAINER_DEFAULT_PROVIDER: (key: string, sx: SxProps<Theme>, additionalProperties: any) => React.JSX.Element = (key: string, sx: SxProps<Theme>, additionalProperties: any) =>
-    <Stack key={key} direction={'row'} alignSelf={'stretch'} sx={sx} {...additionalProperties}></Stack>;
 
 export function SimpleCrudListRow<T>({
                                          index,
@@ -148,7 +146,11 @@ export function SimpleCrudListRow<T>({
         },
         [entity, idExtractor, reorderProps]
     );
-    return (rowContainerProvider || ROW_CONTAINER_DEFAULT_PROVIDER)(
+    const defaultRowContainerProvider = (key: string, sx: SxProps<Theme>, additionalProperties: any) =>
+        <Stack key={key} direction="row" alignSelf="stretch"
+               sx={[compactListRow(theme), sx] as SxProps<Theme>} {...additionalProperties}/>;
+
+    return (rowContainerProvider || defaultRowContainerProvider)(
         idExtractor(entity),
         {
             '&:hover': highlightRowOnHover

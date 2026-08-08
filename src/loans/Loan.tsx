@@ -11,7 +11,7 @@ import {
     UpdateLoan,
     UpdateLoanMutation,
 } from "../types";
-import {Box, Button, Stack} from "@mui/material";
+import {Button, Stack} from "@mui/material";
 import * as React from "react";
 import {useState} from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
@@ -78,15 +78,16 @@ export function Loan() {
     } else if (data) {
         const loan = data!.singleLoan!;
         return (
-            <Box component="section" sx={{width: 1000, m: 'auto'}}>
+            <Stack component="section" alignItems="center" sx={{px: {xs: 1, sm: 2}, py: 2}}>
                 {
-                    (<Stack direction={"row"}>
-                        <Button variant={"text"} onClick={() => setPageParams([])} aria-label={'Wróć do listy pożyczek'}>
+                    (<Stack direction="row" alignItems="flex-start" sx={{width: '100%', maxWidth: 1200}}>
+                        <Button variant="text" onClick={() => setPageParams([])}
+                                aria-label="Wróć do listy pożyczek" sx={{flexShrink: 0}}>
                             <ArrowLeft/>
                         </Button>
-                        <Stack direction={"column"} key={loan.publicId}>
+                        <Stack direction="column" spacing={2} key={loan.publicId} sx={{flex: 1, minWidth: 0}}>
                             <LoanDetails loan={loan} short={false}/>
-                            <Stack direction={'row'}>
+                            <Stack direction="row" flexWrap="wrap" gap={1}>
                                 <FormDialogButton
                                     title='Dane raty'
                                     onConfirm={value => {
@@ -146,7 +147,8 @@ export function Loan() {
                                                currency={loan.paidAmount.currency}/>
                             {simulationParams && <LoanSimulation loan={loan} {...simulationParams}/>}
                         </Stack>
-                        <FormDialogButton
+                        <Stack direction="row" sx={{flexShrink: 0}}>
+                            <FormDialogButton
                             title='Dane pożyczki'
                             onConfirm={value => {
                                 return updateLoan(loan.publicId, value.name);
@@ -160,17 +162,18 @@ export function Loan() {
                                 </IconButton>
                             }
                             formProps={EDIT_LOAN_FORM_PROPS(loan.name)}
-                        />
-                        <DeleteButton
+                            />
+                            <DeleteButton
                             object={loan.publicId}
                             confirmationMessage={'Na pewno usunąć?'}
                             buttonContent={<Delete/>}
                             onDelete={deleteLoan}
                             onCancel={() => {
                                 return Promise.resolve();
-                            }}/>
+                                }}/>
+                        </Stack>
                     </Stack>)
-                }</Box>
+                }</Stack>
         );
     } else {
         return <></>;

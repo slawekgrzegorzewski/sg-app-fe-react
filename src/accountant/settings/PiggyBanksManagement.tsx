@@ -12,9 +12,7 @@ import * as Yup from "yup";
 import {AutocompleteEditorField, BooleanEditorField, EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
-import Box from "@mui/material/Box";
-import {Card, Theme, useTheme} from "@mui/material";
-import {SxProps} from "@mui/system";
+import {Chip, Stack, Typography} from "@mui/material";
 import Decimal from "decimal.js";
 import {formatBalance} from "../../utils/functions";
 import Grid from "@mui/material/Grid";
@@ -118,8 +116,6 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
     const [updatePiggyBankMutation] = useMutation<UpdatePiggyBankMutation>(UpdatePiggyBank);
     const [deletePiggyBankMutation] = useMutation<DeletePiggyBankMutation>(DeletePiggyBank);
 
-    const theme = useTheme();
-
     const createPiggyBank = async (piggyBank: PiggyBankDTO): Promise<any> => {
         return await createPiggyBankMutation({
             variables: {
@@ -174,38 +170,31 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
             }
             idExtractor={piggyBank => piggyBank.publicId}
             formSupplier={piggyBank => piggyBank ? PIGGY_BANK_FORM(supportedCurrencies, piggyBank) : PIGGY_BANK_FORM(supportedCurrencies)}
-            rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-                return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
-            }}
-
             entityDisplay={(piggyBank) => {
-                return <Grid container>
+                return <Grid container width="100%" alignItems="flex-start" spacing={1}>
                     <Grid size={8}>
-                        <Box dir={'column'} key={piggyBank.publicId} sx={{paddingLeft: '15px'}}>
-                            <div>{piggyBank.name}</div>
-                            <div style={{
-                                color: theme.palette.text.disabled,
-                                paddingLeft: '15px'
-                            }}>{piggyBank.description}</div>
-                            <div style={{
-                                color: piggyBank.balance.toNumber() < 0 ? theme.palette.error.main : theme.palette.text.disabled,
-                                paddingLeft: '15px'
-                            }}>Stan: {formatBalance(piggyBank.currency, piggyBank.balance)}</div>
+                        <Stack direction="column" key={piggyBank.publicId} sx={{minWidth: 0}}>
+                            <Typography sx={{fontWeight: 600}}>{piggyBank.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">{piggyBank.description}</Typography>
+                            <Typography variant="body2" sx={{
+                                color: piggyBank.balance.toNumber() < 0 ? 'error.main' : 'text.secondary',
+                                fontWeight: 500,
+                                fontVariantNumeric: 'tabular-nums',
+                            }}>Stan: {formatBalance(piggyBank.currency, piggyBank.balance)}</Typography>
                             {
-                                piggyBank.monthlyTopUp.toNumber() > 0 && (<div style={{
-                                    color: theme.palette.text.disabled,
-                                    paddingLeft: '15px'
-                                }}>Miesięczne uznania: {formatBalance(piggyBank.currency, piggyBank.monthlyTopUp)}</div>)
+                                piggyBank.monthlyTopUp.toNumber() > 0 &&
+                                <Typography variant="body2" color="text.secondary">
+                                    Miesięczne uznania: {formatBalance(piggyBank.currency, piggyBank.monthlyTopUp)}
+                                </Typography>
                             }
                             {
-                                piggyBank.savings && (<div style={{
-                                    color: theme.palette.warning.main,
-                                    paddingLeft: '15px'
-                                }}>Do przechowywania oszczędności</div>)
+                                piggyBank.savings &&
+                                <Chip size="small" variant="outlined" color="secondary"
+                                      label="Do przechowywania oszczędności" sx={{mt: 0.5, alignSelf: 'flex-start'}}/>
                             }
-                        </Box>
+                        </Stack>
                     </Grid>
-                    <Grid size={4}>
+                    <Grid size={4} sx={{textAlign: 'right'}}>
                         <Button variant="text" onClick={(event) => {
                             event.stopPropagation();
                             setPiggyBankBalanceDialogOptions({type: 'CREDIT', piggyBank: piggyBank});

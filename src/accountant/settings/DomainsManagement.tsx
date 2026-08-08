@@ -19,11 +19,8 @@ import * as Yup from "yup";
 import {EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
-import {SxProps} from "@mui/system";
-import {Card, Theme} from "@mui/material";
-import Grid from "@mui/material/Grid";
+import {IconButton, Stack, Typography} from "@mui/material";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import {useCurrentUser} from "../../utils/users/use-current-user";
 import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
@@ -118,11 +115,16 @@ export interface UserRowProps {
 }
 
 function UserRow({user, domain, showDomainAccessLevelButtons, setDomainAccessLevelDialogOptions}: UserRowProps) {
-    return <Grid container justifyContent={'space-between'}>
-        <Grid> {user.login}</Grid>
+    return <Stack direction="row" alignItems="center"
+                  flexWrap="nowrap" gap={0.5} sx={{width: 'fit-content', maxWidth: '100%', minWidth: 0}}>
+        <Typography component="span" sx={{fontWeight: 'inherit', minWidth: 0, overflowWrap: 'anywhere'}}>
+            {user.login}
+        </Typography>
         {showDomainAccessLevelButtons && (
-            <Grid>
-                <Button variant="text" onClick={(event) => {
+            <Stack direction="row" flexWrap="nowrap" sx={{flexShrink: 0}}>
+                <IconButton size="small"
+                            aria-label={user.domainAccessLevel === DomainAccessLevel.Admin ? 'Ustaw jako członka' : 'Ustaw jako administratora'}
+                            onClick={(event) => {
                     setDomainAccessLevelDialogOptions({
                         domainPublicId: domain.publicId,
                         domainName: domain.name,
@@ -134,8 +136,8 @@ function UserRow({user, domain, showDomainAccessLevelButtons, setDomainAccessLev
                     {user.domainAccessLevel === DomainAccessLevel.Admin
                         ? <KeyboardDoubleArrowDownIcon/>
                         : <KeyboardDoubleArrowUpIcon/>}
-                </Button>
-                <Button variant="text" onClick={(event) => {
+                </IconButton>
+                <IconButton size="small" aria-label="Usuń użytkownika" onClick={(event) => {
                     setDomainAccessLevelDialogOptions({
                         domainPublicId: domain.publicId,
                         domainName: domain.name,
@@ -145,9 +147,9 @@ function UserRow({user, domain, showDomainAccessLevelButtons, setDomainAccessLev
                     event.stopPropagation();
                 }} color="inherit">
                     <PersonRemoveIcon/>
-                </Button>
-            </Grid>)}
-    </Grid>;
+                </IconButton>
+            </Stack>)}
+    </Stack>;
 }
 
 function DomainsManagement() {
@@ -223,20 +225,18 @@ function DomainsManagement() {
             list={[...domains as Domain[]].filter(domain => domain.name !== '').sort(ComparatorBuilder.comparing<Domain>(domain => domain.name).build())}
             idExtractor={domain => domain.publicId}
             formSupplier={value => value ? DOMAIN_FORM(value) : DOMAIN_FORM()}
-            rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-                return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
-            }}
             entityDisplay={
                 domain => {
                     const admins = domain.users.filter(user => user.domainAccessLevel === 'ADMIN');
                     const isCurrentUserAdmin = admins.some(admin => admin.login === currentUser!.user.login);
                     const members = domain.users.filter(user => user.domainAccessLevel === 'MEMBER');
-                    const size = {xs: 12, sm: 12, md: 12, lg: 7, xl: 7};
-                    const size2 = {xs: 12, sm: 12, md: 12, lg: 12 - size.lg, xl: 12 - size.xl};
-                    return <Grid container justifyContent={'space-between'}>
-                        <Grid container justifyContent={'space-between'} alignItems={() => 'flex-start'} size={size}>
-                            {domain.name}
-                            <Button variant="text" onClick={(event) => {
+                    return <Stack direction="column" spacing={0.5} sx={{width: '100%', minWidth: 0}}>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between"
+                               flexWrap="nowrap" gap={1}>
+                            <Typography sx={{fontWeight: 600, minWidth: 0}}>
+                                {domain.name}
+                            </Typography>
+                            <IconButton size="small" aria-label="Zaproś użytkownika" onClick={(event) => {
                                 setInviteUserToDomainDataDialogOptions({
                                     domainPublicId: domain.publicId,
                                     domainName: domain.name,
@@ -245,15 +245,13 @@ function DomainsManagement() {
                                 event.stopPropagation();
                             }} color="inherit">
                                 <PersonAddIcon/>
-                            </Button>
-                        </Grid>
-                        <Grid size={size2}>
-                            <Box>
-                                Administratorzy
-                            </Box>
+                            </IconButton>
+                        </Stack>
+                        <Stack direction="column" sx={{pl: {xs: 1.5, sm: 3}}}>
+                            <Typography color="text.secondary">Administratorzy</Typography>
                             {
                                 admins.map(user => <Box key={user.login} sx={{
-                                    paddingLeft: '15px',
+                                    pl: 1.5,
                                     fontWeight: user.login === currentUser!.user.login ? 'bold' : 'normal'
                                 }}>
                                     <UserRow user={user} domain={domain}
@@ -261,14 +259,10 @@ function DomainsManagement() {
                                              setDomainAccessLevelDialogOptions={setDomainAccessLevelDialogOptions}/>
                                 </Box>)
                             }
-                            {
-                                members.length > 0 && <Box>
-                                    Członkowie
-                                </Box>
-                            }
+                            {members.length > 0 && <Typography color="text.secondary" sx={{mt: 0.5}}>Członkowie</Typography>}
                             {
                                 members.map(user => <Box key={user.login} sx={{
-                                    paddingLeft: '15px',
+                                    pl: 1.5,
                                     fontWeight: user.login === currentUser!.user.login ? 'bold' : 'normal'
                                 }}>
                                     <UserRow user={user} domain={domain}
@@ -276,8 +270,8 @@ function DomainsManagement() {
                                              setDomainAccessLevelDialogOptions={setDomainAccessLevelDialogOptions}/>
                                 </Box>)
                             }
-                        </Grid>
-                    </Grid>
+                        </Stack>
+                    </Stack>
                 }
             }
             enableDndReorder={

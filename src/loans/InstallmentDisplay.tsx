@@ -37,7 +37,8 @@ export function InstallmentDisplay({installment, onClick = noOp}: InstallmentDis
     }
 
     return (
-        <Box onClick={onClick}>
+        <Box onClick={onClick}
+             sx={{px: 1.5, py: 0.65, borderBottom: '1px solid', borderColor: 'divider', '&:hover': {bgcolor: 'action.hover'}}}>
             Spłacona dnia <b>{installment.paidAt}</b>,
             {repaidInstallment()}
             {repaidAmount()}

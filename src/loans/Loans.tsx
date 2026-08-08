@@ -17,8 +17,7 @@ import {
     GetLoans,
     GetLoansQuery,
 } from "../types";
-import {Box, Button, Card, CardContent, CardHeader, Stack} from "@mui/material";
-import Grid from '@mui/material/Grid';
+import {Button, Stack, Typography, useTheme} from "@mui/material";
 import * as React from "react";
 import {FormDialogButton} from "../utils/buttons/FormDialogButton";
 import {DeleteButton} from "../utils/buttons/DeleteButton";
@@ -36,9 +35,11 @@ import {LoanDetails} from "./LoanDetails";
 import {RateStrategyDisplay} from "./RateStrategyDisplay";
 import {RepaymentDayStrategyDisplay} from "./RepaymentDayStrategyDisplay";
 import Decimal from "decimal.js";
+import {compactListRow} from "../utils/theme/utils";
 
 export function Loans() {
 
+    const theme = useTheme();
     const {setPageParams} = useApplicationNavigation();
     const {loading, error, data, refetch} = useQuery<GetLoansQuery>(GetLoans);
     const [createLoanMutation, createLoanMutationResult] = useMutation<CreateLoanMutation>(CreateLoan);
@@ -112,10 +113,18 @@ export function Loans() {
         return <ErrorDisplay error={error}/>
     } else if (data) {
         return (
-            <Grid container spacing={2}>
-                <Grid>
-                    <Box component="section" sx={{width: 1000, m: 'auto'}}>
-                        <Stack direction="row">
+            <Stack
+                direction={{xs: 'column', lg: 'row'}}
+                spacing={{xs: 3, lg: 5}}
+                justifyContent="center"
+                alignItems={{xs: 'stretch', lg: 'flex-start'}}
+                sx={{px: {xs: 1, sm: 2}, py: 2}}
+            >
+                <Stack component="section" direction="column" sx={{width: '100%', maxWidth: 800}}>
+                    <Typography variant="h4" textAlign="center" sx={{mb: 1.5, color: 'secondary.main'}}>
+                        Pożyczki
+                    </Typography>
+                        <Stack direction="row" justifyContent="center" sx={{mb: 1}}>
                             <FormDialogButton
                                 title='Dane pożyczki'
                                 onConfirm={createLoan}
@@ -131,7 +140,8 @@ export function Loans() {
                             <Stack direction={"column"}>
                                 {(data.loans.loans
                                         .map(loan =>
-                                            (<Stack direction={"row"} key={loan.publicId}>
+                                            (<Stack direction="row" alignItems="center" key={loan.publicId}
+                                                    sx={compactListRow(theme)}>
                                                 <LoanDetails
                                                     loan={loan}
                                                     short={true}
@@ -147,12 +157,14 @@ export function Loans() {
                                             </Stack>))
                                 )}
                             </Stack>
-                        }</Box>
-                </Grid>
-                <Grid>
-                    <Card variant="outlined">
-                        <CardHeader title={'Sposoby naliczania odsetek'}/>
-                        <CardContent>
+                        }
+                </Stack>
+                <Stack direction="column" spacing={3} sx={{width: '100%', maxWidth: 560}}>
+                    <Stack component="section" direction="column">
+                        <Typography variant="h4" textAlign="center" sx={{mb: 1.5, color: 'secondary.main'}}>
+                            Sposoby naliczania odsetek
+                        </Typography>
+                        <Stack direction="row" justifyContent="center" sx={{mb: 1}}>
                             <FormDialogButton
                                 title='Tworzenie'
                                 onConfirm={createConstantForNFirstInstallmentRateStrategyConfig}
@@ -162,12 +174,14 @@ export function Loans() {
                                 buttonContent={<Button size={'small'} variant={'text'} color="secondary">Stwórz nowy</Button>}
                                 formProps={CREATE_RATE_STRATEGY_CONFIG()}
                             />
+                        </Stack>
 
                             <Stack direction={"column"}>
                                 {(data.loans.rateStrategyConfigs
                                         .map(config =>
                                             (
-                                                <Stack direction={"row"} key={config.publicId}>
+                                                <Stack direction="row" alignItems="center" justifyContent="space-between"
+                                                       key={config.publicId} sx={compactListRow(theme)}>
                                                     <RateStrategyDisplay rateStrategyConfig={config}/>
                                                     <DeleteButton
                                                         object={config.publicId}
@@ -181,25 +195,28 @@ export function Loans() {
                                             ))
                                 )}
                             </Stack>
-                        </CardContent>
-                    </Card>
-                    <Card variant="outlined">
-                        <CardHeader title={'Sposoby obliczania dnia spłaty'}/>
-                        <CardContent>
+                    </Stack>
+                    <Stack component="section" direction="column">
+                        <Typography variant="h4" textAlign="center" sx={{mb: 1.5, color: 'secondary.main'}}>
+                            Sposoby obliczania dnia spłaty
+                        </Typography>
+                        <Stack direction="row" justifyContent="center" sx={{mb: 1}}>
                             <FormDialogButton
                                 title='Tworzenie'
                                 onConfirm={createNthDayOfMonthRepaymentDayStrategyConfig}
                                 onCancel={() => {
                                     return Promise.resolve();
                                 }}
-                                buttonContent={<>Stwórz nowy</>}
+                                buttonContent={<Button size="small" variant="text" color="secondary">Stwórz nowy</Button>}
                                 formProps={CREATE_REPAYMENT_DAY_STRATEGY_CONFIG()}
                             />
+                        </Stack>
                             <Stack direction={"column"}>
                                 {(data.loans.repaymentDayStrategyConfigs
                                         .map(config =>
                                             (
-                                                <Stack direction={"row"} key={config.publicId}>
+                                                <Stack direction="row" alignItems="center" justifyContent="space-between"
+                                                       key={config.publicId} sx={compactListRow(theme)}>
                                                     <RepaymentDayStrategyDisplay
                                                         repaymentDayStrategyConfig={config}/>
                                                     <DeleteButton
@@ -214,10 +231,9 @@ export function Loans() {
                                             ))
                                 )}
                             </Stack>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
+                    </Stack>
+                </Stack>
+            </Stack>
         );
     } else {
         return <></>;

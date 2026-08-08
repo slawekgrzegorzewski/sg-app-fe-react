@@ -9,16 +9,7 @@ import {ComparatorBuilder} from "../utils/comparator-builder";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
 import {AccountView} from "./AccountView";
-
-const listRowSx = (theme: ReturnType<typeof useTheme>) => ({
-    px: 1.5,
-    py: 0.65,
-    borderBottom: '1px solid',
-    borderColor: 'divider',
-    '&:hover': {
-        bgcolor: 'action.hover',
-    },
-});
+import {compactListRow} from "../utils/theme/utils";
 
 export function Accounts() {
     const {
@@ -38,6 +29,7 @@ export function Accounts() {
 
     if (data) {
         const accounts = [...(data.financeManagement.accounts as Account[])]
+            .filter(a => a.visible)
             .sort(
                 ComparatorBuilder
                     .comparing<Account>(a => a.order)
@@ -74,6 +66,7 @@ export function Accounts() {
                         textAlign="center"
                         sx={{
                             mb: 1.5,
+                            color: 'secondary.main',
                         }}
                     >
                         Twoje konta
@@ -90,7 +83,7 @@ export function Accounts() {
                         header="Suma:"
                         sx={{
                             mb: 1,
-                            ...listRowSx(theme),
+                            ...compactListRow(theme),
                         }}
                     />
 
@@ -116,6 +109,7 @@ export function Accounts() {
                         textAlign="center"
                         sx={{
                             mb: 1.5,
+                            color: 'secondary.main',
                         }}
                     >
                         Skarbonki
@@ -128,7 +122,7 @@ export function Accounts() {
                                 direction="row"
                                 alignItems="center"
                                 justifyContent="space-between"
-                                sx={listRowSx(theme)}
+                                sx={compactListRow(theme)}
                             >
                                 <Typography>
                                     {piggyBank.name}

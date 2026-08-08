@@ -1,7 +1,7 @@
 import {clickableProps} from "../application/components/clickable";
 import React, {JSX, useState} from "react";
 import {BillingElementType} from "./model/BillingElementType";
-import {Dialog, DialogContent, DialogTitle, Stack} from "@mui/material";
+import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import {formatCurrency, minDate, trimDateToDay} from "../utils/functions";
@@ -14,6 +14,7 @@ import Decimal from "decimal.js";
 import {BillingElementDTO} from "./CreateBillingElementForm";
 import {TransferDTO} from "./CreateTransferForm";
 import {Account, BankTransactionToImport, CurrencyInfo, MonetaryAmount} from "../types";
+import {compactListRow} from "../utils/theme/utils";
 
 type BillingElementImport = { importType: 'billingElement', data: BillingElementDTO };
 type TransferImport = { importType: 'transfer', data: TransferDTO & { possibleDays: Dayjs[] } };
@@ -99,6 +100,7 @@ export function BankTransactionsToImportPicker({
                                                }: BankTransactionsToImportPickerProps): JSX.Element {
 
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<BankTransactionToImport[]>([]);
+    const theme = useTheme();
     const [possibleImports, setPossibleImports] = useState<PossibleImports>({
         debit: null,
         credit: null,
@@ -284,8 +286,8 @@ export function BankTransactionsToImportPicker({
                    open={true}
                    fullScreen={true}>
         <DialogTitle onClick={e => e.stopPropagation()}>
-            <Stack direction={'row'} justifyContent={'space-between'}>
-                <Typography variant={"h4"}>Wybierz transakcja do zaimportowania</Typography>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography variant="h4" sx={{color: 'secondary.main'}}>Wybierz transakcje do zaimportowania</Typography>
                 <IconButton onClick={() => onClose(null)}>
                     <CloseIcon/>
                 </IconButton>
@@ -314,14 +316,16 @@ export function BankTransactionsToImportPicker({
                                               }
                                           }}
                                           sx={{
-                                              padding: '3px',
-                                              marginBottom: '20px',
-                                              border: '1px solid gray',
+                                              ...compactListRow(theme),
+                                              py: 1,
                                               cursor: 'pointer',
                                               ...(selected
                                                   ? {
-                                                      color: 'primary.contrastText',
-                                                      backgroundColor: 'primary.main',
+                                                      color: 'secondary.contrastText',
+                                                      backgroundColor: 'secondary.main',
+                                                      '&:hover': {
+                                                          backgroundColor: 'secondary.dark',
+                                                      },
                                                   }
                                                   : {})
                                           }}
@@ -330,7 +334,7 @@ export function BankTransactionsToImportPicker({
                                     <Typography>Od: {sourceAccount?.name}</Typography>
                                 </Grid>
                                 <Grid
-                                    size={2}><Typography>{sourceAccount ? formatCurrency(sourceAccount.currentBalance.currency.code, bankTransactionToImport.debit) : ''}</Typography>
+                                    size={2}><Typography sx={{fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>{sourceAccount ? formatCurrency(sourceAccount.currentBalance.currency.code, bankTransactionToImport.debit) : ''}</Typography>
                                 </Grid>
                                 <Grid size={5}>
                                     <Typography>Data:</Typography>
@@ -339,10 +343,10 @@ export function BankTransactionsToImportPicker({
                                     <Typography>Do: {destinationAccount?.name}</Typography>
                                 </Grid>
                                 <Grid size={2}>
-                                    <Typography>{destinationAccount ? formatCurrency(destinationAccount.currentBalance.currency.code, bankTransactionToImport.credit) : ''}</Typography>
+                                    <Typography sx={{fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>{destinationAccount ? formatCurrency(destinationAccount.currentBalance.currency.code, bankTransactionToImport.credit) : ''}</Typography>
                                 </Grid>
                                 <Grid size={5}>
-                                    <Typography>{dayjs(bankTransactionToImport.timeOfTransaction).locale(navigator.language).format('DD MMMM')}</Typography>
+                                    <Typography color={selected ? 'inherit' : 'text.secondary'}>{dayjs(bankTransactionToImport.timeOfTransaction).locale(navigator.language).format('DD MMMM')}</Typography>
                                 </Grid>
                                 <Grid size={12}>
                                     <Typography>{bankTransactionToImport.description}</Typography>
@@ -351,7 +355,7 @@ export function BankTransactionsToImportPicker({
                         }))
                 }
                 {
-                    possibleImports.credit && <Stack direction={'column'}>
+                    possibleImports.credit && <Stack direction="column" sx={compactListRow(theme)}>
                         <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
@@ -369,14 +373,14 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        })}>
+                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
                             Przychód
                         </Typography>
                         <DebugDisplayObject object={possibleImports.credit}/>
                     </Stack>
                 }
                 {
-                    possibleImports.debit && <Stack direction={'column'}>
+                    possibleImports.debit && <Stack direction="column" sx={compactListRow(theme)}>
                         <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
@@ -394,7 +398,7 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        })}>
+                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
                             Wydatek
                         </Typography>
                         <DebugDisplayObject object={possibleImports.debit}/>
@@ -402,7 +406,7 @@ export function BankTransactionsToImportPicker({
                 }
                 {
                     possibleImports.transfer &&
-                    <Stack direction={'column'}>
+                    <Stack direction="column" sx={compactListRow(theme)}>
                         <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
@@ -419,14 +423,14 @@ export function BankTransactionsToImportPicker({
                                     }
                                 }
                             })
-                        })}>
+                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
                             {possibleImports.transfer.fromCurrency!.code === possibleImports.transfer.toCurrency!.code ? 'Transfer bez wymiany walut' : 'Transfer z wymianą walut'}
                         </Typography>
                         <DebugDisplayObject object={possibleImports.transfer}/>
                     </Stack>
                 }
                 {
-                    possibleImports.ignore && <Stack direction={'column'}>
+                    possibleImports.ignore && <Stack direction="column" sx={compactListRow(theme)}>
                         <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
@@ -434,20 +438,21 @@ export function BankTransactionsToImportPicker({
                                     importType: 'mutuallyIgnore'
                                 }
                             })
-                        })}>
+                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
                             Wzajemnie ignoruj
                         </Typography>
                         <DebugDisplayObject object={possibleImports.ignore}/>
                     </Stack>
                 }
                 {
-                    selectedBankAccountTransactionsToImport.length > 0 && <Stack direction={'column'}>
+                    selectedBankAccountTransactionsToImport.length > 0 &&
+                    <Stack direction="column" sx={compactListRow(theme)}>
                         <Typography {...clickableProps(() => {
                             onClose({
                                 selectedBankTransactions: selectedBankAccountTransactionsToImport,
                                 importDecision: {importType: 'custom'}
                             })
-                        })}>
+                        })} sx={{color: 'secondary.main', fontWeight: 600}}>
                             Własny import
                         </Typography>
                     </Stack>

@@ -13,9 +13,7 @@ import * as Yup from "yup";
 import {EditorField} from "../../utils/forms/Form";
 import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
-import Box from "@mui/material/Box";
-import {Card, Theme, useTheme} from "@mui/material";
-import {SxProps} from "@mui/system";
+import {Stack, Typography} from "@mui/material";
 
 const BILLING_CATEGORY_FORM = (billingCategory?: BillingCategory) => {
         return {
@@ -65,8 +63,6 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
     const [updateBillingCategoryMutation] = useMutation<UpdateBillingCategoryMutation>(UpdateBillingCategory);
     const [deleteBillingCategoryMutation] = useMutation<DeleteBillingCategoryMutation>(DeleteBillingCategory);
 
-    const theme = useTheme();
-
     const createBillingCategory = async (billingCategory: BillingCategory): Promise<any> => {
         return await createBillingCategoryMutation({
             variables: {
@@ -113,17 +109,11 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
         }
         idExtractor={billingCategory => billingCategory.publicId}
         formSupplier={billingCategory => billingCategory ? BILLING_CATEGORY_FORM(billingCategory) : BILLING_CATEGORY_FORM()}
-        rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-            return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
-        }}
         entityDisplay={(billingCategory) => {
-            return <Box dir={'column'} key={billingCategory.publicId} sx={{paddingLeft: '15px'}}>
-                <div>{billingCategory.name}</div>
-                <div style={{
-                    color: theme.palette.text.disabled,
-                    paddingLeft: '15px'
-                }}>{billingCategory.description}</div>
-            </Box>;
+            return <Stack direction="column" key={billingCategory.publicId} sx={{minWidth: 0}}>
+                <Typography sx={{fontWeight: 600}}>{billingCategory.name}</Typography>
+                <Typography variant="body2" color="text.secondary">{billingCategory.description}</Typography>
+            </Stack>;
         }}
         enableDndReorder={false}
     />

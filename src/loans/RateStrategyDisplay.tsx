@@ -33,7 +33,7 @@ export function RateStrategyDisplay({rateStrategyConfig, onClick = noOp}: RateSt
     }
 
     return (
-        <Box onClick={onClick}>
+        <Box onClick={onClick} sx={{flex: 1, minWidth: 0, fontSize: '0.8125rem', color: 'text.secondary'}}>
             {convertToElement()}
         </Box>
     );

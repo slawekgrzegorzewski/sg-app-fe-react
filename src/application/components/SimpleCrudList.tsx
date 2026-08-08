@@ -137,8 +137,9 @@ export function SimpleCrudList<T>({
     </Stack>;
 
     const TitleBox = styled(Box)(({theme}) => ({
-        color: theme.palette.primary.main,
-        fontSize: theme.typography.pxToRem(18)
+        color: theme.palette.secondary.main,
+        fontSize: theme.typography.pxToRem(18),
+        fontWeight: 600,
     }));
 
     const elements = [];
@@ -170,7 +171,7 @@ export function SimpleCrudList<T>({
 
     return <>
         <Stack direction={'column'}>
-            <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{mb: 1}}>
                 <TitleBox>{title}</TitleBox>
                 {onCreate && formSupplier && showCreateControl && <FormDialogButton
                     clickTrigger={editButtonClick}

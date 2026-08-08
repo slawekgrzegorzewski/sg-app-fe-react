@@ -1,5 +1,5 @@
 import {Loan} from "../types";
-import {Stack} from "@mui/material";
+import {Stack, Typography} from "@mui/material";
 import * as React from "react";
 import {MouseEventHandler} from "react";
 import {remainingCapital} from "./utils/loan-form";
@@ -19,22 +19,29 @@ const noOp: MouseEventHandler<any> = () => {
 export function LoanDetails({loan, short = false, onClick = noOp}: LoanDetailsProp) {
     if (short) {
         return (
-            <Stack direction={"column"} key={loan.publicId} onClick={onClick}>
-                <div>{loan.name}</div>
-                <div><CurrencyAmountDisplay {...loan.paidAmount} /></div>
-                <div><CurrencyAmountDisplay {...remainingCapital(loan)} /></div>
-                <div>{loan.paymentDate}</div>
-                <RateStrategyDisplay rateStrategyConfig={loan.rateStrategyConfig}/>
-                <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={loan.repaymentDayStrategyConfig}/>
+            <Stack direction="column" key={loan.publicId} onClick={onClick}
+                   sx={{flex: 1, minWidth: 0, cursor: 'pointer'}}>
+                <Stack direction="row" justifyContent="space-between" alignItems="baseline" gap={2}>
+                    <Typography sx={{fontWeight: 600}}>{loan.name}</Typography>
+                    <Typography sx={{fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>
+                        <CurrencyAmountDisplay {...remainingCapital(loan)} />
+                    </Typography>
+                </Stack>
+                <Stack direction="row" flexWrap="wrap" gap={1.5} color="text.secondary">
+                    <Typography variant="body2">Kwota: <CurrencyAmountDisplay {...loan.paidAmount} /></Typography>
+                    <Typography variant="body2">Od: {loan.paymentDate}</Typography>
+                    <RateStrategyDisplay rateStrategyConfig={loan.rateStrategyConfig}/>
+                    <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={loan.repaymentDayStrategyConfig}/>
+                </Stack>
             </Stack>);
     } else
         return (
-            <Stack direction={"column"} key={loan.publicId}>
-                <div>{loan.publicId}</div>
-                <div>{loan.name}</div>
-                <div><CurrencyAmountDisplay {...loan.paidAmount} /></div>
-                <div><CurrencyAmountDisplay {...remainingCapital(loan)} /></div>
-                <div>{loan.paymentDate}</div>
+            <Stack direction="column" spacing={0.5} key={loan.publicId} sx={{minWidth: 0}}>
+                <Typography variant="h4" sx={{color: 'secondary.main'}}>{loan.name}</Typography>
+                <Typography variant="caption" color="text.secondary">{loan.publicId}</Typography>
+                <Typography>Kwota pożyczki: <b><CurrencyAmountDisplay {...loan.paidAmount} /></b></Typography>
+                <Typography>Pozostały kapitał: <b><CurrencyAmountDisplay {...remainingCapital(loan)} /></b></Typography>
+                <Typography color="text.secondary">Data wypłaty: {loan.paymentDate}</Typography>
                 <RateStrategyDisplay rateStrategyConfig={loan.rateStrategyConfig}/>
                 <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={loan.repaymentDayStrategyConfig}/>
             </Stack>

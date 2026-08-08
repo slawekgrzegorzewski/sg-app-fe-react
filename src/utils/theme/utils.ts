@@ -30,3 +30,13 @@ export const rowHover: (theme: Theme) => SxProps<Theme> = (theme: Theme) => {
         }
     } as SxProps<Theme>;
 }
+
+export const compactListRow = (theme: Theme): SystemStyleObject<Theme> => ({
+    px: 1.5,
+    py: 0.65,
+    borderBottom: '1px solid',
+    borderColor: 'divider',
+    '&:hover': {
+        backgroundColor: theme.palette.action.hover,
+    },
+});

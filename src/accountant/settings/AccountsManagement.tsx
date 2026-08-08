@@ -24,8 +24,7 @@ import {SimpleCrudList} from "../../application/components/SimpleCrudList";
 import {ComparatorBuilder} from "../../utils/comparator-builder";
 import Decimal from "decimal.js";
 import {formatBalance} from "../../utils/functions";
-import {Card, Stack, Theme, useTheme} from "@mui/material";
-import {SxProps} from "@mui/system";
+import {Chip, Stack} from "@mui/material";
 import {Visibility, VisibilityOff} from "@mui/icons-material";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
@@ -151,8 +150,6 @@ export function AccountsManagement({
         })
             .finally(() => refetch());
     };
-    const theme = useTheme();
-
     const updateAccount = async (account: AccountDTO): Promise<any> => {
         return await updateAccountMutation({
             variables: {
@@ -241,49 +238,42 @@ export function AccountsManagement({
             idExtractor={account => account.publicId}
             highlightRowOnHover={false}
             formSupplier={account => account ? ACCOUNT_FORM(currencies, account) : ACCOUNT_FORM(currencies)}
-            rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-                return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
-            }}
             entityDisplay={(account) => {
-                return <Stack direction={'row'} key={account.publicId} sx={{paddingLeft: '15px'}}
-                              justifyContent={'space-between'} alignItems={'baseline'}>
-                    <Stack direction={'column'} alignItems={'flex-start'}>
-                        <Typography variant={'body1'}>{account.name}</Typography>
-                        <Stack direction={'column'} sx={{paddingLeft: '15px'}}>
+                return <Stack direction="row" key={account.publicId} width="100%"
+                              justifyContent="space-between" alignItems="flex-start" gap={2}>
+                    <Stack direction="column" alignItems="flex-start" sx={{minWidth: 0}}>
+                        <Typography variant="body1" sx={{fontWeight: 600}}>{account.name}</Typography>
+                        <Stack direction="column">
                             {account.bankAccount && (
                                 <Typography variant={'body2'}
                                             sx={{
-                                                color: theme.palette.text.disabled
+                                                color: 'text.secondary'
                                             }}>
                                     Powiązane z kontem bankowym: {account.bankAccount.iban}
                                 </Typography>
                             )}
                             <Typography variant={'body2'}
                                         sx={{
-                                            color: account.currentBalance.toNumber() < 0 ? theme.palette.error.main : theme.palette.text.disabled
+                                            color: account.currentBalance.toNumber() < 0 ? 'error.main' : 'text.secondary',
+                                            fontWeight: 500,
+                                            fontVariantNumeric: 'tabular-nums',
                                         }}>
                                 Stan konta: {formatBalance(account.currency, account.currentBalance)}
                             </Typography>
-                            {account.creditLimitAmount.toNumber() > 0 && (
-                                <Typography variant={'body2'}
-                                            sx={{
-                                                color: theme.palette.text.disabled
-                                            }}>
-                                    Limit kredytowy: {formatBalance(account.currency, account.creditLimitAmount)}
-                                </Typography>
-                            )}
-                            {!account.visible && (
-                                <Typography variant={'body2'}
-                                            sx={{
-                                                color: theme.palette.warning.main
-                                            }}>
-                                    Ukryte z interfejsu
-                                </Typography>
-                            )}
+                            <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{mt: 0.5}}>
+                                {account.creditLimitAmount.toNumber() > 0 && (
+                                    <Chip size="small" variant="outlined" color="secondary"
+                                          label={`Limit kredytowy: ${formatBalance(account.currency, account.creditLimitAmount)}`}/>
+                                )}
+                                {!account.visible && (
+                                    <Chip size="small" variant="outlined" color="warning"
+                                          label="Ukryte z interfejsu"/>
+                                )}
+                            </Stack>
                         </Stack>
                     </Stack>
-                    <Stack direction={'column'} alignItems={'flex-start'}>
-                        <Stack direction={'row'}>
+                    <Stack direction="column" alignItems="flex-end" sx={{flexShrink: 0}}>
+                        <Stack direction="row">
                             <Button onClick={() => editTrigger.current(account)}>Edytuj</Button>
                             <Button onClick={() => setDeleteDialogOptions({account: account})}>Usuń</Button>
                         </Stack>

@@ -107,6 +107,7 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     } else {
         if (!showDialog) {
             return <Button
+                sx={{alignSelf: 'center', mt: 2}}
                 onClick={() => setShowDialog(true)}>
                 {transactionsToImportButtonText(data.bankTransactionsToImport.length)}
             </Button>;

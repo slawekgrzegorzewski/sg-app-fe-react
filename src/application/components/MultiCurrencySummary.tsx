@@ -27,21 +27,29 @@ export function MultiCurrencySummary<T>({
         return collector;
     }, new Map<string, Decimal>());
 
-    return <Stack direction="column" alignItems={'flex-end'} sx={{...sx}}>
+    return <Stack direction="column" alignItems="flex-end" sx={sx}>
         {Array.from(accountBalancePerCurrency.entries()).map(([currency, balance], index) => {
-            return <Stack direction={'row'} key={'container' + index}>
-                {
-                    [(index === 0 && header) ?
-                        <Typography key={'leftColumn' + index}
-                                    sx={{paddingRight: '20px', color: 'text.secondary'}}>
-                            {header}
-                        </Typography>
-                        : null,
-                        <Typography key={'rightColumn' + index}>{
-                            formatCurrency(currency, balance)
-                        }
-                        </Typography>]
+            return <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="flex-end"
+                gap={2.5}
+                key={'container' + index}
+            >
+                {(index === 0 && header) &&
+                    <Typography sx={{color: 'secondary.main'}}>
+                        {header}
+                    </Typography>
                 }
+                <Typography
+                    sx={{
+                        fontWeight: 500,
+                        fontVariantNumeric: 'tabular-nums',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {formatCurrency(currency, balance)}
+                </Typography>
             </Stack>;
         })}
     </Stack>;
