@@ -3,13 +3,14 @@ import * as React from "react";
 import {JSX, useMemo, useState} from "react";
 import {BillingElementDTO, CreateBillingElementForm} from "./CreateBillingElementForm";
 import {CreateTransferForm, TransferDTO} from "./CreateTransferForm";
-import {Box, Button, Dialog, DialogContent, Stack} from "@mui/material";
+import {Box, Button, Dialog, DialogContent, Stack, useMediaQuery} from "@mui/material";
 import Decimal from "decimal.js";
 import {CustomImportSummary} from "./CustomImportSummary";
 import Typography from "@mui/material/Typography";
 import {formatCurrency} from "../utils/functions";
 import {transactionCustomImportSummary} from "./utils/customImportSummary";
 import {Account, BankTransactionToImport, BillingCategory, PiggyBank} from "../types";
+import {almostFullHeightDialog} from "../utils/theme/utils";
 
 export type CustomImportResult = {
     billingElements: BillingElementDTO[];
@@ -33,6 +34,7 @@ export function CreateCustomImportForm({
                                            bankTransactions,
                                            onClose
                                        }: CreateCustomImportFormProps): JSX.Element {
+    const isTouchDevice = useMediaQuery('(pointer: coarse)');
     const accountsInvolvedInImportingTransactionPublicIds = new Set(bankTransactions.flatMap(bt => [bt.creditBankAccountPublicId, bt.debitBankAccountPublicId]));
     const accountsInvolvedInImportingTransactions = accountsWithAssignedBankAccounts.filter(account =>
         account.bankAccount && accountsInvolvedInImportingTransactionPublicIds.has(account.bankAccount.publicId));
@@ -97,7 +99,16 @@ export function CreateCustomImportForm({
         {
             billingElements.map((be, index) => {
                     return <Stack key={`billing-element-${index}`}
-                                  direction={'row'} justifyContent={'flex-start'} alignItems={'center'} width={'100%'}
+                                  direction={'row'} justifyContent={'space-between'} alignItems={'center'} width={'100%'}
+                                  gap={1}
+                                  sx={{
+                                      px: 2,
+                                      py: 1.25,
+                                      backgroundColor: 'background.paper',
+                                      border: '1px solid',
+                                      borderColor: 'divider',
+                                      borderRadius: 1,
+                                  }}
                                   {...clickableProps(() => setEditBillingElement(be), 'Edytuj element rozliczeniowy')}>
                         {billingElementDescription(be)}
                         <Button
@@ -114,7 +125,16 @@ export function CreateCustomImportForm({
         {
             transfers.map((transfer, index) => {
                 return <Stack key={`transfer-${index}`}
-                              direction={'row'} justifyContent={'flex-start'} alignItems={'center'} width={'100%'}
+                              direction={'row'} justifyContent={'space-between'} alignItems={'center'} width={'100%'}
+                              gap={1}
+                              sx={{
+                                  px: 2,
+                                  py: 1.25,
+                                  backgroundColor: 'background.paper',
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  borderRadius: 1,
+                              }}
                               {...clickableProps(() => setEditTransfer(transfer), 'Edytuj transfer')}>
                     {transferDescription(transfer)}
                     <Button
@@ -129,7 +149,20 @@ export function CreateCustomImportForm({
         }
         {
             editBillingElement &&
-            <Dialog open={true} maxWidth={"lg"} fullWidth={false}>
+            <Dialog
+                open={true}
+                fullScreen={isTouchDevice}
+                maxWidth={false}
+                sx={[
+                    almostFullHeightDialog,
+                    {
+                        '& .MuiDialog-paper': {
+                            width: isTouchDevice ? '100%' : '800px',
+                            maxWidth: isTouchDevice ? '100%' : '800px',
+                        },
+                    },
+                ]}
+            >
                 <DialogContent>
                     <CreateBillingElementForm accounts={accountsInvolvedInImportingTransactions}
                                               billingCategories={billingCategories}
@@ -147,7 +180,20 @@ export function CreateCustomImportForm({
         }
         {
             editTransfer &&
-            <Dialog open={true} maxWidth={"lg"} fullWidth={false}>
+            <Dialog
+                open={true}
+                fullScreen={isTouchDevice}
+                maxWidth={false}
+                sx={[
+                    almostFullHeightDialog,
+                    {
+                        '& .MuiDialog-paper': {
+                            width: isTouchDevice ? '100%' : '800px',
+                            maxWidth: isTouchDevice ? '100%' : '800px',
+                        },
+                    },
+                ]}
+            >
                 <DialogContent>
                     <CreateTransferForm
                         accounts={[...accountsInvolvedInImportingTransactions, ...accountsWithoutAssignedBankAccounts]}

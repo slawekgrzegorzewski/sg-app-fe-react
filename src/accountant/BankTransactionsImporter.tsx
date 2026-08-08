@@ -33,7 +33,8 @@ import {
     isTransferToCreate
 } from "./BankTransactionsToImportPicker";
 import {CreateCustomImportForm} from "./CreateCustomImportForm";
-import {Dialog, DialogContent} from "@mui/material";
+import {Dialog, DialogContent, useMediaQuery} from "@mui/material";
+import {almostFullHeightDialog} from "../utils/theme/utils";
 
 export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>
@@ -66,6 +67,7 @@ function billingElementVariables(
 
 export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterProps): JSX.Element {
 
+    const isTouchDevice = useMediaQuery('(pointer: coarse)');
     const {loading, error, data} = useQuery<BankTransactionsToImportQuery>(BankTransactionsToImport);
     const [showDialog, setShowDialog] = useState(false);
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<BankTransactionToImport[]>([]);
@@ -205,7 +207,20 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                                                return Promise.resolve();
                                            }}/>
             } else if (transactionsToCustomImport) {
-                return <Dialog open={true} maxWidth={"lg"} fullWidth={false}>
+                return <Dialog
+                    open={true}
+                    fullScreen={isTouchDevice}
+                    maxWidth={false}
+                    sx={[
+                        almostFullHeightDialog,
+                        {
+                            '& .MuiDialog-paper': {
+                                width: isTouchDevice ? '100%' : '800px',
+                                maxWidth: isTouchDevice ? '100%' : '800px',
+                            },
+                        },
+                    ]}
+                >
                     <DialogContent>
                         <CreateCustomImportForm
                             accountsWithAssignedBankAccounts={mappedAccounts.filter(a => a.bankAccount)}

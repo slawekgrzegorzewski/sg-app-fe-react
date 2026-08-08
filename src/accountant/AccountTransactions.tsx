@@ -126,7 +126,6 @@ export function AccountTransactions({account, onClose}: AccountTransactionsProps
                                         >
                                             {formattedValue => <>{formattedValue}</>}
                                         </FormattedMoneyText>
-
                                         <OverflowTooltip>
                                             {transaction.description}
                                         </OverflowTooltip>

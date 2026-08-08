@@ -1,10 +1,10 @@
 import {clickableProps} from "../application/components/clickable";
 import React, {JSX, useState} from "react";
 import {BillingElementType} from "./model/BillingElementType";
-import {Dialog, DialogContent, DialogTitle, Stack, useTheme} from "@mui/material";
+import {Dialog, DialogContent, DialogTitle, Stack, useMediaQuery, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import {formatCurrency, minDate, trimDateToDay} from "../utils/functions";
+import {minDate, trimDateToDay} from "../utils/functions";
 import dayjs, {Dayjs} from "dayjs";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
@@ -14,7 +14,8 @@ import Decimal from "decimal.js";
 import {BillingElementDTO} from "./CreateBillingElementForm";
 import {TransferDTO} from "./CreateTransferForm";
 import {Account, BankTransactionToImport, CurrencyInfo, MonetaryAmount} from "../types";
-import {compactListRow} from "../utils/theme/utils";
+import {almostFullHeightDialog, compactListRow} from "../utils/theme/utils";
+import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
 
 type BillingElementImport = { importType: 'billingElement', data: BillingElementDTO };
 type TransferImport = { importType: 'transfer', data: TransferDTO & { possibleDays: Dayjs[] } };
@@ -101,6 +102,7 @@ export function BankTransactionsToImportPicker({
 
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<BankTransactionToImport[]>([]);
     const theme = useTheme();
+    const isTouchDevice = useMediaQuery('(pointer: coarse)');
     const [possibleImports, setPossibleImports] = useState<PossibleImports>({
         debit: null,
         credit: null,
@@ -282,19 +284,65 @@ export function BankTransactionsToImportPicker({
         return accounts.find(account => accountPublicId === account.publicId);
     }
 
-    return <Dialog onClose={() => onClose(null)}
-                   open={true}
-                   fullScreen={true}>
-        <DialogTitle onClick={e => e.stopPropagation()}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Typography variant="h4" sx={{color: 'secondary.main'}}>Wybierz transakcje do zaimportowania</Typography>
-                <IconButton onClick={() => onClose(null)}>
+    return <Dialog
+        onClose={() => onClose(null)}
+        open={true}
+        fullScreen={isTouchDevice}
+        maxWidth={false}
+        sx={[
+            almostFullHeightDialog,
+            {
+                '& .MuiDialog-paper': {
+                    width: isTouchDevice ? '100%' : '800px',
+                    maxWidth: isTouchDevice ? '100%' : '800px',
+                },
+            },
+        ]}
+    >
+        <DialogTitle
+            onClick={e => e.stopPropagation()}
+            sx={{
+                px: {xs: 2, sm: 3},
+                py: 2,
+            }}
+        >
+            <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="center"
+                sx={{position: 'relative'}}
+            >
+                <Typography
+                    variant="h4"
+                    textAlign="center"
+                    sx={{
+                        px: 5,
+                        color: 'secondary.main',
+                    }}
+                >
+                    Wybierz transakcje do zaimportowania
+                </Typography>
+                <IconButton
+                    aria-label="Zamknij"
+                    onClick={() => onClose(null)}
+                    sx={{position: 'absolute', right: 0}}
+                >
                     <CloseIcon/>
                 </IconButton>
             </Stack>
         </DialogTitle>
-        <DialogContent onClick={e => e.stopPropagation()}>
-            <Stack>
+        <DialogContent
+            onClick={e => e.stopPropagation()}
+            sx={{px: {xs: 1, sm: 2}, py: 2}}
+        >
+            <Stack
+                direction="column"
+                sx={{
+                    width: '100%',
+                    maxWidth: 800,
+                    mx: 'auto',
+                }}
+            >
                 {
                     ([...bankTransactions]
                         .sort(ComparatorBuilder.comparingByDate<BankTransactionToImport>(t => dayjs(t.timeOfTransaction).toDate()).build())
@@ -330,28 +378,50 @@ export function BankTransactionsToImportPicker({
                                                   : {})
                                           }}
                                           onClick={() => onBankTransactionToImportClicked(accounts, bankTransactionToImport)}>
-                                <Grid size={5}>
-                                    <Typography>Od: {sourceAccount?.name}</Typography>
+                                    <Grid size={5}>
+                                        <Typography>Od: {sourceAccount?.name}</Typography>
+                                    </Grid>
+                                    <Grid size={2}>
+                                        {
+                                            sourceAccount && <FormattedMoneyText
+                                                money={{
+                                                    amount: -bankTransactionToImport.debit,
+                                                    currency: sourceAccount.currentBalance.currency.code,
+                                                }}
+                                                parenthesizeNegative
+                                            >
+                                                {formattedValue => <>{formattedValue}</>}
+                                            </FormattedMoneyText>
+                                        }
+                                    </Grid>
+                                    <Grid size={5}>
+                                        <Typography>Data:</Typography>
+                                    </Grid>
+                                    <Grid size={5}>
+                                        <Typography>Do: {destinationAccount?.name}</Typography>
+                                    </Grid>
+                                    <Grid size={2}>
+                                        {
+                                            destinationAccount && <FormattedMoneyText
+                                                money={{
+                                                    amount: bankTransactionToImport.credit,
+                                                    currency: destinationAccount.currentBalance.currency.code,
+                                                }}
+                                                parenthesizeNegative
+                                            >
+                                                {formattedValue => <>{formattedValue}</>}
+                                            </FormattedMoneyText>
+                                        }
+                                    </Grid>
+                                    <Grid size={5}>
+                                        <Typography
+                                            color={selected ? 'inherit' : 'text.secondary'}>{dayjs(bankTransactionToImport.timeOfTransaction).locale(navigator.language).format('DD MMMM')}</Typography>
+                                    </Grid>
+                                    <Grid size={12}>
+                                        <Typography>{bankTransactionToImport.description}</Typography>
+                                    </Grid>
                                 </Grid>
-                                <Grid
-                                    size={2}><Typography sx={{fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>{sourceAccount ? formatCurrency(sourceAccount.currentBalance.currency.code, bankTransactionToImport.debit) : ''}</Typography>
-                                </Grid>
-                                <Grid size={5}>
-                                    <Typography>Data:</Typography>
-                                </Grid>
-                                <Grid size={5}>
-                                    <Typography>Do: {destinationAccount?.name}</Typography>
-                                </Grid>
-                                <Grid size={2}>
-                                    <Typography sx={{fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}>{destinationAccount ? formatCurrency(destinationAccount.currentBalance.currency.code, bankTransactionToImport.credit) : ''}</Typography>
-                                </Grid>
-                                <Grid size={5}>
-                                    <Typography color={selected ? 'inherit' : 'text.secondary'}>{dayjs(bankTransactionToImport.timeOfTransaction).locale(navigator.language).format('DD MMMM')}</Typography>
-                                </Grid>
-                                <Grid size={12}>
-                                    <Typography>{bankTransactionToImport.description}</Typography>
-                                </Grid>
-                            </Grid>);
+                            );
                         }))
                 }
                 {
