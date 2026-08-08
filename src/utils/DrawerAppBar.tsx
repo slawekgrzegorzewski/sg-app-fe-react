@@ -35,6 +35,7 @@ import {
 import Grid from "@mui/material/Grid";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import {useApplicationFavicon} from "./applications/use-application-favicon";
 
 interface Props {
     /**
@@ -59,6 +60,7 @@ export const DomainsContext = React.createContext<DomainsContextType>({
 export default function DrawerAppBar(props: Props) {
     const {changePage} = useApplicationNavigation();
     const {currentApplicationId} = useApplication();
+    useApplicationFavicon(currentApplicationId);
     const {currentDomainPublicId, changeCurrentSettings} = useApplicationAndDomain();
     const theme = useTheme();
     const {mode, setMode, themeVariantId, setThemeVariant, availableVariants} = useThemeMode();

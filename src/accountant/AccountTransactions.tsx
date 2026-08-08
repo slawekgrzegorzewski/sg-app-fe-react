@@ -46,7 +46,11 @@ export function AccountTransactions({account, onClose}: AccountTransactionsProps
                                       return onClose?.() ?? Promise.resolve();
                                   }}
                                   dialogOptions={{fullScreen: isTouchDevice}}
-                                  sx={almostFullHeightDialog}>
+                                  sx={[
+                                      almostFullHeightDialog,
+                                      {
+                                          '& .MuiDialog-paper': {maxWidth: '800px', width: '800px'}
+                                      }]}>
             <Stack direction="column">
                 <Stack
                     direction="row"
