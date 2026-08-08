@@ -21,7 +21,7 @@ export default function InformationDialog(props: InformationDialogProps) {
 
     const {title, message, children, open, onClose, dialogOptions, sx} = props;
 
-    const handleClose = (e: React.MouseEvent<HTMLElement>, r: string = '') => {
+    const handleClose = (e: React.MouseEvent<HTMLElement>, _: string = '') => {
         e.stopPropagation();
         onClose();
     };
@@ -29,10 +29,9 @@ export default function InformationDialog(props: InformationDialogProps) {
     return (
         <Dialog onClose={handleClose} open={open} {...dialogOptions} sx={sx}>
             <DialogTitle onClick={e => e.stopPropagation()}
-                         sx={{position: 'relative'}}>
+                         sx={{position: 'relative', textAlign: 'center'}}>
                 <Typography variant="h4"
-                            component="span"
-                            sx={{textAlign: 'center'}}>
+                            component="span">
                     {title}
                 </Typography>
                 <IconButton onClick={handleClose}

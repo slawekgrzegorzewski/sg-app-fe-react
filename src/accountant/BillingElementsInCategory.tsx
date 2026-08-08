@@ -2,8 +2,7 @@ import {clickableProps} from "../application/components/clickable";
 import {Box, Grid, Stack, useMediaQuery, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
-import {useState} from "react";
-import {formatCurrency} from "../utils/functions";
+import React, {useState} from "react";
 import InformationDialog from "../utils/dialogs/InformationDialog";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import dayjs from "dayjs";
@@ -11,10 +10,15 @@ import {Expense, Income} from "../types";
 import Decimal from "decimal.js";
 import {almostFullHeightDialog, compactListRow} from "../utils/theme/utils";
 import {OverflowTooltip} from "../utils/OverflowTooltip";
+import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
 
 export interface BillingElementsInCategoryProps {
     categoryName: string;
     billingElements: (Income | Expense) [];
+}
+
+function isIncome(billingElement: Income | Expense): billingElement is Income {
+    return billingElement.__typename === 'Income';
 }
 
 const GRID_DATE_COLUMN_SIZE = {xs: 4, sm: 3};
@@ -25,6 +29,11 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
     const [expanded, setExpanded] = useState(false)
     const theme = useTheme();
     const isTouchDevice = useMediaQuery('(pointer: coarse)');
+    let categoryDialogTitle = billingElements.length === 0
+        ? 'Kategoria: ' + categoryName
+        : isIncome(billingElements[0])
+            ? "Dochody w kategorii: " + categoryName
+            : "Wydatki w kategorii: " + categoryName;
     return <Stack direction="column" width="100%"
                   sx={compactListRow(theme)}
                   {...clickableProps(() => setExpanded(!expanded), `Kategoria ${categoryName}`, expanded)}>
@@ -35,7 +44,7 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                 currencyExtractor={be => be.currency}
                 amountExtractor={be => new Decimal(be.amount)}/>
         </Stack>
-        <InformationDialog title={categoryName}
+        <InformationDialog title={categoryDialogTitle}
                            open={expanded}
                            onClose={() => {
                                setExpanded(false);
@@ -65,12 +74,15 @@ export function BillingElementsInCategory({categoryName, billingElements}: Billi
                                     </OverflowTooltip>
                                 </Grid>
                                 <Grid size={GRID_AMOUNT_COLUMN_SIZE} sx={{textAlign: 'right'}}>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{fontWeight: 500, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap'}}
+                                    <FormattedMoneyText
+                                        money={{
+                                            amount: new Decimal(be.amount),
+                                            currency: be.currency,
+                                        }}
+                                        parenthesizeNegative
                                     >
-                                        {formatCurrency(be.currency, new Decimal(be.amount))}
-                                    </Typography>
+                                        {formattedValue => <>{formattedValue}</>}
+                                    </FormattedMoneyText>
                                 </Grid>
                             </Grid>
                         )
