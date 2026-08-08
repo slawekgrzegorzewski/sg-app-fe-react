@@ -26,6 +26,7 @@ fragment AccountTransactionShort on AccountTransaction {
 
 query GetAccountTransactions($publicId: UUID, $yearMonth: YearMonth){
     financeManagement {
+        id
         accounts(publicId: $publicId){
             transactions(yearMonth: $yearMonth){
                 ...AccountTransactionShort
@@ -36,6 +37,7 @@ query GetAccountTransactions($publicId: UUID, $yearMonth: YearMonth){
 
 query GetFinanceManagement {
     financeManagement {
+        id
         supportedCurrencies {
             code
             description
@@ -293,6 +295,7 @@ query BankTransactionsToImport {
         debitTransactionPublicId
     }
     financeManagement {
+        id
         accounts {
             publicId
             order

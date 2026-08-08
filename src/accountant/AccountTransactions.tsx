@@ -13,14 +13,16 @@ import {ComparatorBuilder} from "../utils/comparator-builder";
 import {OverflowTooltip} from "../utils/OverflowTooltip";
 
 const BY_DATE = ComparatorBuilder.comparingByDate<AccountTransactionShortFragment>(t => dayjs(t.timeOfTransaction).toDate()).build();
+const YEAR_MONTH_GRAPHQL_FORMAT = "YYYY-MM";
+const YEAR_MONTH_DISPLAY_FORMAT = "MMMM YYYY";
 
 export interface AccountTransactionsProps {
     account: Account;
+    onClose?: () => Promise<void>;
 }
 
-export function AccountTransactions({account}: AccountTransactionsProps) {
+export function AccountTransactions({account, onClose}: AccountTransactionsProps) {
     const isTouchDevice = useMediaQuery('(pointer: coarse)');
-    const [expanded, setExpanded] = useState(true)
     const [yearMonth, setYearMonth] = useState(dayjs());
     const {
         loading,
@@ -29,7 +31,7 @@ export function AccountTransactions({account}: AccountTransactionsProps) {
     } = useQuery<GetAccountTransactionsQuery>(GetAccountTransactions, {
         variables: {
             publicId: account.publicId,
-            yearMonth: yearMonth.format('YYYY-MM')
+            yearMonth: yearMonth.format(YEAR_MONTH_GRAPHQL_FORMAT)
         }
     });
 
@@ -39,10 +41,9 @@ export function AccountTransactions({account}: AccountTransactionsProps) {
         return <ErrorDisplay error={error}/>
     } else if (data) {
         return <InformationDialog title={'Transakcje dla konta ' + account.name}
-                                  open={expanded}
+                                  open={true}
                                   onClose={() => {
-                                      setExpanded(false);
-                                      return Promise.resolve();
+                                      return onClose?.() ?? Promise.resolve();
                                   }}
                                   dialogOptions={{fullScreen: isTouchDevice}}
                                   sx={almostFullHeightDialog}>
@@ -58,18 +59,18 @@ export function AccountTransactions({account}: AccountTransactionsProps) {
                     }}>
                     <Button onClick={() => setYearMonth(yearMonth.subtract(1, 'month'))}
                             sx={{cursor: 'pointer', fontSize: '0.9rem',}}>
-                        {yearMonth.subtract(1, 'month').format('YYYY-MM')}
+                        {yearMonth.subtract(1, 'month').locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
                     </Button>
 
                     <Typography
                         variant="subtitle1"
                         fontWeight="bold">
-                        {yearMonth.format('YYYY-MM')}
+                        {yearMonth.locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
                     </Typography>
 
                     <Button onClick={() => setYearMonth(yearMonth.add(1, 'month'))}
                             sx={{cursor: 'pointer', fontSize: '0.9rem',}}>
-                        {yearMonth.add(1, 'month').format('YYYY-MM')}
+                        {yearMonth.add(1, 'month').locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
                     </Button>
                 </Stack>
 

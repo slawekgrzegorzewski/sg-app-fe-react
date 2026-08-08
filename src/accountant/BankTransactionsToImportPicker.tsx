@@ -342,7 +342,7 @@ export function BankTransactionsToImportPicker({
                                     <Typography>{destinationAccount ? formatCurrency(destinationAccount.currentBalance.currency.code, bankTransactionToImport.credit) : ''}</Typography>
                                 </Grid>
                                 <Grid size={5}>
-                                    <Typography>{dayjs(bankTransactionToImport.timeOfTransaction).locale('pl').format('DD MMMM')}</Typography>
+                                    <Typography>{dayjs(bankTransactionToImport.timeOfTransaction).locale(navigator.language).format('DD MMMM')}</Typography>
                                 </Grid>
                                 <Grid size={12}>
                                     <Typography>{bankTransactionToImport.description}</Typography>

@@ -93,7 +93,7 @@ export function BillingPeriods() {
                         </Button>
                         <Typography variant={'h4'}
                                     textAlign={'center'}>
-                            {dayjs(yearMonth).locale('pl').format(YEAR_MONTH_DISPLAY_FORMAT)}
+                            {dayjs(yearMonth).locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
                         </Typography>
                         <Button onClick={() => fetchBillingPeriod(dayjs(yearMonth).add(1, 'month').toDate())}>
                             później

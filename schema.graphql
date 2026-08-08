@@ -416,6 +416,7 @@ type CurrencyInfo {
 }
 
 type FinanceManagement {
+    id: ID!
     supportedCurrencies: [CurrencyInfo!]!
     accounts(publicId:UUID):[Account!]!
     billingCategories:[BillingCategory!]!
@@ -898,6 +899,7 @@ type DebitInvoice implements Invoice & FinancialDocument {
 }
 
 type Settings {
+    id: ID!
     accountantSettings: AccountantSettings!
     domains: [Domain!]!
 }

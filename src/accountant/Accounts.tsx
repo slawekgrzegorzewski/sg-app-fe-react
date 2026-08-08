@@ -1,7 +1,7 @@
 import {ErrorDisplay} from "../application/components/QueryState";
 import {useQuery} from "@apollo/client/react";
 import {Account, GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} from "../types";
-import React, {useState} from "react";
+import React from "react";
 import {Stack, useTheme} from "@mui/material";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
 import {formatMonetaryAmount} from "../utils/functions";
@@ -9,7 +9,7 @@ import {ComparatorBuilder} from "../utils/comparator-builder";
 import {rowHover} from "../utils/theme/utils";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
-import {AccountTransactions} from "./AccountTransactions";
+import {AccountView} from "./AccountView";
 
 export function Accounts() {
     const {
@@ -19,7 +19,6 @@ export function Accounts() {
     } = useQuery<GetFinanceManagementQuery>(
         GetFinanceManagement
     );
-    const [selectedAccountPublicId, setSelectedAccountPublicId] = useState<string | null>(null);
     const theme = useTheme();
 
     if (loading) {
@@ -47,16 +46,7 @@ export function Accounts() {
                     {(
                         accounts.map(account =>
                             (
-                                <Stack direction={'row'} justifyContent={'space-between'} key={account.publicId}
-                                       sx={{...rowHover(theme), minWidth: '270px'}}
-                                       onClick={() => setSelectedAccountPublicId(account.publicId)}>
-                                    <Typography>{account.name}</Typography>
-                                    <Typography>{formatMonetaryAmount(account.currentBalance)}</Typography>
-                                    {
-                                        selectedAccountPublicId === account.publicId &&
-                                        <AccountTransactions account={account}/>
-                                    }
-                                </Stack>
+                                <AccountView key={'av' + account.publicId} account={account}/>
                             ))
                     )}
                 </Stack>

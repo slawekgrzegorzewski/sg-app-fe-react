@@ -1,27 +1,25 @@
 import {SxProps, SystemStyleObject} from '@mui/system';
 import {Theme} from '@mui/material/styles';
 
-export const almostFullHeight = (
-    theme: Theme
-): SystemStyleObject<Theme> => ({
+export const almostFullHeight = (): SystemStyleObject<Theme> => ({
     height: '90vh',
     maxHeight: 'none',
-
-    [theme.breakpoints.down('sm')]: {
-        height: '100vh',
-        width: '100vw',
-        maxWidth: '100vw',
-    },
 });
 
 export const almostFullHeightDialog = (
     theme: Theme
 ): SystemStyleObject<Theme> => ({
     '& .MuiDialog-paper': {
-        ...almostFullHeight(theme),
+        ...almostFullHeight(),
         width: 'fit-content',
         maxWidth: '90vw',
         minWidth: 0,
+        [theme.breakpoints.down('sm')]: {
+            width: '100vw',
+            maxWidth: '100vw',
+            margin: 0,
+            borderRadius: 0,
+        },
     },
 });
 

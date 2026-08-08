@@ -11,7 +11,9 @@ export interface InformationDialogProps {
     children?: React.JSX.Element;
     open: boolean;
     onClose: () => Promise<void>;
-    dialogOptions?: any,
+    dialogOptions?: {
+        fullScreen?: boolean
+    },
     sx?: SxProps<Theme>
 }
 
@@ -26,28 +28,36 @@ export default function InformationDialog(props: InformationDialogProps) {
 
     return (
         <Dialog onClose={handleClose} open={open} {...dialogOptions} sx={sx}>
-            <DialogTitle onClick={e => e.stopPropagation()}>
-                <Stack direction={'row'} justifyContent={'space-between'}>
-                    <Typography variant={"h4"}>{title}</Typography>
-                    <IconButton onClick={handleClose}>
-                        <CloseIcon/>
-                    </IconButton>
-                </Stack>
+            <DialogTitle onClick={e => e.stopPropagation()}
+                         sx={{position: 'relative'}}>
+                <Typography variant="h4"
+                            component="span"
+                            sx={{textAlign: 'center'}}>
+                    {title}
+                </Typography>
+                <IconButton onClick={handleClose}
+                            sx={{
+                                position: 'absolute',
+                                right: 8,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                            }}>
+                    <CloseIcon/>
+                </IconButton>
             </DialogTitle>
             <DialogContent onClick={e => e.stopPropagation()}>
-                {children
-                    ? children
-                    : (
-                        <div>{message}
-                            <Stack direction={"row"} spacing={4} alignItems={"center"}>
-                                <Button variant="text" sx={{flexGrow: 1}}
-                                        onClick={(e) => handleClose(e, 'confirm')}>
-                                    OK
-                                </Button>
-                            </Stack>
-                        </div>
-                    )}
-
+                {children ? children : (
+                    <div>
+                        {message}
+                        <Stack direction="row" spacing={4} alignItems="center">
+                            <Button variant="text"
+                                    sx={{flexGrow: 1}}
+                                    onClick={(e) => handleClose(e, 'confirm')}>
+                                OK
+                            </Button>
+                        </Stack>
+                    </div>
+                )}
             </DialogContent>
         </Dialog>
     );
