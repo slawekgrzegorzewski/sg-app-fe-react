@@ -47,12 +47,12 @@
     "@babel/preset-typescript": "^7.28.5",
     "@graphql-codegen/add": "^6.0.0",
     "@graphql-codegen/cli": "^6.1.1",
+    "@graphql-codegen/named-operations-object": "^4.0.1",
     "@graphql-codegen/typed-document-node": "^6.1.5",
     "@graphql-codegen/typescript": "^5.0.7",
     "@graphql-codegen/typescript-document-nodes": "^5.0.7",
     "@graphql-codegen/typescript-operations": "^5.0.7",
     "@graphql-codegen/typescript-resolvers": "^5.1.5",
-    "@graphql-codegen/named-operations-object": "^4.0.1",
     "@types/base-64": "^1.0.2",
     "@types/file-saver": "^2.0.7",
     "webpack-cli": "^6.0.1"

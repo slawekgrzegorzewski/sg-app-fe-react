@@ -1,7 +1,7 @@
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from "react";
 import {PaletteMode, ThemeProvider, useMediaQuery} from "@mui/material";
-import {buildTheme as buildDefaultTheme} from "./theme";
-import {buildTheme as buildPlumTheme} from "./theme2";
+import {buildTheme as buildDefaultTheme} from "./theme/theme";
+import {buildTheme as buildPlumTheme} from "./theme/theme2";
 import {Theme} from "@mui/material/styles";
 
 export type ThemeMode = 'light' | 'dark' | 'auto';

@@ -2,7 +2,6 @@ import {clickableProps} from "../application/components/clickable";
 import {Box, Grid, Stack, useMediaQuery, useTheme} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
-import {rowHover} from "../utils/theme";
 import {useState} from "react";
 import {formatCurrency} from "../utils/functions";
 import InformationDialog from "../utils/dialogs/InformationDialog";
@@ -10,6 +9,7 @@ import {ComparatorBuilder} from "../utils/comparator-builder";
 import dayjs from "dayjs";
 import {Expense, Income} from "../types";
 import Decimal from "decimal.js";
+import {rowHover} from "../utils/theme/utils";
 
 export interface BillingElementsInCategoryProps {
     categoryName: string;

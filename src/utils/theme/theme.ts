@@ -1,18 +1,17 @@
-import {alpha, createTheme, PaletteMode, Theme, ThemeOptions} from "@mui/material";
-import {SxProps} from "@mui/system";
+import {createTheme, PaletteMode, Theme, ThemeOptions} from "@mui/material";
 
 // Design tokens
 const tokens = {
     primary: {
-        main: '#6D3B75',
-        light: '#8B5A92',
-        dark: '#512C57',
+        main: '#475569',
+        light: '#94A3B8',
+        dark: '#334155',
         contrastText: '#FFFFFF',
     },
     secondary: {
-        main: '#0E7490',
-        light: '#38B2AC',
-        dark: '#155E75',
+        main: '#A16207',
+        light: '#E5C563',
+        dark: '#854D0E',
         contrastText: '#FFFFFF',
     },
     borderRadius: 4,
@@ -26,42 +25,44 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
         ...(mode === 'light'
             ? {
                 background: {
-                    default: '#FCF9FC',
-                    paper: '#FFFFFF',
+                    default: '#FFFBF5',
+                    paper: '#FFFBF5',
                 },
                 text: {
-                    primary: '#2D2431',
-                    secondary: '#6A5F6E',
+                    primary: '#1F2937',
+                    secondary: '#6B7280',
                 },
-                divider: '#E8DFEA',
+                divider: '#E5E7EB',
                 action: {
-                    hover: alpha(tokens.primary.main, 0.04),
+                    hover: '#DEDAD5',
                 },
             }
             : {
                 background: {
-                    default: '#171319',
-                    paper: '#211C24',
+                    default: '#1F1E2A',
+                    paper: '#2A2A3C',
                 },
                 text: {
-                    primary: '#F4EEF6',
-                    secondary: '#C7BDCB',
+                    primary: '#F3F4F6',
+                    secondary: '#9CA3AF',
                 },
-                divider: '#3B3340',
+                divider: '#3A3A4C',
                 action: {
-                    hover: alpha(tokens.primary.main, 0.12),
+                    hover: '#3A3A4C',
                 },
             }),
         error: {
-            main: mode === 'light' ? '#C54E4E' : '#F06A6A',
+            main: '#EF4444',
         },
         warning: {
-            main: mode === 'light' ? '#D9922E' : '#F2B544',
+            main: '#F59E0B',
         },
         success: {
-            main: mode === 'light' ? '#2E7D5A' : '#4CAF78',
+            main: '#10B981',
         },
-        info: tokens.secondary,
+        info: {
+            main: '#3B82F6',
+        },
     },
     typography: {
         fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
@@ -116,17 +117,17 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
                 root: {
                     borderRadius: tokens.borderRadius,
                     ...(mode === 'light'
-                        ? {backgroundColor: '#FAF4FB'}
-                        : {backgroundColor: '#2A242E'}),
+                        ? {backgroundColor: '#F1F5F9'}
+                        : {backgroundColor: '#3A3A4C'}),
                     '&:hover': {
                         ...(mode === 'light'
-                            ? {backgroundColor: '#F0E6F2'}
-                            : {backgroundColor: '#3B3340'}),
+                            ? {backgroundColor: '#E2E8F0'}
+                            : {backgroundColor: '#4A4A5C'}),
                     },
                     '&.Mui-focused': {
                         ...(mode === 'light'
-                            ? {backgroundColor: '#F0E6F2'}
-                            : {backgroundColor: '#3B3340'}),
+                            ? {backgroundColor: '#E2E8F0'}
+                            : {backgroundColor: '#4A4A5C'}),
                     },
                 },
             },
@@ -149,9 +150,9 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             },
             styleOverrides: {
                 root: {
-                    color: mode === 'light' ? '#6A5F6E' : '#C7BDCB',
+                    color: mode === 'light' ? '#6B7280' : '#9CA3AF',
                     '&.Mui-focused': {
-                        color: mode === 'light' ? tokens.primary.dark : tokens.primary.light,
+                        color: mode === 'light' ? '#334155' : '#E5C563',
                     },
                 },
             },
@@ -200,14 +201,6 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
             styleOverrides: {
                 root: {
                     borderRadius: tokens.borderRadius,
-                },
-                filledPrimary: {
-                    backgroundColor: alpha(tokens.primary.main, 0.18),
-                    color: mode === 'light' ? tokens.primary.dark : '#F4EEF6',
-                },
-                filledSecondary: {
-                    backgroundColor: alpha(tokens.secondary.main, 0.18),
-                    color: mode === 'light' ? tokens.secondary.dark : '#DDF8F7',
                 },
             },
         },
@@ -274,13 +267,4 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
 
 export function buildTheme(mode: PaletteMode): Theme {
     return createTheme(getDesignTokens(mode));
-}
-
-// Utility: row hover style using theme tokens
-export const rowHover: (theme: Theme) => SxProps<Theme> = (theme: Theme) => {
-    return {
-        '&:hover': {
-            backgroundColor: theme.palette.action.hover,
-        }
-    } as SxProps<Theme>;
 }

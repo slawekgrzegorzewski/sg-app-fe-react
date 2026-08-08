@@ -1,3 +1,39 @@
+fragment AccountTransactionShort on AccountTransaction {
+    publicId
+    description
+    debit {
+        amount
+        currency {
+            description
+            code
+        }
+    }
+    credit{
+        amount
+        currency {
+            description
+            code
+        }
+    }
+    destination {
+        publicId
+    }
+    source {
+        publicId
+    }
+    timeOfTransaction
+}
+
+query GetAccountTransactions($publicId: UUID, $yearMonth: YearMonth){
+    financeManagement {
+        accounts(publicId: $publicId){
+            transactions(yearMonth: $yearMonth){
+                ...AccountTransactionShort
+            }
+        }
+    }
+}
+
 query GetFinanceManagement {
     financeManagement {
         supportedCurrencies {

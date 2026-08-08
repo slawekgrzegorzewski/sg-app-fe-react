@@ -417,7 +417,7 @@ type CurrencyInfo {
 
 type FinanceManagement {
     supportedCurrencies: [CurrencyInfo!]!
-    accounts:[Account!]!
+    accounts(publicId:UUID):[Account!]!
     billingCategories:[BillingCategory!]!
     piggyBanks:[PiggyBank!]!
 }
@@ -436,12 +436,13 @@ type Account {
 }
 
 type AccountTransaction {
+    publicId: String!
     description: String!
     source: Account
     destination: Account
-    debit: BigDecimal
-    credit: BigDecimal
-    timeOfTransaction: LocalDateTime
+    debit: MonetaryAmount
+    credit: MonetaryAmount
+    timeOfTransaction: LocalDateTime!
 }
 
 input AccountCreationInput {
