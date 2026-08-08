@@ -31,6 +31,7 @@ import Typography from "@mui/material/Typography";
 import {PickBankAccountButton} from "./PickBankAccountButton";
 import {FormDialog} from "../../utils/dialogs/FormDialog";
 import ConfirmationDialog from "../../utils/dialogs/ConfirmationDialog";
+import {FormattedMoneyText} from "../../application/components/FormattedMoneyText";
 
 type AccountDTO = {
     publicId: string,
@@ -252,14 +253,15 @@ export function AccountsManagement({
                                     Powiązane z kontem bankowym: {account.bankAccount.iban}
                                 </Typography>
                             )}
-                            <Typography variant={'body2'}
-                                        sx={{
-                                            color: account.currentBalance.toNumber() < 0 ? 'error.main' : 'text.secondary',
-                                            fontWeight: 500,
-                                            fontVariantNumeric: 'tabular-nums',
-                                        }}>
-                                Stan konta: {formatBalance(account.currency, account.currentBalance)}
-                            </Typography>
+                            <FormattedMoneyText
+                                money={{
+                                    amount: account.currentBalance,
+                                    currency: account.currency,
+                                }}
+                                parenthesizeNegative
+                            >
+                                {formattedValue => <>Stan konta: {formattedValue}</>}
+                            </FormattedMoneyText>
                             <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{mt: 0.5}}>
                                 {account.creditLimitAmount.toNumber() > 0 && (
                                     <Chip size="small" variant="outlined" color="secondary"

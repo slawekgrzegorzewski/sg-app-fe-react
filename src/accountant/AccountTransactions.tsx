@@ -6,11 +6,11 @@ import {Box, Stack, useMediaQuery} from "@mui/material";
 import InformationDialog from "../utils/dialogs/InformationDialog";
 import dayjs from "dayjs";
 import Typography from "@mui/material/Typography";
-import {formatMonetaryAmount} from "../utils/functions";
 import Button from "@mui/material/Button";
 import {almostFullHeightDialog} from "../utils/theme/utils";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import {OverflowTooltip} from "../utils/OverflowTooltip";
+import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
 
 const BY_DATE = (account: Account) => ComparatorBuilder
     .comparingByDate<AccountTransactionShortFragment>(t => dayjs(t.timeOfTransaction).toDate())
@@ -87,53 +87,52 @@ export function AccountTransactions({account, onClose}: AccountTransactionsProps
                     {data.financeManagement.accounts.length === 0 ? [] : [...data.financeManagement.accounts[0].transactions]
                         .sort(BY_DATE(account))
                         .map(
-                            (transaction) => (
-                                <Stack
-                                    key={transaction.publicId}
-                                    direction="row"
-                                    alignItems="center"
-                                    spacing={2}
-                                    sx={{
-                                        px: 1.5,
-                                        py: 0.2,
-                                        borderBottom: '1px solid',
-                                        borderColor: 'divider',
-                                        '&:hover': {
-                                            bgcolor: 'action.hover',
-                                        },
-                                    }}>
-                                    <Box
+                            (transaction) => {
+                                let balance = transaction.source?.publicId === account.publicId
+                                    ? {amount: -transaction.debit!.amount, currency: transaction.debit!.currency.code}
+                                    : {amount: transaction.credit!.amount, currency: transaction.credit!.currency.code};
+                                return (
+                                    <Stack
+                                        key={transaction.publicId}
+                                        direction="row"
+                                        alignItems="center"
+                                        spacing={2}
                                         sx={{
-                                            width: 100,
-                                            flexShrink: 0,
-                                            color: 'text.secondary',
-                                            fontSize: '0.875rem',
+                                            px: 1.5,
+                                            py: 0.2,
+                                            borderBottom: '1px solid',
+                                            borderColor: 'divider',
+                                            '&:hover': {
+                                                bgcolor: 'action.hover',
+                                            },
                                         }}>
-                                        {dayjs(transaction.timeOfTransaction).format(
-                                            'YYYY-MM-DD'
-                                        )}
-                                    </Box>
+                                        <Box
+                                            sx={{
+                                                width: 100,
+                                                flexShrink: 0,
+                                                color: 'text.secondary',
+                                                fontSize: '0.875rem',
+                                            }}>
+                                            {dayjs(transaction.timeOfTransaction).format(
+                                                'YYYY-MM-DD'
+                                            )}
+                                        </Box>
+                                        <FormattedMoneyText
+                                            money={{
+                                                amount: balance.amount,
+                                                currency: balance.currency,
+                                            }}
+                                            parenthesizeNegative
+                                        >
+                                            {formattedValue => <>{formattedValue}</>}
+                                        </FormattedMoneyText>
 
-                                    <Box
-                                        sx={{
-                                            width: 110,
-                                            flexShrink: 0,
-                                            textAlign: 'right',
-                                            fontWeight: 500,
-                                            fontVariantNumeric: 'tabular-nums',
-                                        }}>
-                                        {formatMonetaryAmount(
-                                            transaction.source?.publicId === account.publicId
-                                                ? transaction.debit!
-                                                : transaction.credit!
-                                        )}
-                                    </Box>
-
-                                    <OverflowTooltip>
-                                        {transaction.description}
-                                    </OverflowTooltip>
-                                </Stack>
-                            )
+                                        <OverflowTooltip>
+                                            {transaction.description}
+                                        </OverflowTooltip>
+                                    </Stack>
+                                );
+                            }
                         )}
                 </Stack>
             </Stack>

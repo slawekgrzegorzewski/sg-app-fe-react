@@ -4,12 +4,12 @@ import {Account, GetFinanceManagement, GetFinanceManagementQuery, PiggyBank} fro
 import React from "react";
 import {Stack, useTheme} from "@mui/material";
 import {MultiCurrencySummary} from "../application/components/MultiCurrencySummary";
-import {formatMonetaryAmount} from "../utils/functions";
 import {ComparatorBuilder} from "../utils/comparator-builder";
 import Typography from "@mui/material/Typography";
 import Decimal from "decimal.js";
 import {AccountView} from "./AccountView";
 import {compactListRow} from "../utils/theme/utils";
+import {FormattedMoneyText} from "../application/components/FormattedMoneyText";
 
 export function Accounts() {
     const {
@@ -127,17 +127,15 @@ export function Accounts() {
                                 <Typography>
                                     {piggyBank.name}
                                 </Typography>
-
-                                <Typography
-                                    sx={{
-                                        fontWeight: 500,
-                                        fontVariantNumeric: 'tabular-nums',
-                                        whiteSpace: 'nowrap',
-                                        ml: 2,
+                                <FormattedMoneyText
+                                    money={{
+                                        amount: piggyBank.balance.amount,
+                                        currency: piggyBank.balance.currency.code,
                                     }}
+                                    parenthesizeNegative
                                 >
-                                    {formatMonetaryAmount(piggyBank.balance)}
-                                </Typography>
+                                    {formattedValue => <>{formattedValue}</>}
+                                </FormattedMoneyText>
                             </Stack>
                         ))}
                     </Stack>

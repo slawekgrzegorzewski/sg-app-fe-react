@@ -1,9 +1,9 @@
 import React from "react";
 import Decimal from "decimal.js";
 import {Stack, Theme} from "@mui/material";
-import {formatCurrency} from "../../utils/functions";
 import {SxProps} from "@mui/system";
 import Typography from "@mui/material/Typography";
+import {FormattedMoneyText} from "./FormattedMoneyText";
 
 type MultiCurrencySummaryProps<T> = {
     data: T[],
@@ -41,15 +41,15 @@ export function MultiCurrencySummary<T>({
                         {header}
                     </Typography>
                 }
-                <Typography
-                    sx={{
-                        fontWeight: 500,
-                        fontVariantNumeric: 'tabular-nums',
-                        whiteSpace: 'nowrap',
+                <FormattedMoneyText
+                    money={{
+                        amount: balance,
+                        currency: currency,
                     }}
+                    parenthesizeNegative
                 >
-                    {formatCurrency(currency, balance)}
-                </Typography>
+                    {formattedValue => <>{formattedValue}</>}
+                </FormattedMoneyText>
             </Stack>;
         })}
     </Stack>;
