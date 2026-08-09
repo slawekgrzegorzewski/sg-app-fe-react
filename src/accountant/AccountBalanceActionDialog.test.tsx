@@ -3,14 +3,37 @@ import userEvent from '@testing-library/user-event';
 import {useMutation} from '@apollo/client/react';
 import {Account, CreateTransfer, CurrencyInfo} from '../types';
 import {AccountBalanceActionDialog} from './AccountBalanceActionDialog';
+import Decimal from 'decimal.js';
+import dayjs from 'dayjs';
 
 jest.mock('@apollo/client/react', () => ({
     useMutation: jest.fn(),
 }));
 
 jest.mock('./CreateTransferForm', () => ({
-    CreateTransferForm: ({onClose}: {onClose: (value: unknown) => void}) => (
+    CreateTransferForm: ({
+        onClose,
+        transferToCreate,
+        descriptionEditable,
+        dateEditable,
+    }: {
+        onClose: (value: unknown) => void;
+        descriptionEditable: boolean;
+        dateEditable: boolean;
+        transferToCreate: {
+            fromAccountPublicId: string;
+            fromAmount: {toString: () => string};
+            description: string;
+            day: {format: (format: string) => string} | null;
+        };
+    }) => (
         <button
+            data-from-account={transferToCreate.fromAccountPublicId}
+            data-from-amount={transferToCreate.fromAmount.toString()}
+            data-description={transferToCreate.description}
+            data-description-editable={descriptionEditable}
+            data-date-editable={dateEditable}
+            data-day={transferToCreate.day?.format('YYYY-MM-DD')}
             onClick={() =>
                 onClose({
                     fromAccountPublicId: 'account-id',
@@ -52,14 +75,31 @@ describe('AccountBalanceActionDialog', () => {
         const onCompleted = jest.fn().mockResolvedValue(undefined);
         render(
             <AccountBalanceActionDialog
-                action={{account}}
+                action={{
+                    account,
+                    initialTransfer: {
+                        fromAmount: new Decimal(125),
+                        description: 'Źródłowa transakcja',
+                        day: dayjs('2026-08-08'),
+                    },
+                    lockDescription: true,
+                    dateEditable: true,
+                }}
                 accounts={[account]}
                 onClose={onClose}
                 onCompleted={onCompleted}
             />
         );
 
-        await user.click(screen.getByRole('button', {name: 'Zapisz transfer'}));
+        const submitButton = screen.getByRole('button', {name: 'Zapisz transfer'});
+        expect(submitButton).toHaveAttribute('data-from-account', 'account-id');
+        expect(submitButton).toHaveAttribute('data-from-amount', '125');
+        expect(submitButton).toHaveAttribute('data-description', 'Źródłowa transakcja');
+        expect(submitButton).toHaveAttribute('data-description-editable', 'false');
+        expect(submitButton).toHaveAttribute('data-date-editable', 'true');
+        expect(submitButton).toHaveAttribute('data-day', '2026-08-08');
+
+        await user.click(submitButton);
 
         await waitFor(() =>
             expect(createTransferMutation).toHaveBeenCalledWith({

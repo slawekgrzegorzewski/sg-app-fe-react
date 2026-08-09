@@ -9,10 +9,12 @@ import {AccountBalanceActions} from './AccountBalanceActions';
 
 export interface AccountViewProps {
     account: Account;
+    accounts: Account[];
     onTransfer: () => void;
+    onTransferCompleted: () => Promise<unknown>;
 }
 
-export function AccountView({account, onTransfer}: AccountViewProps) {
+export function AccountView({account, accounts, onTransfer, onTransferCompleted}: AccountViewProps) {
     const theme = useTheme();
     const [expanded, setExpanded] = useState(false);
     return (
@@ -46,6 +48,8 @@ export function AccountView({account, onTransfer}: AccountViewProps) {
                 <AccountTransactions
                     key={'at' + account.publicId}
                     account={account}
+                    accounts={accounts}
+                    onTransferCompleted={onTransferCompleted}
                     onClose={() => {
                         setExpanded(false);
                         return Promise.resolve();

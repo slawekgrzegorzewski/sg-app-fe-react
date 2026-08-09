@@ -26,14 +26,18 @@ export const TRANSFER_FORM_PROPERTIES = (
     accounts: Account[],
     restrictToDates: Dayjs[],
     alwaysEditable: boolean = false,
-    initialTransfer: TransferDTO = transfer
+    initialTransfer: TransferDTO = transfer,
+    descriptionEditable: boolean = true,
+    dateEditable?: boolean
 ) => {
     const areAllCurrenciesSet = !!transfer.fromCurrency && !!transfer.toCurrency;
     const transferWithConversion = areAllCurrenciesSet && transfer.fromCurrency !== transfer.toCurrency;
     return {
         validationSchema: Yup.object({
             fromAccountPublicId: Yup.string().required('Wymagana'),
-            toAccountPublicId: Yup.string().required('Wymagana'),
+            toAccountPublicId: Yup.string()
+                .notOneOf([Yup.ref('fromAccountPublicId')], 'Konto docelowe musi być inne niż źródłowe')
+                .required('Wymagana'),
             fromAmount: Yup.number().required('Wymagana'),
             toAmount: Yup.number().required('Wymagana'),
             day: Yup.object().required('Wymagana'),
@@ -64,12 +68,14 @@ export const TRANSFER_FORM_PROPERTIES = (
                 key: 'toAccountPublicId',
                 label: 'Na konto',
                 type: 'SELECT',
-                selectOptions: accounts.map(account => {
-                    return {
-                        key: account.publicId,
-                        displayElement: <>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>,
-                    };
-                }),
+                selectOptions: accounts
+                    .filter(account => account.publicId !== transfer.fromAccountPublicId)
+                    .map(account => {
+                        return {
+                            key: account.publicId,
+                            displayElement: <>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>,
+                        };
+                    }),
                 editable: alwaysEditable || !initialTransfer.toAccountPublicId,
             } as SelectEditorField,
             {
@@ -90,7 +96,7 @@ export const TRANSFER_FORM_PROPERTIES = (
                 label: 'Data',
                 type: 'DATEPICKER',
                 key: 'day',
-                editable: alwaysEditable || !initialTransfer.day,
+                editable: dateEditable ?? (alwaysEditable || !initialTransfer.day),
                 additionalProps: {
                     sx: {
                         width: '200px',
@@ -103,7 +109,7 @@ export const TRANSFER_FORM_PROPERTIES = (
                 label: 'Opis',
                 type: 'TEXTAREA',
                 key: 'description',
-                editable: true,
+                editable: descriptionEditable,
                 additionalProps: {sx: {display: areAllCurrenciesSet ? 'block' : 'none'}},
             } as RegularEditorField,
         ],
@@ -115,6 +121,8 @@ export interface CreateTransferFormProps {
     transferToCreate: TransferDTO & {possibleDays: Dayjs[]};
     onClose: (transferToCreate: TransferDTO | null) => void;
     alwaysEditable?: boolean;
+    descriptionEditable?: boolean;
+    dateEditable?: boolean;
 }
 
 export function CreateTransferForm({
@@ -122,9 +130,19 @@ export function CreateTransferForm({
     transferToCreate,
     onClose,
     alwaysEditable = false,
+    descriptionEditable = true,
+    dateEditable,
 }: CreateTransferFormProps): JSX.Element {
     const [formProperties, setFormProperties] = useState(
-        TRANSFER_FORM_PROPERTIES(transferToCreate, accounts, transferToCreate.possibleDays, alwaysEditable)
+        TRANSFER_FORM_PROPERTIES(
+            transferToCreate,
+            accounts,
+            transferToCreate.possibleDays,
+            alwaysEditable,
+            transferToCreate,
+            descriptionEditable,
+            dateEditable
+        )
     );
     return (
         <Form
@@ -162,7 +180,9 @@ export function CreateTransferForm({
                         accounts,
                         transferToCreate.possibleDays,
                         alwaysEditable,
-                        transferToCreate
+                        transferToCreate,
+                        descriptionEditable,
+                        dateEditable
                     )
                 );
             }}

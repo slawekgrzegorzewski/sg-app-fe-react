@@ -121,7 +121,9 @@ export function Accounts() {
                                 <AccountView
                                     key={'av' + account.publicId}
                                     account={account}
+                                    accounts={accounts}
                                     onTransfer={() => setAccountBalanceAction({account})}
+                                    onTransferCompleted={refetch}
                                 />
                             ))}
                         </Stack>

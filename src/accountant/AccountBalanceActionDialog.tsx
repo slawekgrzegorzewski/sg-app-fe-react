@@ -6,6 +6,9 @@ import {CreateTransferForm, TransferDTO} from './CreateTransferForm';
 
 export interface AccountBalanceAction {
     account: Account;
+    initialTransfer?: Partial<Pick<TransferDTO, 'fromAmount' | 'toAmount' | 'day' | 'description'>>;
+    lockDescription?: boolean;
+    dateEditable?: boolean;
 }
 
 export interface AccountBalanceActionDialogProps {
@@ -49,12 +52,14 @@ export function AccountBalanceActionDialog({action, accounts, onClose, onComplet
                 accounts={accounts}
                 transferToCreate={{
                     fromAccountPublicId: action.account.publicId,
-                    fromAmount: new Decimal(0),
-                    toAmount: new Decimal(0),
-                    day: null,
-                    description: '',
+                    fromAmount: action.initialTransfer?.fromAmount ?? new Decimal(0),
+                    toAmount: action.initialTransfer?.toAmount ?? new Decimal(0),
+                    day: action.initialTransfer?.day ?? null,
+                    description: action.initialTransfer?.description ?? '',
                     possibleDays: [],
                 }}
+                descriptionEditable={!action.lockDescription}
+                dateEditable={action.dateEditable}
                 onClose={transfer => {
                     if (transfer) {
                         void saveTransfer(transfer);

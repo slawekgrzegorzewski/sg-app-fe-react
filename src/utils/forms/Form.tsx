@@ -175,7 +175,16 @@ export default function Form<T>({
                 name={editorField.key}
                 key={editorField.key}
                 label={editorField.label}
-                value={formik.values[editorField.key]}
+                value={formik.values[editorField.key] ?? ''}
+                slotProps={
+                    isSelectEditorField(editorField)
+                        ? {
+                              inputLabel: {
+                                  htmlFor: undefined,
+                              },
+                          }
+                        : undefined
+                }
                 onChange={e => {
                     formik.handleChange(e);
                     if (autoSubmit) {
