@@ -16,9 +16,9 @@ import {Chip, Stack, Typography} from '@mui/material';
 import Decimal from 'decimal.js';
 import {formatBalance} from '../../utils/functions';
 import Grid from '@mui/material/Grid';
-import Button from '@mui/material/Button';
 import {PiggyBankBalanceEditor, Type} from './PiggyBankBalanceEditor';
 import {StandOutText} from '../../application/components/StandOutText';
+import {PiggyBankBalanceActions} from '../PiggyBankBalanceActions';
 
 export type PiggyBankDTO = {
     publicId: string;
@@ -206,26 +206,15 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
                                 </Stack>
                             </Grid>
                             <Grid size={4} sx={{textAlign: 'right'}}>
-                                <Button
-                                    variant="text"
-                                    onClick={event => {
-                                        event.stopPropagation();
+                                <PiggyBankBalanceActions
+                                    piggyBankName={piggyBank.name}
+                                    onCredit={() => {
                                         setPiggyBankBalanceDialogOptions({type: 'CREDIT', piggyBank: piggyBank});
                                     }}
-                                    color="inherit"
-                                >
-                                    Uznaj
-                                </Button>
-                                <Button
-                                    variant="text"
-                                    onClick={event => {
-                                        event.stopPropagation();
+                                    onDebit={() => {
                                         setPiggyBankBalanceDialogOptions({type: 'DEBIT', piggyBank: piggyBank});
                                     }}
-                                    color="inherit"
-                                >
-                                    Obciąż
-                                </Button>
+                                />
                             </Grid>
                         </Grid>
                     );

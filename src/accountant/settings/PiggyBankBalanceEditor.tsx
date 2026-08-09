@@ -1,17 +1,18 @@
 import * as React from 'react';
 import * as Yup from 'yup';
 import Form, {EditorField} from '../../utils/forms/Form';
-import {Dialog, DialogContent, DialogTitle, useTheme} from '@mui/material';
-import {PiggyBankDTO} from './PiggyBanksManagement';
+import {useTheme} from '@mui/material';
+import type {PiggyBankDTO} from './PiggyBanksManagement';
 import Decimal from 'decimal.js';
 import Box from '@mui/material/Box';
 import {formatCurrency} from '../../utils/functions';
+import InformationDialog from '../../utils/dialogs/InformationDialog';
 
 export type Type = 'CREDIT' | 'DEBIT';
 
 const FORM = {
     validationSchema: Yup.object({
-        balance: Yup.number().required(),
+        balance: Yup.number().moreThan(0, 'Kwota musi być większa od zera').required('Wymagana'),
     }),
     initialValues: {
         balance: 0,
@@ -33,45 +34,53 @@ export interface PiggyBankBalanceEditorProps {
     onCancel: () => void;
 }
 
+export function calculateNewPiggyBankBalance(currentBalance: Decimal, amount: number, type: Type) {
+    const absoluteAmount = new Decimal(amount).abs();
+    return type === 'CREDIT' ? currentBalance.add(absoluteAmount) : currentBalance.sub(absoluteAmount);
+}
+
 export function PiggyBankBalanceEditor({type, piggyBank, onSave, onCancel}: PiggyBankBalanceEditorProps) {
-    const calculateNewBalance = (piggyBank: PiggyBankDTO, amount: number) => {
-        const decimal = new Decimal(amount).abs();
-        return type === 'CREDIT' ? piggyBank.balance.add(decimal) : piggyBank.balance.sub(decimal);
-    };
     const theme = useTheme();
 
     return (
-        <Dialog open={true} maxWidth={'lg'} fullWidth={false}>
-            <DialogTitle>{type === 'CREDIT' ? 'Uznaj' : 'Obciąż'}</DialogTitle>
-            <DialogContent>
-                <Form
-                    {...FORM}
-                    onSave={v => {
-                        onSave({...piggyBank, balance: calculateNewBalance(piggyBank, v.balance)});
-                    }}
-                    onCancel={onCancel}
-                    previewOfChange={value => {
-                        const valueFromForm = value.balance || 0;
-                        const newBalance = calculateNewBalance(piggyBank, valueFromForm);
-                        return (
-                            <Box>
-                                <span>Balans po {type === 'CREDIT' ? 'uznaniu' : 'obciążeniu'}</span>
-                                <span
-                                    style={{
-                                        color:
-                                            newBalance.toNumber() >= 0
-                                                ? theme.palette.text.primary
-                                                : theme.palette.error.main,
-                                    }}
-                                >
-                                    {' '}
-                                    {formatCurrency(piggyBank.currency, newBalance)}
-                                </span>
-                            </Box>
-                        );
-                    }}
-                />
-            </DialogContent>
-        </Dialog>
+        <InformationDialog
+            title={type === 'CREDIT' ? 'Uznaj' : 'Obciąż'}
+            open={true}
+            onClose={() => {
+                onCancel();
+                return Promise.resolve();
+            }}
+        >
+            <Form
+                {...FORM}
+                onSave={v => {
+                    onSave({
+                        ...piggyBank,
+                        balance: calculateNewPiggyBankBalance(piggyBank.balance, v.balance, type),
+                    });
+                }}
+                onCancel={onCancel}
+                previewOfChange={value => {
+                    const valueFromForm = value.balance || 0;
+                    const newBalance = calculateNewPiggyBankBalance(piggyBank.balance, valueFromForm, type);
+                    return (
+                        <Box>
+                            <span>Balans po {type === 'CREDIT' ? 'uznaniu' : 'obciążeniu'}</span>
+                            <span
+                                style={{
+                                    color:
+                                        newBalance.toNumber() >= 0
+                                            ? theme.palette.text.primary
+                                            : theme.palette.error.main,
+                                }}
+                            >
+                                {' '}
+                                {formatCurrency(piggyBank.currency, newBalance)}
+                            </span>
+                        </Box>
+                    );
+                }}
+            />
+        </InformationDialog>
     );
 }

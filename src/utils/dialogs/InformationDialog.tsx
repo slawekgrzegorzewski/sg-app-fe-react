@@ -32,6 +32,7 @@ export default function InformationDialog(props: InformationDialogProps) {
                     {title}
                 </Typography>
                 <IconButton
+                    aria-label="Zamknij"
                     onClick={handleClose}
                     sx={{
                         position: 'absolute',
