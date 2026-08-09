@@ -984,7 +984,7 @@ type BankTransactionToImport {
 }
 
 enum CubeType {
-    THREE_BY_THREE
+    TWO, THREE, FOUR, FIVE, SIX, SEVEN, MEGAMINX
 }
 
 input CubeResultsQuery {
@@ -994,6 +994,22 @@ input CubeResultsQuery {
 type CubeResults {
     numberOfSolves: Int!
     todayAverageInMillis: Int!
+    stats(month: YearMonth!): [CubeDayStats!]!
+    topTenAllTime: [CubeBestResult!]!
+}
+
+type CubeDayStats {
+    day: LocalDate!
+    min: Int
+    max: Int
+    minAo5: Int
+    minAo30: Int
+    numberOfTries: Int!
+}
+
+type CubeBestResult {
+    timeInMillis: Int!
+    date: LocalDateTime!
 }
 
 input SaveCubeResultInput {

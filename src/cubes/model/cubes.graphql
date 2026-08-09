@@ -1,14 +1,29 @@
 query GetCubeResults($cubeType: CubeType!) {
-    cubeResults(cubeResultsQuery: {cubeType: $cubeType}){
+    cubeResults(cubeResultsQuery: {cubeType: $cubeType}) {
         numberOfSolves
         todayAverageInMillis
     }
 }
 
-mutation StoreCubeResult($cubeType: CubeType!, $timeInMillis:Int!, $timestampOfSolve: LocalDateTime!) {
-    saveCubeResult(saveCubeResultInput: {
-        cubeType: $cubeType
-        timeInMillis: $timeInMillis
-        timestampOfSolve: $timestampOfSolve
-    })
+query GetCubeStats($cubeType: CubeType!, $month: YearMonth!) {
+    cubeResults(cubeResultsQuery: {cubeType: $cubeType}) {
+        topTenAllTime {
+            timeInMillis
+            date
+        }
+        stats(month: $month) {
+            day
+            min
+            max
+            minAo5
+            minAo30
+            numberOfTries
+        }
+    }
+}
+
+mutation StoreCubeResult($cubeType: CubeType!, $timeInMillis: Int!, $timestampOfSolve: LocalDateTime!) {
+    saveCubeResult(
+        saveCubeResultInput: {cubeType: $cubeType, timeInMillis: $timeInMillis, timestampOfSolve: $timestampOfSolve}
+    )
 }

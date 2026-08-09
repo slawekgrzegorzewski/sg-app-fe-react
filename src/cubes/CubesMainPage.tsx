@@ -58,14 +58,14 @@ export function CubesMainPage() {
         reset.current();
         storeCubeResultMutation({
             variables: {
-                cubeType: 'THREE_BY_THREE',
+                cubeType: 'THREE',
                 timestampOfSolve: dayjs().format('YYYY-MM-DD HH:mm:ss.SSS'),
                 timeInMillis: resultCopy,
             },
         }).then(() => refetch());
     });
 
-    const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType: 'THREE_BY_THREE'}});
+    const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType: 'THREE'}});
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
 
     const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});

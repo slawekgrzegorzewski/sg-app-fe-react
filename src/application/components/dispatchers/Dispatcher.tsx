@@ -10,6 +10,7 @@ import {IntellectualPropertySettingsMainPage} from '../../../intellectual-proper
 import {useApplicationAndDomain} from '../../../utils/use-application-and-domain';
 import {AccountantDispatcher} from './AccountantDispatcher';
 import {CubesMainPage} from '../../../cubes/CubesMainPage';
+import {CubeStatsPage} from '../../../cubes/CubeStatsPage';
 
 export function Dispatcher() {
     let {page} = useParams();
@@ -41,6 +42,9 @@ export function Dispatcher() {
     } else if (application.id === 'CUBES') {
         if (!page || isRequestForPage('CUBE_MAIN')) {
             return <CubesMainPage></CubesMainPage>;
+        }
+        if (isRequestForPage('CUBE_STATS')) {
+            return <CubeStatsPage />;
         }
         return <></>;
     }

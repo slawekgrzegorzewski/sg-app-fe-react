@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from '../application/components/CurrentUserDisplay';
 import {useCurrentUser} from './users/use-current-user';
-import {Link, Menu, MenuItem, Stack, styled, useTheme} from '@mui/material';
+import {Link, Menu, MenuItem, Stack, useTheme} from '@mui/material';
 import {useApplication} from './applications/use-application';
 import {ApplicationId, applications} from './applications/applications-access';
 import {useApplicationNavigation} from './use-application-navigation';
@@ -99,8 +99,6 @@ export default function DrawerAppBar(props: Props) {
 
     const container = window !== undefined ? () => window().document.body : undefined;
 
-    const Offset = styled('div')(({theme}) => theme.mixins.toolbar);
-
     const hideWhenXS = {display: {xs: 'none', sm: 'block'}};
 
     if (domainsDataLoading) {
@@ -115,7 +113,7 @@ export default function DrawerAppBar(props: Props) {
                     refreshDomains: domainsDataRefetch,
                 }}
             >
-                <Stack direction="column" sx={{width: '100dvw', height: '100dvh'}}>
+                <Stack direction="column" sx={{width: '100%', minHeight: '100dvh'}}>
                     <AppBar position="sticky">
                         {domainsData.domainInvitations.length > 0 && (
                             <Toolbar sx={{backgroundColor: theme.palette.info.main}}>
@@ -512,7 +510,9 @@ export default function DrawerAppBar(props: Props) {
                             </Box>
                         }
                     </Drawer>
-                    <Offset sx={{flexGrow: 1}}>{children}</Offset>
+                    <Box component="main" sx={{flexGrow: 1, minWidth: 0, width: '100%'}}>
+                        {children}
+                    </Box>
                 </Stack>
             </DomainsContext.Provider>
         );

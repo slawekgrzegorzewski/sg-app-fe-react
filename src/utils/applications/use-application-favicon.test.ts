@@ -17,10 +17,10 @@ describe("getApplicationFaviconName", () => {
         expect(getApplicationFaviconName("UNKNOWN")).toBe("home");
     });
 
-    it("uses versioned favicon file names", () => {
+    it("replaces existing favicon links with versioned file names", () => {
         document.head.innerHTML = `
+            <link rel="icon" href="/favicon.ico" />
             <link data-app-favicon rel="icon" sizes="32x32" href="/favicons/home-v2-32.png" />
-            <link data-app-favicon rel="icon" sizes="16x16" href="/favicons/home-v2-16.png" />
         `;
 
         renderHook(() => useApplicationFavicon("ACCOUNTANT"));
@@ -29,8 +29,9 @@ describe("getApplicationFaviconName", () => {
             document.querySelectorAll<HTMLLinkElement>("link[data-app-favicon]")
         );
         expect(faviconLinks.map(link => link.getAttribute("href"))).toEqual([
-            "/favicons/accountant-v2-32.png",
-            "/favicons/accountant-v2-16.png",
+            "/favicons/accountant-v3-32.png",
+            "/favicons/accountant-v3-16.png",
         ]);
+        expect(document.querySelectorAll('link[rel~="icon"]')).toHaveLength(2);
     });
 });
