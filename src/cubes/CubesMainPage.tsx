@@ -2,19 +2,31 @@ import {clickableProps} from '../application/components/clickable';
 import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from './phase';
 import * as React from 'react';
 import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
-import {Box, Dialog, Stack, useMediaQuery, useTheme} from '@mui/material';
+import {
+    Alert,
+    Box,
+    Dialog,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+    Stack,
+    useMediaQuery,
+    useTheme,
+} from '@mui/material';
 import {newCube} from './visualizer';
 import {scramble as generateScramble} from './cube-scrambler';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {StopWatch} from './StopWatch';
 import {useMutation, useQuery} from '@apollo/client/react';
-import {GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMutation} from '../types';
+import {CubeType, GetCubeResults, GetCubeResultsQuery, StoreCubeResult, StoreCubeResultMutation} from '../types';
 import dayjs from 'dayjs';
 import {useWakeLock} from '../utils/use-wake-lock';
 import {StopWatchDisplay} from './StopWatchDisplay';
 import {useIsTouchDevice} from '../utils/use-is-touch-screen';
 import {StandOutText} from '../application/components/StandOutText';
+import {CUBE_TYPE_OPTIONS, getCubeLayers, getCubeScrambleOptions} from './cube-types';
 
 export function CubesMainPage() {
     const [, forceUpdate] = useReducer(x => x + 1, 0);
@@ -22,11 +34,23 @@ export function CubesMainPage() {
     const isTouchDevice = useIsTouchDevice();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md')) || isTouchDevice;
     const [wakeLock, requestWakeLock, releaseWakeLock] = useWakeLock();
+    const [cubeType, setCubeType] = useState<CubeType>(CubeType.Three);
+    const cubeTypeRef = useRef(cubeType);
+    cubeTypeRef.current = cubeType;
     const [scramble, setScramble] = useState('');
     const [phase, setPhase] = useState<Phase>('IDLE');
     const result = useRef(0);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
     const cubeVisualizationContainerRef = useRef<HTMLElement | null>(null);
+    const selectedCubeLayers = getCubeLayers(cubeType);
+    const scrambleOptions = getCubeScrambleOptions(cubeType);
+
+    const generateScrambleForSelectedCube = useCallback(() => {
+        const options = getCubeScrambleOptions(cubeType);
+        if (options) {
+            setScramble(generateScramble(options).join(' '));
+        }
+    }, [cubeType]);
 
     const clearInspectionTimeout = useCallback(() => {
         if (becomeLateInspectionTimeOutId.current) {
@@ -58,14 +82,14 @@ export function CubesMainPage() {
         reset.current();
         storeCubeResultMutation({
             variables: {
-                cubeType: 'THREE',
+                cubeType: cubeTypeRef.current,
                 timestampOfSolve: dayjs().format('YYYY-MM-DD HH:mm:ss.SSS'),
                 timeInMillis: resultCopy,
             },
         }).then(() => refetch());
     });
 
-    const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType: 'THREE'}});
+    const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType}});
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
 
     const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});
@@ -97,7 +121,7 @@ export function CubesMainPage() {
                 }
             }
             if (e.code === 'KeyS' && phase === 'IDLE') {
-                setScramble(generateScramble({turns: 30}).join(' '));
+                generateScrambleForSelectedCube();
             }
             if (e.code === 'KeyR') {
                 reset.current();
@@ -125,7 +149,7 @@ export function CubesMainPage() {
             document.removeEventListener('keydown', keyDownListener);
             document.removeEventListener('keyup', keyUpListener);
         };
-    }, [phase, clearInspectionTimeout, beginInspection]);
+    }, [phase, clearInspectionTimeout, beginInspection, generateScrambleForSelectedCube]);
 
     useEffect(() => clearInspectionTimeout, [clearInspectionTimeout]);
 
@@ -133,10 +157,10 @@ export function CubesMainPage() {
 
     useEffect(() => {
         const container = cubeVisualizationContainerRef.current;
-        if (!container) {
+        if (!container || selectedCubeLayers === null) {
             return;
         }
-        const scene = newCube(container, 3);
+        const scene = newCube(container, selectedCubeLayers);
         scene.enableKey = _ => false;
         if (scramble) {
             scene.puzzle.performAlg(scramble);
@@ -144,7 +168,7 @@ export function CubesMainPage() {
         return () => {
             scene.dispose();
         };
-    }, [scramble, hasCubeResults]);
+    }, [scramble, hasCubeResults, selectedCubeLayers]);
 
     if (data) {
         return (
@@ -156,21 +180,48 @@ export function CubesMainPage() {
                 direction={'column'}
                 alignItems={'center'}
             >
+                <FormControl variant="filled" size="small" sx={{minWidth: 180, mt: 2}}>
+                    <InputLabel id="main-cube-type-label">Rodzaj kostki</InputLabel>
+                    <Select
+                        labelId="main-cube-type-label"
+                        id="main-cube-type"
+                        value={cubeType}
+                        disabled={phase !== 'IDLE' || result.current > 0}
+                        onChange={event => {
+                            reset.current();
+                            setCubeType(event.target.value as CubeType);
+                        }}
+                    >
+                        {CUBE_TYPE_OPTIONS.map(option => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
                 {wakeLock && <Typography>Wake lock on</Typography>}
                 {!wakeLock && <Typography>Wake lock off</Typography>}
                 <Typography>Liczba ułożeń: {data.cubeResults.numberOfSolves}</Typography>
                 <Typography>Średnia: {data.cubeResults.todayAverageInMillis / 1000}</Typography>
                 <Stack direction={'row'}>
-                    <Button onClick={() => setScramble(generateScramble({turns: 30}).join(' '))}>Scramble</Button>
+                    <Button disabled={!scrambleOptions} onClick={generateScrambleForSelectedCube}>
+                        Scramble
+                    </Button>
                     <Button onClick={reset.current}>Reset</Button>
                 </Stack>
                 <Typography variant={'h5'}>{scramble}</Typography>
-                <Box
-                    component="div"
-                    ref={cubeVisualizationContainerRef}
-                    id="scenesContainer"
-                    sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}
-                ></Box>
+                {selectedCubeLayers === null ? (
+                    <Alert severity="info" sx={{my: 2}}>
+                        Generator i wizualizacja nie są jeszcze dostępne dla Megaminx.
+                    </Alert>
+                ) : (
+                    <Box
+                        component="div"
+                        ref={cubeVisualizationContainerRef}
+                        id="scenesContainer"
+                        sx={{display: 'flex', flexWrap: 'wrap', gap: '16px', width: '300px', height: '300px'}}
+                    ></Box>
+                )}
                 {fullScreen && (
                     <Dialog
                         open={fullScreen && phase === 'SOLVING'}

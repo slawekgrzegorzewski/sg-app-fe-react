@@ -1,11 +1,10 @@
-import {scramble} from "./cube-scrambler";
-import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from "./phase";
+import {scramble} from './cube-scrambler';
+import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from './phase';
 
 const FACES = ['U', 'D', 'F', 'B', 'R', 'L'];
 const OPPOSITES: Record<string, string> = {U: 'D', D: 'U', F: 'B', B: 'F', L: 'R', R: 'L'};
 
 describe('scramble', () => {
-
     it('produces exactly the requested number of turns', () => {
         expect(scramble({turns: 30})).toHaveLength(30);
         expect(scramble({turns: 1})).toHaveLength(1);
@@ -56,10 +55,33 @@ describe('scramble', () => {
     it('defaults to 20 turns when no options are given', () => {
         expect(scramble()).toHaveLength(20);
     });
+
+    it('can generate wide turns for larger cubes', () => {
+        const randomValues = [0.01, 0.01, 0.01, 0.34, 0.01, 0.01];
+        let randomIndex = 0;
+        const random = jest.spyOn(Math, 'random').mockImplementation(() => randomValues[randomIndex++ % 6]);
+
+        try {
+            expect(scramble({turns: 4, wideMoves: true})).toEqual(['Uw', 'Rw', 'Uw', 'Rw']);
+        } finally {
+            random.mockRestore();
+        }
+    });
+
+    it('can generate three-layer wide turns for six- and seven-layer cubes', () => {
+        const randomValues = [0.01, 0.01, 0.01, 0.99];
+        let randomIndex = 0;
+        const random = jest.spyOn(Math, 'random').mockImplementation(() => randomValues[randomIndex++ % 4]);
+
+        try {
+            expect(scramble({turns: 1, wideMoves: true, maxWideMoveDepth: 3})).toEqual(['3Uw']);
+        } finally {
+            random.mockRestore();
+        }
+    });
 });
 
 describe('isInspection', () => {
-
     it('accepts both inspection phases', () => {
         expect(isInspection('INSPECTION_EARLY')).toBe(true);
         expect(isInspection('INSPECTION_LATE')).toBe(true);

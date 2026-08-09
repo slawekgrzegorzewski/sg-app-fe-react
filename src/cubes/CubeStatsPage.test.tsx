@@ -1,7 +1,11 @@
 import {useQuery} from '@apollo/client/react';
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {LocalizationProvider} from '@mui/x-date-pickers';
+import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {plPL} from '@mui/x-date-pickers/locales';
 import dayjs from 'dayjs';
+import 'dayjs/locale/pl';
 import {CubeStatsPage, formatCubeTime, summarizeCubeStats} from './CubeStatsPage';
 
 jest.mock('@apollo/client/react', () => ({
@@ -9,6 +13,18 @@ jest.mock('@apollo/client/react', () => ({
 }));
 
 const useQueryMock = useQuery as unknown as jest.Mock;
+
+function renderPage() {
+    return render(
+        <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="pl"
+            localeText={plPL.components.MuiLocalizationProvider.defaultProps.localeText}
+        >
+            <CubeStatsPage />
+        </LocalizationProvider>
+    );
+}
 
 describe('cube statistics helpers', () => {
     it('formats milliseconds as a stopwatch time', () => {
@@ -81,7 +97,7 @@ describe('CubeStatsPage', () => {
 
     it('shows the top three results and expands the remaining places', async () => {
         const user = userEvent.setup();
-        render(<CubeStatsPage />);
+        renderPage();
 
         expect(screen.getByText('Liczba prób').nextElementSibling).toHaveTextContent('12');
         expect(screen.getByText('Aktywne dni').nextElementSibling).toHaveTextContent('2');
@@ -108,7 +124,7 @@ describe('CubeStatsPage', () => {
 
     it('loads statistics for another cube type and month', async () => {
         const user = userEvent.setup();
-        render(<CubeStatsPage />);
+        renderPage();
 
         await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
         await user.click(screen.getByRole('option', {name: '2×2'}));
@@ -123,5 +139,26 @@ describe('CubeStatsPage', () => {
                 month: dayjs().subtract(1, 'month').format('YYYY-MM'),
             })
         );
+    });
+
+    it('opens a Polish month picker from the month label', async () => {
+        const user = userEvent.setup();
+        const selectedMonth = dayjs().subtract(1, 'month');
+        renderPage();
+
+        const monthLabel = screen.getByRole('button', {name: /Wybierz miesiąc, obecnie/i});
+        expect(monthLabel).toHaveTextContent(dayjs().locale('pl').format('MMMM YYYY'));
+
+        await user.click(monthLabel);
+
+        expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+        expect(screen.getByRole('radio', {name: 'styczeń'})).toBeInTheDocument();
+
+        await user.click(screen.getByRole('radio', {name: selectedMonth.locale('pl').format('MMMM')}));
+
+        await waitFor(() =>
+            expect(useQueryMock.mock.calls.at(-1)[1].variables.month).toBe(selectedMonth.format('YYYY-MM'))
+        );
+        expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
     });
 });

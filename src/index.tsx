@@ -20,6 +20,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import {AppThemeProvider} from './utils/ThemeContext';
 import {LocalizationProvider} from '@mui/x-date-pickers';
 import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
+import {plPL} from '@mui/x-date-pickers/locales';
 import {logError} from './utils/logger';
 import 'dayjs/locale/pl';
 
@@ -56,7 +57,11 @@ const router = createBrowserRouter(
             path: '/:applicationId/:domainPublicId?/:page?/:param1?',
             element: (
                 <AppThemeProvider>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <LocalizationProvider
+                        dateAdapter={AdapterDayjs}
+                        adapterLocale="pl"
+                        localeText={plPL.components.MuiLocalizationProvider.defaultProps.localeText}
+                    >
                         <CssBaseline />
                         <GlobalBackdropProvider>
                             <Authenticated>

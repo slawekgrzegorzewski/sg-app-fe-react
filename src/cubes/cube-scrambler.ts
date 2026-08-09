@@ -1,13 +1,14 @@
-interface ScrambleOptions {
+export interface ScrambleOptions {
     turns: number;
+    wideMoves: boolean;
+    maxWideMoveDepth?: number;
 }
 
-type FaceStatus = 'movable' | 'not-movable'
+type FaceStatus = 'movable' | 'not-movable';
 type Face = 'U' | 'D' | 'F' | 'B' | 'R' | 'L';
-type MoveVariant = '' | '\'' | '2'
+type MoveVariant = '' | "'" | '2';
 
 export const scramble = (options: Partial<ScrambleOptions> = {turns: 20}) => {
-
     const result: string[] = [];
 
     const faceStatuses = new Map<Face, FaceStatus>([
@@ -16,7 +17,7 @@ export const scramble = (options: Partial<ScrambleOptions> = {turns: 20}) => {
         ['F', 'movable'],
         ['B', 'movable'],
         ['R', 'movable'],
-        ['L', 'movable']
+        ['L', 'movable'],
     ]);
 
     function oppositeFace(face: Face): Face {
@@ -60,7 +61,7 @@ export const scramble = (options: Partial<ScrambleOptions> = {turns: 20}) => {
             case 0:
                 return '';
             case 1:
-                return '\'';
+                return "'";
             case 2:
                 return '2';
             default:
@@ -82,7 +83,13 @@ export const scramble = (options: Partial<ScrambleOptions> = {turns: 20}) => {
         }
         faceStatuses.set(face, 'not-movable');
         setAllMovable([face, oppositeFace(face)]);
-        result.push(face + variant);
+        let move: string = face;
+        if (options.wideMoves && Math.random() < 0.5) {
+            const maxWideMoveDepth = Math.max(2, options.maxWideMoveDepth ?? 2);
+            const depth = maxWideMoveDepth === 2 ? 2 : 2 + Math.floor(Math.random() * (maxWideMoveDepth - 1));
+            move = depth === 2 ? `${face}w` : `${depth}${face}w`;
+        }
+        result.push(move + variant);
     }
     return result;
-}
+};

@@ -5,11 +5,13 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
     Button,
+    ButtonBase,
     FormControl,
     IconButton,
     InputLabel,
     MenuItem,
     Paper,
+    Popover,
     Select,
     Stack,
     Table,
@@ -20,24 +22,17 @@ import {
     TableRow,
     Typography,
 } from '@mui/material';
+import {DateCalendar} from '@mui/x-date-pickers';
+import {DateView} from '@mui/x-date-pickers/models';
 import dayjs, {Dayjs} from 'dayjs';
 import 'dayjs/locale/pl';
 import {useState} from 'react';
 import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {StandOutText} from '../application/components/StandOutText';
 import {CubeType, GetCubeStats, GetCubeStatsQuery} from '../types';
+import {CUBE_TYPE_OPTIONS} from './cube-types';
 
 const YEAR_MONTH_FORMAT = 'YYYY-MM';
-
-export const CUBE_TYPE_OPTIONS: Array<{value: CubeType; label: string}> = [
-    {value: CubeType.Two, label: '2×2'},
-    {value: CubeType.Three, label: '3×3'},
-    {value: CubeType.Four, label: '4×4'},
-    {value: CubeType.Five, label: '5×5'},
-    {value: CubeType.Six, label: '6×6'},
-    {value: CubeType.Seven, label: '7×7'},
-    {value: CubeType.Megaminx, label: 'Megaminx'},
-];
 
 type CubeDayStats = GetCubeStatsQuery['cubeResults']['stats'][number];
 type CubeBestResult = GetCubeStatsQuery['cubeResults']['topTenAllTime'][number];
@@ -144,15 +139,63 @@ function TopTenResults({results}: {results: CubeBestResult[]}) {
 
 function MonthNavigation({month, onChange}: {month: Dayjs; onChange: (month: Dayjs) => void}) {
     const isCurrentMonth = month.isSame(dayjs(), 'month');
+    const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
+    const [calendarMonth, setCalendarMonth] = useState(month);
+    const [calendarView, setCalendarView] = useState<DateView>('month');
+
+    function closeCalendar() {
+        setCalendarAnchor(null);
+    }
 
     return (
         <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
             <IconButton aria-label="Poprzedni miesiąc" onClick={() => onChange(month.subtract(1, 'month'))}>
                 <NavigateBeforeIcon />
             </IconButton>
-            <Typography variant="h4" textAlign="center" sx={{minWidth: {xs: 150, sm: 190}, color: 'secondary.main'}}>
-                {month.locale('pl').format('MMMM YYYY')}
-            </Typography>
+            <ButtonBase
+                aria-label={`Wybierz miesiąc, obecnie ${month.locale('pl').format('MMMM YYYY')}`}
+                onClick={event => {
+                    setCalendarMonth(month);
+                    setCalendarView('month');
+                    setCalendarAnchor(event.currentTarget);
+                }}
+                sx={{borderRadius: 1}}
+            >
+                <Typography
+                    variant="h4"
+                    textAlign="center"
+                    sx={{minWidth: {xs: 150, sm: 190}, color: 'secondary.main'}}
+                >
+                    {month.locale('pl').format('MMMM YYYY')}
+                </Typography>
+            </ButtonBase>
+            <Popover
+                open={Boolean(calendarAnchor)}
+                anchorEl={calendarAnchor}
+                onClose={closeCalendar}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+                transformOrigin={{vertical: 'top', horizontal: 'center'}}
+            >
+                <DateCalendar
+                    value={calendarMonth}
+                    view={calendarView}
+                    views={['year', 'month']}
+                    maxDate={dayjs()}
+                    onViewChange={setCalendarView}
+                    onChange={selectedMonth => {
+                        if (!selectedMonth) {
+                            return;
+                        }
+
+                        setCalendarMonth(selectedMonth);
+                        if (calendarView === 'month') {
+                            onChange(selectedMonth.startOf('month'));
+                            closeCalendar();
+                        }
+                    }}
+                    sx={{height: 'auto'}}
+                />
+            </Popover>
             <IconButton
                 aria-label="Następny miesiąc"
                 disabled={isCurrentMonth}

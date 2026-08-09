@@ -118,6 +118,27 @@ export class Cube extends Puzzle {
         this.wideTurn(0, 0, 1, forward);
     }
 
+    performMove(move: string, forward: boolean) {
+        const numberedWideMove = /^(\d+)([UDFBRL])w(2'?|')?$/.exec(move);
+        if (!numberedWideMove) {
+            super.performMove(move, forward);
+            return;
+        }
+
+        const [, depthText, face, variant = ''] = numberedWideMove;
+        const depth = Number(depthText);
+        if (depth < 2 || depth > this.layers) {
+            super.performMove(move, forward);
+            return;
+        }
+
+        const moveForward = variant.endsWith("'") ? !forward : forward;
+        const turns = variant.startsWith('2') ? 2 : 1;
+        for (let turn = 0; turn < turns; turn++) {
+            this.numberedWideTurn(face, depth, moveForward);
+        }
+    }
+
     L(forward: boolean) {
         this.turn(0, this.layers - 1, !forward);
     }
@@ -170,8 +191,33 @@ export class Cube extends Puzzle {
     wideTurn(axis: number, layer1: number, layer2: number, clockwise: boolean) {
         this.resetAffectedStickers();
         this.pushAnimation(axis, clockwise, [...this.stickers]);
-        this.matchTurn(axis, layer1, clockwise);
-        this.matchTurn(axis, layer2, clockwise);
+        const step = layer1 <= layer2 ? 1 : -1;
+        for (let layer = layer1; layer !== layer2 + step; layer += step) {
+            this.matchTurn(axis, layer, clockwise);
+        }
+    }
+
+    private numberedWideTurn(face: string, depth: number, forward: boolean) {
+        switch (face) {
+            case 'U':
+                this.wideTurn(1, 0, depth - 1, forward);
+                break;
+            case 'D':
+                this.wideTurn(1, this.layers - 1, this.layers - depth, !forward);
+                break;
+            case 'F':
+                this.wideTurn(2, 0, depth - 1, forward);
+                break;
+            case 'B':
+                this.wideTurn(2, this.layers - 1, this.layers - depth, !forward);
+                break;
+            case 'R':
+                this.wideTurn(0, 0, depth - 1, forward);
+                break;
+            case 'L':
+                this.wideTurn(0, this.layers - 1, this.layers - depth, !forward);
+                break;
+        }
     }
 
     
