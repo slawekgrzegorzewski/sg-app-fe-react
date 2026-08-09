@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from '../application/components/CurrentUserDisplay';
 import {useCurrentUser} from './users/use-current-user';
-import {Link, Menu, MenuItem, Stack, useTheme} from '@mui/material';
+import {Menu, MenuItem, Stack, useTheme} from '@mui/material';
 import {useApplication} from './applications/use-application';
 import {ApplicationId, applications} from './applications/applications-access';
 import {useApplicationNavigation} from './use-application-navigation';
@@ -320,12 +320,6 @@ export default function DrawerAppBar(props: Props) {
                                     <Typography>Wyloguj</Typography>
                                 </MenuItem>
                             </Menu>
-                            <Link
-                                href={process.env.REACT_APP_OLD_APP_URL}
-                                sx={{color: 'primary.contrastText', ...hideWhenXS}}
-                            >
-                                STARA APLIKACJA
-                            </Link>
                             {(() => {
                                 const domains = [...(domainsData.settings.domains as Domain[])].filter(
                                     d => d.name !== ''
@@ -455,13 +449,6 @@ export default function DrawerAppBar(props: Props) {
                                         {page.label}
                                     </Button>
                                 ))}
-                                <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}} />
-                                <Link
-                                    href={process.env.REACT_APP_OLD_APP_URL}
-                                    sx={{color: 'primary.contrastText', display: 'block', py: 1}}
-                                >
-                                    STARA APLIKACJA
-                                </Link>
                                 {(() => {
                                     const domains = [...(domainsData.settings.domains as Domain[])].filter(
                                         d => d.name !== ''
