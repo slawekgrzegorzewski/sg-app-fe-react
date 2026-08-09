@@ -17,11 +17,16 @@ export type TransferDTO = {
     description: string;
 };
 
+function isZeroAmount(amount: Decimal.Value): boolean {
+    return new Decimal(amount || 0).isZero();
+}
+
 export const TRANSFER_FORM_PROPERTIES = (
     transfer: TransferDTO,
     accounts: Account[],
     restrictToDates: Dayjs[],
-    alwaysEditable: boolean = false
+    alwaysEditable: boolean = false,
+    initialTransfer: TransferDTO = transfer
 ) => {
     const areAllCurrenciesSet = !!transfer.fromCurrency && !!transfer.toCurrency;
     const transferWithConversion = areAllCurrenciesSet && transfer.fromCurrency !== transfer.toCurrency;
@@ -53,7 +58,7 @@ export const TRANSFER_FORM_PROPERTIES = (
                         displayElement: <>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>,
                     };
                 }),
-                editable: alwaysEditable || !transfer.fromAccountPublicId,
+                editable: alwaysEditable || !initialTransfer.fromAccountPublicId,
             } as SelectEditorField,
             {
                 key: 'toAccountPublicId',
@@ -65,27 +70,27 @@ export const TRANSFER_FORM_PROPERTIES = (
                         displayElement: <>{account.name + ' (' + account.currentBalance.currency.code + ')'}</>,
                     };
                 }),
-                editable: alwaysEditable || !transfer.toAccountPublicId,
+                editable: alwaysEditable || !initialTransfer.toAccountPublicId,
             } as SelectEditorField,
             {
                 label: 'Kwota' + (transferWithConversion ? ' z ' : ''),
                 type: 'NUMBER',
                 key: 'fromAmount',
                 additionalProps: {sx: {display: areAllCurrenciesSet ? 'block' : 'none'}},
-                editable: alwaysEditable || transfer.fromAmount.isZero(),
+                editable: alwaysEditable || isZeroAmount(initialTransfer.fromAmount),
             } as RegularEditorField,
             {
                 label: 'Kwota na',
                 type: 'NUMBER',
                 key: 'toAmount',
                 additionalProps: {sx: {display: areAllCurrenciesSet && transferWithConversion ? 'block' : 'none'}},
-                editable: alwaysEditable || transfer.toAmount.isZero(),
+                editable: alwaysEditable || isZeroAmount(initialTransfer.toAmount),
             } as RegularEditorField,
             {
                 label: 'Data',
                 type: 'DATEPICKER',
                 key: 'day',
-                editable: alwaysEditable || !transfer.day,
+                editable: alwaysEditable || !initialTransfer.day,
                 additionalProps: {
                     sx: {
                         width: '200px',
@@ -156,7 +161,8 @@ export function CreateTransferForm({
                         },
                         accounts,
                         transferToCreate.possibleDays,
-                        alwaysEditable
+                        alwaysEditable,
+                        transferToCreate
                     )
                 );
             }}

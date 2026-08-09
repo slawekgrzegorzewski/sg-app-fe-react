@@ -21,6 +21,8 @@ import {PiggyBankBalanceEditor} from './settings/PiggyBankBalanceEditor';
 import type {Type} from './settings/PiggyBankBalanceEditor';
 import type {PiggyBankDTO} from './settings/PiggyBanksManagement';
 import {PiggyBankBalanceActions} from './PiggyBankBalanceActions';
+import {AccountBalanceActionDialog} from './AccountBalanceActionDialog';
+import type {AccountBalanceAction} from './AccountBalanceActionDialog';
 
 export function Accounts() {
     const {loading, error, data, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
@@ -29,6 +31,7 @@ export function Accounts() {
         type: Type;
         piggyBank: PiggyBankDTO;
     } | null>(null);
+    const [accountBalanceAction, setAccountBalanceAction] = React.useState<AccountBalanceAction | null>(null);
     const theme = useTheme();
 
     const mapPiggyBank = (piggyBank: PiggyBank): PiggyBankDTO => ({
@@ -72,7 +75,6 @@ export function Accounts() {
         const piggyBanks = [...(data.financeManagement.piggyBanks as PiggyBank[])].sort(
             ComparatorBuilder.comparing<PiggyBank>(pb => pb.name).build()
         );
-
         return (
             <>
                 <Stack
@@ -116,7 +118,11 @@ export function Accounts() {
 
                         <Stack direction="column">
                             {accounts.map(account => (
-                                <AccountView key={'av' + account.publicId} account={account} />
+                                <AccountView
+                                    key={'av' + account.publicId}
+                                    account={account}
+                                    onTransfer={() => setAccountBalanceAction({account})}
+                                />
                             ))}
                         </Stack>
                     </Stack>
@@ -180,6 +186,14 @@ export function Accounts() {
                         </Stack>
                     </Stack>
                 </Stack>
+                {accountBalanceAction && (
+                    <AccountBalanceActionDialog
+                        action={accountBalanceAction}
+                        accounts={accounts}
+                        onClose={() => setAccountBalanceAction(null)}
+                        onCompleted={refetch}
+                    />
+                )}
                 {piggyBankBalanceDialogOptions && (
                     <PiggyBankBalanceEditor
                         type={piggyBankBalanceDialogOptions.type}

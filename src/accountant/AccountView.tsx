@@ -5,12 +5,14 @@ import Typography from '@mui/material/Typography';
 import {compactListRow} from '../utils/theme/utils';
 import {AccountTransactions} from './AccountTransactions';
 import {FormattedMoneyText} from '../application/components/FormattedMoneyText';
+import {AccountBalanceActions} from './AccountBalanceActions';
 
 export interface AccountViewProps {
     account: Account;
+    onTransfer: () => void;
 }
 
-export function AccountView({account}: AccountViewProps) {
+export function AccountView({account, onTransfer}: AccountViewProps) {
     const theme = useTheme();
     const [expanded, setExpanded] = useState(false);
     return (
@@ -27,15 +29,18 @@ export function AccountView({account}: AccountViewProps) {
                 }}
             >
                 <Typography>{account.name}</Typography>
-                <FormattedMoneyText
-                    money={{
-                        amount: account.currentBalance.amount,
-                        currency: account.currentBalance.currency.code,
-                    }}
-                    parenthesizeNegative
-                >
-                    {formattedValue => <>{formattedValue}</>}
-                </FormattedMoneyText>
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                    <FormattedMoneyText
+                        money={{
+                            amount: account.currentBalance.amount,
+                            currency: account.currentBalance.currency.code,
+                        }}
+                        parenthesizeNegative
+                    >
+                        {formattedValue => <>{formattedValue}</>}
+                    </FormattedMoneyText>
+                    <AccountBalanceActions accountName={account.name} onTransfer={onTransfer} />
+                </Stack>
             </Stack>
             {expanded && (
                 <AccountTransactions
