@@ -10,6 +10,8 @@ const faviconNames: Record<string, string> = {
     IPR: "ipr",
 };
 
+const faviconVersion = "v2";
+
 export function getApplicationFaviconName(applicationId?: ApplicationId): string {
     return faviconNames[applicationId ?? "HOME"] ?? faviconNames.HOME;
 }
@@ -22,8 +24,8 @@ export function useApplicationFavicon(applicationId?: ApplicationId): void {
         document
             .querySelectorAll<HTMLLinkElement>('link[data-app-favicon]')
             .forEach(link => {
-                const size = link.sizes.value === "16x16" ? 16 : 32;
-                link.href = `${publicUrl}/favicons/${faviconName}-${size}.png`;
+                const size = link.getAttribute("sizes") === "16x16" ? 16 : 32;
+                link.href = `${publicUrl}/favicons/${faviconName}-${faviconVersion}-${size}.png`;
             });
     }, [applicationId]);
 }
