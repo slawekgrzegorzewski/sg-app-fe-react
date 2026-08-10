@@ -1,4 +1,4 @@
-import {ErrorDisplay} from '../application/components/QueryState';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {useResetMutationResults} from '../utils/use-reset-mutation-results';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {
@@ -17,11 +17,12 @@ import {
     GetLoans,
     GetLoansQuery,
 } from '../types';
-import {Button, Stack, Typography, useTheme} from '@mui/material';
+import {Button, ButtonBase, Chip, IconButton, Paper, Stack, Tooltip, Typography, useTheme} from '@mui/material';
 import * as React from 'react';
 import {FormDialogButton} from '../utils/buttons/FormDialogButton';
 import {DeleteButton} from '../utils/buttons/DeleteButton';
-import {Delete} from '@mui/icons-material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import {useApplicationNavigation} from '../utils/use-application-navigation';
 import {
     ConstantForNFirstInstallmentRateStrategyConfigDTO,
@@ -36,6 +37,7 @@ import {RateStrategyDisplay} from './RateStrategyDisplay';
 import {RepaymentDayStrategyDisplay} from './RepaymentDayStrategyDisplay';
 import Decimal from 'decimal.js';
 import {compactListRow} from '../utils/theme/utils';
+import {StandOutText} from '../application/components/StandOutText';
 
 export function Loans() {
     const theme = useTheme();
@@ -74,7 +76,7 @@ export function Loans() {
     };
 
     const deleteLoan = async (loanId: string): Promise<any> => {
-        await deleteLoanMutation({variables: {loanId: loanId}});
+        await deleteLoanMutation({variables: {loanId}});
         return refetch();
     };
 
@@ -93,21 +95,19 @@ export function Loans() {
     };
 
     const deleteRateStrategyConfig = async (publicId: string): Promise<any> => {
-        await deleteRateStrategyConfigMutation({variables: {publicId: publicId}});
+        await deleteRateStrategyConfigMutation({variables: {publicId}});
         return refetch();
     };
 
     const createNthDayOfMonthRepaymentDayStrategyConfig = async (
         creationParams: NthDayOfMonthRepaymentDayStrategyConfigDTO
     ): Promise<any> => {
-        await createNthDayOfMonthRepaymentDayStrategyConfigMutation({
-            variables: creationParams,
-        });
+        await createNthDayOfMonthRepaymentDayStrategyConfigMutation({variables: creationParams});
         return refetch();
     };
 
     const deleteRepaymentDayStrategyConfig = async (publicId: string): Promise<any> => {
-        await deleteRepaymentDayStrategyConfigMutation({variables: {publicId: publicId}});
+        await deleteRepaymentDayStrategyConfigMutation({variables: {publicId}});
         return refetch();
     };
 
@@ -121,160 +121,244 @@ export function Loans() {
     );
 
     if (loading) {
-        return <></>;
-    } else if (error) {
-        return <ErrorDisplay error={error} />;
-    } else if (data) {
-        return (
-            <Stack
-                direction={{xs: 'column', lg: 'row'}}
-                spacing={{xs: 3, lg: 5}}
-                justifyContent="center"
-                alignItems={{xs: 'stretch', lg: 'flex-start'}}
-                sx={{px: {xs: 1, sm: 2}, py: 2}}
-            >
-                <Stack component="section" direction="column" sx={{width: '100%', maxWidth: 800}}>
-                    <Typography variant="h4" textAlign="center" sx={{mb: 1.5, color: 'secondary.main'}}>
-                        Pożyczki
-                    </Typography>
-                    <Stack direction="row" justifyContent="center" sx={{mb: 1}}>
-                        <FormDialogButton
-                            title="Dane pożyczki"
-                            onConfirm={createLoan}
-                            onCancel={() => {
-                                return Promise.resolve();
-                            }}
-                            buttonContent={
-                                <Button size={'small'} variant={'text'} color="secondary">
-                                    stwórz pożyczkę
-                                </Button>
-                            }
-                            formProps={CREATE_LOAN_FORM_PROPS(
-                                ['PLN'],
-                                data.loans.rateStrategyConfigs,
-                                data.loans.repaymentDayStrategyConfigs
-                            )}
-                        />
-                    </Stack>
+        return <LoadingIndicator label="Ładowanie pożyczek..." />;
+    }
 
-                    {
-                        <Stack direction={'column'}>
-                            {data.loans.loans.map(loan => (
-                                <Stack
-                                    direction="row"
-                                    alignItems="center"
-                                    key={loan.publicId}
-                                    sx={compactListRow(theme)}
-                                >
-                                    <LoanDetails
-                                        loan={loan}
-                                        short={true}
-                                        onClick={() => setPageParams([loan.publicId])}
-                                    />
-                                    <DeleteButton
-                                        object={loan.publicId}
-                                        confirmationMessage={'Na pewno usunąć?'}
-                                        buttonContent={<Delete />}
-                                        onDelete={deleteLoan}
-                                        onCancel={() => {
-                                            return Promise.resolve();
-                                        }}
-                                    />
-                                </Stack>
-                            ))}
-                        </Stack>
-                    }
-                </Stack>
-                <Stack direction="column" spacing={3} sx={{width: '100%', maxWidth: 560}}>
-                    <Stack component="section" direction="column">
-                        <Typography variant="h4" textAlign="center" sx={{mb: 1.5, color: 'secondary.main'}}>
-                            Sposoby naliczania odsetek
-                        </Typography>
-                        <Stack direction="row" justifyContent="center" sx={{mb: 1}}>
+    if (error) {
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
+    }
+
+    if (!data) {
+        return <></>;
+    }
+
+    return (
+        <Stack alignItems="center" sx={{width: '100%', px: {xs: 1, sm: 2}, py: 2}}>
+            <Stack spacing={3} sx={{width: '100%', maxWidth: 960}}>
+                <Typography variant="h3">
+                    <StandOutText standOutBy="both">Pożyczki</StandOutText>
+                </Typography>
+
+                <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+                    <Stack spacing={1.5}>
+                        <Stack
+                            direction={{xs: 'column', sm: 'row'}}
+                            alignItems={{xs: 'stretch', sm: 'center'}}
+                            justifyContent="space-between"
+                            gap={1.5}
+                        >
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <Typography variant="h4">Twoje pożyczki</Typography>
+                                <Chip size="small" variant="outlined" label={`Liczba: ${data.loans.loans.length}`} />
+                            </Stack>
                             <FormDialogButton
-                                title="Tworzenie"
-                                onConfirm={createConstantForNFirstInstallmentRateStrategyConfig}
-                                onCancel={() => {
-                                    return Promise.resolve();
-                                }}
+                                title="Dodaj pożyczkę"
+                                onConfirm={createLoan}
+                                onCancel={() => Promise.resolve()}
                                 buttonContent={
-                                    <Button size={'small'} variant={'text'} color="secondary">
-                                        Stwórz nowy
+                                    <Button variant="contained" color="secondary" startIcon={<AddRoundedIcon />}>
+                                        Dodaj pożyczkę
+                                    </Button>
+                                }
+                                formProps={CREATE_LOAN_FORM_PROPS(
+                                    ['PLN'],
+                                    data.loans.rateStrategyConfigs,
+                                    data.loans.repaymentDayStrategyConfigs
+                                )}
+                            />
+                        </Stack>
+
+                        {data.loans.loans.length === 0 ? (
+                            <Typography color="text.secondary" textAlign="center" sx={{py: 3}}>
+                                Nie masz jeszcze żadnej pożyczki.
+                            </Typography>
+                        ) : (
+                            <Stack>
+                                {data.loans.loans.map(loan => (
+                                    <Stack
+                                        direction="row"
+                                        alignItems="center"
+                                        key={loan.publicId}
+                                        sx={compactListRow(theme)}
+                                    >
+                                        <ButtonBase
+                                            onClick={() => setPageParams([loan.publicId])}
+                                            sx={{flex: 1, minWidth: 0, borderRadius: 1, textAlign: 'left'}}
+                                        >
+                                            <LoanDetails loan={loan} short />
+                                        </ButtonBase>
+                                        <DeleteButton
+                                            object={loan.publicId}
+                                            title="Usunąć pożyczkę?"
+                                            confirmationMessage={
+                                                <>
+                                                    Czy na pewno chcesz usunąć pożyczkę <strong>{loan.name}</strong>?
+                                                    Tej operacji nie można cofnąć.
+                                                </>
+                                            }
+                                            buttonContent={
+                                                <Tooltip title="Usuń pożyczkę">
+                                                    <IconButton aria-label={`Usuń pożyczkę ${loan.name}`} size="small">
+                                                        <DeleteOutlineRoundedIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            }
+                                            onDelete={deleteLoan}
+                                            onCancel={() => Promise.resolve()}
+                                        />
+                                    </Stack>
+                                ))}
+                            </Stack>
+                        )}
+                    </Stack>
+                </Paper>
+
+                <Stack direction={{xs: 'column', md: 'row'}} spacing={2} alignItems="flex-start">
+                    <Paper component="section" variant="outlined" sx={{width: '100%', p: {xs: 1.5, sm: 2}}}>
+                        <Stack spacing={1.5}>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <Typography variant="h4">Oprocentowanie</Typography>
+                                <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={`Liczba: ${data.loans.rateStrategyConfigs.length}`}
+                                />
+                            </Stack>
+                            <FormDialogButton
+                                title="Dodaj sposób naliczania odsetek"
+                                onConfirm={createConstantForNFirstInstallmentRateStrategyConfig}
+                                onCancel={() => Promise.resolve()}
+                                buttonContent={
+                                    <Button
+                                        variant="outlined"
+                                        color="secondary"
+                                        startIcon={<AddRoundedIcon />}
+                                        fullWidth
+                                    >
+                                        Dodaj sposób naliczania
                                     </Button>
                                 }
                                 formProps={CREATE_RATE_STRATEGY_CONFIG()}
                             />
-                        </Stack>
-
-                        <Stack direction={'column'}>
-                            {data.loans.rateStrategyConfigs.map(config => (
-                                <Stack
-                                    direction="row"
-                                    alignItems="center"
-                                    justifyContent="space-between"
-                                    key={config.publicId}
-                                    sx={compactListRow(theme)}
-                                >
-                                    <RateStrategyDisplay rateStrategyConfig={config} />
-                                    <DeleteButton
-                                        object={config.publicId}
-                                        confirmationMessage={'Na pewno usunąć?'}
-                                        buttonContent={<Delete />}
-                                        onDelete={deleteRateStrategyConfig}
-                                        onCancel={() => {
-                                            return Promise.resolve();
-                                        }}
-                                    />
+                            {data.loans.rateStrategyConfigs.length === 0 ? (
+                                <Typography color="text.secondary" textAlign="center" sx={{py: 2}}>
+                                    Brak zdefiniowanych sposobów naliczania.
+                                </Typography>
+                            ) : (
+                                <Stack>
+                                    {data.loans.rateStrategyConfigs.map(config => (
+                                        <Stack
+                                            direction="row"
+                                            alignItems="center"
+                                            key={config.publicId}
+                                            sx={compactListRow(theme)}
+                                        >
+                                            <Stack sx={{flex: 1, minWidth: 0}}>
+                                                <Typography fontWeight={600}>{config.name}</Typography>
+                                                <RateStrategyDisplay rateStrategyConfig={config} />
+                                            </Stack>
+                                            <DeleteButton
+                                                object={config.publicId}
+                                                title="Usunąć sposób naliczania?"
+                                                confirmationMessage={
+                                                    <>
+                                                        Czy na pewno chcesz usunąć <strong>{config.name}</strong>?
+                                                        Usunięcie może być niemożliwe, jeśli używa go pożyczka.
+                                                    </>
+                                                }
+                                                buttonContent={
+                                                    <Tooltip title="Usuń sposób naliczania">
+                                                        <IconButton
+                                                            aria-label={`Usuń sposób naliczania ${config.name}`}
+                                                            size="small"
+                                                        >
+                                                            <DeleteOutlineRoundedIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                }
+                                                onDelete={deleteRateStrategyConfig}
+                                                onCancel={() => Promise.resolve()}
+                                            />
+                                        </Stack>
+                                    ))}
                                 </Stack>
-                            ))}
+                            )}
                         </Stack>
-                    </Stack>
-                    <Stack component="section" direction="column">
-                        <Typography variant="h4" textAlign="center" sx={{mb: 1.5, color: 'secondary.main'}}>
-                            Sposoby obliczania dnia spłaty
-                        </Typography>
-                        <Stack direction="row" justifyContent="center" sx={{mb: 1}}>
+                    </Paper>
+
+                    <Paper component="section" variant="outlined" sx={{width: '100%', p: {xs: 1.5, sm: 2}}}>
+                        <Stack spacing={1.5}>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <Typography variant="h4">Dzień spłaty</Typography>
+                                <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={`Liczba: ${data.loans.repaymentDayStrategyConfigs.length}`}
+                                />
+                            </Stack>
                             <FormDialogButton
-                                title="Tworzenie"
+                                title="Dodaj sposób wyboru dnia spłaty"
                                 onConfirm={createNthDayOfMonthRepaymentDayStrategyConfig}
-                                onCancel={() => {
-                                    return Promise.resolve();
-                                }}
+                                onCancel={() => Promise.resolve()}
                                 buttonContent={
-                                    <Button size="small" variant="text" color="secondary">
-                                        Stwórz nowy
+                                    <Button
+                                        variant="outlined"
+                                        color="secondary"
+                                        startIcon={<AddRoundedIcon />}
+                                        fullWidth
+                                    >
+                                        Dodaj sposób wyboru dnia
                                     </Button>
                                 }
                                 formProps={CREATE_REPAYMENT_DAY_STRATEGY_CONFIG()}
                             />
-                        </Stack>
-                        <Stack direction={'column'}>
-                            {data.loans.repaymentDayStrategyConfigs.map(config => (
-                                <Stack
-                                    direction="row"
-                                    alignItems="center"
-                                    justifyContent="space-between"
-                                    key={config.publicId}
-                                    sx={compactListRow(theme)}
-                                >
-                                    <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={config} />
-                                    <DeleteButton
-                                        object={config.publicId}
-                                        confirmationMessage={'Na pewno usunąć?'}
-                                        buttonContent={<Delete />}
-                                        onDelete={deleteRepaymentDayStrategyConfig}
-                                        onCancel={() => {
-                                            return Promise.resolve();
-                                        }}
-                                    />
+                            {data.loans.repaymentDayStrategyConfigs.length === 0 ? (
+                                <Typography color="text.secondary" textAlign="center" sx={{py: 2}}>
+                                    Brak zdefiniowanych sposobów wyboru dnia.
+                                </Typography>
+                            ) : (
+                                <Stack>
+                                    {data.loans.repaymentDayStrategyConfigs.map(config => (
+                                        <Stack
+                                            direction="row"
+                                            alignItems="center"
+                                            key={config.publicId}
+                                            sx={compactListRow(theme)}
+                                        >
+                                            <Stack sx={{flex: 1, minWidth: 0}}>
+                                                <Typography fontWeight={600}>{config.name}</Typography>
+                                                <RepaymentDayStrategyDisplay repaymentDayStrategyConfig={config} />
+                                            </Stack>
+                                            <DeleteButton
+                                                object={config.publicId}
+                                                title="Usunąć sposób wyboru dnia?"
+                                                confirmationMessage={
+                                                    <>
+                                                        Czy na pewno chcesz usunąć <strong>{config.name}</strong>?
+                                                        Usunięcie może być niemożliwe, jeśli używa go pożyczka.
+                                                    </>
+                                                }
+                                                buttonContent={
+                                                    <Tooltip title="Usuń sposób wyboru dnia">
+                                                        <IconButton
+                                                            aria-label={`Usuń sposób wyboru dnia ${config.name}`}
+                                                            size="small"
+                                                        >
+                                                            <DeleteOutlineRoundedIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                }
+                                                onDelete={deleteRepaymentDayStrategyConfig}
+                                                onCancel={() => Promise.resolve()}
+                                            />
+                                        </Stack>
+                                    ))}
                                 </Stack>
-                            ))}
+                            )}
                         </Stack>
-                    </Stack>
+                    </Paper>
                 </Stack>
             </Stack>
-        );
-    } else {
-        return <></>;
-    }
+        </Stack>
+    );
 }

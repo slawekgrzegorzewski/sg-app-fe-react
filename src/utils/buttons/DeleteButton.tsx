@@ -5,14 +5,26 @@ import ConfirmationDialog from '../dialogs/ConfirmationDialog';
 
 export interface DeleteButtonProps<T> {
     object: T;
-    confirmationMessage: string;
+    confirmationMessage: React.ReactNode;
     onDelete: (object: T) => Promise<any>;
     onCancel: () => Promise<void>;
     buttonContent?: React.ReactNode;
+    title?: React.ReactNode;
+    confirmLabel?: string;
+    cancelLabel?: string;
 }
 
 export function DeleteButton<T>(props: DeleteButtonProps<T>) {
-    let {buttonContent, onDelete, onCancel, confirmationMessage, object} = props;
+    let {
+        buttonContent,
+        onDelete,
+        onCancel,
+        confirmationMessage,
+        object,
+        title = 'Usunąć element?',
+        confirmLabel = 'Usuń',
+        cancelLabel = 'Anuluj',
+    } = props;
 
     const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
 
@@ -30,9 +42,12 @@ export function DeleteButton<T>(props: DeleteButtonProps<T>) {
             <Box onClick={openDialog}>{buttonContent!}</Box>
             <ConfirmationDialog
                 companionObject={object}
-                title={'Na pewno usunąć?'}
+                title={title}
                 message={confirmationMessage}
                 open={confirmationDialogOpen}
+                tone="danger"
+                confirmLabel={confirmLabel}
+                cancelLabel={cancelLabel}
                 onConfirm={(companionObject: T) => {
                     return doButtonAction(() => onDelete(companionObject));
                 }}

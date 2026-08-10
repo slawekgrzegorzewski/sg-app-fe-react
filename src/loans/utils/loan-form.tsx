@@ -38,6 +38,9 @@ export type Config = {
 };
 export const EDIT_LOAN_FORM_PROPS = (name: string) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: 'Zapisz zmiany',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             name: Yup.string().required('Wymagana'),
         }),
@@ -60,6 +63,9 @@ export const CREATE_LOAN_FORM_PROPS = (
     repaymentDayStrategyConfigs: Config[]
 ) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: 'Dodaj pożyczkę',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             name: Yup.string().required('Wymagana'),
             paymentDate: Yup.date().max(new Date(), 'Nie może być z przyszłości').required('Wymagana'),
@@ -160,6 +166,9 @@ export type InstallmentDTO = {
 };
 export const CREATE_INSTALLMENT_FORM_PROPS = () => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: 'Zarejestruj ratę',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             paidAt: Yup.date().max(new Date(), 'Nie może być z przyszłości').required('Wymagana'),
             repaidInterest: Yup.number().min(0).required('Wymagana'),
@@ -210,6 +219,9 @@ export type ConstantForNFirstInstallmentRateStrategyConfigDTO = {
 
 export const CREATE_RATE_STRATEGY_CONFIG = () => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: 'Dodaj strategię',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             name: Yup.string().required('Wymagana'),
             constantRate: Yup.number().positive('Musi być dodatnia').required('Wymagana'),
@@ -261,6 +273,9 @@ export type NthDayOfMonthRepaymentDayStrategyConfigDTO = {
 
 export const CREATE_REPAYMENT_DAY_STRATEGY_CONFIG = () => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: 'Dodaj strategię',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             name: Yup.string().required('Wymagana'),
             dayOfMonth: Yup.number().positive('Musi być dodatnia').max(31).required('Wymagana'),

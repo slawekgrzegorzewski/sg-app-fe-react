@@ -31,4 +31,50 @@ describe('FormDialog', () => {
 
         expect(onCancel).toHaveBeenCalledTimes(1);
     });
+
+    it('cancels the form from the close button', async () => {
+        const user = userEvent.setup();
+        const onCancel = jest.fn().mockResolvedValue(undefined);
+
+        render(
+            <FormDialog
+                dialogTitle={<>Formularz testowy</>}
+                open
+                onConfirm={jest.fn().mockResolvedValue(undefined)}
+                onCancel={onCancel}
+                formProps={{
+                    fields: [],
+                    initialValues: {},
+                    validationSchema: Yup.object({}),
+                }}
+            />
+        );
+
+        await user.click(screen.getByRole('button', {name: 'Zamknij'}));
+
+        expect(onCancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('cancels the form after clicking the backdrop', async () => {
+        const user = userEvent.setup();
+        const onCancel = jest.fn().mockResolvedValue(undefined);
+
+        render(
+            <FormDialog
+                dialogTitle={<>Formularz testowy</>}
+                open
+                onConfirm={jest.fn().mockResolvedValue(undefined)}
+                onCancel={onCancel}
+                formProps={{
+                    fields: [],
+                    initialValues: {},
+                    validationSchema: Yup.object({}),
+                }}
+            />
+        );
+
+        await user.click(screen.getByTestId('form-dialog-backdrop'));
+
+        expect(onCancel).toHaveBeenCalledTimes(1);
+    });
 });

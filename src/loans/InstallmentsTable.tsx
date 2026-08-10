@@ -125,7 +125,7 @@ export function InstallmentsTable({currency, installments}: InstallmentsTablePro
                                 },
                             }}
                         >
-                            <TableCell>{installment.paidAt.format('YYYY-MM-DD')}</TableCell>
+                            <TableCell>{installment.paidAt.format('DD.MM.YYYY')}</TableCell>
                             <TableCell align="right">
                                 {amountOrDash(installment.repaidInterest.plus(installment.repaidAmount))}
                             </TableCell>

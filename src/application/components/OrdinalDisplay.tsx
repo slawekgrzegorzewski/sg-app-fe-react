@@ -1,16 +1,10 @@
 import * as React from 'react';
-import getUserLocale from 'get-user-locale';
 
 export type OrdinalDisplayProps = {
     value: number;
 };
 
 export function OrdinalDisplay({value}: OrdinalDisplayProps) {
-    const userLocale = getUserLocale();
-    if (userLocale !== 'pl-PL' && userLocale !== 'pl') {
-        throw Error(userLocale + ' is not supported');
-    }
-
     function convertPL(value: number) {
         function convertBase(value: number) {
             switch (value) {
@@ -32,7 +26,7 @@ export function OrdinalDisplay({value}: OrdinalDisplayProps) {
                     return 'ósmy';
                 case 9:
                     return 'dziewiąty';
-                case 0:
+                case 10:
                     return 'dziesiąty';
                 case 11:
                     return 'jedenasty';
@@ -77,7 +71,10 @@ export function OrdinalDisplay({value}: OrdinalDisplayProps) {
         }
 
         const value1 = Math.floor(value / 10) * 10;
-        return value < 20 ? convertBase(value) : convertTenths(value1) + ' ' + convertBase(value % 10);
+        if (value < 20) {
+            return convertBase(value);
+        }
+        return value % 10 === 0 ? convertTenths(value1) : convertTenths(value1) + ' ' + convertBase(value % 10);
     }
 
     return <>{convertPL(value)}</>;
