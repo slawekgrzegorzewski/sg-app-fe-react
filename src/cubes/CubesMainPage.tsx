@@ -1,4 +1,3 @@
-import {clickableProps} from '../application/components/clickable';
 import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from './phase';
 import * as React from 'react';
 import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
@@ -29,6 +28,7 @@ import {generateCubingScramble} from './cubing-scramble';
 import {CubingVisualizer} from './CubingVisualizer';
 import {validateCubingScramble} from './cubing-api';
 import {CubeStatCard} from './CubeStatCard';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
 
 function isTextEditingTarget(target: EventTarget | null): boolean {
     return (
@@ -56,6 +56,7 @@ export function CubesMainPage() {
     const scrambleValidationId = useRef(0);
     const [phase, setPhase] = useState<Phase>('IDLE');
     const result = useRef(0);
+    const resultActionsRef = useRef<HTMLDivElement | null>(null);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
 
     const generateScrambleForSelectedCube = useCallback(() => {
@@ -329,6 +330,11 @@ export function CubesMainPage() {
                             open={fullScreen && phase === 'SOLVING'}
                             fullScreen={true}
                             keepMounted={true}
+                            onTransitionExited={() => {
+                                if (result.current > 0) {
+                                    resultActionsRef.current?.scrollIntoView?.({behavior: 'smooth', block: 'end'});
+                                }
+                            }}
                             onTouchStart={() => {
                                 result.current = stop.current();
                                 setPhase('IDLE');
@@ -343,6 +349,7 @@ export function CubesMainPage() {
                                 <StopWatch
                                     variant={'h2'}
                                     showControls={false}
+                                    sx={{color: 'black'}}
                                     startTrigger={startTrigger}
                                     stopTrigger={stopTrigger}
                                     resetTrigger={resetTrigger}
@@ -366,81 +373,144 @@ export function CubesMainPage() {
                                         ? 'green'
                                         : phase === 'INSPECTION_LATE'
                                           ? 'red'
-                                          : theme.palette.text.primary,
+                                          : 'black',
                             }}
                             startTrigger={startTrigger}
                             stopTrigger={stopTrigger}
                             resetTrigger={resetTrigger}
                         />
                     )}
-                    {fullScreen && isInspection(phase) && (
-                        <StopWatch
-                            showControls={false}
-                            variant="h2"
-                            inspectionMode={phase === 'INSPECTION_EARLY' ? 'countdown' : 'overtime'}
-                            inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
-                        />
-                    )}
                     <Typography>{phase}</Typography>
                     {fullScreen && (result.current === 0 || phase !== 'IDLE') && (
                         <Stack
+                            role="button"
+                            tabIndex={0}
+                            aria-label={
+                                isInspection(phase)
+                                    ? 'Puść, aby uruchomić stoper'
+                                    : 'Dotknij i przytrzymaj, aby rozpocząć'
+                            }
                             direction={'column'}
                             sx={{
                                 flexGrow: 1,
                                 alignSelf: 'stretch',
+                                minHeight: 180,
                                 userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                WebkitTouchCallout: 'none',
+                                WebkitTapHighlightColor: 'transparent',
+                                touchAction: 'none',
+                                cursor: 'pointer',
+                                border: 2,
+                                borderStyle: 'dashed',
+                                borderColor:
+                                    phase === 'INSPECTION_LATE'
+                                        ? 'error.main'
+                                        : phase === 'INSPECTION_EARLY'
+                                          ? 'success.main'
+                                          : 'primary.main',
+                                borderRadius: 2,
+                                bgcolor: 'action.hover',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                gap: 1,
+                                px: 2,
+                                textAlign: 'center',
+                                '& *': {
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    pointerEvents: 'none',
+                                },
                             }}
-                            onTouchStart={() => {
+                            onTouchStart={event => {
+                                event.preventDefault();
                                 if (phase === 'IDLE' && result.current === 0) {
                                     beginInspection();
                                 }
                             }}
-                            onTouchEnd={() => {
+                            onTouchEnd={event => {
+                                event.preventDefault();
                                 clearInspectionTimeout();
                                 if (isInspection(phase)) {
                                     setPhase('SOLVING');
                                     start.current();
                                 }
                             }}
-                        ></Stack>
+                            onTouchCancel={() => {
+                                clearInspectionTimeout();
+                                if (isInspection(phase)) {
+                                    setPhase('IDLE');
+                                }
+                            }}
+                            onContextMenu={event => event.preventDefault()}
+                        >
+                            {isInspection(phase) ? (
+                                <StopWatch
+                                    showControls={false}
+                                    variant="h2"
+                                    sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : 'red'}}
+                                    inspectionMode={phase === 'INSPECTION_EARLY' ? 'countdown' : 'overtime'}
+                                    inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
+                                />
+                            ) : (
+                                <TouchAppIcon sx={{fontSize: 56}} color="primary" />
+                            )}
+                            <Typography variant="h6">
+                                {isInspection(phase) ? 'Puść, aby uruchomić stoper' : 'Dotknij i przytrzymaj'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {isInspection(phase)
+                                    ? 'Stoper rozpocznie pomiar po oderwaniu palca.'
+                                    : 'Rozpoczniesz inspekcję. Oderwij palec, aby zacząć układanie.'}
+                            </Typography>
+                        </Stack>
                     )}
                     {fullScreen && result.current > 0 && phase === 'IDLE' && (
-                        <StopWatchDisplay currentTimeInMillis={result.current} />
+                        <Stack sx={{color: 'black'}}>
+                            <StopWatchDisplay currentTimeInMillis={result.current} />
+                        </Stack>
                     )}
                     {fullScreen && result.current > 0 && phase === 'IDLE' && (
                         <Stack
+                            ref={resultActionsRef}
                             direction={'row'}
                             justifyContent={'stretch'}
+                            gap={1}
                             sx={{
                                 flexGrow: 1,
                                 alignSelf: 'stretch',
+                                minHeight: 144,
                                 userSelect: 'none',
                             }}
                         >
-                            <Stack
+                            <Button
+                                color="success"
+                                variant="contained"
+                                size="large"
+                                aria-label="Zapisz wynik"
+                                onClick={() => save.current()}
                                 sx={{
-                                    backgroundColor: 'success.light',
-                                    color: 'success.dark',
-                                    width: '50%',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
+                                    flex: 1,
+                                    minHeight: 144,
+                                    borderRadius: 2,
                                 }}
-                                {...clickableProps(() => save.current(), 'Zapisz wynik')}
                             >
                                 <StandOutText standOutBy="bold">ZAPISZ</StandOutText>
-                            </Stack>
-                            <Stack
+                            </Button>
+                            <Button
+                                color="error"
+                                variant="contained"
+                                size="large"
+                                aria-label="Odrzuć wynik"
+                                onClick={() => reset.current()}
                                 sx={{
-                                    backgroundColor: 'error.light',
-                                    color: 'error.dark',
-                                    width: '50%',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
+                                    flex: 1,
+                                    minHeight: 144,
+                                    borderRadius: 2,
                                 }}
-                                {...clickableProps(() => reset.current(), 'Odrzuć wynik')}
                             >
                                 <StandOutText standOutBy="bold">ODRZUĆ</StandOutText>
-                            </Stack>
+                            </Button>
                         </Stack>
                     )}
                 </Stack>

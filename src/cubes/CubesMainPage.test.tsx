@@ -1,9 +1,10 @@
 import {useMutation, useQuery} from '@apollo/client/react';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {validateCubingScramble} from './cubing-api';
 import {generateCubingScramble} from './cubing-scramble';
 import {CubesMainPage} from './CubesMainPage';
+import {useIsTouchDevice} from '../utils/use-is-touch-screen';
 
 jest.mock('@apollo/client/react', () => ({
     useMutation: jest.fn(),
@@ -30,19 +31,32 @@ jest.mock('../utils/use-wake-lock', () => ({
 }));
 
 jest.mock('../utils/use-is-touch-screen', () => ({
-    useIsTouchDevice: () => false,
+    useIsTouchDevice: jest.fn(),
 }));
 
 jest.mock('./StopWatch', () => {
     const React = require('react');
     return {
-        StopWatch: ({startTrigger, stopTrigger, resetTrigger, inspectionMode}: any) => {
+        StopWatch: ({startTrigger, stopTrigger, resetTrigger, inspectionMode, sx}: any) => {
             React.useEffect(() => {
-                startTrigger.current = jest.fn();
-                stopTrigger.current = () => 4_321;
-                resetTrigger.current = jest.fn();
+                if (startTrigger) {
+                    startTrigger.current = jest.fn();
+                }
+                if (stopTrigger) {
+                    stopTrigger.current = () => 4_321;
+                }
+                if (resetTrigger) {
+                    resetTrigger.current = jest.fn();
+                }
             });
-            return <div data-testid="stopwatch" data-inspection-mode={inspectionMode} />;
+            return (
+                <div
+                    role="timer"
+                    data-testid="stopwatch"
+                    data-inspection-mode={inspectionMode}
+                    data-color={sx?.color}
+                />
+            );
         },
     };
 });
@@ -51,13 +65,19 @@ const useQueryMock = useQuery as unknown as jest.Mock;
 const useMutationMock = useMutation as unknown as jest.Mock;
 const generateCubingScrambleMock = generateCubingScramble as jest.Mock;
 const validateCubingScrambleMock = validateCubingScramble as jest.Mock;
+const useIsTouchDeviceMock = useIsTouchDevice as jest.Mock;
 
 describe('CubesMainPage', () => {
     const storeCubeResult = jest.fn().mockResolvedValue(undefined);
     const refetch = jest.fn().mockResolvedValue(undefined);
+    const scrollIntoView = jest.fn();
 
     beforeEach(() => {
         jest.clearAllMocks();
+        Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+            configurable: true,
+            value: scrollIntoView,
+        });
         storeCubeResult.mockResolvedValue(undefined);
         refetch.mockResolvedValue(undefined);
         useQueryMock.mockReturnValue({
@@ -72,6 +92,7 @@ describe('CubesMainPage', () => {
         useMutationMock.mockReturnValue([storeCubeResult]);
         generateCubingScrambleMock.mockResolvedValue("R U R'");
         validateCubingScrambleMock.mockResolvedValue(undefined);
+        useIsTouchDeviceMock.mockReturnValue(false);
     });
 
     it('loads results and a visualizer for the selected cube type', async () => {
@@ -79,8 +100,12 @@ describe('CubesMainPage', () => {
         render(<CubesMainPage />);
 
         expect(screen.getByRole('heading', {name: 'Układanie kostek'})).toBeInTheDocument();
-        expect(screen.getByText('Liczba ułożeń').nextElementSibling).toHaveTextContent('10');
-        expect(screen.getByText('Dzisiejsza średnia').nextElementSibling).toHaveTextContent('12 s');
+        expect(
+            within(screen.getByRole('group', {name: 'Liczba ułożeń'})).getByRole('heading', {name: '10'})
+        ).toBeVisible();
+        expect(
+            within(screen.getByRole('group', {name: 'Dzisiejsza średnia'})).getByRole('heading', {name: '12 s'})
+        ).toBeVisible();
         expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'THREE'});
         expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'THREE');
 
@@ -157,9 +182,11 @@ describe('CubesMainPage', () => {
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('INSPECTION_EARLY');
         expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-inspection-mode', 'countdown');
+        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-color', 'green');
         fireEvent.keyUp(document, {code: 'Space'});
         await screen.findByText('SOLVING');
         expect(screen.getByTestId('stopwatch')).not.toHaveAttribute('data-inspection-mode');
+        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-color', 'black');
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('IDLE');
 
@@ -173,6 +200,40 @@ describe('CubesMainPage', () => {
                     cubeType: 'FOUR',
                     timeInMillis: 4_321,
                 }),
+            })
+        );
+    });
+
+    it('shows a touch target that starts the stopwatch on mobile', async () => {
+        useIsTouchDeviceMock.mockReturnValue(true);
+
+        render(<CubesMainPage />);
+
+        const touchTarget = screen.getByRole('button', {name: 'Dotknij i przytrzymaj, aby rozpocząć'});
+        expect(touchTarget).toBeVisible();
+
+        fireEvent.touchStart(touchTarget);
+        expect(await screen.findByText('INSPECTION_EARLY')).toBeInTheDocument();
+        const inspectionTarget = screen.getByRole('button', {name: 'Puść, aby uruchomić stoper'});
+        expect(within(inspectionTarget).getByTestId('stopwatch')).toHaveAttribute('data-inspection-mode', 'countdown');
+        expect(within(inspectionTarget).getByTestId('stopwatch')).toHaveAttribute('data-color', 'green');
+
+        fireEvent.touchEnd(inspectionTarget);
+        expect(await screen.findByText('SOLVING')).toBeInTheDocument();
+
+        fireEvent.touchStart(screen.getByRole('dialog'));
+        expect(await screen.findByText('IDLE')).toBeInTheDocument();
+
+        const saveButton = await screen.findByRole('button', {name: 'Zapisz wynik'});
+        const discardButton = await screen.findByRole('button', {name: 'Odrzuć wynik'});
+        expect(saveButton).toHaveClass('MuiButton-colorSuccess');
+        expect(discardButton).toHaveClass('MuiButton-colorError');
+        expect(saveButton).toHaveStyle({minHeight: '144px'});
+        expect(discardButton).toHaveStyle({minHeight: '144px'});
+        await waitFor(() =>
+            expect(scrollIntoView).toHaveBeenCalledWith({
+                behavior: 'smooth',
+                block: 'end',
             })
         );
     });

@@ -1,111 +1,111 @@
 {
-  "name": "sg-app-fe-react",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@apollo/client": "^4.1.4",
-    "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
-    "@atlaskit/pragmatic-drag-and-drop-flourish": "^2.0.12",
-    "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
-    "@emotion/react": "^11.11.1",
-    "@emotion/styled": "^11.11.0",
-    "@fontsource/inter": "^5.3.0",
-    "@mui/icons-material": "^7.3.7",
-    "@mui/material": "^7.3.7",
-    "@mui/x-date-pickers": "^8.27.0",
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/apollo-upload-client": "^19.0.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^24.10.13",
-    "@types/react": "^19.2.4",
-    "@types/react-dom": "^19.2.3",
-    "apollo-upload-client": "^19.0.0",
-    "cubing": "0.63.3",
-    "dayjs": "^1.11.11",
-    "decimal.js": "^10.4.3",
-    "env-cmd": "^10.1.0",
-    "file-saver": "^2.0.5",
-    "formik": "^2.4.6",
-    "get-user-locale": "^2.3.2",
-    "graphql": "^16.9.0",
-    "graphql-scalars": "^1.22.4",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-router-dom": "^7.18.2",
-    "react-scripts": "^5.0.1",
-    "typescript": "5.1.6",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-    "yup": "^1.4.0"
-  },
-  "overrides": {
-    "typescript": "5.1.6"
-  },
-  "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/preset-typescript": "^7.28.5",
-    "@graphql-codegen/add": "^6.0.0",
-    "@graphql-codegen/cli": "^6.1.1",
-    "@graphql-codegen/named-operations-object": "^4.0.1",
-    "@graphql-codegen/typed-document-node": "^6.1.5",
-    "@graphql-codegen/typescript": "^5.0.7",
-    "@graphql-codegen/typescript-document-nodes": "^5.0.7",
-    "@graphql-codegen/typescript-operations": "^5.0.7",
-    "@graphql-codegen/typescript-resolvers": "^5.1.5",
-    "@types/base-64": "^1.0.2",
-    "@types/file-saver": "^2.0.7",
-    "prettier": "3.9.6",
-    "webpack-cli": "^6.0.1"
-  },
-  "scripts": {
-    "prepare-cubing": "node scripts/copy-cubing-assets.mjs",
-    "update-cubing": "node scripts/update-cubing-library.mjs",
-    "codegen": "graphql-codegen --config codegen.ts",
-    "watch": "graphql-codegen -w",
-    "start-dev": "npm run prepare-cubing && CI=false env-cmd -f .env react-scripts start",
-    "start-dev-macos": "npm run prepare-cubing && CI=false env-cmd -f .env.macos react-scripts start",
-    "start-prod": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts start",
-    "build": "npm run prepare-cubing && CI=false env-cmd -f .env react-scripts build",
-    "build-prod": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts build",
-    "test": "react-scripts test",
-    "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.tsx\"",
-    "format:check": "prettier --check \"src/**/*.tsx\"",
-    "eject": "react-scripts eject",
-    "predeploy to s3": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts build",
-    "deploy to s3": "aws s3 sync build/ s3://sg-application"
-  },
-  "eslintConfig": {
-    "ignorePatterns": [
-      "src/cubes/library/cubing/**"
-    ],
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "src/types.ts"
+    "name": "sg-app-fe-react",
+    "version": "0.1.0",
+    "private": true,
+    "dependencies": {
+        "@apollo/client": "^4.1.4",
+        "@atlaskit/pragmatic-drag-and-drop": "^1.7.7",
+        "@atlaskit/pragmatic-drag-and-drop-flourish": "^2.0.12",
+        "@atlaskit/pragmatic-drag-and-drop-hitbox": "^1.1.0",
+        "@emotion/react": "^11.11.1",
+        "@emotion/styled": "^11.11.0",
+        "@fontsource/inter": "^5.3.0",
+        "@mui/icons-material": "^7.3.7",
+        "@mui/material": "^7.3.7",
+        "@mui/x-date-pickers": "^8.27.0",
+        "@testing-library/dom": "^10.4.1",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@testing-library/user-event": "^14.6.1",
+        "@types/apollo-upload-client": "^19.0.0",
+        "@types/jest": "^27.5.2",
+        "@types/node": "^24.10.13",
+        "@types/react": "^19.2.4",
+        "@types/react-dom": "^19.2.3",
+        "apollo-upload-client": "^19.0.0",
+        "cubing": "0.63.3",
+        "dayjs": "^1.11.11",
+        "decimal.js": "^10.4.3",
+        "env-cmd": "^10.1.0",
+        "file-saver": "^2.0.5",
+        "formik": "^2.4.6",
+        "get-user-locale": "^2.3.2",
+        "graphql": "^16.9.0",
+        "graphql-scalars": "^1.22.4",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
+        "react-router-dom": "^7.18.2",
+        "react-scripts": "^5.0.1",
+        "typescript": "5.1.6",
+        "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+        "yup": "^1.4.0"
+    },
+    "overrides": {
+        "typescript": "5.1.6"
+    },
+    "devDependencies": {
+        "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+        "@babel/preset-typescript": "^7.28.5",
+        "@graphql-codegen/add": "^6.0.0",
+        "@graphql-codegen/cli": "^6.1.1",
+        "@graphql-codegen/named-operations-object": "^4.0.1",
+        "@graphql-codegen/typed-document-node": "^6.1.5",
+        "@graphql-codegen/typescript": "^5.0.7",
+        "@graphql-codegen/typescript-document-nodes": "^5.0.7",
+        "@graphql-codegen/typescript-operations": "^5.0.7",
+        "@graphql-codegen/typescript-resolvers": "^5.1.5",
+        "@types/base-64": "^1.0.2",
+        "@types/file-saver": "^2.0.7",
+        "prettier": "3.9.6",
+        "webpack-cli": "^6.0.1"
+    },
+    "scripts": {
+        "prepare-cubing": "node scripts/copy-cubing-assets.mjs",
+        "update-cubing": "node scripts/update-cubing-library.mjs",
+        "codegen": "graphql-codegen --config codegen.ts",
+        "watch": "graphql-codegen -w",
+        "start-dev": "npm run prepare-cubing && CI=false env-cmd -f .env node scripts/start-dev-network.mjs",
+        "start-dev-macos": "npm run prepare-cubing && CI=false env-cmd -f .env.macos node scripts/start-dev-network.mjs",
+        "start-prod": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts start",
+        "build": "npm run prepare-cubing && CI=false env-cmd -f .env react-scripts build",
+        "build-prod": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts build",
+        "test": "react-scripts test",
+        "typecheck": "tsc --noEmit",
+        "format": "prettier --write \"src/**/*.tsx\"",
+        "format:check": "prettier --check \"src/**/*.tsx\"",
+        "eject": "react-scripts eject",
+        "predeploy to s3": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts build",
+        "deploy to s3": "aws s3 sync build/ s3://sg-application"
+    },
+    "eslintConfig": {
+        "ignorePatterns": [
+            "src/cubes/library/cubing/**"
         ],
-        "rules": {
-          "@typescript-eslint/no-unused-vars": "off"
-        }
-      }
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ],
+        "overrides": [
+            {
+                "files": [
+                    "src/types.ts"
+                ],
+                "rules": {
+                    "@typescript-eslint/no-unused-vars": "off"
+                }
+            }
+        ]
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
 }
