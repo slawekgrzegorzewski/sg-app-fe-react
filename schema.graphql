@@ -984,7 +984,7 @@ type BankTransactionToImport {
 }
 
 enum CubeType {
-    TWO, THREE, FOUR, FIVE, SIX, SEVEN, MEGAMINX
+    TWO, THREE, FOUR, FIVE, SIX, SEVEN, MEGAMINX, PYRAMINX, SKEWB, SQUARE_1
 }
 
 input CubeResultsQuery {

@@ -23,6 +23,7 @@
     "@types/react": "^19.2.4",
     "@types/react-dom": "^19.2.3",
     "apollo-upload-client": "^19.0.0",
+    "cubing": "0.63.3",
     "dayjs": "^1.11.11",
     "decimal.js": "^10.4.3",
     "env-cmd": "^10.1.0",
@@ -59,22 +60,27 @@
     "webpack-cli": "^6.0.1"
   },
   "scripts": {
+    "prepare-cubing": "node scripts/copy-cubing-assets.mjs",
+    "update-cubing": "node scripts/update-cubing-library.mjs",
     "codegen": "graphql-codegen --config codegen.ts",
     "watch": "graphql-codegen -w",
-    "start-dev": "env-cmd -f .env react-scripts start",
-    "start-dev-macos": "env-cmd -f .env.macos react-scripts start",
-    "start-prod": "env-cmd -f .env.production react-scripts start",
-    "build": "env-cmd -f .env react-scripts build",
-    "build-prod": "env-cmd -f .env.production react-scripts build",
+    "start-dev": "npm run prepare-cubing && CI=false env-cmd -f .env react-scripts start",
+    "start-dev-macos": "npm run prepare-cubing && CI=false env-cmd -f .env.macos react-scripts start",
+    "start-prod": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts start",
+    "build": "npm run prepare-cubing && CI=false env-cmd -f .env react-scripts build",
+    "build-prod": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.tsx\"",
     "format:check": "prettier --check \"src/**/*.tsx\"",
     "eject": "react-scripts eject",
-    "predeploy to s3": "env-cmd -f .env.production react-scripts build",
+    "predeploy to s3": "npm run prepare-cubing && CI=false env-cmd -f .env.production react-scripts build",
     "deploy to s3": "aws s3 sync build/ s3://sg-application"
   },
   "eslintConfig": {
+    "ignorePatterns": [
+      "src/cubes/library/cubing/**"
+    ],
     "extends": [
       "react-app",
       "react-app/jest"

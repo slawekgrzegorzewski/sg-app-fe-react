@@ -1,7 +1,8 @@
 import {useMutation, useQuery} from '@apollo/client/react';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {newCube} from './visualizer';
+import {validateCubingScramble} from './cubing-api';
+import {generateCubingScramble} from './cubing-scramble';
 import {CubesMainPage} from './CubesMainPage';
 
 jest.mock('@apollo/client/react', () => ({
@@ -9,8 +10,19 @@ jest.mock('@apollo/client/react', () => ({
     useQuery: jest.fn(),
 }));
 
-jest.mock('./visualizer', () => ({
-    newCube: jest.fn(),
+jest.mock('./cubing-scramble', () => ({
+    generateCubingScramble: jest.fn(),
+}));
+
+jest.mock('./cubing-api', () => ({
+    validateCubingScramble: jest.fn(),
+}));
+
+jest.mock('./CubingVisualizer', () => ({
+    CubingVisualizer: ({cubeType, scramble}: {cubeType: string; scramble: string}) => {
+        const React = require('react');
+        return React.createElement('div', {'data-testid': 'cubing-visualizer', 'data-cube-type': cubeType}, scramble);
+    },
 }));
 
 jest.mock('../utils/use-wake-lock', () => ({
@@ -24,20 +36,21 @@ jest.mock('../utils/use-is-touch-screen', () => ({
 jest.mock('./StopWatch', () => {
     const React = require('react');
     return {
-        StopWatch: ({startTrigger, stopTrigger, resetTrigger}: any) => {
+        StopWatch: ({startTrigger, stopTrigger, resetTrigger, inspectionMode}: any) => {
             React.useEffect(() => {
                 startTrigger.current = jest.fn();
                 stopTrigger.current = () => 4_321;
                 resetTrigger.current = jest.fn();
             });
-            return <div data-testid="stopwatch" />;
+            return <div data-testid="stopwatch" data-inspection-mode={inspectionMode} />;
         },
     };
 });
 
 const useQueryMock = useQuery as unknown as jest.Mock;
 const useMutationMock = useMutation as unknown as jest.Mock;
-const newCubeMock = newCube as unknown as jest.Mock;
+const generateCubingScrambleMock = generateCubingScramble as jest.Mock;
+const validateCubingScrambleMock = validateCubingScramble as jest.Mock;
 
 describe('CubesMainPage', () => {
     const storeCubeResult = jest.fn().mockResolvedValue(undefined);
@@ -57,31 +70,81 @@ describe('CubesMainPage', () => {
             refetch,
         });
         useMutationMock.mockReturnValue([storeCubeResult]);
-        newCubeMock.mockImplementation(() => ({
-            puzzle: {performAlg: jest.fn()},
-            enableKey: jest.fn(),
-            dispose: jest.fn(),
-        }));
+        generateCubingScrambleMock.mockResolvedValue("R U R'");
+        validateCubingScrambleMock.mockResolvedValue(undefined);
     });
 
     it('loads results and a visualizer for the selected cube type', async () => {
         const user = userEvent.setup();
         render(<CubesMainPage />);
 
+        expect(screen.getByRole('heading', {name: 'Układanie kostek'})).toBeInTheDocument();
+        expect(screen.getByText('Liczba ułożeń').nextElementSibling).toHaveTextContent('10');
+        expect(screen.getByText('Dzisiejsza średnia').nextElementSibling).toHaveTextContent('12 s');
         expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'THREE'});
-        await waitFor(() => expect(newCubeMock).toHaveBeenLastCalledWith(expect.any(HTMLElement), 3));
+        expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'THREE');
 
         await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
         await user.click(screen.getByRole('option', {name: '4×4'}));
 
         await waitFor(() => expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'FOUR'}));
-        await waitFor(() => expect(newCubeMock).toHaveBeenLastCalledWith(expect.any(HTMLElement), 4));
+        expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'FOUR');
 
         await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
         await user.click(screen.getByRole('option', {name: 'Megaminx'}));
 
-        expect(screen.getByText('Generator i wizualizacja nie są jeszcze dostępne dla Megaminx.')).toBeInTheDocument();
-        expect(screen.getByRole('button', {name: 'Scramble'})).toBeDisabled();
+        await waitFor(() => expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'MEGAMINX'}));
+        expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'MEGAMINX');
+        expect(screen.getByRole('button', {name: 'Scramble'})).toBeEnabled();
+    });
+
+    it('generates a cubing.js scramble for newly supported puzzle types', async () => {
+        const user = userEvent.setup();
+        generateCubingScrambleMock.mockResolvedValue('(1, 0) / (-3, 2)');
+        render(<CubesMainPage />);
+
+        await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
+        await user.click(screen.getByRole('option', {name: 'Square-1'}));
+        await user.click(screen.getByRole('button', {name: 'Scramble'}));
+
+        await waitFor(() => expect(generateCubingScrambleMock).toHaveBeenCalledWith('SQUARE_1'));
+        expect(await screen.findByRole('textbox', {name: 'Scramble'})).toHaveValue('(1, 0) / (-3, 2)');
+        expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'SQUARE_1');
+        await waitFor(() => expect(screen.getByTestId('cubing-visualizer')).toHaveTextContent('(1, 0) / (-3, 2)'));
+    });
+
+    it('allows editing the scramble without triggering keyboard shortcuts', async () => {
+        const user = userEvent.setup();
+        render(<CubesMainPage />);
+
+        const scrambleField = screen.getByRole('textbox', {name: 'Scramble'});
+        await user.type(scrambleField, 'S R U');
+
+        expect(scrambleField).toHaveValue('S R U');
+        await waitFor(() => expect(screen.getByTestId('cubing-visualizer')).toHaveTextContent('S R U'));
+        expect(validateCubingScrambleMock).toHaveBeenLastCalledWith('3x3x3', 'S R U');
+        expect(screen.getByText('Scramble jest poprawny.')).toBeInTheDocument();
+        expect(generateCubingScrambleMock).not.toHaveBeenCalled();
+        expect(screen.getByText('IDLE')).toBeInTheDocument();
+    });
+
+    it('marks an invalid scramble and keeps the last valid visualization', async () => {
+        const user = userEvent.setup();
+        validateCubingScrambleMock.mockImplementation((_puzzleId, value) =>
+            value.includes('X') ? Promise.reject(new Error('Invalid move: X')) : Promise.resolve()
+        );
+        render(<CubesMainPage />);
+
+        const scrambleField = screen.getByRole('textbox', {name: 'Scramble'});
+        await user.type(scrambleField, 'R U');
+        await waitFor(() => expect(screen.getByTestId('cubing-visualizer')).toHaveTextContent('R U'));
+
+        await user.type(scrambleField, ' X');
+
+        expect(await screen.findByText('Niepoprawny scramble: Invalid move: X')).toBeInTheDocument();
+        expect(scrambleField).toHaveAttribute('aria-invalid', 'true');
+        expect(screen.getByTestId('cubing-visualizer')).toHaveTextContent('R U');
+        expect(screen.getByTestId('cubing-visualizer')).not.toHaveTextContent('X');
     });
 
     it('records a solve with the selected cube type', async () => {
@@ -93,8 +156,10 @@ describe('CubesMainPage', () => {
 
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('INSPECTION_EARLY');
+        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-inspection-mode', 'countdown');
         fireEvent.keyUp(document, {code: 'Space'});
         await screen.findByText('SOLVING');
+        expect(screen.getByTestId('stopwatch')).not.toHaveAttribute('data-inspection-mode');
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('IDLE');
 

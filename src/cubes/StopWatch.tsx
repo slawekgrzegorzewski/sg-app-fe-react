@@ -11,12 +11,23 @@ interface StopWatchProps {
     showControls?: boolean;
     variant?: TypographyVariant;
     sx?: SxProps<Theme>;
+    inspectionMode?: 'countdown' | 'overtime';
+    inspectionAllowanceMillis?: number;
     startTrigger?: React.RefObject<() => void>;
     stopTrigger?: React.RefObject<() => number>;
     resetTrigger?: React.RefObject<() => void>;
 }
 
-export function StopWatch({showControls = true, variant, sx, startTrigger, stopTrigger, resetTrigger}: StopWatchProps) {
+export function StopWatch({
+    showControls = true,
+    variant,
+    sx,
+    inspectionMode,
+    inspectionAllowanceMillis = 0,
+    startTrigger,
+    stopTrigger,
+    resetTrigger,
+}: StopWatchProps) {
     const [startTime, setStartTime] = useState<number | null>(null);
     const [currentTime, setCurrentTime] = useState<number>(0);
     const [isRunning, setIsRunning] = useState(false);
@@ -46,8 +57,31 @@ export function StopWatch({showControls = true, variant, sx, startTrigger, stopT
         return () => cancelAnimationFrame(frame);
     }, [isRunning, startTime]);
 
+    useEffect(() => {
+        if (inspectionMode === undefined) {
+            return;
+        }
+
+        const inspectionTimerStart = dayjs().valueOf();
+        setCurrentTime(inspectionMode === 'countdown' ? inspectionAllowanceMillis : 0);
+        let frame = requestAnimationFrame(function tick() {
+            const elapsedTime = dayjs().valueOf() - inspectionTimerStart;
+            const displayedTime =
+                inspectionMode === 'countdown'
+                    ? Math.ceil(Math.max(0, inspectionAllowanceMillis - elapsedTime) / 1000) * 1000
+                    : Math.floor(elapsedTime / 1000) * 1000;
+            setCurrentTime(displayedTime);
+            if (inspectionMode === 'overtime' || displayedTime > 0) {
+                frame = requestAnimationFrame(tick);
+            }
+        });
+
+        return () => cancelAnimationFrame(frame);
+    }, [inspectionAllowanceMillis, inspectionMode]);
+
     const start = () => {
         if (!isRunning) {
+            setCurrentTime(0);
             setIsRunning(true);
             setStartTime(dayjs().valueOf());
         }

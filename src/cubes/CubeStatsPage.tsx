@@ -31,6 +31,7 @@ import {ErrorDisplay, LoadingIndicator} from '../application/components/QuerySta
 import {StandOutText} from '../application/components/StandOutText';
 import {CubeType, GetCubeStats, GetCubeStatsQuery} from '../types';
 import {CUBE_TYPE_OPTIONS} from './cube-types';
+import {CubeStatCard} from './CubeStatCard';
 
 const YEAR_MONTH_FORMAT = 'YYYY-MM';
 
@@ -63,19 +64,6 @@ export function summarizeCubeStats(stats: CubeDayStats[]) {
         bestTime: minimum(stats.map(day => day.min)),
         bestAo5: minimum(stats.map(day => day.minAo5)),
     };
-}
-
-function StatCard({label, value}: {label: string; value: string | number}) {
-    return (
-        <Paper variant="outlined" sx={{flex: 1, minWidth: 145, px: 2, py: 1.5}}>
-            <Typography variant="caption" color="text.secondary">
-                {label}
-            </Typography>
-            <Typography variant="h4" sx={{mt: 0.5, fontVariantNumeric: 'tabular-nums'}}>
-                {value}
-            </Typography>
-        </Paper>
-    );
 }
 
 function TopTenResults({results}: {results: CubeBestResult[]}) {
@@ -258,10 +246,10 @@ export function CubeStatsPage() {
                 {!loading && !error && (
                     <>
                         <Stack direction="row" flexWrap="wrap" gap={1.5}>
-                            <StatCard label="Liczba prób" value={summary.numberOfTries} />
-                            <StatCard label="Aktywne dni" value={summary.activeDays} />
-                            <StatCard label="Najlepszy czas" value={formatCubeTime(summary.bestTime)} />
-                            <StatCard label="Najlepsze Ao5" value={formatCubeTime(summary.bestAo5)} />
+                            <CubeStatCard label="Liczba prób" value={summary.numberOfTries} />
+                            <CubeStatCard label="Aktywne dni" value={summary.activeDays} />
+                            <CubeStatCard label="Najlepszy czas" value={formatCubeTime(summary.bestTime)} />
+                            <CubeStatCard label="Najlepsze Ao5" value={formatCubeTime(summary.bestAo5)} />
                         </Stack>
 
                         <Typography variant="h4">Statystyki dzienne</Typography>

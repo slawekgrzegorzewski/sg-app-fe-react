@@ -1,44 +1,28 @@
 import {CubeType} from '../types';
-import {getCubeLayers, getCubeScrambleOptions} from './cube-types';
+import {CUBE_TYPE_OPTIONS, getCubeTypeOption} from './cube-types';
 
 describe('cube type configuration', () => {
     it.each([
-        [CubeType.Two, 2],
-        [CubeType.Three, 3],
-        [CubeType.Four, 4],
-        [CubeType.Five, 5],
-        [CubeType.Six, 6],
-        [CubeType.Seven, 7],
-    ])('maps %s to a %i-layer visualizer', (cubeType, layers) => {
-        expect(getCubeLayers(cubeType)).toBe(layers);
+        [CubeType.Two, '2×2', '2x2x2', '222'],
+        [CubeType.Three, '3×3', '3x3x3', '333'],
+        [CubeType.Four, '4×4', '4x4x4', '444'],
+        [CubeType.Five, '5×5', '5x5x5', '555'],
+        [CubeType.Six, '6×6', '6x6x6', '666'],
+        [CubeType.Seven, '7×7', '7x7x7', '777'],
+        [CubeType.Megaminx, 'Megaminx', 'megaminx', 'minx'],
+        [CubeType.Pyraminx, 'Pyraminx', 'pyraminx', 'pyram'],
+        [CubeType.Skewb, 'Skewb', 'skewb', 'skewb'],
+        [CubeType.Square_1, 'Square-1', 'square1', 'sq1'],
+    ])('maps %s to cubing.js puzzle and event identifiers', (cubeType, label, puzzleId, eventId) => {
+        expect(getCubeTypeOption(cubeType)).toEqual({value: cubeType, label, puzzleId, eventId});
     });
 
-    it('enables wide scramble moves only for cubes with at least four layers', () => {
-        expect(getCubeScrambleOptions(CubeType.Three)).toEqual({turns: 30, wideMoves: false});
-        expect(getCubeScrambleOptions(CubeType.Four)).toEqual({
-            turns: 40,
-            wideMoves: true,
-            maxWideMoveDepth: 2,
-        });
-        expect(getCubeScrambleOptions(CubeType.Five)).toEqual({
-            turns: 60,
-            wideMoves: true,
-            maxWideMoveDepth: 2,
-        });
-        expect(getCubeScrambleOptions(CubeType.Six)).toEqual({
-            turns: 80,
-            wideMoves: true,
-            maxWideMoveDepth: 3,
-        });
-        expect(getCubeScrambleOptions(CubeType.Seven)).toEqual({
-            turns: 100,
-            wideMoves: true,
-            maxWideMoveDepth: 3,
-        });
+    it('exposes all supported types in the picker', () => {
+        expect(CUBE_TYPE_OPTIONS).toHaveLength(10);
+        expect(new Set(CUBE_TYPE_OPTIONS.map(option => option.value))).toEqual(new Set(Object.values(CubeType)));
     });
 
-    it('marks Megaminx visualization and scramble generation as unavailable', () => {
-        expect(getCubeLayers(CubeType.Megaminx)).toBeNull();
-        expect(getCubeScrambleOptions(CubeType.Megaminx)).toBeNull();
+    it('rejects an unsupported type', () => {
+        expect(() => getCubeTypeOption('UNKNOWN' as CubeType)).toThrow('Unsupported cube type: UNKNOWN');
     });
 });
