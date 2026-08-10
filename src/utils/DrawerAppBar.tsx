@@ -36,6 +36,7 @@ import Grid from '@mui/material/Grid';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import {useApplicationFavicon} from './applications/use-application-favicon';
+import {useApplicationTitle} from './applications/use-application-title';
 import {StandOutText} from '../application/components/StandOutText';
 
 interface Props {
@@ -61,6 +62,7 @@ export default function DrawerAppBar(props: Props) {
     const {changePage} = useApplicationNavigation();
     const {currentApplicationId} = useApplication();
     useApplicationFavicon(currentApplicationId);
+    useApplicationTitle(currentApplicationId);
     const {currentDomainPublicId, changeCurrentSettings} = useApplicationAndDomain();
     const theme = useTheme();
     const {mode, setMode, themeVariantId, setThemeVariant, availableVariants} = useThemeMode();
