@@ -1,224 +1,301 @@
-import {ErrorDisplay} from '../application/components/QueryState';
-import {useResetMutationResults} from '../utils/use-reset-mutation-results';
 import {useMutation, useQuery} from '@apollo/client/react';
+import {
+    Box,
+    Chip,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography,
+} from '@mui/material';
+import dayjs from 'dayjs';
+import 'dayjs/locale/pl';
+import * as React from 'react';
+import {useRef, useState} from 'react';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
+import {StandOutText} from '../application/components/StandOutText';
 import {
     AssignCategoryToTimeRecord,
     AssignCategoryToTimeRecordMutation,
     GetIntellectualPropertiesReport,
     GetIntellectualPropertiesReportQuery,
 } from '../types';
-import * as React from 'react';
-import {useRef, useState} from 'react';
-import dayjs from 'dayjs';
-import {FormControl, InputLabel, MenuItem, Select, Stack} from '@mui/material';
 import TableToExcelExport from '../utils/ExportExcel';
-import {StandOutText} from '../application/components/StandOutText';
+import {useResetMutationResults} from '../utils/use-reset-mutation-results';
 
-const borderTop = {borderTop: '2px solid black'};
-const borderBottom = {borderBottom: '2px solid black'};
-const borderLeft = {borderLeft: '2px solid black'};
-const borderRight = {borderRight: '2px solid black'};
-const headerBorders = {...borderTop, ...borderRight, ...borderLeft};
-const sideBorders = {...borderRight, ...borderLeft};
-const footerBorders = {...borderBottom, ...borderRight, ...borderLeft};
+type Report = NonNullable<GetIntellectualPropertiesReportQuery['intellectualPropertiesReport']>['report'];
+type ReportResponse = NonNullable<GetIntellectualPropertiesReportQuery['intellectualPropertiesReport']>;
+
+function formatMonth(yearMonth: string) {
+    return dayjs(`${yearMonth}-01`).locale('pl').format('MMMM YYYY');
+}
+
+function AnnualReportTable({
+    report,
+    response,
+    tableRef,
+    assigningCategory,
+    onCategoryChange,
+}: {
+    report: Report;
+    response: ReportResponse;
+    tableRef: React.RefObject<HTMLTableElement | null>;
+    assigningCategory: boolean;
+    onCategoryChange: (timeRecordId: number, categoryId: number | null) => Promise<void>;
+}) {
+    return (
+        <TableContainer component={Paper} variant="outlined">
+            <Table ref={tableRef} size="small" aria-label={`Raport własności intelektualnej za rok ${report.year}`}>
+                <caption>Raport własności intelektualnej za rok {report.year}</caption>
+                <TableHead>
+                    <TableRow>
+                        <TableCell sx={{minWidth: 260}}>Opis zadania</TableCell>
+                        <TableCell align="right" sx={{minWidth: 110}}>
+                            Godziny IP
+                        </TableCell>
+                        <TableCell align="right" sx={{minWidth: 130}}>
+                            Pozostałe godziny
+                        </TableCell>
+                        <TableCell align="right" sx={{minWidth: 100}}>
+                            Udział IP
+                        </TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {report.monthReports.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={4} align="center" sx={{py: 4, color: 'text.secondary'}}>
+                                Brak danych w wybranym roku.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        [...report.monthReports]
+                            .sort((left, right) => left.yearMonth.localeCompare(right.yearMonth))
+                            .flatMap(monthReport => [
+                                <TableRow key={`${monthReport.yearMonth}-summary`} sx={{bgcolor: 'action.hover'}}>
+                                    <TableCell component="th" scope="row">
+                                        <Typography fontWeight={700} sx={{textTransform: 'capitalize'}}>
+                                            {formatMonth(monthReport.yearMonth)}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell align="right" sx={{fontWeight: 700}}>
+                                        {monthReport.ipHours}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{fontWeight: 700}}>
+                                        {monthReport.nonIPHours}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{fontWeight: 700}}>
+                                        {monthReport.ipPercentage}%
+                                    </TableCell>
+                                </TableRow>,
+                                ...monthReport.timeRecordReports.map((timeRecordReport, index) => (
+                                    <TableRow key={`${monthReport.yearMonth}-record-${index}`}>
+                                        <TableCell sx={{overflowWrap: 'anywhere'}}>
+                                            {timeRecordReport.description}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {timeRecordReport.ipHours === 0 ? '—' : timeRecordReport.ipHours}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            {timeRecordReport.nonIPHours === 0 ? '—' : timeRecordReport.nonIPHours}
+                                        </TableCell>
+                                        <TableCell align="right">—</TableCell>
+                                    </TableRow>
+                                )),
+                                ...monthReport.nonCategorizedTimeRecords.map(timeRecord => {
+                                    const categoryLabelId = `category-${timeRecord.id}-label`;
+                                    const categoryInputId = `category-${timeRecord.id}-input`;
+                                    return (
+                                        <TableRow key={`${monthReport.yearMonth}-uncategorized-${timeRecord.id}`}>
+                                            <TableCell sx={{overflowWrap: 'anywhere'}}>
+                                                <Stack spacing={0.25}>
+                                                    <Typography>{timeRecord.description || 'Bez opisu'}</Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {timeRecord.numberOfHours} godz. · bez kategorii
+                                                    </Typography>
+                                                </Stack>
+                                            </TableCell>
+                                            <TableCell colSpan={3}>
+                                                <FormControl size="small" fullWidth sx={{minWidth: 180}}>
+                                                    <InputLabel
+                                                        id={categoryLabelId}
+                                                        htmlFor={categoryInputId}
+                                                        sx={{color: 'text.primary'}}
+                                                    >
+                                                        Kategoria
+                                                    </InputLabel>
+                                                    <Select
+                                                        labelId={categoryLabelId}
+                                                        id={`category-${timeRecord.id}-display`}
+                                                        name={`timeRecordCategory-${timeRecord.id}`}
+                                                        inputProps={{id: categoryInputId}}
+                                                        label="Kategoria"
+                                                        value=""
+                                                        disabled={assigningCategory}
+                                                        onChange={event =>
+                                                            void onCategoryChange(
+                                                                timeRecord.id,
+                                                                event.target.value === ''
+                                                                    ? null
+                                                                    : Number(event.target.value)
+                                                            )
+                                                        }
+                                                    >
+                                                        <MenuItem value="">
+                                                            <em>Wybierz kategorię</em>
+                                                        </MenuItem>
+                                                        {response.timeRecordCategories.map(category => (
+                                                            <MenuItem key={category.id} value={category.id}>
+                                                                {category.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }),
+                            ])
+                    )}
+                </TableBody>
+            </Table>
+        </TableContainer>
+    );
+}
 
 export function IntellectualPropertyReportMainPage() {
-    const tableRef = useRef(null);
-
+    const tableRef = useRef<HTMLTableElement>(null);
+    const yearSelectLabelId = React.useId();
+    const yearSelectInputId = React.useId();
     const [yearFilter, setYearFilter] = useState(dayjs().format('YYYY'));
-
     const {loading, error, data, refetch} = useQuery<GetIntellectualPropertiesReportQuery>(
         GetIntellectualPropertiesReport,
-        {
-            variables: {
-                year: yearFilter,
-            },
-        }
+        {variables: {year: yearFilter}}
     );
     const [assignCategoryToTimeRecordMutation, assignCategoryToTimeRecordMutationResult] =
         useMutation<AssignCategoryToTimeRecordMutation>(AssignCategoryToTimeRecord);
 
-    const updateTimeRecordCategory = async (timeRecordId: number, timeRecordCategoryId: number) => {
-        await assignCategoryToTimeRecordMutation({
-            variables: {
-                timeRecordId: timeRecordId,
-                timeRecordCategoryId: timeRecordCategoryId,
-            },
-        });
-        refetch();
+    const updateTimeRecordCategory = async (timeRecordId: number, timeRecordCategoryId: number | null) => {
+        await assignCategoryToTimeRecordMutation({variables: {timeRecordId, timeRecordCategoryId}});
+        await refetch();
     };
 
     useResetMutationResults(assignCategoryToTimeRecordMutationResult);
+
     if (loading) {
-        return <></>;
-    } else if (error) {
-        return <ErrorDisplay error={error} />;
-    } else if (data && data.intellectualPropertiesReport) {
-        const report = data.intellectualPropertiesReport?.report;
-        const availableYearFilters = [...(data.intellectualPropertiesReport.availableYears || [yearFilter])].sort();
-        const table = (
-            <>
-                <table ref={tableRef} style={{textAlign: 'left', borderCollapse: 'collapse'}}>
-                    <caption style={{captionSide: 'top', textAlign: 'left'}}>
-                        Raport własności intelektualnej za rok {report.year}
-                    </caption>
-                    <thead>
-                        <tr style={headerBorders}>
-                            <th colSpan={5}>
-                                <StandOutText>
-                                    Raporty ze świadczenia usług programistycznych na podstawie umowy z dnia 20-07-2020
-                                    z Satago Software Solutions spółka z o.o. w roku {report.year}
-                                </StandOutText>
-                            </th>
-                        </tr>
-                        <tr style={sideBorders}>
-                            <th colSpan={5}>
-                                <StandOutText>Łączna ilość prac autorskich: {report.countOfDifferentIPs}</StandOutText>
-                            </th>
-                        </tr>
-                        <tr style={sideBorders}>
-                            <th colSpan={5}>
-                                <StandOutText>
-                                    Liczba godzin: IP: {report?.ipHours ?? 0}, nie IP: {report.nonIPHours}
-                                </StandOutText>
-                            </th>
-                        </tr>
-                        <tr style={footerBorders}>
-                            <th colSpan={5}>
-                                <StandOutText>
-                                    Wynagrodzenie z tytułu przeniesienia praw autorskich stanowi {report?.ipPercentage}%
-                                    wynagrodzenia
-                                </StandOutText>
-                            </th>
-                        </tr>
-                        <tr style={headerBorders}>
-                            <th>
-                                <StandOutText>Opis zadania</StandOutText>
-                            </th>
-                            <th>
-                                <StandOutText>Ilość godzin IP</StandOutText>
-                            </th>
-                            <th>
-                                <StandOutText>Ilość godzin zwykłych</StandOutText>
-                            </th>
-                            <th>
-                                <StandOutText>Procent IP</StandOutText>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-                            .map(
-                                month =>
-                                    [month, report?.year.toString() + '-' + month.toString().padStart(2, '0')] as [
-                                        number,
-                                        string,
-                                    ]
-                            )
-                            .flatMap(([month, yearMonth]) =>
-                                (report?.monthReports ?? [])
-                                    .filter(monthReport => monthReport.yearMonth === yearMonth)
-                                    .flatMap(monthReport => [
-                                        <tr
-                                            key={`${yearMonth}-summary`}
-                                            style={month === 1 ? sideBorders : headerBorders}
-                                        >
-                                            <td>
-                                                <StandOutText>{monthReport.yearMonth}</StandOutText>
-                                            </td>
-                                            <td>
-                                                <StandOutText>{monthReport.ipHours}</StandOutText>
-                                            </td>
-                                            <td>
-                                                <StandOutText>{monthReport.nonIPHours}</StandOutText>
-                                            </td>
-                                            <td>
-                                                <StandOutText>{monthReport.ipPercentage}</StandOutText>
-                                            </td>
-                                        </tr>,
-                                        ...monthReport.timeRecordReports.map((timeRecordReport, index) => (
-                                            <tr key={`${yearMonth}-record-${index}`} style={sideBorders}>
-                                                <td>{timeRecordReport.description}</td>
-                                                <td>
-                                                    {timeRecordReport.ipHours === 0 ? '' : timeRecordReport.ipHours}
-                                                </td>
-                                                <td>
-                                                    {timeRecordReport.nonIPHours === 0
-                                                        ? ''
-                                                        : timeRecordReport.nonIPHours}
-                                                </td>
-                                                <td></td>
-                                            </tr>
-                                        )),
-                                        ...monthReport.nonCategorizedTimeRecords.map(timeRecordReport => (
-                                            <tr
-                                                key={`${yearMonth}-uncategorised-${timeRecordReport.id}`}
-                                                style={sideBorders}
-                                            >
-                                                <td>
-                                                    {timeRecordReport.description} - {timeRecordReport.numberOfHours}{' '}
-                                                    godzin
-                                                </td>
-                                                <td colSpan={3}>
-                                                    <select
-                                                        aria-label={'Kategoria dla: ' + timeRecordReport.description}
-                                                        onChange={event =>
-                                                            updateTimeRecordCategory(
-                                                                timeRecordReport.id,
-                                                                Number(event.target.value)
-                                                            )
-                                                        }
-                                                    >
-                                                        <option value={''}></option>
-                                                        {data.intellectualPropertiesReport?.timeRecordCategories.map(
-                                                            rc => (
-                                                                <option key={rc.id} value={rc.id}>
-                                                                    {rc.name}
-                                                                </option>
-                                                            )
-                                                        )}
-                                                    </select>
-                                                </td>
-                                                <td></td>
-                                            </tr>
-                                        )),
-                                    ])
-                            )}
-                    </tbody>
-                </table>
-            </>
-        );
-        return (
-            <Stack direction="column" sx={{width: 1000, m: 'auto'}}>
-                <Stack direction="row" justifyContent="space-between">
-                    <TableToExcelExport
-                        buttonText={'Pobierz jako excel'}
-                        dataGetter={() => tableRef.current!}
-                        fileName={'Raport IP za rok ' + yearFilter}
-                    />
-                    <FormControl variant="standard" sx={{m: 1, minWidth: 120}}>
-                        <InputLabel id="demo-simple-select-standard-label">Miesiąc</InputLabel>
-                        <Select
-                            labelId="demo-simple-select-standard-label"
-                            id="demo-simple-select-standard"
-                            value={yearFilter}
-                            onChange={event => {
-                                setYearFilter(event.target.value as string);
-                            }}
-                            label="Miesiąc"
-                        >
-                            {availableYearFilters.map(yearMonthFilter => (
-                                <MenuItem key={yearMonthFilter} value={yearMonthFilter}>
-                                    {yearMonthFilter}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Stack>
-                {table}
-            </Stack>
-        );
-    } else {
+        return <LoadingIndicator label="Ładowanie raportu rocznego..." />;
+    }
+
+    if (error) {
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
+    }
+
+    if (!data?.intellectualPropertiesReport) {
         return <></>;
     }
+
+    const response = data.intellectualPropertiesReport;
+    const report = response.report;
+    const availableYears = Array.from(new Set([...(response.availableYears || []), Number(yearFilter)])).sort(
+        (left, right) => right - left
+    );
+
+    return (
+        <Stack alignItems="center" sx={{width: '100%', px: {xs: 1, sm: 2}, py: 2}}>
+            <Stack spacing={2.5} sx={{width: '100%', maxWidth: 1080}}>
+                <Stack
+                    direction={{xs: 'column', sm: 'row'}}
+                    alignItems={{xs: 'stretch', sm: 'center'}}
+                    justifyContent="space-between"
+                    gap={1.5}
+                >
+                    <Stack spacing={0.5}>
+                        <Typography variant="h3">
+                            <StandOutText standOutBy="both">Raporty roczne</StandOutText>
+                        </Typography>
+                        <Typography color="text.secondary">
+                            Podsumowanie czasu pracy i udziału własności intelektualnej w rozliczeniu rocznym.
+                        </Typography>
+                    </Stack>
+                    <Box
+                        sx={{
+                            '& .MuiButton-root': {
+                                minHeight: 40,
+                                px: 2,
+                                border: 1,
+                                borderColor: 'divider',
+                            },
+                        }}
+                    >
+                        <TableToExcelExport
+                            buttonText="Pobierz jako Excel"
+                            dataGetter={() => tableRef.current!}
+                            fileName={`Raport IP za rok ${yearFilter}`}
+                        />
+                    </Box>
+                </Stack>
+
+                <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+                    <Stack
+                        direction={{xs: 'column', md: 'row'}}
+                        justifyContent="space-between"
+                        alignItems={{xs: 'stretch', md: 'center'}}
+                        gap={1.5}
+                    >
+                        <Stack direction="row" flexWrap="wrap" gap={1}>
+                            <Chip variant="outlined" label={`Prace autorskie: ${report.countOfDifferentIPs}`} />
+                            <Chip color="secondary" variant="outlined" label={`IP: ${report.ipHours} godz.`} />
+                            <Chip variant="outlined" label={`Pozostałe: ${report.nonIPHours} godz.`} />
+                            <Chip variant="outlined" label={`Udział IP: ${report.ipPercentage}%`} />
+                        </Stack>
+                        <FormControl size="small" sx={{minWidth: {xs: '100%', md: 150}}}>
+                            <InputLabel id={yearSelectLabelId} htmlFor={yearSelectInputId} sx={{color: 'text.primary'}}>
+                                Rok
+                            </InputLabel>
+                            <Select
+                                labelId={yearSelectLabelId}
+                                id={`${yearSelectInputId}-display`}
+                                name="intellectualPropertyReportYear"
+                                inputProps={{id: yearSelectInputId}}
+                                value={yearFilter}
+                                onChange={event => setYearFilter(event.target.value as string)}
+                                label="Rok"
+                            >
+                                {availableYears.map(year => (
+                                    <MenuItem key={year} value={year.toString()}>
+                                        {year}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Stack>
+                </Paper>
+
+                <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+                    <Typography variant="h4" gutterBottom>
+                        Raport za {report.year} rok
+                    </Typography>
+                    <Typography color="text.secondary">
+                        Usługi programistyczne świadczone na podstawie umowy z Satago Software Solutions sp. z o.o.
+                    </Typography>
+                </Paper>
+
+                <AnnualReportTable
+                    report={report}
+                    response={response}
+                    tableRef={tableRef}
+                    assigningCategory={assignCategoryToTimeRecordMutationResult.loading}
+                    onCategoryChange={updateTimeRecordCategory}
+                />
+            </Stack>
+        </Stack>
+    );
 }

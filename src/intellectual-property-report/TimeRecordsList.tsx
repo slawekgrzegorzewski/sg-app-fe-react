@@ -1,4 +1,4 @@
-import {Stack} from '@mui/material';
+import {Chip, Paper, Stack, Typography} from '@mui/material';
 import * as React from 'react';
 import {
     AutocompleteAsyncEditorField,
@@ -7,11 +7,11 @@ import {
     RegularEditorField,
 } from '../utils/forms/Form';
 import dayjs from 'dayjs';
+import 'dayjs/locale/pl';
 import {SearchTasks, SearchTasksQuery, Task, TimeRecord} from '../types';
 import {TimeRecordView} from './TimeRecordView';
-import {StandOutText} from '../application/components/StandOutText';
 
-export const TIME_RECORD_DIALOG_TITLE = 'Dane raportu czasowego';
+export const TIME_RECORD_DIALOG_TITLE = 'Edytuj raport czasu';
 
 type Data = {task: Task | null; timeRecord: TimeRecord};
 
@@ -23,16 +23,8 @@ export function timeRecordEditorField(descriptionEditable: boolean): EditorField
             key: 'task',
             editable: true,
             query: SearchTasks,
-            additionalProps: {
-                sx: {width: '250px'},
-            },
             queryToOptionsMapper: (data: SearchTasksQuery) =>
-                data.tasks.tasks.map((t: any) => {
-                    return {
-                        id: t.id,
-                        description: t.description,
-                    };
-                }),
+                data.tasks.tasks.map(task => ({id: task.id, description: task.description})),
             getOptionLabel: (object: any) => object.description,
             isOptionEqualToValue: (option: any, value: any) => option.id === value.id,
         } as AutocompleteAsyncEditorField,
@@ -41,27 +33,20 @@ export function timeRecordEditorField(descriptionEditable: boolean): EditorField
             type: 'DATEPICKER',
             key: 'date',
             editable: true,
-            additionalProps: {
-                sx: {width: '200px'},
-            },
         } as DatePickerEditorField,
         {
             label: 'Liczba godzin',
             type: 'NUMBER',
             key: 'numberOfHours',
             editable: true,
-            additionalProps: {
-                sx: {width: '200px'},
-            },
+            additionalProps: {autoComplete: 'off'},
         } as RegularEditorField,
         {
             label: 'Opis',
             type: 'TEXTAREA',
             key: 'description',
             editable: descriptionEditable,
-            additionalProps: {
-                sx: {width: '200px'},
-            },
+            additionalProps: {autoComplete: 'off'},
         } as RegularEditorField,
     ];
 }
@@ -72,51 +57,60 @@ export function TimeRecordsList(properties: {
     refetchDataCallback: () => void;
 }) {
     const {taskWithTimeRecords, nonIPTimeRecords, refetchDataCallback} = properties;
+    const timeRecordsByDates: Record<string, Data[]> = {};
 
-    const timeRecordsByDates = nonIPTimeRecords.reduce((collector, timeRecordDTO) => {
-        var dateKey = dayjs(timeRecordDTO.date).format('YYYY-MM-DD');
-        collector[dateKey] = collector[dateKey] || [];
-        collector[dateKey].push({task: null, timeRecord: timeRecordDTO});
-        return collector;
-    }, Object.create(null));
+    nonIPTimeRecords.forEach(timeRecord => {
+        const dateKey = dayjs(timeRecord.date).format('YYYY-MM-DD');
+        timeRecordsByDates[dateKey] = timeRecordsByDates[dateKey] || [];
+        timeRecordsByDates[dateKey].push({task: null, timeRecord});
+    });
 
-    taskWithTimeRecords.forEach(taskWithTimeRecords => {
-        (taskWithTimeRecords.timeRecords || []).forEach(timeRecord => {
+    taskWithTimeRecords.forEach(task => {
+        (task.timeRecords || []).forEach(timeRecord => {
             const dateKey = dayjs(timeRecord.date).format('YYYY-MM-DD');
             timeRecordsByDates[dateKey] = timeRecordsByDates[dateKey] || [];
             timeRecordsByDates[dateKey].push({
-                task: taskWithTimeRecords,
-                timeRecord: {...timeRecord, description: taskWithTimeRecords.description},
+                task,
+                timeRecord: {...timeRecord, description: task.description},
             });
         });
     });
+
     return (
-        <>
-            {Object.keys(timeRecordsByDates)
-                .sort()
-                .map(date => {
+        <Stack component="section" spacing={1.5}>
+            {Object.entries(timeRecordsByDates)
+                .sort(([left], [right]) => right.localeCompare(left))
+                .map(([date, records]) => {
+                    const hours = records.reduce((sum, record) => sum + record.timeRecord.numberOfHours, 0);
                     return (
-                        <Stack key={date}>
-                            <StandOutText>{date}</StandOutText>
-                            {timeRecordsByDates[date]
-                                .sort((data1: Data, data2: Data) => data1.timeRecord.id - data2.timeRecord.id)
-                                .map((data: Data) => {
-                                    return (
-                                        <TimeRecordView
-                                            key={data.timeRecord.id}
-                                            relatedTask={data.task}
-                                            timeRecord={data.timeRecord}
-                                            refetchDataCallback={refetchDataCallback}
-                                            dialogOptions={{
-                                                title: TIME_RECORD_DIALOG_TITLE,
-                                                editorFields: timeRecordEditorField(!data.task),
-                                            }}
-                                        />
-                                    );
-                                })}
-                        </Stack>
+                        <Paper key={date} variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+                            <Stack spacing={1}>
+                                <Stack direction="row" alignItems="center" gap={1}>
+                                    <Typography variant="h4">
+                                        {dayjs(date).locale('pl').format('D MMMM YYYY')}
+                                    </Typography>
+                                    <Chip size="small" variant="outlined" label={`${hours} godz.`} />
+                                </Stack>
+                                <Stack spacing={0.75}>
+                                    {records
+                                        .sort((left, right) => left.timeRecord.id - right.timeRecord.id)
+                                        .map(record => (
+                                            <TimeRecordView
+                                                key={record.timeRecord.id}
+                                                relatedTask={record.task}
+                                                timeRecord={record.timeRecord}
+                                                refetchDataCallback={refetchDataCallback}
+                                                dialogOptions={{
+                                                    title: TIME_RECORD_DIALOG_TITLE,
+                                                    editorFields: timeRecordEditorField(!record.task),
+                                                }}
+                                            />
+                                        ))}
+                                </Stack>
+                            </Stack>
+                        </Paper>
                     );
                 })}
-        </>
+        </Stack>
     );
 }
