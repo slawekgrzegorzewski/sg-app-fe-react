@@ -1,4 +1,4 @@
-import {ErrorDisplay} from '../application/components/QueryState';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {
     Account,
@@ -9,7 +9,7 @@ import {
     UpdatePiggyBankMutation,
 } from '../types';
 import React from 'react';
-import {Stack, useTheme} from '@mui/material';
+import {Chip, Paper, Stack, Tooltip, useTheme} from '@mui/material';
 import {MultiCurrencySummary} from '../application/components/MultiCurrencySummary';
 import {ComparatorBuilder} from '../utils/comparator-builder';
 import Typography from '@mui/material/Typography';
@@ -23,6 +23,12 @@ import type {PiggyBankDTO} from './settings/PiggyBanksManagement';
 import {PiggyBankBalanceActions} from './PiggyBankBalanceActions';
 import {AccountBalanceActionDialog} from './AccountBalanceActionDialog';
 import type {AccountBalanceAction} from './AccountBalanceActionDialog';
+import {StandOutText} from '../application/components/StandOutText';
+import {useApplicationNavigation} from '../utils/use-application-navigation';
+import {
+    ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY,
+    ACCOUNTS_TAB_LABEL,
+} from './settings/accountant-settings-tabs';
 
 export function Accounts() {
     const {loading, error, data, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
@@ -33,6 +39,12 @@ export function Accounts() {
     } | null>(null);
     const [accountBalanceAction, setAccountBalanceAction] = React.useState<AccountBalanceAction | null>(null);
     const theme = useTheme();
+    const {changePage} = useApplicationNavigation();
+
+    const navigateToAccountsManagement = () => {
+        window.localStorage.setItem(ACCOUNTANT_SETTINGS_ACTIVE_TAB_LOCAL_STORAGE_KEY, ACCOUNTS_TAB_LABEL);
+        changePage('settings');
+    };
 
     const mapPiggyBank = (piggyBank: PiggyBank): PiggyBankDTO => ({
         publicId: piggyBank.publicId,
@@ -60,131 +72,161 @@ export function Accounts() {
     };
 
     if (loading) {
-        return <></>;
+        return <LoadingIndicator label="Ładowanie kont i skarbonek..." />;
     }
 
     if (error) {
-        return <ErrorDisplay error={error} />;
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
     }
 
     if (data) {
-        const accounts = [...(data.financeManagement.accounts as Account[])]
-            .filter(a => a.visible)
-            .sort(ComparatorBuilder.comparing<Account>(a => a.order).build());
+        const allAccounts = [...(data.financeManagement.accounts as Account[])].sort(
+            ComparatorBuilder.comparing<Account>(a => a.order).build()
+        );
+        const accounts = allAccounts.filter(a => a.visible);
+        const hiddenAccountsCount = allAccounts.length - accounts.length;
 
         const piggyBanks = [...(data.financeManagement.piggyBanks as PiggyBank[])].sort(
             ComparatorBuilder.comparing<PiggyBank>(pb => pb.name).build()
         );
         return (
             <>
-                <Stack
-                    direction={{xs: 'column', md: 'row'}}
-                    spacing={{xs: 3, md: 5}}
-                    justifyContent="center"
-                    alignItems={{xs: 'stretch', md: 'flex-start'}}
-                    sx={{
-                        px: {xs: 1, sm: 2},
-                        py: 2,
-                    }}
-                >
-                    <Stack
-                        direction="column"
-                        sx={{
-                            width: '100%',
-                            maxWidth: 800,
-                        }}
-                    >
-                        <Typography
-                            variant="h4"
-                            textAlign="center"
-                            sx={{
-                                mb: 1.5,
-                                color: 'secondary.main',
-                            }}
-                        >
-                            Twoje konta
+                <Stack alignItems="center" sx={{width: '100%', px: {xs: 1, sm: 2}, py: 2}}>
+                    <Stack spacing={3} sx={{width: '100%', maxWidth: 960}}>
+                        <Typography variant="h3">
+                            <StandOutText standOutBy="both">Konta</StandOutText>
                         </Typography>
 
-                        <MultiCurrencySummary
-                            data={accounts}
-                            amountExtractor={account => new Decimal(account.currentBalance.amount)}
-                            currencyExtractor={account => account.currentBalance.currency.code}
-                            header="Suma:"
-                            sx={{
-                                mb: 1,
-                                ...compactListRow(theme),
-                            }}
-                        />
-
-                        <Stack direction="column">
-                            {accounts.map(account => (
-                                <AccountView
-                                    key={'av' + account.publicId}
-                                    account={account}
-                                    accounts={accounts}
-                                    onTransfer={() => setAccountBalanceAction({account})}
-                                    onTransferCompleted={refetch}
-                                />
-                            ))}
-                        </Stack>
-                    </Stack>
-
-                    <Stack
-                        direction="column"
-                        sx={{
-                            width: '100%',
-                            maxWidth: 800,
-                        }}
-                    >
-                        <Typography
-                            variant="h4"
-                            textAlign="center"
-                            sx={{
-                                mb: 1.5,
-                                color: 'secondary.main',
-                            }}
+                        <Stack
+                            direction={{xs: 'column', md: 'row'}}
+                            spacing={2}
+                            alignItems={{xs: 'stretch', md: 'flex-start'}}
                         >
-                            Skarbonki
-                        </Typography>
+                            <Paper variant="outlined" sx={{flex: 1, minWidth: 0, p: {xs: 1.5, sm: 2}}}>
+                                <Stack spacing={1.5}>
+                                    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                                        <Typography variant="h4">Twoje konta</Typography>
+                                        <Stack direction="row" spacing={0.75} flexWrap="wrap" justifyContent="flex-end">
+                                            <Chip
+                                                size="small"
+                                                variant="outlined"
+                                                label={`Liczba kont: ${allAccounts.length}`}
+                                            />
+                                            <Tooltip title="Przejdź do Ustawienia → Konta">
+                                                <Chip
+                                                    clickable
+                                                    size="small"
+                                                    variant="outlined"
+                                                    label={`Ukrytych: ${hiddenAccountsCount}`}
+                                                    aria-label={`Ukrytych: ${hiddenAccountsCount}. Przejdź do Ustawienia, Konta`}
+                                                    onClick={navigateToAccountsManagement}
+                                                    sx={{color: 'text.secondary'}}
+                                                />
+                                            </Tooltip>
+                                        </Stack>
+                                    </Stack>
 
-                        <Stack direction="column">
-                            {piggyBanks.map(piggyBank => (
-                                <Stack
-                                    key={piggyBank.publicId}
-                                    direction="row"
-                                    alignItems="center"
-                                    justifyContent="space-between"
-                                    sx={compactListRow(theme)}
-                                >
-                                    <Typography>{piggyBank.name}</Typography>
-                                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                                        <FormattedMoneyText
-                                            money={{
-                                                amount: piggyBank.balance.amount,
-                                                currency: piggyBank.balance.currency.code,
-                                            }}
-                                            parenthesizeNegative
+                                    <Paper variant="outlined" sx={{p: 1.5}}>
+                                        <Stack
+                                            direction={{xs: 'column', sm: 'row'}}
+                                            alignItems={{xs: 'stretch', sm: 'flex-start'}}
+                                            justifyContent="space-between"
+                                            spacing={1}
                                         >
-                                            {formattedValue => <>{formattedValue}</>}
-                                        </FormattedMoneyText>
-                                        <PiggyBankBalanceActions
-                                            piggyBankName={piggyBank.name}
-                                            onCredit={() => {
-                                                setPiggyBankBalanceDialogOptions({
-                                                    type: 'CREDIT',
-                                                    piggyBank: mapPiggyBank(piggyBank),
-                                                });
-                                            }}
-                                            onDebit={() => {
-                                                setPiggyBankBalanceDialogOptions({
-                                                    type: 'DEBIT',
-                                                    piggyBank: mapPiggyBank(piggyBank),
-                                                });
-                                            }}
+                                            <Typography variant="body2" color="text.secondary">
+                                                Łączne saldo
+                                            </Typography>
+                                            <MultiCurrencySummary
+                                                data={accounts}
+                                                amountExtractor={account => new Decimal(account.currentBalance.amount)}
+                                                currencyExtractor={account => account.currentBalance.currency.code}
+                                                sx={{'& .MuiTypography-root': {color: 'text.primary', fontWeight: 600}}}
+                                            />
+                                        </Stack>
+                                    </Paper>
+
+                                    {accounts.length === 0 ? (
+                                        <Typography color="text.secondary" textAlign="center" sx={{py: 3}}>
+                                            Brak widocznych kont.
+                                        </Typography>
+                                    ) : (
+                                        <Stack direction="column">
+                                            {accounts.map(account => (
+                                                <AccountView
+                                                    key={'av' + account.publicId}
+                                                    account={account}
+                                                    accounts={accounts}
+                                                    onTransfer={() => setAccountBalanceAction({account})}
+                                                    onTransferCompleted={refetch}
+                                                />
+                                            ))}
+                                        </Stack>
+                                    )}
+                                </Stack>
+                            </Paper>
+
+                            <Paper variant="outlined" sx={{flex: 1, minWidth: 0, p: {xs: 1.5, sm: 2}}}>
+                                <Stack spacing={1.5}>
+                                    <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+                                        <Typography variant="h4">Skarbonki</Typography>
+                                        <Chip
+                                            size="small"
+                                            variant="outlined"
+                                            label={`Liczba skarbonek: ${piggyBanks.length}`}
                                         />
                                     </Stack>
+
+                                    {piggyBanks.length === 0 ? (
+                                        <Typography color="text.secondary" textAlign="center" sx={{py: 3}}>
+                                            Brak skarbonek.
+                                        </Typography>
+                                    ) : (
+                                        <Stack direction="column">
+                                            {piggyBanks.map(piggyBank => (
+                                                <Stack
+                                                    key={piggyBank.publicId}
+                                                    direction="row"
+                                                    alignItems="center"
+                                                    justifyContent="space-between"
+                                                    spacing={1}
+                                                    sx={compactListRow(theme)}
+                                                >
+                                                    <Typography sx={{minWidth: 0, overflowWrap: 'anywhere'}}>
+                                                        {piggyBank.name}
+                                                    </Typography>
+                                                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                        <FormattedMoneyText
+                                                            money={{
+                                                                amount: piggyBank.balance.amount,
+                                                                currency: piggyBank.balance.currency.code,
+                                                            }}
+                                                            parenthesizeNegative
+                                                            sx={{color: 'text.primary', fontWeight: 600}}
+                                                        >
+                                                            {formattedValue => <>{formattedValue}</>}
+                                                        </FormattedMoneyText>
+                                                        <PiggyBankBalanceActions
+                                                            piggyBankName={piggyBank.name}
+                                                            onCredit={() => {
+                                                                setPiggyBankBalanceDialogOptions({
+                                                                    type: 'CREDIT',
+                                                                    piggyBank: mapPiggyBank(piggyBank),
+                                                                });
+                                                            }}
+                                                            onDebit={() => {
+                                                                setPiggyBankBalanceDialogOptions({
+                                                                    type: 'DEBIT',
+                                                                    piggyBank: mapPiggyBank(piggyBank),
+                                                                });
+                                                            }}
+                                                        />
+                                                    </Stack>
+                                                </Stack>
+                                            ))}
+                                        </Stack>
+                                    )}
                                 </Stack>
-                            ))}
+                            </Paper>
                         </Stack>
                     </Stack>
                 </Stack>

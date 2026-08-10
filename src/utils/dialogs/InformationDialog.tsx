@@ -19,19 +19,36 @@ export interface InformationDialogProps {
 
 export default function InformationDialog(props: InformationDialogProps) {
     const {title, message, children, open, onClose, dialogOptions, sx} = props;
+    const dialogTitleId = React.useId();
 
-    const handleClose = (e: React.MouseEvent<HTMLElement>, _: string = '') => {
-        e.stopPropagation();
-        onClose();
+    const handleClose = (event?: React.SyntheticEvent) => {
+        event?.stopPropagation();
+        void onClose();
     };
 
     return (
-        <Dialog onClose={handleClose} open={open} {...dialogOptions} sx={sx}>
-            <DialogTitle onClick={e => e.stopPropagation()} sx={{position: 'relative', textAlign: 'center'}}>
-                <Typography variant="h4" component="span">
+        <Dialog
+            onClose={() => handleClose()}
+            open={open}
+            aria-labelledby={dialogTitleId}
+            slotProps={{
+                backdrop: {
+                    'data-testid': 'information-dialog-backdrop',
+                } as React.ComponentPropsWithoutRef<'div'>,
+            }}
+            {...dialogOptions}
+            sx={sx}
+        >
+            <DialogTitle
+                id={`${dialogTitleId}-container`}
+                onClick={e => e.stopPropagation()}
+                sx={{position: 'relative', textAlign: 'center'}}
+            >
+                <Typography id={dialogTitleId} variant="h4" component="span">
                     {title}
                 </Typography>
                 <IconButton
+                    autoFocus
                     aria-label="Zamknij"
                     onClick={handleClose}
                     sx={{
@@ -51,7 +68,7 @@ export default function InformationDialog(props: InformationDialogProps) {
                     <div>
                         {message}
                         <Stack direction="row" spacing={4} alignItems="center">
-                            <Button variant="text" sx={{flexGrow: 1}} onClick={e => handleClose(e, 'confirm')}>
+                            <Button variant="text" sx={{flexGrow: 1}} onClick={handleClose}>
                                 OK
                             </Button>
                         </Stack>

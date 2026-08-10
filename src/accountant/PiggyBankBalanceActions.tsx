@@ -1,16 +1,24 @@
-import {Badge, IconButton, Stack, Tooltip} from '@mui/material';
-import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined';
+import {alpha, IconButton, Stack, Theme, Tooltip} from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import type {MouseEvent} from 'react';
 
-const PIGGY_BANK_ACTION_BADGE_SX = {
-    '& .MuiBadge-badge': {
-        zIndex: 0,
-        minWidth: 13,
-        height: 13,
-        padding: 0,
-        fontSize: '0.625rem',
-        fontWeight: 700,
-    },
+const actionButtonSx = (paletteName: 'success' | 'error') => (theme: Theme) => {
+    const actionColor =
+        theme.palette.mode === 'light' ? theme.palette[paletteName].dark : theme.palette[paletteName].light;
+
+    return {
+        color: actionColor,
+        border: '1px solid',
+        borderColor: actionColor,
+        bgcolor: alpha(actionColor, 0.06),
+        width: 22,
+        height: 22,
+        p: 0,
+        '&:hover': {
+            bgcolor: alpha(actionColor, 0.14),
+        },
+    };
 };
 
 export interface PiggyBankBalanceActionsProps {
@@ -25,38 +33,26 @@ export function PiggyBankBalanceActions({piggyBankName, onCredit, onDebit}: Pigg
         action();
     };
 
-    const actionIcon = (badgeContent: string, color: 'success' | 'error') => (
-        <Badge
-            badgeContent={badgeContent}
-            color={color}
-            overlap="circular"
-            anchorOrigin={{vertical: 'top', horizontal: 'left'}}
-            sx={PIGGY_BANK_ACTION_BADGE_SX}
-        >
-            <SavingsOutlinedIcon fontSize="medium" sx={{position: 'relative', zIndex: 1}} />
-        </Badge>
-    );
-
     return (
-        <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5}>
-            <Tooltip title="Uznaj">
+        <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={1}>
+            <Tooltip title="Dodaj środki">
                 <IconButton
                     size="small"
-                    color="inherit"
-                    aria-label={`Uznaj skarbonkę ${piggyBankName}`}
+                    aria-label={`Dodaj środki do skarbonki ${piggyBankName}`}
+                    sx={actionButtonSx('success')}
                     onClick={event => handleClick(event, onCredit)}
                 >
-                    {actionIcon('+', 'success')}
+                    <AddRoundedIcon sx={{fontSize: 13}} />
                 </IconButton>
             </Tooltip>
-            <Tooltip title="Obciąż">
+            <Tooltip title="Odejmij środki">
                 <IconButton
                     size="small"
-                    color="inherit"
-                    aria-label={`Obciąż skarbonkę ${piggyBankName}`}
+                    aria-label={`Odejmij środki ze skarbonki ${piggyBankName}`}
+                    sx={actionButtonSx('error')}
                     onClick={event => handleClick(event, onDebit)}
                 >
-                    {actionIcon('−', 'error')}
+                    <RemoveRoundedIcon sx={{fontSize: 13}} />
                 </IconButton>
             </Tooltip>
         </Stack>

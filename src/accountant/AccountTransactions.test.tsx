@@ -76,6 +76,10 @@ describe('AccountTransactions', () => {
             />
         );
 
+        expect(screen.getByRole('dialog', {name: 'Transakcje dla konta Konto główne'})).toBeInTheDocument();
+        expect(screen.getByRole('button', {name: 'Poprzedni miesiąc'})).toBeInTheDocument();
+        expect(screen.getByRole('button', {name: 'Następny miesiąc'})).toBeInTheDocument();
+        expect(screen.getByText('Liczba transakcji: 2')).toBeInTheDocument();
         expect(screen.queryByRole('button', {name: 'Przelej dalej: Zakupy'})).not.toBeInTheDocument();
         await user.click(screen.getByRole('button', {name: 'Przelej dalej: Wynagrodzenie'}));
 

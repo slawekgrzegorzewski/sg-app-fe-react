@@ -2,17 +2,17 @@ import {ErrorDisplay} from '../application/components/QueryState';
 import {useQuery} from '@apollo/client/react';
 import {Account, AccountTransactionShortFragment, GetAccountTransactions, GetAccountTransactionsQuery} from '../types';
 import React, {useState} from 'react';
-import {Box, IconButton, Stack, Tooltip, useMediaQuery} from '@mui/material';
+import {Box, Chip, IconButton, Paper, Stack, Tooltip, useMediaQuery, useTheme} from '@mui/material';
 import ForwardOutlinedIcon from '@mui/icons-material/ForwardOutlined';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import InformationDialog from '../utils/dialogs/InformationDialog';
 import dayjs from 'dayjs';
+import 'dayjs/locale/pl';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import {almostFullHeightDialog} from '../utils/theme/utils';
 import {ComparatorBuilder} from '../utils/comparator-builder';
-import {OverflowTooltip} from '../utils/OverflowTooltip';
 import {FormattedMoneyText} from '../application/components/FormattedMoneyText';
-import {StandOutText} from '../application/components/StandOutText';
 import Decimal from 'decimal.js';
 import {AccountBalanceActionDialog} from './AccountBalanceActionDialog';
 import type {AccountBalanceAction} from './AccountBalanceActionDialog';
@@ -35,6 +35,7 @@ export interface AccountTransactionsProps {
 
 export function AccountTransactions({account, accounts, onClose, onTransferCompleted}: AccountTransactionsProps) {
     const isTouchDevice = useMediaQuery('(pointer: coarse)');
+    const theme = useTheme();
     const [yearMonth, setYearMonth] = useState(dayjs());
     const [transferAction, setTransferAction] = useState<AccountBalanceAction | null>(null);
     const {loading, error, data, refetch} = useQuery<GetAccountTransactionsQuery>(GetAccountTransactions, {
@@ -49,6 +50,11 @@ export function AccountTransactions({account, accounts, onClose, onTransferCompl
     } else if (error) {
         return <ErrorDisplay error={error} />;
     } else if (data) {
+        const transactions =
+            data.financeManagement.accounts.length === 0
+                ? []
+                : [...data.financeManagement.accounts[0].transactions].sort(BY_DATE(account));
+
         return (
             <>
                 <InformationDialog
@@ -61,129 +67,161 @@ export function AccountTransactions({account, accounts, onClose, onTransferCompl
                     sx={[
                         almostFullHeightDialog,
                         {
-                            '& .MuiDialog-paper': {maxWidth: '800px', width: '800px'},
+                            '& .MuiDialog-paper': {
+                                maxWidth: isTouchDevice ? '100%' : '800px',
+                                width: isTouchDevice ? '100%' : '800px',
+                                ...(isTouchDevice && {
+                                    height: '100%',
+                                    maxHeight: '100%',
+                                    margin: 0,
+                                }),
+                            },
                         },
                     ]}
                 >
-                    <Stack direction="column">
-                        <Stack
-                            direction="row"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            sx={{
-                                px: 1.5,
-                                py: 1,
-                                mb: 1,
-                            }}
-                        >
-                            <Button
+                    <Stack direction="column" spacing={2}>
+                        <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                            <IconButton
+                                aria-label="Poprzedni miesiąc"
                                 onClick={() => setYearMonth(yearMonth.subtract(1, 'month'))}
-                                sx={{cursor: 'pointer', fontSize: '0.9rem'}}
                             >
-                                {yearMonth
-                                    .subtract(1, 'month')
-                                    .locale(navigator.language)
-                                    .format(YEAR_MONTH_DISPLAY_FORMAT)}
-                            </Button>
+                                <NavigateBeforeIcon />
+                            </IconButton>
 
-                            <Typography variant="subtitle1">
-                                <StandOutText standOutBy="bold">
-                                    {yearMonth.locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
-                                </StandOutText>
+                            <Typography
+                                variant="h4"
+                                textAlign="center"
+                                sx={{minWidth: {xs: 150, sm: 190}, color: 'secondary.main'}}
+                            >
+                                {yearMonth.locale('pl').format(YEAR_MONTH_DISPLAY_FORMAT)}
                             </Typography>
 
-                            <Button
+                            <IconButton
+                                aria-label="Następny miesiąc"
                                 onClick={() => setYearMonth(yearMonth.add(1, 'month'))}
-                                sx={{cursor: 'pointer', fontSize: '0.9rem'}}
                             >
-                                {yearMonth.add(1, 'month').locale(navigator.language).format(YEAR_MONTH_DISPLAY_FORMAT)}
-                            </Button>
+                                <NavigateNextIcon />
+                            </IconButton>
                         </Stack>
 
-                        <Stack>
-                            {data.financeManagement.accounts.length === 0
-                                ? []
-                                : [...data.financeManagement.accounts[0].transactions]
-                                      .sort(BY_DATE(account))
-                                      .map(transaction => {
-                                          const isCreditTransaction =
-                                              transaction.source?.publicId !== account.publicId && !!transaction.credit;
-                                          const balance =
-                                              transaction.source?.publicId === account.publicId
-                                                  ? {
-                                                        amount: -transaction.debit!.amount,
-                                                        currency: transaction.debit!.currency.code,
-                                                    }
-                                                  : {
-                                                        amount: transaction.credit!.amount,
-                                                        currency: transaction.credit!.currency.code,
-                                                    };
-                                          return (
-                                              <Stack
-                                                  key={transaction.publicId}
-                                                  direction="row"
-                                                  alignItems="center"
-                                                  spacing={2}
-                                                  sx={{
-                                                      px: 1.5,
-                                                      py: 0.2,
-                                                      borderBottom: '1px solid',
-                                                      borderColor: 'divider',
-                                                      '&:hover': {
-                                                          bgcolor: 'action.hover',
-                                                      },
-                                                  }}
-                                              >
-                                                  <Box
-                                                      sx={{
-                                                          width: 100,
-                                                          flexShrink: 0,
-                                                          color: 'text.secondary',
-                                                          fontSize: '0.875rem',
-                                                      }}
-                                                  >
-                                                      {dayjs(transaction.timeOfTransaction).format('YYYY-MM-DD')}
-                                                  </Box>
-                                                  <FormattedMoneyText
-                                                      money={{
-                                                          amount: balance.amount,
-                                                          currency: balance.currency,
-                                                      }}
-                                                      parenthesizeNegative
-                                                  >
-                                                      {formattedValue => <>{formattedValue}</>}
-                                                  </FormattedMoneyText>
-                                                  <OverflowTooltip>{transaction.description}</OverflowTooltip>
-                                                  {isCreditTransaction && (
-                                                      <Tooltip title="Przelej dalej">
-                                                          <IconButton
-                                                              size="small"
-                                                              color="inherit"
-                                                              aria-label={`Przelej dalej: ${transaction.description}`}
-                                                              onClick={event => {
-                                                                  event.stopPropagation();
-                                                                  setTransferAction({
-                                                                      account,
-                                                                      initialTransfer: {
-                                                                          fromAmount: new Decimal(
-                                                                              transaction.credit!.amount
-                                                                          ),
-                                                                          description: transaction.description,
-                                                                          day: dayjs(transaction.timeOfTransaction),
-                                                                      },
-                                                                      lockDescription: true,
-                                                                      dateEditable: true,
-                                                                  });
-                                                              }}
-                                                          >
-                                                              <ForwardOutlinedIcon />
-                                                          </IconButton>
-                                                      </Tooltip>
-                                                  )}
-                                              </Stack>
-                                          );
-                                      })}
-                        </Stack>
+                        <Chip
+                            size="small"
+                            variant="outlined"
+                            label={`Liczba transakcji: ${transactions.length}`}
+                            sx={{alignSelf: 'flex-end'}}
+                        />
+
+                        {transactions.length === 0 ? (
+                            <Typography color="text.secondary" textAlign="center" sx={{py: 4}}>
+                                Brak transakcji w tym miesiącu.
+                            </Typography>
+                        ) : (
+                            <Stack spacing={1}>
+                                {transactions.map(transaction => {
+                                    const isCreditTransaction =
+                                        transaction.source?.publicId !== account.publicId && !!transaction.credit;
+                                    const balance =
+                                        transaction.source?.publicId === account.publicId
+                                            ? {
+                                                  amount: -transaction.debit!.amount,
+                                                  currency: transaction.debit!.currency.code,
+                                              }
+                                            : {
+                                                  amount: transaction.credit!.amount,
+                                                  currency: transaction.credit!.currency.code,
+                                              };
+                                    const amountColor = new Decimal(balance.amount).isNegative()
+                                        ? theme.palette.mode === 'light'
+                                            ? theme.palette.error.dark
+                                            : theme.palette.error.light
+                                        : theme.palette.text.primary;
+
+                                    return (
+                                        <Paper
+                                            variant="outlined"
+                                            key={transaction.publicId}
+                                            sx={{
+                                                display: 'grid',
+                                                gridTemplateColumns: {
+                                                    xs: 'minmax(0, 1fr) auto 36px',
+                                                    sm: '105px 125px minmax(0, 1fr) 36px',
+                                                },
+                                                gridTemplateAreas: {
+                                                    xs: '"date amount action" "description description description"',
+                                                    sm: '"date amount description action"',
+                                                },
+                                                columnGap: {xs: 1, sm: 1.5},
+                                                rowGap: 0.75,
+                                                alignItems: 'center',
+                                                p: {xs: 1.25, sm: 1.5},
+                                                '&:hover': {bgcolor: 'action.hover'},
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="body2"
+                                                color="text.secondary"
+                                                sx={{gridArea: 'date', whiteSpace: 'nowrap'}}
+                                            >
+                                                {dayjs(transaction.timeOfTransaction).locale('pl').format('D MMM YYYY')}
+                                            </Typography>
+                                            <Box sx={{gridArea: 'amount', textAlign: 'right'}}>
+                                                <FormattedMoneyText
+                                                    money={{
+                                                        amount: balance.amount,
+                                                        currency: balance.currency,
+                                                    }}
+                                                    parenthesizeNegative
+                                                    sx={{color: amountColor, fontWeight: 600, whiteSpace: 'nowrap'}}
+                                                >
+                                                    {formattedValue => <>{formattedValue}</>}
+                                                </FormattedMoneyText>
+                                            </Box>
+                                            <Typography
+                                                title={transaction.description}
+                                                sx={{
+                                                    gridArea: 'description',
+                                                    minWidth: 0,
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: {xs: 'normal', sm: 'nowrap'},
+                                                    overflowWrap: 'anywhere',
+                                                }}
+                                            >
+                                                {transaction.description}
+                                            </Typography>
+                                            <Box sx={{gridArea: 'action', width: 36}}>
+                                                {isCreditTransaction && (
+                                                    <Tooltip title="Przelej dalej">
+                                                        <IconButton
+                                                            size="small"
+                                                            color="inherit"
+                                                            aria-label={`Przelej dalej: ${transaction.description}`}
+                                                            onClick={event => {
+                                                                event.stopPropagation();
+                                                                setTransferAction({
+                                                                    account,
+                                                                    initialTransfer: {
+                                                                        fromAmount: new Decimal(
+                                                                            transaction.credit!.amount
+                                                                        ),
+                                                                        description: transaction.description,
+                                                                        day: dayjs(transaction.timeOfTransaction),
+                                                                    },
+                                                                    lockDescription: true,
+                                                                    dateEditable: true,
+                                                                });
+                                                            }}
+                                                        >
+                                                            <ForwardOutlinedIcon />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                            </Box>
+                                        </Paper>
+                                    );
+                                })}
+                            </Stack>
+                        )}
                     </Stack>
                 </InformationDialog>
                 {transferAction && (

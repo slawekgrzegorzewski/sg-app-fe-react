@@ -115,6 +115,8 @@ export type FormProps<T> = {
     onCancel: () => void;
     onChange?(value: T): void;
     presentation?: 'default' | 'dialog';
+    submitLabel?: string;
+    submitColor?: 'primary' | 'secondary' | 'success' | 'error';
 };
 
 export default function Form<T>({
@@ -128,6 +130,8 @@ export default function Form<T>({
     onCancel,
     onChange,
     presentation = 'default',
+    submitLabel,
+    submitColor,
 }: FormProps<T>) {
     if (showControlButtons === undefined) {
         showControlButtons = true;
@@ -356,11 +360,31 @@ export default function Form<T>({
                             </Button>
                             <Button
                                 variant="contained"
+                                color={submitColor}
                                 type="submit"
-                                sx={{flex: {xs: 1, sm: '0 0 auto'}}}
+                                sx={theme => {
+                                    const semanticPalette =
+                                        submitColor === 'success' || submitColor === 'error'
+                                            ? theme.palette[submitColor]
+                                            : null;
+                                    const backgroundColor = semanticPalette
+                                        ? theme.palette.mode === 'light'
+                                            ? semanticPalette.dark
+                                            : semanticPalette.light
+                                        : undefined;
+
+                                    return {
+                                        flex: {xs: 1, sm: '0 0 auto'},
+                                        ...(backgroundColor && {
+                                            bgcolor: backgroundColor,
+                                            color: theme.palette.getContrastText(backgroundColor),
+                                            '&:hover': {bgcolor: backgroundColor},
+                                        }),
+                                    };
+                                }}
                                 onClick={e => e.stopPropagation()}
                             >
-                                Zapisz
+                                {submitLabel ?? 'Zapisz'}
                             </Button>
                         </Stack>
                     )}
@@ -368,12 +392,12 @@ export default function Form<T>({
                         <Stack direction={'row'} spacing={4} alignItems={'center'} justifyContent={'space-evenly'}>
                             <Button
                                 variant="text"
-                                color="secondary"
+                                color={submitColor ?? 'secondary'}
                                 type="submit"
                                 sx={{flexGrow: 1}}
                                 onClick={e => e.stopPropagation()}
                             >
-                                Potwierdź
+                                {submitLabel ?? 'Potwierdź'}
                             </Button>
                             <Button
                                 variant="text"
