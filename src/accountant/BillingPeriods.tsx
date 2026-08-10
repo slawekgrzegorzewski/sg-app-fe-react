@@ -37,6 +37,8 @@ import ConfirmationDialog from '../utils/dialogs/ConfirmationDialog';
 import {CreateBillingElementButton} from './CreateBillingElementButton';
 import {BankTransactionsImporter} from './BankTransactionsImporter';
 import {StandOutText} from '../application/components/StandOutText';
+import {MultiCurrencySummary} from '../application/components/MultiCurrencySummary';
+import Decimal from 'decimal.js';
 
 const YEAR_MONTH_FORMAT = 'YYYY-MM';
 
@@ -129,6 +131,7 @@ function BillingElementsSection<T extends Income | Expense>({
         (total, elements) => total + elements.length,
         0
     );
+    const allElements = Array.from(elementsByCategory.values()).flat();
 
     return (
         <Paper variant="outlined" sx={{flex: 1, minWidth: 0, p: {xs: 1.5, sm: 2}}}>
@@ -136,7 +139,19 @@ function BillingElementsSection<T extends Income | Expense>({
                 <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
                     <Typography variant="h4">{title}</Typography>
                     <Chip size="small" variant="outlined" label={`Liczba pozycji: ${numberOfElements}`} />
-                </Stack>
+                </Stack>{' '}
+                {categories.length > 0 && (
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                        <Typography variant="body2" color="text.secondary">
+                            Łącznie
+                        </Typography>
+                        <MultiCurrencySummary
+                            data={allElements}
+                            currencyExtractor={be => be.currency}
+                            amountExtractor={be => new Decimal(be.amount)}
+                        />
+                    </Stack>
+                )}
                 {categories.length === 0 ? (
                     <Typography color="text.secondary" textAlign="center" sx={{py: 3}}>
                         Brak pozycji w tym miesiącu.
