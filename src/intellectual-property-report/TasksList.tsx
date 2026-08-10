@@ -1,7 +1,8 @@
 import {useResetMutationResults} from '../utils/use-reset-mutation-results';
 import {useMutation} from '@apollo/client/react';
 import {CreateTask, CreateTaskMutation, IntellectualProperty, Task} from '../types';
-import {Button, Stack, useTheme} from '@mui/material';
+import {Button, Chip, Stack, Typography} from '@mui/material';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import * as React from 'react';
 import {FormDialogButton} from '../utils/buttons/FormDialogButton';
 import * as Yup from 'yup';
@@ -23,12 +24,8 @@ const taskEditorFields: EditorField[] = [
     },
 ];
 
-const taskDialogTitle = 'Dane zadania';
-
 export function TasksList(properties: {intellectualProperty: IntellectualProperty; refetchDataCallback: () => void}) {
     const {intellectualProperty, refetchDataCallback} = properties;
-    const theme = useTheme();
-    const oddStyle = {backgroundColor: theme.palette.action.hover};
     const [createTaskMutation, createTaskMutationResult] = useMutation<CreateTaskMutation>(CreateTask);
 
     const createTask = async (task: Task): Promise<any> => {
@@ -44,26 +41,35 @@ export function TasksList(properties: {intellectualProperty: IntellectualPropert
 
     useResetMutationResults(createTaskMutationResult);
 
+    const tasks = intellectualProperty.tasks || [];
+
     return (
-        <Stack direction="column">
-            <Stack direction="row" justifyContent="space-between">
-                <div>
-                    {(intellectualProperty.tasks || []).length === 0 ? 'Brak zadań w ramach IP' : 'Zadania w ramach IP'}
-                </div>
+        <Stack spacing={1.5}>
+            <Stack
+                direction={{xs: 'column', sm: 'row'}}
+                alignItems={{xs: 'stretch', sm: 'center'}}
+                justifyContent="space-between"
+                gap={1}
+            >
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="h4">Zadania</Typography>
+                    <Chip size="small" variant="outlined" label={`Liczba: ${tasks.length}`} />
+                </Stack>
                 <FormDialogButton
-                    title={taskDialogTitle}
+                    title="Dodaj zadanie"
                     buttonContent={
-                        <Button variant={'text'} size={'small'} color="secondary">
-                            stwórz zadanie
+                        <Button variant="outlined" color="secondary" startIcon={<AddRoundedIcon />} fullWidth>
+                            Dodaj zadanie
                         </Button>
                     }
                     onConfirm={value => createTask(value)}
-                    onCancel={() => {
-                        return Promise.resolve();
-                    }}
+                    onCancel={() => Promise.resolve()}
                     formProps={{
+                        presentation: 'dialog',
+                        submitLabel: 'Dodaj zadanie',
+                        submitColor: 'secondary',
                         initialValues: {
-                            intellectualPropertyId: -1,
+                            intellectualPropertyId: intellectualProperty.id,
                             id: -1,
                             description: '',
                             coAuthors: '',
@@ -71,24 +77,32 @@ export function TasksList(properties: {intellectualProperty: IntellectualPropert
                             timeRecords: [],
                         },
                         fields: taskEditorFields,
-                        validationSchema: Yup.object({}),
+                        validationSchema: Yup.object({
+                            description: Yup.string().trim().required('Wymagane'),
+                            coAuthors: Yup.string(),
+                        }),
                     }}
                 />
             </Stack>
-            <Stack direction="column">
-                {(intellectualProperty.tasks || []).map((task, index) => (
-                    <TaskView
-                        key={task.id}
-                        task={task}
-                        sx={index % 2 === 0 ? oddStyle : {}}
-                        dialogOptions={{
-                            title: taskDialogTitle,
-                            editorFields: taskEditorFields,
-                        }}
-                        refetchDataCallback={refetchDataCallback}
-                    />
-                ))}
-            </Stack>
+            {tasks.length === 0 ? (
+                <Typography color="text.secondary" textAlign="center" sx={{py: 2}}>
+                    Ten raport nie zawiera jeszcze żadnych zadań.
+                </Typography>
+            ) : (
+                <Stack spacing={1}>
+                    {tasks.map(task => (
+                        <TaskView
+                            key={task.id}
+                            task={task}
+                            dialogOptions={{
+                                title: 'Edytuj zadanie',
+                                editorFields: taskEditorFields,
+                            }}
+                            refetchDataCallback={refetchDataCallback}
+                        />
+                    ))}
+                </Stack>
+            )}
         </Stack>
     );
 }

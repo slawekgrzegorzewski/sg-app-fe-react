@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {Box} from '@mui/material';
 import {FormProps} from '../forms/Form';
 import {FormDialog} from '../dialogs/FormDialog';
@@ -19,8 +19,20 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
     let {title, buttonContent, onConfirm, onCancel, formProps, dialogOptions} = props;
 
     const [formDialogOpen, setFormDialogOpen] = useState(false);
+    const triggerRef = useRef<HTMLDivElement>(null);
+
+    const restoreTriggerFocus = () => {
+        window.requestAnimationFrame(() => {
+            triggerRef.current
+                ?.querySelector<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+                ?.focus();
+        });
+    };
 
     const openFormClicked = (e?: React.SyntheticEvent) => {
+        if (document.activeElement instanceof HTMLElement && triggerRef.current?.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
         setFormDialogOpen(true);
         e?.stopPropagation();
     };
@@ -41,7 +53,7 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
 
     return (
         <>
-            <Box onClick={e => openFormClicked(e)} onKeyDown={activateOnEnterOrSpace(openFormClicked)}>
+            <Box ref={triggerRef} onClick={e => openFormClicked(e)} onKeyDown={activateOnEnterOrSpace(openFormClicked)}>
                 {buttonContent!}
             </Box>
             <FormDialog
@@ -50,7 +62,13 @@ export function FormDialogButton<T>(props: FormDialogButtonProps<T>) {
                 onConfirm={confirm}
                 onCancel={cancel}
                 open={formDialogOpen}
-                dialogOptions={dialogOptions}
+                dialogOptions={{
+                    ...dialogOptions,
+                    onTransitionExited: () => {
+                        dialogOptions?.onTransitionExited?.();
+                        restoreTriggerFocus();
+                    },
+                }}
             />
         </>
     );

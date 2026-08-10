@@ -1,4 +1,4 @@
-import {ErrorDisplay} from '../application/components/QueryState';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {useResetMutationResults} from '../utils/use-reset-mutation-results';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {
@@ -10,22 +10,27 @@ import {
 } from '../types';
 import * as React from 'react';
 import {useState} from 'react';
-import {IntellectualPropertiesList, IPR_DIALOG_TITLE, IPR_EDITOR_FIELDS} from './IntellectualPropertiesList';
 import {
     Button,
+    Chip,
     FormControl,
     FormControlLabel,
-    FormGroup,
     InputLabel,
     MenuItem,
+    Paper,
     Select,
     Stack,
     Switch,
+    Typography,
 } from '@mui/material';
 import {FormDialogButton} from '../utils/buttons/FormDialogButton';
 import * as Yup from 'yup';
 import dayjs from 'dayjs';
+import 'dayjs/locale/pl';
 import {ComparatorBuilder} from '../utils/comparator-builder';
+import {IntellectualPropertiesList, IPR_EDITOR_FIELDS} from './IntellectualPropertiesList';
+import {StandOutText} from '../application/components/StandOutText';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 
 type IntellectualPropertiesFilter = {
     yearMonthFilter: string;
@@ -33,14 +38,19 @@ type IntellectualPropertiesFilter = {
     onlyReportsHavingTasksWithNoAttachments: boolean;
 };
 
+const ALL_MONTHS = 'all';
+
+function formatMonth(yearMonth: string) {
+    return dayjs(`${yearMonth}-01`).locale('pl').format('MMMM YYYY');
+}
+
 export function IntellectualPropertiesMainPage() {
-    const noYearMonthFilterLabel = 'wszystkie';
-    const intellectualPropertiesFilter: IntellectualPropertiesFilter = {
+    const monthSelectLabelId = React.useId();
+    const [ipFilter, setIpFilter] = useState<IntellectualPropertiesFilter>({
         yearMonthFilter: dayjs().format('YYYY-MM'),
         onlyReportsWithoutAttachments: false,
         onlyReportsHavingTasksWithNoAttachments: false,
-    };
-    const [ipFilter, setIpFilter] = useState<IntellectualPropertiesFilter>(intellectualPropertiesFilter);
+    });
     const [createIntellectualPropertyReportMutation, createIntellectualPropertyReportMutationResult] =
         useMutation<CreateIntellectualPropertyReportMutation>(CreateIntellectualPropertyReport);
 
@@ -53,7 +63,7 @@ export function IntellectualPropertiesMainPage() {
         IntellectualPropertiesRecords,
         {
             variables: {
-                yearMonthFilter: ipFilter.yearMonthFilter === noYearMonthFilterLabel ? null : ipFilter.yearMonthFilter,
+                yearMonthFilter: ipFilter.yearMonthFilter === ALL_MONTHS ? null : ipFilter.yearMonthFilter,
                 onlyReportsWithoutAttachments: ipFilter.onlyReportsWithoutAttachments,
                 onlyReportsHavingTasksWithNoAttachments: ipFilter.onlyReportsHavingTasksWithNoAttachments,
             },
@@ -63,119 +73,172 @@ export function IntellectualPropertiesMainPage() {
     useResetMutationResults(createIntellectualPropertyReportMutationResult);
 
     if (loading) {
+        return <LoadingIndicator label="Ładowanie raportów własności intelektualnej..." />;
+    }
+
+    if (error) {
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
+    }
+
+    if (!data) {
         return <></>;
-    } else if (error) {
-        return <ErrorDisplay error={error} />;
-    } else if (data) {
-        const yearMonthFilters = [];
-        if (data.intellectualPropertiesRecords?.stats.firstTimeRecord) {
-            const fromDate = new Date(data.intellectualPropertiesRecords!.stats.firstTimeRecord);
-            const now = new Date();
-            while (fromDate.getTime() < now.getTime()) {
-                yearMonthFilters.push(dayjs(fromDate).format('YYYY-MM'));
-                fromDate.setMonth(fromDate.getMonth() + 1);
-            }
+    }
+
+    const yearMonthFilters: string[] = [];
+    if (data.intellectualPropertiesRecords?.stats.firstTimeRecord) {
+        const fromDate = new Date(data.intellectualPropertiesRecords.stats.firstTimeRecord);
+        const lastRecordDate = data.intellectualPropertiesRecords.stats.lastTimeRecord
+            ? new Date(data.intellectualPropertiesRecords.stats.lastTimeRecord)
+            : new Date();
+        const toDate = lastRecordDate.getTime() > Date.now() ? lastRecordDate : new Date();
+        fromDate.setDate(1);
+        toDate.setDate(1);
+        while (fromDate.getTime() <= toDate.getTime()) {
+            yearMonthFilters.push(dayjs(fromDate).format('YYYY-MM'));
+            fromDate.setMonth(fromDate.getMonth() + 1);
         }
-        return (
-            <Stack direction="column" sx={{width: 1000, m: 'auto'}}>
-                <Stack direction="row" justifyContent="space-between">
+    }
+    if (ipFilter.yearMonthFilter !== ALL_MONTHS && !yearMonthFilters.includes(ipFilter.yearMonthFilter)) {
+        yearMonthFilters.push(ipFilter.yearMonthFilter);
+    }
+
+    const reports = [...(data.intellectualPropertiesRecords?.reports || [])] as IntellectualProperty[];
+    reports.sort(ComparatorBuilder.comparing<IntellectualProperty>(report => report.id).build());
+    const tasksCount = reports.reduce((sum, report) => sum + (report.tasks?.length || 0), 0);
+    const activeAttachmentFilter = ipFilter.onlyReportsWithoutAttachments
+        ? 'Raporty bez załączników'
+        : ipFilter.onlyReportsHavingTasksWithNoAttachments
+          ? 'Zadania bez załączników'
+          : null;
+
+    return (
+        <Stack alignItems="center" sx={{width: '100%', px: {xs: 1, sm: 2}, py: 2}}>
+            <Stack spacing={2.5} sx={{width: '100%', maxWidth: 960}}>
+                <Stack
+                    direction={{xs: 'column', sm: 'row'}}
+                    alignItems={{xs: 'stretch', sm: 'center'}}
+                    justifyContent="space-between"
+                    gap={1.5}
+                >
+                    <Stack spacing={0.5}>
+                        <Typography variant="h3">
+                            <StandOutText standOutBy="both">Raporty własności intelektualnej</StandOutText>
+                        </Typography>
+                        <Typography color="text.secondary">
+                            Zarządzaj pracami autorskimi, zadaniami i ich załącznikami.
+                        </Typography>
+                    </Stack>
                     <FormDialogButton
-                        title={IPR_DIALOG_TITLE}
+                        title="Dodaj raport własności intelektualnej"
                         buttonContent={
-                            <Button variant={'text'} size={'small'} color="secondary">
-                                stwórz własność intelektualną
+                            <Button variant="contained" color="secondary" startIcon={<AddRoundedIcon />} fullWidth>
+                                Dodaj raport IP
                             </Button>
                         }
                         onConfirm={value => createIntellectualProperty(value)}
-                        onCancel={() => {
-                            return Promise.resolve();
-                        }}
+                        onCancel={() => Promise.resolve()}
                         formProps={{
+                            presentation: 'dialog',
+                            submitLabel: 'Dodaj raport',
+                            submitColor: 'secondary',
                             initialValues: {
                                 id: -1,
                                 description: '',
                                 tasks: [],
-                                domain: {
-                                    publicId: '',
-                                    name: '',
-                                },
+                                domain: {publicId: '', name: ''},
                             },
                             fields: IPR_EDITOR_FIELDS,
-                            validationSchema: Yup.object({}),
+                            validationSchema: Yup.object({
+                                description: Yup.string().trim().required('Wymagane'),
+                            }),
                         }}
                     />
-                    <FormControl variant="standard" sx={{m: 1, minWidth: 120}}>
-                        <InputLabel id="demo-simple-select-standard-label">Miesiąc</InputLabel>
-                        <Select
-                            labelId="demo-simple-select-standard-label"
-                            id="demo-simple-select-standard"
-                            value={ipFilter.yearMonthFilter}
-                            onChange={event => {
-                                setIpFilter({...ipFilter, yearMonthFilter: event.target.value as string});
-                            }}
-                            label="Miesiąc"
-                        >
-                            <MenuItem value={noYearMonthFilterLabel}>{noYearMonthFilterLabel}</MenuItem>
-                            {yearMonthFilters.map(yearMonthFilter => (
-                                <MenuItem key={yearMonthFilter} value={yearMonthFilter}>
-                                    {yearMonthFilter}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={ipFilter.onlyReportsWithoutAttachments}
-                                    onChange={event => {
-                                        setIpFilter({
-                                            ...ipFilter,
-                                            onlyReportsWithoutAttachments: event.target.checked,
-                                            onlyReportsHavingTasksWithNoAttachments: event.target.checked
-                                                ? false
-                                                : ipFilter.onlyReportsHavingTasksWithNoAttachments,
-                                        });
-                                    }}
-                                />
-                            }
-                            label="IP bez załączników"
-                        />
-                    </FormGroup>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={ipFilter.onlyReportsHavingTasksWithNoAttachments}
-                                    onChange={event => {
-                                        setIpFilter({
-                                            ...ipFilter,
-                                            onlyReportsHavingTasksWithNoAttachments: event.target.checked,
-                                            onlyReportsWithoutAttachments: event.target.checked
-                                                ? false
-                                                : ipFilter.onlyReportsWithoutAttachments,
-                                        });
-                                    }}
-                                />
-                            }
-                            label="taski bez załączników"
-                        />
-                    </FormGroup>
                 </Stack>
 
-                {(data.intellectualPropertiesRecords?.reports?.length || 0) === 0 ? (
-                    <>No data</>
-                ) : (
-                    <IntellectualPropertiesList
-                        intellectualProperties={[
-                            ...(data.intellectualPropertiesRecords!.reports! as IntellectualProperty[]),
-                        ].sort(ComparatorBuilder.comparing<IntellectualProperty>(ip => ip.id).build())}
-                        refetchDataCallback={refetch}
-                    />
-                )}
+                <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+                    <Stack spacing={1.5}>
+                        <Typography variant="h4">Filtry</Typography>
+                        <Stack direction={{xs: 'column', md: 'row'}} alignItems={{md: 'center'}} gap={1.5}>
+                            <FormControl size="small" sx={{minWidth: {xs: '100%', md: 210}}}>
+                                <InputLabel id={monthSelectLabelId} sx={{color: 'text.primary'}}>
+                                    Miesiąc
+                                </InputLabel>
+                                <Select
+                                    labelId={monthSelectLabelId}
+                                    value={ipFilter.yearMonthFilter}
+                                    onChange={event =>
+                                        setIpFilter({...ipFilter, yearMonthFilter: event.target.value as string})
+                                    }
+                                    label="Miesiąc"
+                                >
+                                    <MenuItem value={ALL_MONTHS}>Wszystkie miesiące</MenuItem>
+                                    {yearMonthFilters.reverse().map(yearMonthFilter => (
+                                        <MenuItem key={yearMonthFilter} value={yearMonthFilter}>
+                                            {formatMonth(yearMonthFilter)}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <FormControlLabel
+                                sx={{m: 0}}
+                                control={
+                                    <Switch
+                                        checked={ipFilter.onlyReportsWithoutAttachments}
+                                        onChange={event =>
+                                            setIpFilter({
+                                                ...ipFilter,
+                                                onlyReportsWithoutAttachments: event.target.checked,
+                                                onlyReportsHavingTasksWithNoAttachments: event.target.checked
+                                                    ? false
+                                                    : ipFilter.onlyReportsHavingTasksWithNoAttachments,
+                                            })
+                                        }
+                                    />
+                                }
+                                label="Raporty bez załączników"
+                            />
+                            <FormControlLabel
+                                sx={{m: 0}}
+                                control={
+                                    <Switch
+                                        checked={ipFilter.onlyReportsHavingTasksWithNoAttachments}
+                                        onChange={event =>
+                                            setIpFilter({
+                                                ...ipFilter,
+                                                onlyReportsHavingTasksWithNoAttachments: event.target.checked,
+                                                onlyReportsWithoutAttachments: event.target.checked
+                                                    ? false
+                                                    : ipFilter.onlyReportsWithoutAttachments,
+                                            })
+                                        }
+                                    />
+                                }
+                                label="Zadania bez załączników"
+                            />
+                        </Stack>
+                    </Stack>
+                </Paper>
+
+                <Stack component="section" spacing={1.5}>
+                    <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1}>
+                        <Typography variant="h4">Raporty IP</Typography>
+                        <Chip size="small" variant="outlined" label={`Raporty: ${reports.length}`} />
+                        <Chip size="small" variant="outlined" label={`Zadania: ${tasksCount}`} />
+                        {activeAttachmentFilter && (
+                            <Chip size="small" color="secondary" variant="outlined" label={activeAttachmentFilter} />
+                        )}
+                    </Stack>
+                    {reports.length === 0 ? (
+                        <Paper variant="outlined" sx={{p: 4}}>
+                            <Typography color="text.secondary" textAlign="center">
+                                Brak raportów spełniających wybrane kryteria.
+                            </Typography>
+                        </Paper>
+                    ) : (
+                        <IntellectualPropertiesList intellectualProperties={reports} refetchDataCallback={refetch} />
+                    )}
+                </Stack>
             </Stack>
-        );
-    } else {
-        return <></>;
-    }
+        </Stack>
+    );
 }

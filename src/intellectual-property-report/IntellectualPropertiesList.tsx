@@ -1,13 +1,12 @@
-import {Box} from '@mui/material';
+import {Stack} from '@mui/material';
 import * as React from 'react';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import {EditorField} from '../utils/forms/Form';
 import {IntellectualPropertyReport} from './IntellectualPropertyReport';
 import {IntellectualProperty} from '../types';
 
 const EXPANDED_INTELLECTUAL_PROPERTY_ID_LOCAL_STORAGE_KEY = 'newApp_IPR_accordion_expandedId';
 
-export const IPR_DIALOG_TITLE = 'Dane własności intelektualnej';
 export const IPR_EDITOR_FIELDS: EditorField[] = [
     {
         label: 'Opis',
@@ -39,16 +38,16 @@ export function IntellectualPropertiesList(properties: {
         );
     };
 
-    function expandedTabIdNotPresentInDataSet() {
-        return !intellectualProperties.map(ipr => ipr.id).find(id => id === expandedIntellectualPropertyId);
-    }
+    const expandedTabIdPresent = intellectualProperties.some(ipr => ipr.id === expandedIntellectualPropertyId);
 
-    if (expandedIntellectualPropertyId !== -1 && expandedTabIdNotPresentInDataSet()) {
-        setExpandedIntellectualPropertyId(-1);
-    }
+    useEffect(() => {
+        if (expandedIntellectualPropertyId !== -1 && !expandedTabIdPresent) {
+            setExpandedIntellectualPropertyId(-1);
+        }
+    }, [expandedIntellectualPropertyId, expandedTabIdPresent]);
 
     return (
-        <Box component="section">
+        <Stack spacing={1.5}>
             {intellectualProperties.map(intellectualProperty => (
                 <IntellectualPropertyReport
                     key={intellectualProperty.id}
@@ -56,12 +55,9 @@ export function IntellectualPropertiesList(properties: {
                     expanded={expandedIntellectualPropertyId === intellectualProperty.id}
                     onExpandCallback={changeTab}
                     refetchDataCallback={refetchDataCallback}
-                    dialogOptions={{
-                        title: IPR_DIALOG_TITLE,
-                        editorFields: IPR_EDITOR_FIELDS,
-                    }}
+                    editorFields={IPR_EDITOR_FIELDS}
                 />
             ))}
-        </Box>
+        </Stack>
     );
 }
