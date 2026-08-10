@@ -75,6 +75,21 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 - Preferujemy istniejące komponenty współdzielone, w szczególności `FormDialog`, `ConfirmationDialog`, `ErrorDisplay`, `LoadingIndicator` i wariant ustawień `SimpleCrudList`.
 - Rozszerzenie komponentu współdzielonego nie może zmieniać wyglądu dotychczasowych użyć bez jawnego wybrania nowego wariantu.
 
+## Nawigacja i `DrawerAppBar`
+
+- Aktualnie wybrana strona musi być wizualnie wyróżniona na desktopie i w menu mobilnym. Kontrolka aktywnej strony powinna mieć również `aria-current="page"`.
+- Pasek powinien zachowywać czytelną hierarchię: nazwa aplikacji jest elementem nadrzędnym, strony są nawigacją, a użytkownik, domena i motyw są kontrolkami pomocniczymi.
+- Wygląd `DrawerAppBar` nie może zależeć od sprawdzania identyfikatora konkretnego wariantu motywu. Komponent korzysta z semantycznych kolorów i pozostałych tokenów aktywnego motywu.
+- Mobilny drawer zajmuje pełną wysokość, ma spójne tło, nagłówek i widoczny przycisk zamknięcia.
+- Pozycje menu mobilnego muszą mieć wygodny obszar dotykowy. Aktywna pozycja jest jednoznacznie zaznaczona i nie polega wyłącznie na zmianie koloru tekstu.
+- Rozwijane sekcje użytkownika, aplikacji i domeny pokazują ikonę kierunku oraz ustawiają `aria-expanded` i `aria-controls`.
+- Kontrolki otwierające menu aplikacji, domeny, użytkownika lub wariantu motywu powinny komunikować stan przez `aria-haspopup` i `aria-expanded`.
+- Etykiety dostępności są napisane po polsku i opisują działanie, np. „Otwórz menu”, „Zmień tryb motywu” i „Zmień wariant motywu”.
+- Akcje przy zaproszeniach do domen są prawdziwymi przyciskami z `Tooltip` i jednoznacznym `aria-label`. Nie używamy elementów układu, takich jak `Grid`, jako kontrolek klikanych.
+- Pasek zaproszeń jest responsywny i nie korzysta ze stałej szerokości, która może rozszerzyć ekran telefonu.
+- Podczas pobierania danych domen nie pozostawiamy pustego ekranu. Pokazujemy `LoadingIndicator` albo zachowujemy szkielet paska z lokalnym wskaźnikiem ładowania.
+- Sticky AppBar nie może powodować poziomego przepełnienia ani zasłaniać treści po nawigacji i przewijaniu.
+
 ## Weryfikacja zmiany
 
 Po zakończeniu pracy należy:
@@ -86,4 +101,3 @@ Po zakończeniu pracy należy:
 5. Uruchomić testy, TypeScript i ESLint.
 6. Przejrzeć diff, aby upewnić się, że zmiana nie objęła niezwiązanych plików.
 7. Nie wykonywać destrukcyjnych operacji na rzeczywistych danych tylko w celu wizualnej weryfikacji.
-
