@@ -51,7 +51,7 @@ function findLocalIPv4() {
 
 function replaceLocalhost(urlValue, address) {
     if (!urlValue) {
-        throw new Error('REACT_APP_BACKEND_URL is missing from .env.macos.');
+        throw new Error('REACT_APP_BACKEND_URL is missing from the environment file.');
     }
 
     const backendUrl = new URL(urlValue);
@@ -65,11 +65,12 @@ const {address, interfaceName} = findLocalIPv4();
 const environment = {
     ...process.env,
     HOST: process.env.HOST ?? '0.0.0.0',
-    REACT_APP_BACKEND_URL: replaceLocalhost(process.env.REACT_APP_BACKEND_URL, address),
+    REACT_APP_NETWORK_BACKEND_URL: replaceLocalhost(process.env.REACT_APP_BACKEND_URL, address),
 };
 
 console.log(`Using ${interfaceName} address: ${address}`);
-console.log(`Backend URL: ${environment.REACT_APP_BACKEND_URL}`);
+console.log(`Local backend URL: ${environment.REACT_APP_BACKEND_URL}`);
+console.log(`Network backend URL: ${environment.REACT_APP_NETWORK_BACKEND_URL}`);
 console.log(`Open the application on another device at: http://${address}:3000`);
 
 if (!process.argv.includes('--print-only')) {

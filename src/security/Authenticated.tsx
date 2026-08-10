@@ -19,8 +19,9 @@ import {Institution, SwitchDomain, SwitchDomainMutation} from '../types';
 import getUserApplications from '../utils/applications/applications-access';
 import {logError} from '../utils/logger';
 import {backdropHandle} from '../utils/GlobalBackdropContext';
+import {getBackendUrl} from '../utils/backend-url';
 
-const httpLink = new UploadHttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/graphql'});
+const httpLink = new UploadHttpLink({uri: getBackendUrl() + '/graphql'});
 
 const authMiddleware = new ApolloLink((operation, forward) => {
     operation.setContext(({headers = {}}) => {

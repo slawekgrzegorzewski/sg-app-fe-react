@@ -26,6 +26,7 @@ import {useCurrentUser} from '../utils/users/use-current-user';
 import {ShowInformationButton} from '../utils/buttons/ShowInformationButton';
 import {useParams} from 'react-router-dom';
 import {StandOutText} from '../application/components/StandOutText';
+import {getBackendUrl} from '../utils/backend-url';
 
 const sidePadding = {
     paddingLeft: '5px',
@@ -68,21 +69,12 @@ export function TaskView(properties: {
     };
 
     const downloadAttachment = (attachmentName: string) => {
-        fetch(
-            process.env.REACT_APP_BACKEND_URL +
-                '/task/' +
-                task.id +
-                '/attachment/' +
-                attachmentName +
-                '?domainId=' +
-                domainPublicId!,
-            {
-                method: 'POST',
-                headers: {
-                    Authorization: 'Bearer ' + user!.jwtToken,
-                },
-            }
-        )
+        fetch(getBackendUrl() + '/task/' + task.id + '/attachment/' + attachmentName + '?domainId=' + domainPublicId!, {
+            method: 'POST',
+            headers: {
+                Authorization: 'Bearer ' + user!.jwtToken,
+            },
+        })
             .then(response => response.blob())
             .then(blob => {
                 const url = window.URL.createObjectURL(new Blob([blob]));

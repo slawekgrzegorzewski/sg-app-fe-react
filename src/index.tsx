@@ -23,8 +23,9 @@ import {AdapterDayjs} from '@mui/x-date-pickers/AdapterDayjs';
 import {plPL} from '@mui/x-date-pickers/locales';
 import {logError} from './utils/logger';
 import 'dayjs/locale/pl';
+import {getBackendUrl} from './utils/backend-url';
 
-const httpLink = new HttpLink({uri: process.env.REACT_APP_BACKEND_URL + '/auth/graphql'});
+const httpLink = new HttpLink({uri: getBackendUrl() + '/auth/graphql'});
 
 const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
