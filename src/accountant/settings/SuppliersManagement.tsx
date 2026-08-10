@@ -1,4 +1,4 @@
-import {ErrorDisplay} from '../../application/components/QueryState';
+import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {
     CreateSupplier,
@@ -16,6 +16,7 @@ import * as React from 'react';
 import {SimpleCrudList} from '../../application/components/SimpleCrudList';
 import {ComparatorBuilder} from '../../utils/comparator-builder';
 import {GraphqlSupplier} from '../../graphql.entities';
+import {Typography} from '@mui/material';
 
 type SupplierDTO = {
     publicId: string;
@@ -24,6 +25,9 @@ type SupplierDTO = {
 
 const SUPPLIER_FORM = (supplier?: SupplierDTO) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: supplier ? 'Zapisz zmiany' : 'Dodaj dostawcę',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             publicId: supplier ? Yup.string().required() : Yup.string(),
             name: Yup.string().required('Wymagana'),
@@ -73,15 +77,18 @@ export function SuppliersManagement() {
     };
 
     if (loading) {
-        return <></>;
+        return <LoadingIndicator label="Ładowanie dostawców..." />;
     } else if (error) {
-        return <ErrorDisplay error={error} />;
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
     } else if (data) {
         return (
             <SimpleCrudList
-                title={'ZARZĄDZAJ DOSTAWCAMI'}
+                title="Dostawcy"
+                presentation="settings"
+                emptyStateLabel="Brak dostawców."
                 createSettings={{
                     dialogTitle: 'Dodaj dostawcę',
+                    buttonLabel: 'Dodaj dostawcę',
                     onCreate: createSupplier,
                 }}
                 editSettings={{
@@ -90,6 +97,13 @@ export function SuppliersManagement() {
                 }}
                 deleteSettings={{
                     showControl: true,
+                    confirmationTitle: 'Usunąć dostawcę?',
+                    confirmationMessage: supplier => (
+                        <>
+                            Czy na pewno chcesz usunąć dostawcę <strong>{supplier.name}</strong>? Tej operacji nie można
+                            cofnąć.
+                        </>
+                    ),
                     onDelete: deleteSupplier,
                 }}
                 list={[...data.allSuppliers]
@@ -99,7 +113,7 @@ export function SuppliersManagement() {
                     })}
                 idExtractor={supplier => supplier.publicId}
                 formSupplier={value => (value ? SUPPLIER_FORM(value) : SUPPLIER_FORM())}
-                entityDisplay={value => <>{value.name}</>}
+                entityDisplay={value => <Typography fontWeight={600}>{value.name}</Typography>}
                 enableDndReorder={false}
             />
         );

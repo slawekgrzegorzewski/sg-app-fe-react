@@ -19,7 +19,7 @@ import * as Yup from 'yup';
 import {EditorField} from '../../utils/forms/Form';
 import {SimpleCrudList} from '../../application/components/SimpleCrudList';
 import {ComparatorBuilder} from '../../utils/comparator-builder';
-import {IconButton, Stack, Typography} from '@mui/material';
+import {Chip, IconButton, Stack, Tooltip, Typography} from '@mui/material';
 import Box from '@mui/material/Box';
 import {useCurrentUser} from '../../utils/users/use-current-user';
 import ConfirmationDialog from '../../utils/dialogs/ConfirmationDialog';
@@ -33,6 +33,9 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 const DOMAIN_FORM = (domain?: Domain) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: domain ? 'Zapisz zmiany' : 'Dodaj domenę',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             publicId: Yup.string().required(),
             name: Yup.string().required(),
@@ -60,6 +63,9 @@ const DOMAIN_FORM = (domain?: Domain) => {
 
 const INVITE_USER_FORM = (inviteUserToDomainData: InviteUserToDomainData) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: 'Wyślij zaproszenie',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             domainPublicId: Yup.string().required(),
             domainName: Yup.string().required(),
@@ -74,7 +80,7 @@ const INVITE_USER_FORM = (inviteUserToDomainData: InviteUserToDomainData) => {
             {
                 label: 'domainPublicId',
                 type: 'HIDDEN',
-                key: 'publicId',
+                key: 'domainPublicId',
                 editable: false,
             } as EditorField,
             {
@@ -84,7 +90,7 @@ const INVITE_USER_FORM = (inviteUserToDomainData: InviteUserToDomainData) => {
                 editable: false,
             } as EditorField,
             {
-                label: 'Login użytkownika do zaproszenia',
+                label: 'Login użytkownika',
                 type: 'TEXT',
                 key: 'login',
                 editable: true,
@@ -121,6 +127,11 @@ function UserRow({
     showDomainAccessLevelButtons,
     setDomainAccessLevelDialogOptions,
 }: UserRowProps) {
+    const changeAccessLabel =
+        user.domainAccessLevel === DomainAccessLevel.Admin
+            ? `Ustaw użytkownika ${user.login} jako członka domeny ${domain.name}`
+            : `Ustaw użytkownika ${user.login} jako administratora domeny ${domain.name}`;
+
     return (
         <Stack
             direction="row"
@@ -134,49 +145,55 @@ function UserRow({
             </Typography>
             {showDomainAccessLevelButtons && (
                 <Stack direction="row" flexWrap="nowrap" sx={{flexShrink: 0}}>
-                    <IconButton
-                        size="small"
-                        aria-label={
+                    <Tooltip
+                        title={
                             user.domainAccessLevel === DomainAccessLevel.Admin
                                 ? 'Ustaw jako członka'
                                 : 'Ustaw jako administratora'
                         }
-                        onClick={event => {
-                            setDomainAccessLevelDialogOptions({
-                                domainPublicId: domain.publicId,
-                                domainName: domain.name,
-                                login: user.login,
-                                accessLevel:
-                                    user.domainAccessLevel === DomainAccessLevel.Admin
-                                        ? SetDomainAccessLevel.Member
-                                        : SetDomainAccessLevel.Admin,
-                            });
-                            event.stopPropagation();
-                        }}
-                        color="inherit"
                     >
-                        {user.domainAccessLevel === DomainAccessLevel.Admin ? (
-                            <KeyboardDoubleArrowDownIcon />
-                        ) : (
-                            <KeyboardDoubleArrowUpIcon />
-                        )}
-                    </IconButton>
-                    <IconButton
-                        size="small"
-                        aria-label="Usuń użytkownika"
-                        onClick={event => {
-                            setDomainAccessLevelDialogOptions({
-                                domainPublicId: domain.publicId,
-                                domainName: domain.name,
-                                login: user.login,
-                                accessLevel: SetDomainAccessLevel.Remove,
-                            });
-                            event.stopPropagation();
-                        }}
-                        color="inherit"
-                    >
-                        <PersonRemoveIcon />
-                    </IconButton>
+                        <IconButton
+                            size="small"
+                            aria-label={changeAccessLabel}
+                            onClick={event => {
+                                setDomainAccessLevelDialogOptions({
+                                    domainPublicId: domain.publicId,
+                                    domainName: domain.name,
+                                    login: user.login,
+                                    accessLevel:
+                                        user.domainAccessLevel === DomainAccessLevel.Admin
+                                            ? SetDomainAccessLevel.Member
+                                            : SetDomainAccessLevel.Admin,
+                                });
+                                event.stopPropagation();
+                            }}
+                            color="inherit"
+                        >
+                            {user.domainAccessLevel === DomainAccessLevel.Admin ? (
+                                <KeyboardDoubleArrowDownIcon />
+                            ) : (
+                                <KeyboardDoubleArrowUpIcon />
+                            )}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Usuń użytkownika">
+                        <IconButton
+                            size="small"
+                            aria-label={`Usuń użytkownika ${user.login} z domeny ${domain.name}`}
+                            onClick={event => {
+                                setDomainAccessLevelDialogOptions({
+                                    domainPublicId: domain.publicId,
+                                    domainName: domain.name,
+                                    login: user.login,
+                                    accessLevel: SetDomainAccessLevel.Remove,
+                                });
+                                event.stopPropagation();
+                            }}
+                            color="inherit"
+                        >
+                            <PersonRemoveIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
             )}
         </Stack>
@@ -236,19 +253,22 @@ function DomainsManagement() {
 
     function setAccessLevelMessage(domainAccessLevelDialogOptions: DomainAccessLevelData) {
         return domainAccessLevelDialogOptions.accessLevel === SetDomainAccessLevel.Remove
-            ? `Czy na pewno chcesz usunąć ${domainAccessLevelDialogOptions!.login} ` +
-                  `z domeny ${domainAccessLevelDialogOptions!.domainName}`
-            : `Czy na pewno chcesz ustawić ${domainAccessLevelDialogOptions!.login} ` +
+            ? `Czy na pewno chcesz usunąć użytkownika „${domainAccessLevelDialogOptions.login}” ` +
+                  `z domeny „${domainAccessLevelDialogOptions.domainName}”?`
+            : `Czy na pewno chcesz ustawić użytkownika „${domainAccessLevelDialogOptions.login}” ` +
                   `jako ${domainAccessLevelDialogOptions!.accessLevel === SetDomainAccessLevel.Admin ? 'administratora' : 'członka'} ` +
-                  `domeny ${domainAccessLevelDialogOptions!.domainName}`;
+                  `domeny „${domainAccessLevelDialogOptions.domainName}”?`;
     }
 
     return (
         <>
             <SimpleCrudList
-                title={'ZARZĄDZAJ DOMENAMI'}
+                title="Domeny"
+                presentation="settings"
+                emptyStateLabel="Brak domen."
                 createSettings={{
                     dialogTitle: 'Dodaj domenę',
+                    buttonLabel: 'Dodaj domenę',
                     onCreate: createDomain,
                 }}
                 editSettings={{
@@ -276,24 +296,29 @@ function DomainsManagement() {
                                 <Typography sx={{minWidth: 0}}>
                                     <StandOutText standOutBy="bold">{domain.name}</StandOutText>
                                 </Typography>
-                                <IconButton
-                                    size="small"
-                                    aria-label="Zaproś użytkownika"
-                                    onClick={event => {
-                                        setInviteUserToDomainDataDialogOptions({
-                                            domainPublicId: domain.publicId,
-                                            domainName: domain.name,
-                                            login: '',
-                                        });
-                                        event.stopPropagation();
-                                    }}
-                                    color="inherit"
-                                >
-                                    <PersonAddIcon />
-                                </IconButton>
+                                <Tooltip title="Zaproś użytkownika">
+                                    <IconButton
+                                        size="small"
+                                        aria-label={`Zaproś użytkownika do domeny ${domain.name}`}
+                                        onClick={event => {
+                                            setInviteUserToDomainDataDialogOptions({
+                                                domainPublicId: domain.publicId,
+                                                domainName: domain.name,
+                                                login: '',
+                                            });
+                                            event.stopPropagation();
+                                        }}
+                                        color="inherit"
+                                    >
+                                        <PersonAddIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </Stack>
                             <Stack direction="column" sx={{pl: {xs: 1.5, sm: 3}}}>
-                                <Typography color="text.secondary">Administratorzy</Typography>
+                                <Stack direction="row" alignItems="center" spacing={0.75}>
+                                    <Typography color="text.secondary">Administratorzy</Typography>
+                                    <Chip size="small" variant="outlined" label={admins.length} />
+                                </Stack>
                                 {admins.map(user => (
                                     <Box key={user.login} sx={{pl: 1.5}}>
                                         <UserRow
@@ -306,9 +331,10 @@ function DomainsManagement() {
                                     </Box>
                                 ))}
                                 {members.length > 0 && (
-                                    <Typography color="text.secondary" sx={{mt: 0.5}}>
-                                        Członkowie
-                                    </Typography>
+                                    <Stack direction="row" alignItems="center" spacing={0.75} sx={{mt: 0.5}}>
+                                        <Typography color="text.secondary">Członkowie</Typography>
+                                        <Chip size="small" variant="outlined" label={members.length} />
+                                    </Stack>
                                 )}
                                 {members.map(user => (
                                     <Box key={user.login} sx={{pl: 1.5}}>
@@ -333,6 +359,16 @@ function DomainsManagement() {
                     title={'Potwierdź zmianę'}
                     message={setAccessLevelMessage(domainAccessLevelDialogOptions)}
                     open={true}
+                    tone={
+                        domainAccessLevelDialogOptions.accessLevel === SetDomainAccessLevel.Remove
+                            ? 'danger'
+                            : 'default'
+                    }
+                    confirmLabel={
+                        domainAccessLevelDialogOptions.accessLevel === SetDomainAccessLevel.Remove
+                            ? 'Usuń użytkownika'
+                            : 'Zmień uprawnienia'
+                    }
                     onConfirm={setUserDomainAccessLevel}
                     onCancel={() => {
                         setDomainAccessLevelDialogOptions(null);
@@ -342,10 +378,13 @@ function DomainsManagement() {
             )}
             {inviteUserToDomainDataDialogOptions && (
                 <FormDialog
-                    dialogTitle={<Box>Zapraszanie użytkownika do domeny</Box>}
+                    dialogTitle={<Box>Zaproś użytkownika do domeny „{inviteUserToDomainDataDialogOptions.domainName}”</Box>}
                     open={true}
                     onConfirm={inviteUserToDomain}
-                    onCancel={() => Promise.resolve()}
+                    onCancel={() => {
+                        setInviteUserToDomainDataDialogOptions(null);
+                        return Promise.resolve();
+                    }}
                     formProps={{...INVITE_USER_FORM(inviteUserToDomainDataDialogOptions)}}
                 />
             )}

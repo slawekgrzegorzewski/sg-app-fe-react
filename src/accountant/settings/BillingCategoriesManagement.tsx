@@ -18,6 +18,9 @@ import {Stack, Typography} from '@mui/material';
 
 const BILLING_CATEGORY_FORM = (billingCategory?: BillingCategory) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: billingCategory ? 'Zapisz zmiany' : 'Dodaj kategorię',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             publicId: billingCategory ? Yup.string().required() : Yup.string(),
             name: Yup.string().required('Wymagana'),
@@ -88,17 +91,27 @@ export function BillingCategoriesManagement({billingCategories, refetch}: Billin
 
     return (
         <SimpleCrudList
-            title={'KATEGORIE'}
+            title="Kategorie wydatków"
+            presentation="settings"
+            emptyStateLabel="Brak kategorii wydatków."
             editSettings={{
-                dialogTitle: 'Edytuj',
+                dialogTitle: 'Edytuj kategorię',
                 onUpdate: updateBillingCategory,
             }}
             createSettings={{
-                dialogTitle: 'Dodaj',
+                dialogTitle: 'Dodaj kategorię',
+                buttonLabel: 'Dodaj kategorię',
                 onCreate: createBillingCategory,
             }}
             deleteSettings={{
                 showControl: true,
+                confirmationTitle: 'Usunąć kategorię?',
+                confirmationMessage: category => (
+                    <>
+                        Czy na pewno chcesz usunąć kategorię <strong>{category.name}</strong>? Tej operacji nie można
+                        cofnąć.
+                    </>
+                ),
                 onDelete: deleteBillingCategory,
             }}
             list={billingCategories.sort(

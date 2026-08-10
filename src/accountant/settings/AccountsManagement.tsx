@@ -17,22 +17,21 @@ import {
     UpdateAccountMutation,
 } from '../../types';
 import * as React from 'react';
-import {useRef, useState} from 'react';
+import {useState} from 'react';
 import * as Yup from 'yup';
 import {AutocompleteEditorField, BooleanEditorField, EditorField} from '../../utils/forms/Form';
 import {SimpleCrudList} from '../../application/components/SimpleCrudList';
 import {ComparatorBuilder} from '../../utils/comparator-builder';
 import Decimal from 'decimal.js';
 import {formatBalance} from '../../utils/functions';
-import {Chip, Stack} from '@mui/material';
+import {Chip, IconButton, Stack, Tooltip} from '@mui/material';
 import {Visibility, VisibilityOff} from '@mui/icons-material';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import {PickBankAccountButton} from './PickBankAccountButton';
-import {FormDialog} from '../../utils/dialogs/FormDialog';
 import ConfirmationDialog from '../../utils/dialogs/ConfirmationDialog';
 import {FormattedMoneyText} from '../../application/components/FormattedMoneyText';
 import {StandOutText} from '../../application/components/StandOutText';
+import LinkOffRoundedIcon from '@mui/icons-material/LinkOffRounded';
 
 type AccountDTO = {
     publicId: string;
@@ -52,6 +51,9 @@ type BankAccountDTO = {
 
 const ACCOUNT_FORM = (currencies: string[], account?: AccountDTO) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: account ? 'Zapisz zmiany' : 'Dodaj konto',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             publicId: account ? Yup.string().required() : Yup.string(),
             name: Yup.string().required('Wymagana'),
@@ -132,14 +134,9 @@ export function AccountsManagement({
         useMutation<AssignBankAccountToAccountMutation>(AssignBankAccountToAccount);
     const [deleteBankAccountAssignmentMutation] =
         useMutation<DeleteBankAccountAssignmentMutation>(DeleteBankAccountAssignment);
-    const [editDialogOptions, setEditDialogOptions] = useState<{account: AccountDTO | null}>({account: null});
-    const [deleteDialogOptions, setDeleteDialogOptions] = useState<{account: AccountDTO | null}>({account: null});
     const [deleteBankAccountAssignmentDialogOptions, setDeleteBankAccountAssignmentDialogOptions] = useState<{
         account: AccountDTO | null;
     }>({account: null});
-    const editTrigger: React.RefObject<(accountDTO: AccountDTO) => void> = useRef<(accountDTO: AccountDTO) => void>(
-        () => {}
-    );
 
     const createAccount = async (account: AccountDTO): Promise<any> => {
         return await createAccountMutation({
@@ -204,23 +201,32 @@ export function AccountsManagement({
     return (
         <>
             <SimpleCrudList
-                title={'KONTA'}
+                title="Konta"
+                presentation="settings"
+                emptyStateLabel="Brak kont."
                 editSettings={{
                     rowClickIsTrigger: false,
-                    dialogTitle: 'Edytuj',
-                    trigger: editTrigger,
+                    dialogTitle: 'Edytuj konto',
                     onUpdate: updateAccount,
                 }}
                 createSettings={{
                     showControl: true,
-                    dialogTitle: 'Dodaj',
+                    dialogTitle: 'Dodaj konto',
+                    buttonLabel: 'Dodaj konto',
                     onCreate: createAccount,
                 }}
                 deleteSettings={{
-                    showControl: false,
+                    showControl: true,
+                    confirmationTitle: 'Usunąć konto?',
+                    confirmationMessage: account => (
+                        <>
+                            Czy na pewno chcesz usunąć konto <strong>{account.name}</strong>? Tej operacji nie można
+                            cofnąć.
+                        </>
+                    ),
                     onDelete: deleteAccount,
                 }}
-                list={accounts
+                list={[...accounts]
                     .sort(ComparatorBuilder.comparing<Account>(account => account.order).build())
                     .map(account => {
                         return {
@@ -297,16 +303,19 @@ export function AccountsManagement({
                                 </Stack>
                             </Stack>
                             <Stack direction="column" alignItems="flex-end" sx={{flexShrink: 0}}>
-                                <Stack direction="row">
-                                    <Button onClick={() => editTrigger.current(account)}>Edytuj</Button>
-                                    <Button onClick={() => setDeleteDialogOptions({account: account})}>Usuń</Button>
-                                </Stack>
                                 {account.bankAccount && (
-                                    <Button
-                                        onClick={() => setDeleteBankAccountAssignmentDialogOptions({account: account})}
-                                    >
-                                        Usuń konto
-                                    </Button>
+                                    <Tooltip title="Odłącz konto bankowe">
+                                        <IconButton
+                                            size="small"
+                                            aria-label={`Odłącz konto bankowe od ${account.name}`}
+                                            onClick={event => {
+                                                event.stopPropagation();
+                                                setDeleteBankAccountAssignmentDialogOptions({account});
+                                            }}
+                                        >
+                                            <LinkOffRoundedIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
                                 )}
                                 {!account.bankAccount && notAssignedBankAccounts.length > 0 && (
                                     <PickBankAccountButton
@@ -325,40 +334,20 @@ export function AccountsManagement({
                 enableDndReorder={true}
                 onReorder={event => reorderAccount(event.id, event.aboveId, event.belowId)}
             />
-            {editDialogOptions.account && (
-                <FormDialog
-                    dialogTitle={<Typography>Edytuj konto</Typography>}
-                    open={true}
-                    onConfirm={value => updateAccount(value)}
-                    onCancel={() => {
-                        setEditDialogOptions({account: null});
-                        return Promise.resolve();
-                    }}
-                    formProps={ACCOUNT_FORM(currencies, editDialogOptions.account)}
-                />
-            )}
-            {deleteDialogOptions.account && (
-                <ConfirmationDialog
-                    companionObject={deleteDialogOptions.account}
-                    title={'Na pewno usunąć?'}
-                    message={'Na pewno usunąć?'}
-                    open={true}
-                    onConfirm={(entity: AccountDTO) => {
-                        setDeleteDialogOptions({account: null});
-                        return deleteAccount(entity);
-                    }}
-                    onCancel={() => {
-                        setDeleteDialogOptions({account: null});
-                        return Promise.resolve();
-                    }}
-                />
-            )}
             {deleteBankAccountAssignmentDialogOptions.account && (
                 <ConfirmationDialog
                     companionObject={deleteBankAccountAssignmentDialogOptions.account}
-                    title={'Na pewno usunąć?'}
-                    message={'Na pewno usunąć powiązanie z kontem bankowym?'}
+                    title="Odłączyć konto bankowe?"
+                    message={
+                        <>
+                            Konto bankowe zostanie odłączone od{' '}
+                            <strong>{deleteBankAccountAssignmentDialogOptions.account.name}</strong>. Samo konto i jego
+                            transakcje nie zostaną usunięte.
+                        </>
+                    }
                     open={true}
+                    tone="danger"
+                    confirmLabel="Odłącz"
                     onConfirm={(entity: AccountDTO) => {
                         setDeleteBankAccountAssignmentDialogOptions({account: null});
                         return deleteBankAccountAssignment(entity.publicId);

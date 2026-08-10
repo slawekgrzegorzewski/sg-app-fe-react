@@ -1,4 +1,15 @@
-import {Dialog, DialogTitle, List, ListItem, ListItemButton, ListItemText, Theme} from '@mui/material';
+import {
+    Box,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemText,
+    Theme,
+    Typography,
+} from '@mui/material';
 import * as React from 'react';
 import {SxProps} from '@mui/system';
 import IconButton from '@mui/material/IconButton';
@@ -29,6 +40,7 @@ export default function PickDialog<T>({
     elementContainerProvider,
     fullScreen = false,
 }: PickDialogProps<T>) {
+    const dialogTitleId = React.useId();
     const DEFAULT_CONTAINER_PROVIDER = (sx: SxProps<Theme>, additionalProperties: any) => {
         return <List sx={{pt: 0, ...sx}} {...additionalProperties}></List>;
     };
@@ -49,35 +61,45 @@ export default function PickDialog<T>({
     }
 
     return (
-        <Dialog onClose={() => onClose()} open={open} fullScreen={fullScreen}>
-            <DialogTitle>{title}</DialogTitle>
-            <IconButton
-                aria-label="close"
-                onClick={() => onClose()}
-                sx={{
-                    position: 'absolute',
-                    right: 8,
-                    top: 8,
-                    color: 'text.secondary',
-                }}
-            >
-                <CloseIcon />
-            </IconButton>
-            {containerProvider(
-                {},
-                {
-                    children: options.map(option =>
-                        elementContainerProvider!(
-                            {},
-                            {
-                                key: idExtractor(option),
-                                onClick: () => onPick(option),
-                            },
-                            option
-                        )
-                    ),
-                }
-            )}
+        <Dialog
+            onClose={() => onClose()}
+            open={open}
+            fullScreen={fullScreen}
+            fullWidth
+            maxWidth="md"
+            aria-labelledby={dialogTitleId}
+        >
+            <Box display="flex" alignItems="center">
+                <DialogTitle id={dialogTitleId} sx={{flex: 1, minWidth: 0, px: {xs: 2, sm: 3}, py: 2}}>
+                    {title}
+                </DialogTitle>
+                <IconButton autoFocus aria-label="Zamknij" onClick={() => onClose()} sx={{mr: {xs: 1, sm: 2}}}>
+                    <CloseIcon />
+                </IconButton>
+            </Box>
+            <DialogContent dividers sx={{px: {xs: 2, sm: 3}, py: 2}}>
+                {options.length === 0 ? (
+                    <Typography color="text.secondary" textAlign="center" sx={{py: 3}}>
+                        Brak dostępnych opcji.
+                    </Typography>
+                ) : (
+                    containerProvider(
+                        {},
+                        {
+                            children: options.map(option =>
+                                elementContainerProvider!(
+                                    {},
+                                    {
+                                        key: idExtractor(option),
+                                        onClick: () => onPick(option),
+                                    },
+                                    option
+                                )
+                            ),
+                        }
+                    )
+                )}
+            </DialogContent>
         </Dialog>
     );
 }

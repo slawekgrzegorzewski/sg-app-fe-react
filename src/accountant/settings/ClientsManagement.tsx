@@ -1,4 +1,4 @@
-import {ErrorDisplay} from '../../application/components/QueryState';
+import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {
     CreateClient,
@@ -16,6 +16,7 @@ import {EditorField} from '../../utils/forms/Form';
 import {SimpleCrudList} from '../../application/components/SimpleCrudList';
 import {ComparatorBuilder} from '../../utils/comparator-builder';
 import {GraphqlClient} from '../../graphql.entities';
+import {Typography} from '@mui/material';
 
 type ClientDTO = {
     publicId: string;
@@ -24,6 +25,9 @@ type ClientDTO = {
 
 const CLIENT_FORM = (client?: ClientDTO) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: client ? 'Zapisz zmiany' : 'Dodaj klienta',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             publicId: client ? Yup.string().required() : Yup.string(),
             name: Yup.string().required('Wymagana'),
@@ -73,23 +77,33 @@ export function ClientsManagement() {
     };
 
     if (loading) {
-        return <></>;
+        return <LoadingIndicator label="Ładowanie klientów..." />;
     } else if (error) {
-        return <ErrorDisplay error={error} />;
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
     } else if (data) {
         return (
             <SimpleCrudList
-                title={'ZARZĄDZAJ KLIENTAMI'}
+                title="Klienci"
+                presentation="settings"
+                emptyStateLabel="Brak klientów."
                 editSettings={{
                     dialogTitle: 'Edytuj klienta',
                     onUpdate: updateClient,
                 }}
                 createSettings={{
                     dialogTitle: 'Dodaj klienta',
+                    buttonLabel: 'Dodaj klienta',
                     onCreate: createClient,
                 }}
                 deleteSettings={{
                     showControl: true,
+                    confirmationTitle: 'Usunąć klienta?',
+                    confirmationMessage: client => (
+                        <>
+                            Czy na pewno chcesz usunąć klienta <strong>{client.name}</strong>? Tej operacji nie można
+                            cofnąć.
+                        </>
+                    ),
                     onDelete: deleteClient,
                 }}
                 list={[...data.allClients]
@@ -99,7 +113,7 @@ export function ClientsManagement() {
                     })}
                 idExtractor={client => client.publicId}
                 formSupplier={value => (value ? CLIENT_FORM(value) : CLIENT_FORM())}
-                entityDisplay={value => <>{value.name}</>}
+                entityDisplay={value => <Typography fontWeight={600}>{value.name}</Typography>}
                 enableDndReorder={false}
             />
         );

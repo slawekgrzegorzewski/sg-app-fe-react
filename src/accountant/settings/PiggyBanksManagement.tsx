@@ -32,6 +32,9 @@ export type PiggyBankDTO = {
 
 const PIGGY_BANK_FORM = (currencies: string[], piggyBank?: PiggyBankDTO) => {
     return {
+        presentation: 'dialog' as const,
+        submitLabel: piggyBank ? 'Zapisz zmiany' : 'Dodaj skarbonkę',
+        submitColor: 'secondary' as const,
         validationSchema: Yup.object({
             publicId: piggyBank ? Yup.string().required() : Yup.string(),
             name: Yup.string().required('Wymagana'),
@@ -148,17 +151,27 @@ export function PiggyBanksManagement({piggyBanks, supportedCurrencies, refetch}:
     return (
         <>
             <SimpleCrudList
-                title={'SKARBONKI'}
+                title="Skarbonki"
+                presentation="settings"
+                emptyStateLabel="Brak skarbonek."
                 editSettings={{
-                    dialogTitle: 'Edytuj',
+                    dialogTitle: 'Edytuj skarbonkę',
                     onUpdate: updatePiggyBank,
                 }}
                 createSettings={{
-                    dialogTitle: 'Dodaj',
+                    dialogTitle: 'Dodaj skarbonkę',
+                    buttonLabel: 'Dodaj skarbonkę',
                     onCreate: createPiggyBank,
                 }}
                 deleteSettings={{
                     showControl: true,
+                    confirmationTitle: 'Usunąć skarbonkę?',
+                    confirmationMessage: piggyBank => (
+                        <>
+                            Czy na pewno chcesz usunąć skarbonkę <strong>{piggyBank.name}</strong>? Tej operacji nie
+                            można cofnąć.
+                        </>
+                    ),
                     onDelete: deletePiggyBank,
                 }}
                 list={piggyBanks.sort(ComparatorBuilder.comparing<PiggyBankDTO>(piggyBank => piggyBank.name).build())}

@@ -8,18 +8,67 @@ import {
     StartPermissionRequest,
     StartPermissionRequestMutation,
 } from '../../types';
-import {SimpleCrudList} from '../../application/components/SimpleCrudList';
-import {ComparatorBuilder} from '../../utils/comparator-builder';
-import {SxProps} from '@mui/system';
-import {Button, Card, CardContent, CardMedia, Stack, Theme} from '@mui/material';
+import {Box, Button, Chip, Divider, Paper, Stack, Typography} from '@mui/material';
 import {InstitutionPickerButton} from './InstitutionPickerButton';
-import Typography from '@mui/material/Typography';
 import {FetchBankAccountDataButton} from './FetchBankAccountDataButton';
+import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
+import dayjs from 'dayjs';
+import 'dayjs/locale/pl';
+
+function SettingsSection({
+    title,
+    count,
+    emptyLabel,
+    children,
+}: {
+    title: string;
+    count: number;
+    emptyLabel: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+            <Stack spacing={1.5}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="h4">{title}</Typography>
+                    <Chip size="small" variant="outlined" label={`Liczba: ${count}`} />
+                </Stack>
+                {count === 0 ? (
+                    <Typography color="text.secondary" textAlign="center" sx={{py: 3}}>
+                        {emptyLabel}
+                    </Typography>
+                ) : (
+                    children
+                )}
+            </Stack>
+        </Paper>
+    );
+}
+
+function InstitutionIdentity({institution}: {institution: Institution}) {
+    return (
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{minWidth: 0}}>
+            <Box
+                component="img"
+                src={institution.logo}
+                alt=""
+                sx={{width: 48, height: 48, objectFit: 'contain', borderRadius: 1, flexShrink: 0}}
+            />
+            <Stack sx={{minWidth: 0}}>
+                <Typography fontWeight={600} sx={{overflowWrap: 'anywhere'}}>
+                    {institution.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    BIC: {institution.bic}
+                </Typography>
+            </Stack>
+        </Stack>
+    );
+}
 
 export function BanksPermissionsManagement() {
     const [startPermissionRequestMutation] = useMutation<StartPermissionRequestMutation>(StartPermissionRequest);
-    const {data: bankAccountPermissionsData, refetch: bankAccountPermissionsRefetch} =
-        useQuery<GetBankPermissionsQuery>(GetBankPermissions);
+    const {loading, error, data, refetch} = useQuery<GetBankPermissionsQuery>(GetBankPermissions);
 
     const startConfirmationProcess = async (institution: Institution) => {
         await startPermissionRequestMutation({
@@ -30,154 +79,142 @@ export function BanksPermissionsManagement() {
                 userLanguage: 'pl',
             },
         });
-        return bankAccountPermissionsRefetch();
+        return refetch();
     };
 
-    if (!bankAccountPermissionsData) return <></>;
-    else
-        return (
-            <>
-                <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" sx={{mb: 2}}>
-                    <Typography variant="h4" sx={{color: 'secondary.main'}}>
-                        Dostępy do kont bankowych
-                    </Typography>
+    if (loading) {
+        return <LoadingIndicator label="Ładowanie połączeń bankowych..." />;
+    }
 
-                    <InstitutionPickerButton
-                        onPick={pickedInstitution => startConfirmationProcess(pickedInstitution)}
-                    />
+    if (error) {
+        return <ErrorDisplay error={error} onRetry={() => void refetch()} />;
+    }
+
+    if (!data) {
+        return <></>;
+    }
+
+    const granted = [...(data.bankPermissions.granted as BankPermission[])].sort((left, right) =>
+        left.institutionId.localeCompare(right.institutionId)
+    );
+    const toProcess = [...(data.bankPermissions.toProcess as BankPermission[])].sort((left, right) =>
+        left.institutionId.localeCompare(right.institutionId)
+    );
+    const toRecreate = [...(data.bankPermissions.toRecreate as Institution[])].sort((left, right) =>
+        left.name.localeCompare(right.name)
+    );
+
+    return (
+        <Stack spacing={2}>
+            <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+                <Stack
+                    direction={{xs: 'column', sm: 'row'}}
+                    alignItems={{xs: 'stretch', sm: 'center'}}
+                    justifyContent="space-between"
+                    gap={1.5}
+                >
+                    <Stack>
+                        <Typography variant="h4">Połączenia bankowe</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Zarządzaj dostępem do rachunków i ręcznie pobieraj najnowsze dane.
+                        </Typography>
+                    </Stack>
+                    <InstitutionPickerButton label="Dodaj bank" onPick={startConfirmationProcess} />
                 </Stack>
-                <SimpleCrudList
-                    title={'Dostęp udzielony'}
-                    createSettings={{
-                        dialogTitle: 'Dodaj',
-                    }}
-                    highlightRowOnHover={false}
-                    list={[...(bankAccountPermissionsData.bankPermissions.granted as BankPermission[])].sort(
-                        ComparatorBuilder.comparing<BankPermission>(
-                            bankPermissions => bankPermissions.institutionId
-                        ).build()
-                    )}
-                    idExtractor={bankPermission => bankPermission.publicId}
-                    rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-                        return (
-                            <Card
-                                key={key}
-                                sx={{marginBottom: '10px', width: '600px', ...sx}}
-                                {...additionalProperties}
-                            ></Card>
-                        );
-                    }}
-                    entityDisplay={bankPermission => {
-                        return (
-                            <Stack direction={'row'}>
-                                <CardMedia
-                                    component="img"
-                                    image={bankPermission.institution!.logo}
-                                    sx={{maxWidth: '150px', maxHeight: '150px'}}
-                                ></CardMedia>
-                                <CardContent>
-                                    <Stack direction={'column'}>
-                                        <Typography variant="h6">{bankPermission.institution!.name}</Typography>
-                                        <Typography variant="body1">
-                                            udzielono: {bankPermission.givenAt!.toLocaleString()}, do następujących
-                                            kont:
-                                        </Typography>
-                                        {bankPermission.bankAccounts.map(bankAccount => (
-                                            <Stack
-                                                direction={'row'}
-                                                alignItems={'center'}
-                                                spacing={0}
-                                                justifyContent={'space-between'}
-                                            >
-                                                <Typography variant={'body1'}>{bankAccount.iban}</Typography>
-                                                <FetchBankAccountDataButton bankAccount={bankAccount} />
-                                            </Stack>
-                                        ))}
-                                    </Stack>
-                                </CardContent>
-                            </Stack>
-                        );
-                    }}
-                    enableDndReorder={false}
-                />
-                <SimpleCrudList
-                    title={'Autoryzuj dostęp'}
-                    list={[...(bankAccountPermissionsData.bankPermissions.toProcess as BankPermission[])].sort(
-                        ComparatorBuilder.comparing<BankPermission>(
-                            bankPermissions => bankPermissions.institutionId
-                        ).build()
-                    )}
-                    idExtractor={bankPermission => bankPermission.publicId}
-                    highlightRowOnHover={false}
-                    rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-                        return <Card key={key} sx={{marginBottom: '10px', ...sx}} {...additionalProperties}></Card>;
-                    }}
-                    entityDisplay={bankPermission => {
-                        return (
-                            <Stack direction={'row'}>
-                                <CardMedia
-                                    component="img"
-                                    image={bankPermission.institution!.logo}
-                                    sx={{maxWidth: '150px', maxHeight: '150px'}}
-                                ></CardMedia>
-                                <CardContent>
-                                    <Stack direction={'column'}>
-                                        <Typography variant="h6">{bankPermission.institution!.name}</Typography>
+            </Paper>
 
-                                        <Button
-                                            color="secondary"
-                                            onClick={() => window.location.replace(bankPermission.confirmationLink!)}
-                                        >
-                                            Autoryzuj
-                                        </Button>
-                                    </Stack>
-                                </CardContent>
+            <SettingsSection
+                title="Aktywne dostępy"
+                count={granted.length}
+                emptyLabel="Brak aktywnych dostępów bankowych."
+            >
+                <Stack divider={<Divider flexItem />}>
+                    {granted.map(permission => (
+                        <Stack key={permission.publicId} spacing={1.25} sx={{py: 1}}>
+                            <Stack
+                                direction={{xs: 'column', sm: 'row'}}
+                                alignItems={{xs: 'flex-start', sm: 'center'}}
+                                justifyContent="space-between"
+                                gap={1}
+                            >
+                                <InstitutionIdentity institution={permission.institution!} />
+                                <Typography variant="body2" color="text.secondary">
+                                    Dostęp od {dayjs(permission.givenAt).locale('pl').format('D MMM YYYY, HH:mm')}
+                                </Typography>
                             </Stack>
-                        );
-                    }}
-                    enableDndReorder={false}
-                />
-                <SimpleCrudList
-                    title={'Wygasłe pozwolenia'}
-                    list={[...(bankAccountPermissionsData.bankPermissions.toRecreate as Institution[])].sort(
-                        ComparatorBuilder.comparing<Institution>(institution => institution.id).build()
-                    )}
-                    idExtractor={institution => institution.logo}
-                    elementsDirection="row"
-                    rowContainerProvider={(key: string, sx: SxProps<Theme>, additionalProperties: any) => {
-                        return (
-                            <Card
-                                key={key}
-                                sx={{
-                                    marginBottom: '10px',
-                                    ...sx,
-                                }}
-                                {...additionalProperties}
-                            ></Card>
-                        );
-                    }}
-                    entityDisplay={institution => {
-                        return (
-                            <Stack direction={'row'}>
-                                <CardMedia
-                                    component="img"
-                                    image={institution.logo}
-                                    sx={{maxWidth: '150px', maxHeight: '150px'}}
-                                ></CardMedia>
-                                <CardContent>
-                                    <Stack direction={'column'}>
-                                        <Typography variant="h6">{institution.name}</Typography>
-                                        <Typography variant="body1">BIC: {institution.bic}</Typography>
-                                        <Button color="secondary" onClick={() => startConfirmationProcess(institution)}>
-                                            Odnów
-                                        </Button>
+                            <Stack spacing={0.5} sx={{pl: {xs: 0, sm: 7.5}}}>
+                                {permission.bankAccounts.map(bankAccount => (
+                                    <Stack
+                                        key={bankAccount.publicId}
+                                        direction={{xs: 'column', sm: 'row'}}
+                                        alignItems={{xs: 'stretch', sm: 'center'}}
+                                        justifyContent="space-between"
+                                        gap={0.5}
+                                        sx={{p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1}}
+                                    >
+                                        <Typography variant="body2" sx={{overflowWrap: 'anywhere'}}>
+                                            {bankAccount.iban}
+                                        </Typography>
+                                        <FetchBankAccountDataButton bankAccount={bankAccount} />
                                     </Stack>
-                                </CardContent>
+                                ))}
                             </Stack>
-                        );
-                    }}
-                    enableDndReorder={false}
-                />
-            </>
-        );
+                        </Stack>
+                    ))}
+                </Stack>
+            </SettingsSection>
+
+            <SettingsSection
+                title="Oczekujące na autoryzację"
+                count={toProcess.length}
+                emptyLabel="Brak dostępów oczekujących na autoryzację."
+            >
+                <Stack divider={<Divider flexItem />}>
+                    {toProcess.map(permission => (
+                        <Stack
+                            key={permission.publicId}
+                            direction={{xs: 'column', sm: 'row'}}
+                            alignItems={{xs: 'stretch', sm: 'center'}}
+                            justifyContent="space-between"
+                            gap={1.5}
+                            sx={{py: 1}}
+                        >
+                            <InstitutionIdentity institution={permission.institution!} />
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={() => window.location.replace(permission.confirmationLink!)}
+                            >
+                                Autoryzuj dostęp
+                            </Button>
+                        </Stack>
+                    ))}
+                </Stack>
+            </SettingsSection>
+
+            <SettingsSection title="Wygasłe dostępy" count={toRecreate.length} emptyLabel="Brak wygasłych dostępów.">
+                <Stack divider={<Divider flexItem />}>
+                    {toRecreate.map(institution => (
+                        <Stack
+                            key={institution.id}
+                            direction={{xs: 'column', sm: 'row'}}
+                            alignItems={{xs: 'stretch', sm: 'center'}}
+                            justifyContent="space-between"
+                            gap={1.5}
+                            sx={{py: 1}}
+                        >
+                            <InstitutionIdentity institution={institution} />
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => startConfirmationProcess(institution)}
+                            >
+                                Odnów dostęp
+                            </Button>
+                        </Stack>
+                    ))}
+                </Stack>
+            </SettingsSection>
+        </Stack>
+    );
 }

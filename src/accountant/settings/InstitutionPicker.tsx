@@ -4,7 +4,7 @@ import {useQuery} from '@apollo/client/react';
 import {GetAvailableInstitutions, GetAvailableInstitutionsQuery, Institution} from '../../types';
 import PickDialog from '../../utils/dialogs/PickDialog';
 import {SxProps} from '@mui/system';
-import {Card, CardContent, CardMedia, Stack, Theme} from '@mui/material';
+import {Box, Card, CardActionArea, CardContent, CardMedia, Theme} from '@mui/material';
 import Typography from '@mui/material/Typography';
 
 export interface InstitutionPickerProps {
@@ -20,7 +20,6 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
 
     return (
         <PickDialog
-            fullScreen={true}
             title={'Wybierz bank do podłączenia'}
             options={institutions}
             open={!picked && institutions.length > 0}
@@ -37,27 +36,41 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
             }}
             containerProvider={(sx: SxProps<Theme>, additionalProperties: any) => {
                 return (
-                    <Stack
-                        direction={'row'}
-                        useFlexGap
-                        sx={{flexWrap: 'wrap', ...sx}}
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: {
+                                xs: '1fr',
+                                sm: 'repeat(2, minmax(0, 1fr))',
+                                md: 'repeat(3, minmax(0, 1fr))',
+                            },
+                            gap: 1.5,
+                            ...sx,
+                        }}
                         {...additionalProperties}
-                    ></Stack>
+                    />
                 );
             }}
             elementContainerProvider={(sx: SxProps<Theme>, additionalProperties: any, institution: Institution) => {
                 return (
-                    <Card sx={{marginBottom: '10px', maxWidth: '150px', ...sx}} {...additionalProperties}>
-                        <CardMedia component="img" image={institution.logo} sx={{maxWidth: '150px'}}></CardMedia>
-                        <CardContent>
-                            <Typography variant="body1">{institution.id}</Typography>
-                            <Typography variant="body2" sx={{color: 'text.secondary'}}>
-                                {institution.bic}
-                            </Typography>
-                            <Typography variant="body2" sx={{color: 'text.secondary'}}>
-                                {institution.name}
-                            </Typography>
-                        </CardContent>
+                    <Card key={institution.id} variant="outlined" sx={{...sx}}>
+                        <CardActionArea {...additionalProperties} sx={{height: '100%'}}>
+                            <CardMedia
+                                component="img"
+                                image={institution.logo}
+                                alt=""
+                                sx={{height: 88, objectFit: 'contain', p: 1.5}}
+                            />
+                            <CardContent>
+                                <Typography fontWeight={600}>{institution.name}</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    BIC: {institution.bic}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {institution.id}
+                                </Typography>
+                            </CardContent>
+                        </CardActionArea>
                     </Card>
                 );
             }}

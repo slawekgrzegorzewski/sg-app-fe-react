@@ -2,6 +2,7 @@ import * as React from 'react';
 import {useMutation} from '@apollo/client/react';
 import {BankAccount, TriggerFetchBankAccountData, TriggerFetchBankAccountDataMutation} from '../../types';
 import {Button} from '@mui/material';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 
 export interface FetchBankAccountDataButtonProps {
     bankAccount: BankAccount;
@@ -14,6 +15,7 @@ export function FetchBankAccountDataButton({bankAccount}: FetchBankAccountDataBu
     return (
         <Button
             size="small"
+            startIcon={<RefreshRoundedIcon />}
             onClick={() =>
                 triggerFetchBankAccountDataMutation({
                     variables: {
@@ -22,7 +24,7 @@ export function FetchBankAccountDataButton({bankAccount}: FetchBankAccountDataBu
                 })
             }
         >
-            Pobierz dane
+            Odśwież dane
         </Button>
     );
 }

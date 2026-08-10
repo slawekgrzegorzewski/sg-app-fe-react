@@ -1,30 +1,10 @@
 import {useMutation} from '@apollo/client/react';
 import {UpdateAccountantSettings, UpdateAccountantSettingsMutation} from '../../types';
 import * as React from 'react';
-import * as Yup from 'yup';
-import Form, {BooleanEditorField} from '../../utils/forms/Form';
+import {Paper, Stack, Switch, Typography} from '@mui/material';
 
 export type AccountantSettingsDTO = {
     isCompany: boolean;
-};
-
-const ACCOUNTANT_SETTINGS_FORM = (accountSettings: AccountantSettingsDTO) => {
-    return {
-        validationSchema: Yup.object({
-            isCompany: Yup.boolean().required(),
-        }),
-        initialValues: {
-            isCompany: accountSettings.isCompany,
-        } as AccountantSettingsDTO,
-        fields: [
-            {
-                label: 'Dla firmy',
-                type: 'CHECKBOX',
-                key: 'isCompany',
-                editable: true,
-            } as BooleanEditorField,
-        ],
-    };
 };
 
 export interface AccountantSettingsManagementProps {
@@ -33,25 +13,29 @@ export interface AccountantSettingsManagementProps {
 }
 
 export function AccountantSettingsManagement({accountantSettings, refetch}: AccountantSettingsManagementProps) {
-    const [updateAccountantSettingsMutation] = useMutation<UpdateAccountantSettingsMutation>(UpdateAccountantSettings);
+    const [updateAccountantSettingsMutation, updateResult] =
+        useMutation<UpdateAccountantSettingsMutation>(UpdateAccountantSettings);
 
     const updateAccountantSettings = async (isCompany: boolean): Promise<any> => {
-        return await updateAccountantSettingsMutation({
-            variables: {
-                isCompany: isCompany,
-            },
-        }).finally(() => refetch());
+        return await updateAccountantSettingsMutation({variables: {isCompany}}).finally(() => refetch());
     };
 
     return (
-        <Form
-            {...ACCOUNTANT_SETTINGS_FORM(accountantSettings)}
-            onSave={v => {
-                updateAccountantSettings(v.isCompany);
-            }}
-            onCancel={() => {}}
-            autoSubmit={true}
-            showControlButtons={false}
-        />
+        <Paper component="section" variant="outlined" sx={{p: {xs: 1.5, sm: 2}}}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                <Stack>
+                    <Typography variant="h4">Tryb firmowy</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Włącza ustawienia klientów i dostawców.
+                    </Typography>
+                </Stack>
+                <Switch
+                    checked={accountantSettings.isCompany}
+                    disabled={updateResult.loading}
+                    onChange={event => void updateAccountantSettings(event.target.checked)}
+                    slotProps={{input: {'aria-label': 'Tryb firmowy'}}}
+                />
+            </Stack>
+        </Paper>
     );
 }

@@ -39,22 +39,20 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
         >
             <Box display="flex" alignItems="center" onClick={handleClick}>
                 <DialogTitle id={dialogTitleId} sx={{flex: 1, minWidth: 0, px: {xs: 2, sm: 3}, py: 2}}>
-                    <Box sx={{minWidth: 0}}>
-                        {dialogTitle}
-                    </Box>
+                    <Box sx={{minWidth: 0}}>{dialogTitle}</Box>
                 </DialogTitle>
-                <IconButton
-                    autoFocus
-                    aria-label="Zamknij"
-                    onClick={() => void onCancel()}
-                    sx={{mr: {xs: 1, sm: 2}}}
-                >
+                <IconButton autoFocus aria-label="Zamknij" onClick={() => void onCancel()} sx={{mr: {xs: 1, sm: 2}}}>
                     <CloseIcon />
                 </IconButton>
             </Box>
             <DialogContent dividers onClick={handleClick} sx={{px: {xs: 2, sm: 3}, py: 2.5}}>
                 <>
-                    <Form onSave={onConfirm} onCancel={onCancel} {...formProps} />
+                    <Form
+                        onSave={onConfirm}
+                        onCancel={onCancel}
+                        {...formProps}
+                        presentation={formProps.presentation ?? 'dialog'}
+                    />
                     {children && children}
                 </>
             </DialogContent>
