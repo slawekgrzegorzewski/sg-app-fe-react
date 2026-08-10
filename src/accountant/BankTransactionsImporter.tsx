@@ -33,8 +33,9 @@ import {
     isTransferToCreate,
 } from './BankTransactionsToImportPicker';
 import {CreateCustomImportForm} from './CreateCustomImportForm';
-import {Dialog, DialogContent, useMediaQuery} from '@mui/material';
+import {Dialog, DialogContent, DialogTitle, Stack, useMediaQuery} from '@mui/material';
 import {almostFullHeightDialog} from '../utils/theme/utils';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
 export interface BankTransactionsImporterProps {
     onRefetch: () => Promise<void>;
@@ -97,10 +98,30 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
         setSelectedBankAccountTransactionsToImport([]);
     };
 
+    const closeCustomImport = () => {
+        setTransactionsToCustomImport(null);
+    };
+
+    const closeBillingElementForm = () => {
+        setBillingElementToCreate(null);
+    };
+
+    const closeTransferForm = () => {
+        setTransferToCreate(null);
+    };
+
     function transactionsToImportButtonText(transactionsCount: number) {
-        return transactionsCount === 1
-            ? '1 transakcja do zaimportowania'
-            : transactionsCount + ' transakcji do zaimportowania';
+        if (transactionsCount === 1) {
+            return '1 transakcja do zaimportowania';
+        }
+        if (
+            transactionsCount % 10 >= 2 &&
+            transactionsCount % 10 <= 4 &&
+            (transactionsCount % 100 < 12 || transactionsCount % 100 > 14)
+        ) {
+            return `${transactionsCount} transakcje do zaimportowania`;
+        }
+        return `${transactionsCount} transakcji do zaimportowania`;
     }
 
     if (error) {
@@ -111,7 +132,12 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
     } else {
         if (!showDialog) {
             return (
-                <Button sx={{alignSelf: 'center', mt: 2}} onClick={() => setShowDialog(true)}>
+                <Button
+                    variant="outlined"
+                    startIcon={<FileDownloadOutlinedIcon />}
+                    sx={{alignSelf: 'center', mt: 2}}
+                    onClick={() => setShowDialog(true)}
+                >
                     {transactionsToImportButtonText(data.bankTransactionsToImport.length)}
                 </Button>
             );
@@ -148,65 +174,80 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 );
             } else if (billingElementToCreate) {
                 return (
-                    <Dialog open={true} maxWidth={'lg'} fullWidth={false}>
-                        <DialogContent>
-                            <CreateBillingElementForm
-                                accounts={mappedAccounts}
-                                billingCategories={data.financeManagement.billingCategories as BillingCategory[]}
-                                piggyBanks={data.financeManagement.piggyBanks as PiggyBank[]}
-                                billingElementToCreate={billingElementToCreate}
-                                onClose={billingElementDTO => {
-                                    if (!billingElementDTO) reset();
-                                    else {
-                                        const variables = {
-                                            variables: billingElementVariables(
-                                                billingElementDTO,
-                                                mappedAccounts,
-                                                selectedBankAccountTransactionsToImport.map(
-                                                    bankTransaction => bankTransaction.transactionPublicId
-                                                )
-                                            ),
-                                        };
-                                        (billingElementDTO.billingElementType === 'Income'
-                                            ? createIncomeMutation(variables)
-                                            : createExpenseMutation(variables)
-                                        ).then(() => {
-                                            reset();
-                                            onRefetch();
-                                        });
-                                    }
-                                }}
-                            />
+                    <Dialog open onClose={closeBillingElementForm} fullScreen={isTouchDevice} maxWidth="sm" fullWidth>
+                        <DialogTitle>
+                            <Typography variant="h4" component="span">
+                                {billingElementToCreate.billingElementType === 'Income' ? 'Dochód' : 'Wydatek'}
+                            </Typography>
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Stack sx={{width: '100%', maxWidth: 640, mx: 'auto'}}>
+                                <CreateBillingElementForm
+                                    accounts={mappedAccounts}
+                                    billingCategories={data.financeManagement.billingCategories as BillingCategory[]}
+                                    piggyBanks={data.financeManagement.piggyBanks as PiggyBank[]}
+                                    billingElementToCreate={billingElementToCreate}
+                                    onClose={billingElementDTO => {
+                                        if (!billingElementDTO) closeBillingElementForm();
+                                        else {
+                                            const variables = {
+                                                variables: billingElementVariables(
+                                                    billingElementDTO,
+                                                    mappedAccounts,
+                                                    selectedBankAccountTransactionsToImport.map(
+                                                        bankTransaction => bankTransaction.transactionPublicId
+                                                    )
+                                                ),
+                                            };
+                                            (billingElementDTO.billingElementType === 'Income'
+                                                ? createIncomeMutation(variables)
+                                                : createExpenseMutation(variables)
+                                            ).then(() => {
+                                                reset();
+                                                onRefetch();
+                                            });
+                                        }
+                                    }}
+                                />
+                            </Stack>
                         </DialogContent>
                     </Dialog>
                 );
             } else if (transferToCreate) {
                 return (
-                    <Dialog open={true} maxWidth={'lg'} fullWidth={false}>
-                        <DialogContent>
-                            <CreateTransferForm
-                                accounts={mappedAccounts}
-                                transferToCreate={transferToCreate}
-                                onClose={transferToCreate => {
-                                    if (!transferToCreate) reset();
-                                    else {
-                                        const variables = {
-                                            variables: {
-                                                fromAccountPublicId: transferToCreate.fromAccountPublicId!,
-                                                toAccountPublicId: transferToCreate.toAccountPublicId!,
-                                                fromAmount: transferToCreate.fromAmount!,
-                                                toAmount: transferToCreate.toAmount!,
-                                                description: transferToCreate.description!,
-                                                date: transferToCreate.day!.format('YYYY-MM-DD'),
-                                                bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(
-                                                    bankTransaction => bankTransaction.transactionPublicId!
-                                                ),
-                                            },
-                                        };
-                                        createTransferMutation(variables).then(() => onRefetch());
-                                    }
-                                }}
-                            />
+                    <Dialog open onClose={closeTransferForm} fullScreen={isTouchDevice} maxWidth="sm" fullWidth>
+                        <DialogTitle>
+                            <Typography variant="h4" component="span">
+                                Transfer
+                            </Typography>
+                        </DialogTitle>
+                        <DialogContent dividers>
+                            <Stack sx={{width: '100%', maxWidth: 640, mx: 'auto'}}>
+                                <CreateTransferForm
+                                    accounts={mappedAccounts}
+                                    transferToCreate={transferToCreate}
+                                    onClose={transferToCreate => {
+                                        if (!transferToCreate) closeTransferForm();
+                                        else {
+                                            const variables = {
+                                                variables: {
+                                                    fromAccountPublicId: transferToCreate.fromAccountPublicId!,
+                                                    toAccountPublicId: transferToCreate.toAccountPublicId!,
+                                                    fromAmount: transferToCreate.fromAmount!,
+                                                    toAmount: transferToCreate.toAmount!,
+                                                    description: transferToCreate.description!,
+                                                    date: transferToCreate.day!.format('YYYY-MM-DD'),
+                                                    bankTransactionPublicIds:
+                                                        selectedBankAccountTransactionsToImport.map(
+                                                            bankTransaction => bankTransaction.transactionPublicId!
+                                                        ),
+                                                },
+                                            };
+                                            createTransferMutation(variables).then(() => onRefetch());
+                                        }
+                                    }}
+                                />
+                            </Stack>
                         </DialogContent>
                     </Dialog>
                 );
@@ -235,85 +276,84 @@ export function BankTransactionsImporter({onRefetch}: BankTransactionsImporterPr
                 return (
                     <Dialog
                         open={true}
+                        onClose={closeCustomImport}
                         fullScreen={isTouchDevice}
                         maxWidth={false}
                         sx={[
                             almostFullHeightDialog,
                             {
                                 '& .MuiDialog-paper': {
-                                    width: isTouchDevice ? '100%' : '800px',
-                                    maxWidth: isTouchDevice ? '100%' : '800px',
+                                    width: isTouchDevice ? '100%' : '960px',
+                                    maxWidth: isTouchDevice ? '100%' : '960px',
                                 },
                             },
                         ]}
                     >
-                        <DialogContent>
-                            <CreateCustomImportForm
-                                accountsWithAssignedBankAccounts={mappedAccounts.filter(a => a.bankAccount)}
-                                accountsWithoutAssignedBankAccounts={mappedAccounts.filter(a => !a.bankAccount)}
-                                billingCategories={data.financeManagement.billingCategories as BillingCategory[]}
-                                piggyBanks={data.financeManagement.piggyBanks as PiggyBank[]}
-                                bankTransactions={transactionsToCustomImport}
-                                onClose={customImportResult => {
-                                    if (!customImportResult) reset();
-                                    else {
-                                        const variables = {
-                                            variables: {
-                                                bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(
-                                                    bankTransaction => bankTransaction.transactionPublicId
+                        <CreateCustomImportForm
+                            accountsWithAssignedBankAccounts={mappedAccounts.filter(a => a.bankAccount)}
+                            accountsWithoutAssignedBankAccounts={mappedAccounts.filter(a => !a.bankAccount)}
+                            billingCategories={data.financeManagement.billingCategories as BillingCategory[]}
+                            piggyBanks={data.financeManagement.piggyBanks as PiggyBank[]}
+                            bankTransactions={transactionsToCustomImport}
+                            onClose={customImportResult => {
+                                if (!customImportResult) closeCustomImport();
+                                else {
+                                    const variables = {
+                                        variables: {
+                                            bankTransactionPublicIds: selectedBankAccountTransactionsToImport.map(
+                                                bankTransaction => bankTransaction.transactionPublicId
+                                            ),
+                                            expenses: customImportResult.billingElements
+                                                .filter(
+                                                    billingElementToCreate =>
+                                                        billingElementToCreate.billingElementType === 'Expense'
+                                                )
+                                                .map(billingElementToCreate =>
+                                                    billingElementVariables(
+                                                        billingElementToCreate,
+                                                        mappedAccounts,
+                                                        selectedBankAccountTransactionsToImport.map(
+                                                            bankTransaction => bankTransaction.transactionPublicId
+                                                        )
+                                                    )
                                                 ),
-                                                expenses: customImportResult.billingElements
-                                                    .filter(
-                                                        billingElementToCreate =>
-                                                            billingElementToCreate.billingElementType === 'Expense'
-                                                    )
-                                                    .map(billingElementToCreate =>
-                                                        billingElementVariables(
-                                                            billingElementToCreate,
-                                                            mappedAccounts,
-                                                            selectedBankAccountTransactionsToImport.map(
-                                                                bankTransaction => bankTransaction.transactionPublicId
-                                                            )
+                                            incomes: customImportResult.billingElements
+                                                .filter(
+                                                    billingElementToCreate =>
+                                                        billingElementToCreate.billingElementType === 'Income'
+                                                )
+                                                .map(billingElementToCreate =>
+                                                    billingElementVariables(
+                                                        billingElementToCreate,
+                                                        mappedAccounts,
+                                                        selectedBankAccountTransactionsToImport.map(
+                                                            bankTransaction => bankTransaction.transactionPublicId
                                                         )
-                                                    ),
-                                                incomes: customImportResult.billingElements
-                                                    .filter(
-                                                        billingElementToCreate =>
-                                                            billingElementToCreate.billingElementType === 'Income'
                                                     )
-                                                    .map(billingElementToCreate =>
-                                                        billingElementVariables(
-                                                            billingElementToCreate,
-                                                            mappedAccounts,
-                                                            selectedBankAccountTransactionsToImport.map(
-                                                                bankTransaction => bankTransaction.transactionPublicId
-                                                            )
-                                                        )
-                                                    ),
-                                                transfers: customImportResult.transfers.map(transferToCreate => {
-                                                    return {
-                                                        fromAccountPublicId: transferToCreate.fromAccountPublicId!,
-                                                        toAccountPublicId: transferToCreate.toAccountPublicId!,
-                                                        fromAmount: transferToCreate.fromAmount!,
-                                                        toAmount: transferToCreate.toAmount!,
-                                                        description: transferToCreate.description!,
-                                                        date: transferToCreate.day!.format('YYYY-MM-DD'),
-                                                        bankTransactionPublicIds:
-                                                            selectedBankAccountTransactionsToImport.map(
-                                                                bankTransaction => bankTransaction.transactionPublicId!
-                                                            ),
-                                                    };
-                                                }),
-                                            },
-                                        };
-                                        importBankTransactionsMutation(variables).then(() => {
-                                            reset();
-                                            onRefetch();
-                                        });
-                                    }
-                                }}
-                            />
-                        </DialogContent>
+                                                ),
+                                            transfers: customImportResult.transfers.map(transferToCreate => {
+                                                return {
+                                                    fromAccountPublicId: transferToCreate.fromAccountPublicId!,
+                                                    toAccountPublicId: transferToCreate.toAccountPublicId!,
+                                                    fromAmount: transferToCreate.fromAmount!,
+                                                    toAmount: transferToCreate.toAmount!,
+                                                    description: transferToCreate.description!,
+                                                    date: transferToCreate.day!.format('YYYY-MM-DD'),
+                                                    bankTransactionPublicIds:
+                                                        selectedBankAccountTransactionsToImport.map(
+                                                            bankTransaction => bankTransaction.transactionPublicId!
+                                                        ),
+                                                };
+                                            }),
+                                        },
+                                    };
+                                    importBankTransactionsMutation(variables).then(() => {
+                                        reset();
+                                        onRefetch();
+                                    });
+                                }
+                            }}
+                        />
                     </Dialog>
                 );
             } else {

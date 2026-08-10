@@ -30,6 +30,7 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (
     alwaysEditable: boolean = false
 ) => {
     return {
+        presentation: 'dialog' as const,
         validationSchema: Yup.object({
             billingElementType: Yup.string(),
             publicId: Yup.string(),
@@ -96,7 +97,7 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (
                 key: 'date',
                 editable: alwaysEditable || !billingElement.date,
                 additionalProps: {
-                    sx: {width: '200px'},
+                    sx: {width: '100%'},
                 },
             } as DatePickerEditorField,
             {
@@ -104,6 +105,7 @@ export const BILLING_ELEMENT_FORM_PROPERTIES = (
                 type: 'TEXTAREA',
                 key: 'description',
                 editable: true,
+                additionalProps: {minRows: 2},
             } as EditorField,
             {
                 label: 'Skarbonka do ' + (billingElement.billingElementType === 'Income' ? 'uznania' : 'obciążenia'),

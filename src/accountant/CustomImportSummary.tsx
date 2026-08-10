@@ -14,8 +14,8 @@ export function CustomImportSummary({
     transactionToCustomImportSummaries,
 }: CustomImportSummaryProps) {
     return (
-        <TableContainer component={Paper}>
-            <Table>
+        <TableContainer component={Paper} variant="outlined">
+            <Table size="small" aria-label="Bilans własnego importu">
                 <TableHead>
                     <TableRow>
                         <TableCell>Konto</TableCell>
@@ -33,7 +33,13 @@ export function CustomImportSummary({
                                 )?.name ?? group.bankAccountPublicId}
                             </TableCell>
 
-                            <TableCell align="right">
+                            <TableCell
+                                align="right"
+                                sx={{
+                                    color: group.balanceAfterImport.isZero() ? 'success.main' : 'error.main',
+                                    fontWeight: 600,
+                                }}
+                            >
                                 {formatCurrency(group.currency, group.balanceFromImportingTransactions)}
                             </TableCell>
 

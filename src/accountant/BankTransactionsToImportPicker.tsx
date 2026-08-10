@@ -1,20 +1,31 @@
-import {clickableProps} from '../application/components/clickable';
 import React, {JSX, useState} from 'react';
 import {BillingElementType} from './model/BillingElementType';
-import {Dialog, DialogContent, DialogTitle, Stack, useMediaQuery, useTheme} from '@mui/material';
+import {
+    Box,
+    Button,
+    ButtonBase,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Paper,
+    Stack,
+    useMediaQuery,
+} from '@mui/material';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid';
 import {minDate, trimDateToDay} from '../utils/functions';
 import dayjs, {Dayjs} from 'dayjs';
+import 'dayjs/locale/pl';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {ComparatorBuilder} from '../utils/comparator-builder';
-import {DebugDisplayObject} from '../utils/DebugDisplayObject';
 import Decimal from 'decimal.js';
 import {BillingElementDTO} from './CreateBillingElementForm';
 import {TransferDTO} from './CreateTransferForm';
 import {Account, BankTransactionToImport, CurrencyInfo, MonetaryAmount} from '../types';
-import {almostFullHeightDialog, compactListRow} from '../utils/theme/utils';
+import {almostFullHeightDialog} from '../utils/theme/utils';
 import {FormattedMoneyText} from '../application/components/FormattedMoneyText';
 import {StandOutText} from '../application/components/StandOutText';
 
@@ -104,7 +115,6 @@ export function BankTransactionsToImportPicker({
     const [selectedBankAccountTransactionsToImport, setSelectedBankAccountTransactionsToImport] = useState<
         BankTransactionToImport[]
     >([]);
-    const theme = useTheme();
     const isTouchDevice = useMediaQuery('(pointer: coarse)');
     const [possibleImports, setPossibleImports] = useState<PossibleImports>({
         debit: null,
@@ -327,6 +337,46 @@ export function BankTransactionsToImportPicker({
         return accounts.find(account => accountPublicId === account.publicId);
     }
 
+    function pickBillingElement(billingElementType: BillingElementType, billingElement: BillingElementToImport) {
+        onClose({
+            selectedBankTransactions: selectedBankAccountTransactionsToImport,
+            importDecision: {
+                importType: 'billingElement',
+                data: {
+                    billingElementType,
+                    publicId: '',
+                    affectedAccountPublicId: billingElement.accountPublicId,
+                    amount: billingElement.amount,
+                    category: null,
+                    date: billingElement.date,
+                    description: billingElement.description,
+                    piggyBank: null,
+                },
+            },
+        });
+    }
+
+    function pickTransfer(transfer: TransferToImport) {
+        onClose({
+            selectedBankTransactions: selectedBankAccountTransactionsToImport,
+            importDecision: {
+                importType: 'transfer',
+                data: {
+                    fromAccountPublicId: transfer.fromAccountPublicId,
+                    toAccountPublicId: transfer.toAccountPublicId,
+                    day: transfer.possibleDates.length === 1 ? transfer.possibleDates[0] : null,
+                    fromAmount: transfer.fromAccountDebit,
+                    toAmount: transfer.toAccountCredit,
+                    description: transfer.description,
+                    possibleDays: transfer.possibleDates,
+                },
+            },
+        });
+    }
+
+    const numberOfSelectedTransactions = selectedBankAccountTransactionsToImport.length;
+    const actionButtonSx = {flex: {xs: '1 1 100%', sm: '0 1 auto'}};
+
     return (
         <Dialog
             onClose={() => onClose(null)}
@@ -337,8 +387,8 @@ export function BankTransactionsToImportPicker({
                 almostFullHeightDialog,
                 {
                     '& .MuiDialog-paper': {
-                        width: isTouchDevice ? '100%' : '800px',
-                        maxWidth: isTouchDevice ? '100%' : '800px',
+                        width: isTouchDevice ? '100%' : '960px',
+                        maxWidth: isTouchDevice ? '100%' : '960px',
                     },
                 },
             ]}
@@ -350,35 +400,37 @@ export function BankTransactionsToImportPicker({
                     py: 2,
                 }}
             >
-                <Stack direction="row" alignItems="center" justifyContent="center" sx={{position: 'relative'}}>
-                    <Typography
-                        variant="h4"
-                        textAlign="center"
-                        sx={{
-                            px: 5,
-                            color: 'secondary.main',
-                        }}
-                    >
-                        Wybierz transakcje do zaimportowania
+                <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2}>
+                    <Typography variant="h4" component="span">
+                        <StandOutText standOutBy="both">Import transakcji</StandOutText>
                     </Typography>
-                    <IconButton
-                        aria-label="Zamknij"
-                        onClick={() => onClose(null)}
-                        sx={{position: 'absolute', right: 0}}
-                    >
+                    <IconButton aria-label="Zamknij" onClick={() => onClose(null)} edge="end">
                         <CloseIcon />
                     </IconButton>
                 </Stack>
             </DialogTitle>
-            <DialogContent onClick={e => e.stopPropagation()} sx={{px: {xs: 1, sm: 2}, py: 2}}>
+            <DialogContent dividers onClick={e => e.stopPropagation()} sx={{px: {xs: 1, sm: 2}, py: 2}}>
                 <Stack
-                    direction="column"
+                    spacing={1.5}
                     sx={{
                         width: '100%',
-                        maxWidth: 800,
+                        maxWidth: 920,
                         mx: 'auto',
                     }}
                 >
+                    <Typography variant="body2" color="text.secondary">
+                        Zaznacz transakcje, a następnie wybierz sposób ich zaksięgowania.
+                    </Typography>
+
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                        <Typography variant="h5">Transakcje</Typography>
+                        <Chip
+                            size="small"
+                            variant="outlined"
+                            color={numberOfSelectedTransactions > 0 ? 'success' : 'default'}
+                            label={`Wybrano: ${numberOfSelectedTransactions} z ${bankTransactions.length}`}
+                        />
+                    </Stack>
                     {[...bankTransactions]
                         .sort(
                             ComparatorBuilder.comparingByDate<BankTransactionToImport>(t =>
@@ -395,204 +447,190 @@ export function BankTransactionsToImportPicker({
                                 t => t.id === bankTransactionToImport.id
                             );
                             return (
-                                <Grid
-                                    container
+                                <Paper
+                                    variant="outlined"
                                     key={bankTransactionToImport.id}
-                                    role={'button'}
-                                    tabIndex={0}
-                                    aria-pressed={selected}
-                                    aria-label={`Transakcja ${bankTransactionToImport.description}`}
-                                    onKeyDown={event => {
-                                        if (event.key === 'Enter' || event.key === ' ') {
-                                            event.preventDefault();
-                                            onBankTransactionToImportClicked(accounts, bankTransactionToImport);
-                                        }
-                                    }}
                                     sx={{
-                                        ...compactListRow(theme),
-                                        py: 1,
-                                        cursor: 'pointer',
-                                        ...(selected
-                                            ? {
-                                                  color: 'secondary.contrastText',
-                                                  backgroundColor: 'secondary.main',
-                                                  '&:hover': {
-                                                      backgroundColor: 'secondary.dark',
-                                                  },
-                                              }
-                                            : {}),
+                                        overflow: 'hidden',
+                                        borderColor: selected ? 'success.main' : 'divider',
+                                        borderWidth: selected ? 2 : 1,
+                                        bgcolor: selected ? 'action.selected' : 'background.paper',
                                     }}
-                                    onClick={() => onBankTransactionToImportClicked(accounts, bankTransactionToImport)}
                                 >
-                                    <Grid size={5}>
-                                        <Typography>Od: {sourceAccount?.name}</Typography>
-                                    </Grid>
-                                    <Grid size={2}>
-                                        {sourceAccount && (
-                                            <FormattedMoneyText
-                                                money={{
-                                                    amount: -bankTransactionToImport.debit,
-                                                    currency: sourceAccount.currentBalance.currency.code,
-                                                }}
-                                                parenthesizeNegative
-                                            >
-                                                {formattedValue => <>{formattedValue}</>}
-                                            </FormattedMoneyText>
-                                        )}
-                                    </Grid>
-                                    <Grid size={5}>
-                                        <Typography>Data:</Typography>
-                                    </Grid>
-                                    <Grid size={5}>
-                                        <Typography>Do: {destinationAccount?.name}</Typography>
-                                    </Grid>
-                                    <Grid size={2}>
-                                        {destinationAccount && (
-                                            <FormattedMoneyText
-                                                money={{
-                                                    amount: bankTransactionToImport.credit,
-                                                    currency: destinationAccount.currentBalance.currency.code,
-                                                }}
-                                                parenthesizeNegative
-                                            >
-                                                {formattedValue => <>{formattedValue}</>}
-                                            </FormattedMoneyText>
-                                        )}
-                                    </Grid>
-                                    <Grid size={5}>
-                                        <Typography color={selected ? 'inherit' : 'text.secondary'}>
-                                            {dayjs(bankTransactionToImport.timeOfTransaction)
-                                                .locale(navigator.language)
-                                                .format('DD MMMM')}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid size={12}>
-                                        <Typography>{bankTransactionToImport.description}</Typography>
-                                    </Grid>
-                                </Grid>
+                                    <ButtonBase
+                                        aria-pressed={selected}
+                                        aria-label={`Transakcja ${bankTransactionToImport.description}`}
+                                        onClick={() =>
+                                            onBankTransactionToImportClicked(accounts, bankTransactionToImport)
+                                        }
+                                        sx={{display: 'block', width: '100%', p: {xs: 1.5, sm: 2}, textAlign: 'left'}}
+                                    >
+                                        <Stack spacing={1.25}>
+                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {dayjs(bankTransactionToImport.timeOfTransaction)
+                                                        .locale('pl')
+                                                        .format('D MMMM YYYY')}
+                                                </Typography>
+                                                {selected && (
+                                                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                        <CheckCircleIcon color="success" fontSize="small" />
+                                                        <Typography variant="caption" color="success.main">
+                                                            Wybrano
+                                                        </Typography>
+                                                    </Stack>
+                                                )}
+                                            </Stack>
+
+                                            <Typography>{bankTransactionToImport.description}</Typography>
+
+                                            <Stack direction={{xs: 'column', sm: 'row'}} spacing={1}>
+                                                {sourceAccount && (
+                                                    <Box sx={{flex: 1, p: 1, borderRadius: 1, bgcolor: 'action.hover'}}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Z konta
+                                                        </Typography>
+                                                        <Stack
+                                                            direction="row"
+                                                            justifyContent="space-between"
+                                                            alignItems="baseline"
+                                                            gap={1}
+                                                        >
+                                                            <Typography variant="body2">
+                                                                {sourceAccount.name}
+                                                            </Typography>
+                                                            <FormattedMoneyText
+                                                                money={{
+                                                                    amount: -bankTransactionToImport.debit,
+                                                                    currency:
+                                                                        sourceAccount.currentBalance.currency.code,
+                                                                }}
+                                                                parenthesizeNegative
+                                                            >
+                                                                {formattedValue => <>{formattedValue}</>}
+                                                            </FormattedMoneyText>
+                                                        </Stack>
+                                                    </Box>
+                                                )}
+                                                {destinationAccount && (
+                                                    <Box sx={{flex: 1, p: 1, borderRadius: 1, bgcolor: 'action.hover'}}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Na konto
+                                                        </Typography>
+                                                        <Stack
+                                                            direction="row"
+                                                            justifyContent="space-between"
+                                                            alignItems="baseline"
+                                                            gap={1}
+                                                        >
+                                                            <Typography variant="body2">
+                                                                {destinationAccount.name}
+                                                            </Typography>
+                                                            <FormattedMoneyText
+                                                                money={{
+                                                                    amount: bankTransactionToImport.credit,
+                                                                    currency:
+                                                                        destinationAccount.currentBalance.currency.code,
+                                                                }}
+                                                                parenthesizeNegative
+                                                            >
+                                                                {formattedValue => <>{formattedValue}</>}
+                                                            </FormattedMoneyText>
+                                                        </Stack>
+                                                    </Box>
+                                                )}
+                                            </Stack>
+                                        </Stack>
+                                    </ButtonBase>
+                                </Paper>
                             );
                         })}
-                    {possibleImports.credit && (
-                        <Stack direction="column" sx={compactListRow(theme)}>
-                            <Typography
-                                {...clickableProps(() => {
-                                    onClose({
-                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                        importDecision: {
-                                            importType: 'billingElement',
-                                            data: {
-                                                billingElementType: 'Income',
-                                                publicId: '',
-                                                affectedAccountPublicId: possibleImports.credit!.accountPublicId,
-                                                amount: possibleImports.credit!.amount,
-                                                category: null,
-                                                date: possibleImports.credit!.date,
-                                                description: possibleImports.credit!.description,
-                                                piggyBank: null,
-                                            },
-                                        },
-                                    });
-                                })}
-                            >
-                                <StandOutText standOutBy="both">Przychód</StandOutText>
-                            </Typography>
-                            <DebugDisplayObject object={possibleImports.credit} />
-                        </Stack>
-                    )}
-                    {possibleImports.debit && (
-                        <Stack direction="column" sx={compactListRow(theme)}>
-                            <Typography
-                                {...clickableProps(() => {
-                                    onClose({
-                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                        importDecision: {
-                                            importType: 'billingElement',
-                                            data: {
-                                                billingElementType: 'Expense',
-                                                publicId: '',
-                                                affectedAccountPublicId: possibleImports.debit!.accountPublicId,
-                                                amount: possibleImports.debit!.amount,
-                                                category: null,
-                                                date: possibleImports.debit!.date,
-                                                description: possibleImports.debit!.description,
-                                                piggyBank: null,
-                                            },
-                                        },
-                                    });
-                                })}
-                            >
-                                <StandOutText standOutBy="both">Wydatek</StandOutText>
-                            </Typography>
-                            <DebugDisplayObject object={possibleImports.debit} />
-                        </Stack>
-                    )}
-                    {possibleImports.transfer && (
-                        <Stack direction="column" sx={compactListRow(theme)}>
-                            <Typography
-                                {...clickableProps(() => {
-                                    onClose({
-                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                        importDecision: {
-                                            importType: 'transfer',
-                                            data: {
-                                                fromAccountPublicId: possibleImports.transfer!.fromAccountPublicId,
-                                                toAccountPublicId: possibleImports.transfer!.toAccountPublicId,
-                                                day:
-                                                    possibleImports.transfer!.possibleDates.length === 1
-                                                        ? possibleImports.transfer!.possibleDates[0]
-                                                        : null,
-                                                fromAmount: possibleImports.transfer!.fromAccountDebit,
-                                                toAmount: possibleImports.transfer!.toAccountCredit,
-                                                description: possibleImports.transfer!.description,
-                                                possibleDays: possibleImports.transfer!.possibleDates,
-                                            },
-                                        },
-                                    });
-                                })}
-                            >
-                                <StandOutText standOutBy="both">
-                                    {possibleImports.transfer.fromCurrency!.code ===
-                                    possibleImports.transfer.toCurrency!.code
-                                        ? 'Transfer bez wymiany walut'
-                                        : 'Transfer z wymianą walut'}
-                                </StandOutText>
-                            </Typography>
-                            <DebugDisplayObject object={possibleImports.transfer} />
-                        </Stack>
-                    )}
-                    {possibleImports.ignore && (
-                        <Stack direction="column" sx={compactListRow(theme)}>
-                            <Typography
-                                {...clickableProps(() => {
-                                    onClose({
-                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                        importDecision: {
-                                            importType: 'mutuallyIgnore',
-                                        },
-                                    });
-                                })}
-                            >
-                                <StandOutText standOutBy="both">Wzajemnie ignoruj</StandOutText>
-                            </Typography>
-                            <DebugDisplayObject object={possibleImports.ignore} />
-                        </Stack>
-                    )}
-                    {selectedBankAccountTransactionsToImport.length > 0 && (
-                        <Stack direction="column" sx={compactListRow(theme)}>
-                            <Typography
-                                {...clickableProps(() => {
-                                    onClose({
-                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
-                                        importDecision: {importType: 'custom'},
-                                    });
-                                })}
-                            >
-                                <StandOutText standOutBy="both">Własny import</StandOutText>
-                            </Typography>
-                        </Stack>
+                    {bankTransactions.length === 0 && (
+                        <Paper variant="outlined" sx={{p: 4, textAlign: 'center'}}>
+                            <Typography color="text.secondary">Brak transakcji do zaimportowania.</Typography>
+                        </Paper>
                     )}
                 </Stack>
             </DialogContent>
+            <DialogActions
+                sx={{
+                    px: {xs: 1.5, sm: 3},
+                    py: 2,
+                    '& > :not(style) ~ :not(style)': {ml: 0},
+                }}
+            >
+                <Stack spacing={1} sx={{width: '100%'}}>
+                    <Typography variant="caption" color="text.secondary" textAlign="center">
+                        {numberOfSelectedTransactions === 0
+                            ? 'Zaznacz co najmniej jedną transakcję.'
+                            : `Wybierz sposób importu dla ${numberOfSelectedTransactions} zaznaczonych transakcji.`}
+                    </Typography>
+                    <Stack direction="row" flexWrap="wrap" justifyContent="center" gap={1}>
+                        {possibleImports.credit && (
+                            <Button
+                                color="success"
+                                variant="contained"
+                                sx={actionButtonSx}
+                                onClick={() => pickBillingElement('Income', possibleImports.credit!)}
+                            >
+                                Utwórz dochód
+                            </Button>
+                        )}
+                        {possibleImports.debit && (
+                            <Button
+                                color="error"
+                                variant="contained"
+                                sx={actionButtonSx}
+                                onClick={() => pickBillingElement('Expense', possibleImports.debit!)}
+                            >
+                                Utwórz wydatek
+                            </Button>
+                        )}
+                        {possibleImports.transfer && (
+                            <Button
+                                variant="contained"
+                                sx={actionButtonSx}
+                                onClick={() => pickTransfer(possibleImports.transfer!)}
+                            >
+                                {possibleImports.transfer.fromCurrency?.code ===
+                                possibleImports.transfer.toCurrency?.code
+                                    ? 'Utwórz transfer'
+                                    : 'Transfer z wymianą walut'}
+                            </Button>
+                        )}
+                        {possibleImports.ignore && (
+                            <Button
+                                color="warning"
+                                variant="outlined"
+                                sx={actionButtonSx}
+                                onClick={() =>
+                                    onClose({
+                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
+                                        importDecision: {importType: 'mutuallyIgnore'},
+                                    })
+                                }
+                            >
+                                Anuluj wzajemnie
+                            </Button>
+                        )}
+                        {numberOfSelectedTransactions > 0 && (
+                            <Button
+                                color="secondary"
+                                variant="outlined"
+                                sx={actionButtonSx}
+                                onClick={() =>
+                                    onClose({
+                                        selectedBankTransactions: selectedBankAccountTransactionsToImport,
+                                        importDecision: {importType: 'custom'},
+                                    })
+                                }
+                            >
+                                Własny import
+                            </Button>
+                        )}
+                    </Stack>
+                </Stack>
+            </DialogActions>
         </Dialog>
     );
 }

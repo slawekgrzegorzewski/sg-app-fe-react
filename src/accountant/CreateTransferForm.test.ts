@@ -29,6 +29,10 @@ const account = (publicId: string) =>
     }) as Account;
 
 describe('TRANSFER_FORM_PROPERTIES', () => {
+    it('uses the dialog presentation', () => {
+        expect(TRANSFER_FORM_PROPERTIES(transfer(0, 0), [], []).presentation).toBe('dialog');
+    });
+
     it.each([
         ['number', 10, 20],
         ['string', '10', '20'],

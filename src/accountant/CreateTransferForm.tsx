@@ -33,6 +33,7 @@ export const TRANSFER_FORM_PROPERTIES = (
     const areAllCurrenciesSet = !!transfer.fromCurrency && !!transfer.toCurrency;
     const transferWithConversion = areAllCurrenciesSet && transfer.fromCurrency !== transfer.toCurrency;
     return {
+        presentation: 'dialog' as const,
         validationSchema: Yup.object({
             fromAccountPublicId: Yup.string().required('Wymagana'),
             toAccountPublicId: Yup.string()
@@ -99,7 +100,7 @@ export const TRANSFER_FORM_PROPERTIES = (
                 editable: dateEditable ?? (alwaysEditable || !initialTransfer.day),
                 additionalProps: {
                     sx: {
-                        width: '200px',
+                        width: '100%',
                         display: areAllCurrenciesSet ? 'block' : 'none',
                     },
                 },
@@ -110,7 +111,10 @@ export const TRANSFER_FORM_PROPERTIES = (
                 type: 'TEXTAREA',
                 key: 'description',
                 editable: descriptionEditable,
-                additionalProps: {sx: {display: areAllCurrenciesSet ? 'block' : 'none'}},
+                additionalProps: {
+                    minRows: 2,
+                    sx: {display: areAllCurrenciesSet ? 'block' : 'none'},
+                },
             } as RegularEditorField,
         ],
     };

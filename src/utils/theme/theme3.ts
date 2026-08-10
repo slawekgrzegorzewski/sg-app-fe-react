@@ -1,7 +1,7 @@
-import {alpha, createTheme, PaletteMode, Theme} from "@mui/material";
-import {buildTheme as buildPlumTheme} from "./theme2";
+import {PaletteMode, Theme} from '@mui/material';
+import {buildThemeWithColorTokens, ThemeColorTokens} from './theme-builder';
 
-const colorTokens = {
+const colorTokens: Record<PaletteMode, ThemeColorTokens> = {
     light: {
         primary: {
             main: '#344967',
@@ -63,102 +63,6 @@ const colorTokens = {
         secondaryChipText: '#D9F3F0',
     },
 };
-
-export type ThemeColorTokens = (typeof colorTokens)[PaletteMode];
-
-const BORDER_RADIUS = 6;
-
-export function buildThemeWithColorTokens(mode: PaletteMode, tokens: ThemeColorTokens): Theme {
-    const baseTheme = buildPlumTheme(mode);
-
-    return createTheme(baseTheme, {
-        palette: {
-            mode,
-            primary: tokens.primary,
-            secondary: tokens.secondary,
-            background: {
-                default: tokens.background.default,
-                paper: tokens.background.paper,
-            },
-            text: tokens.text,
-            divider: tokens.divider,
-            action: {
-                hover: alpha(tokens.primary.main, mode === 'light' ? 0.04 : 0.12),
-            },
-            error: {main: tokens.error},
-            warning: {main: tokens.warning},
-            success: {main: tokens.success},
-            info: tokens.secondary,
-        },
-        shape: {
-            borderRadius: BORDER_RADIUS,
-        },
-        components: {
-            MuiButton: {
-                styleOverrides: {
-                    root: {borderRadius: BORDER_RADIUS},
-                },
-            },
-            MuiFilledInput: {
-                styleOverrides: {
-                    root: {
-                        borderRadius: BORDER_RADIUS,
-                        backgroundColor: tokens.background.input,
-                        '&:hover': {
-                            backgroundColor: tokens.background.inputActive,
-                        },
-                        '&.Mui-focused': {
-                            backgroundColor: tokens.background.inputActive,
-                        },
-                    },
-                },
-            },
-            MuiInputLabel: {
-                styleOverrides: {
-                    root: {
-                        color: tokens.text.secondary,
-                        '&.Mui-focused': {
-                            color: mode === 'light' ? tokens.primary.dark : tokens.primary.light,
-                        },
-                    },
-                },
-            },
-            MuiCard: {
-                styleOverrides: {
-                    root: {borderRadius: BORDER_RADIUS},
-                },
-            },
-            MuiPaper: {
-                styleOverrides: {
-                    root: {borderRadius: BORDER_RADIUS},
-                },
-            },
-            MuiAccordion: {
-                styleOverrides: {
-                    root: {borderRadius: `${BORDER_RADIUS}px !important`},
-                },
-            },
-            MuiDialog: {
-                styleOverrides: {
-                    paper: {borderRadius: BORDER_RADIUS},
-                },
-            },
-            MuiChip: {
-                styleOverrides: {
-                    root: {borderRadius: BORDER_RADIUS},
-                    filledPrimary: {
-                        backgroundColor: alpha(tokens.primary.main, 0.18),
-                        color: tokens.primaryChipText,
-                    },
-                    filledSecondary: {
-                        backgroundColor: alpha(tokens.secondary.main, 0.18),
-                        color: tokens.secondaryChipText,
-                    },
-                },
-            },
-        },
-    });
-}
 
 export function buildTheme(mode: PaletteMode): Theme {
     return buildThemeWithColorTokens(mode, colorTokens[mode]);

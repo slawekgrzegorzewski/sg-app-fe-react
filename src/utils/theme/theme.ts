@@ -1,4 +1,6 @@
 import {createTheme, PaletteMode, Theme, ThemeOptions} from "@mui/material";
+// noinspection ES6UnusedImports
+import type {} from '@mui/x-date-pickers/themeAugmentation';
 
 // Design tokens
 const tokens = {
@@ -128,6 +130,23 @@ const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
                         ...(mode === 'light'
                             ? {backgroundColor: '#E2E8F0'}
                             : {backgroundColor: '#4A4A5C'}),
+                    },
+                },
+            },
+        },
+        MuiPickersFilledInput: {
+            defaultProps: {
+                disableUnderline: true,
+            },
+            styleOverrides: {
+                root: {
+                    borderRadius: tokens.borderRadius,
+                    ...(mode === 'light' ? {backgroundColor: '#F1F5F9'} : {backgroundColor: '#3A3A4C'}),
+                    '&:hover': {
+                        ...(mode === 'light' ? {backgroundColor: '#E2E8F0'} : {backgroundColor: '#4A4A5C'}),
+                    },
+                    '&.Mui-focused': {
+                        ...(mode === 'light' ? {backgroundColor: '#E2E8F0'} : {backgroundColor: '#4A4A5C'}),
                     },
                 },
             },

@@ -1,5 +1,5 @@
-import {PaletteMode, Theme} from "@mui/material";
-import {buildThemeWithColorTokens, ThemeColorTokens} from "./theme3";
+import {PaletteMode, Theme} from '@mui/material';
+import {buildThemeWithColorTokens, ThemeColorTokens} from './theme-builder';
 
 const colorTokens: Record<PaletteMode, ThemeColorTokens> = {
     light: {

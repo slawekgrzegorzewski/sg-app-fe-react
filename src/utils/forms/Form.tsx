@@ -114,6 +114,7 @@ export type FormProps<T> = {
     onSave: (value: T) => void;
     onCancel: () => void;
     onChange?(value: T): void;
+    presentation?: 'default' | 'dialog';
 };
 
 export default function Form<T>({
@@ -126,6 +127,7 @@ export default function Form<T>({
     onSave,
     onCancel,
     onChange,
+    presentation = 'default',
 }: FormProps<T>) {
     if (showControlButtons === undefined) {
         showControlButtons = true;
@@ -170,7 +172,8 @@ export default function Form<T>({
                 {...getFieldUniqueProps(editorField)}
                 {...(editorField.additionalProps || {})}
                 fullWidth
-                variant="standard"
+                variant={presentation === 'dialog' ? 'filled' : 'standard'}
+                size={presentation === 'dialog' ? 'small' : undefined}
                 id={editorField.key}
                 name={editorField.key}
                 key={editorField.key}
@@ -211,7 +214,12 @@ export default function Form<T>({
                 {...getFieldUniqueProps(editorField)}
                 {...(editorField.additionalProps || {})}
                 fullWidth
-                variant="standard"
+                variant={presentation === 'dialog' ? 'filled' : 'standard'}
+                slotProps={
+                    presentation === 'dialog'
+                        ? {textField: {variant: 'filled', size: 'small', fullWidth: true}}
+                        : undefined
+                }
                 id={editorField.key}
                 name={editorField.key}
                 key={editorField.key}
@@ -259,7 +267,8 @@ export default function Form<T>({
                 renderInput={params => (
                     <TextField
                         {...params}
-                        variant="standard"
+                        variant={presentation === 'dialog' ? 'filled' : 'standard'}
+                        size={presentation === 'dialog' ? 'small' : undefined}
                         label={editorField.label}
                         error={formik.touched[editorField.key] && Boolean(formik.errors[editorField.key])}
                         helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
@@ -308,8 +317,13 @@ export default function Form<T>({
         }, [formik.values]);
 
         return (
-            <form onSubmit={formik.handleSubmit}>
-                <Stack direction={'column'} spacing={4} alignItems={'center'}>
+            <form onSubmit={formik.handleSubmit} style={{width: '100%'}}>
+                <Stack
+                    direction="column"
+                    spacing={presentation === 'dialog' ? 2 : 4}
+                    alignItems={presentation === 'dialog' ? 'stretch' : 'center'}
+                    sx={{width: '100%'}}
+                >
                     {fields
                         .filter(field => field.type !== 'HIDDEN')
                         .map(editorField => {
@@ -329,7 +343,28 @@ export default function Form<T>({
                             }
                         })}
                     {previewOfChange?.(formik.values)}
-                    {showControlButtons && (
+                    {showControlButtons && presentation === 'dialog' && (
+                        <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{width: '100%', pt: 1}}>
+                            <Button
+                                sx={{flex: {xs: 1, sm: '0 0 auto'}}}
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    onCancel();
+                                }}
+                            >
+                                Anuluj
+                            </Button>
+                            <Button
+                                variant="contained"
+                                type="submit"
+                                sx={{flex: {xs: 1, sm: '0 0 auto'}}}
+                                onClick={e => e.stopPropagation()}
+                            >
+                                Zapisz
+                            </Button>
+                        </Stack>
+                    )}
+                    {showControlButtons && presentation === 'default' && (
                         <Stack direction={'row'} spacing={4} alignItems={'center'} justifyContent={'space-evenly'}>
                             <Button
                                 variant="text"

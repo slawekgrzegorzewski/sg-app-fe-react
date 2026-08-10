@@ -1,7 +1,7 @@
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as Yup from 'yup';
-import Form, {SelectEditorField} from './Form';
+import Form, {EditorField, SelectEditorField} from './Form';
 
 jest.mock('@apollo/client/react', () => ({
     useLazyQuery: jest.fn(),
@@ -43,5 +43,29 @@ describe('Form', () => {
         expect(errorMessages).not.toContain('controlled');
 
         consoleError.mockRestore();
+    });
+
+    it('renders the compact dialog presentation with clear actions', () => {
+        render(
+            <Form
+                presentation="dialog"
+                initialValues={{description: ''}}
+                validationSchema={Yup.object({description: Yup.string().required()})}
+                fields={[
+                    {
+                        key: 'description',
+                        label: 'Opis',
+                        type: 'TEXTAREA',
+                        editable: true,
+                    } as EditorField,
+                ]}
+                onSave={jest.fn()}
+                onCancel={jest.fn()}
+            />
+        );
+
+        expect(screen.getByRole('textbox', {name: 'Opis'})).toHaveClass('MuiFilledInput-input');
+        expect(screen.getByRole('button', {name: 'Anuluj'})).toBeVisible();
+        expect(screen.getByRole('button', {name: 'Zapisz'})).toHaveClass('MuiButton-contained');
     });
 });

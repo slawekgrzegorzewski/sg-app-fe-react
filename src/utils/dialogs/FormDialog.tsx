@@ -20,7 +20,15 @@ export function FormDialog<T>(props: FormDialogProps<T>) {
     };
 
     return (
-        <Dialog open={open} {...dialogOptions} maxWidth={'lg'} fullWidth={false}>
+        <Dialog
+            open={open}
+            maxWidth={'lg'}
+            fullWidth={false}
+            {...dialogOptions}
+            onClose={() => {
+                void onCancel();
+            }}
+        >
             <DialogTitle onClick={handleClick}>{dialogTitle}</DialogTitle>
             <DialogContent onClick={handleClick}>
                 <>

@@ -1,4 +1,4 @@
-import {useLazyQuery, useMutation} from '@apollo/client/react';
+import {useMutation, useQuery} from '@apollo/client/react';
 import {
     Account,
     BillingCategory,
@@ -13,14 +13,14 @@ import {
 import * as React from 'react';
 import {useState} from 'react';
 import Button from '@mui/material/Button';
-import PickDialog from '../utils/dialogs/PickDialog';
 import {BillingElementType} from './model/BillingElementType';
-import {formatMonetaryAmount} from '../utils/functions';
 import {FormDialog} from '../utils/dialogs/FormDialog';
 import Typography from '@mui/material/Typography';
 import {ComparatorBuilder} from '../utils/comparator-builder';
 import {BILLING_ELEMENT_FORM_PROPERTIES, BillingElementDTO} from './CreateBillingElementForm';
 import Decimal from 'decimal.js';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import {useTheme} from '@mui/material/styles';
 
 export interface CreateBillingElementButtonPros {
     billingElementType: BillingElementType;
@@ -28,14 +28,25 @@ export interface CreateBillingElementButtonPros {
 
 export function CreateBillingElementButton({billingElementType}: CreateBillingElementButtonPros) {
     const [showDialog, setShowDialog] = useState(false);
-    const [affectedAccount, setAffectedAccount] = useState<Account | null>(null);
-    const [fetchFinanceManagement, {client, called, data: financeManagementData, refetch}] =
-        useLazyQuery<GetFinanceManagementQuery>(GetFinanceManagement, {});
+    const theme = useTheme();
+    const {
+        client,
+        loading,
+        data: financeManagementData,
+        refetch,
+    } = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
 
     const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
     const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
 
     const save = (billingElementDTO: BillingElementDTO): Promise<void> => {
+        const affectedAccount = (financeManagementData?.financeManagement.accounts as Account[] | undefined)?.find(
+            account => account.publicId === billingElementDTO.affectedAccountPublicId
+        );
+        if (!affectedAccount) {
+            return Promise.reject(new Error('Wybrane konto nie jest dostępne.'));
+        }
+
         const variables = {
             variables: {
                 accountPublicId: billingElementDTO.affectedAccountPublicId!,
@@ -59,37 +70,13 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
     const reset = () => {
         client.clearStore();
         setShowDialog(false);
-        setAffectedAccount(null);
     };
 
-    if (showDialog && !affectedAccount && !financeManagementData) {
+    if (showDialog && !financeManagementData) {
         return <></>;
     }
-    if (showDialog && !affectedAccount && financeManagementData) {
-        const accounts = [...(financeManagementData.financeManagement.accounts as Account[])].sort(
-            ComparatorBuilder.comparing<Account>(a => a.order).build()
-        );
-        return (
-            <PickDialog
-                fullScreen={true}
-                title={'Wybierz konto'}
-                options={accounts}
-                open={true}
-                onClose={() => reset()}
-                onPick={value => {
-                    setAffectedAccount(value);
-                }}
-                idExtractor={function (account): string {
-                    return account ? account.publicId : '';
-                }}
-                descriptionExtractor={function (account): string {
-                    return account ? account.name + ' ' + formatMonetaryAmount(account.currentBalance) : '';
-                }}
-            />
-        );
-    }
 
-    if (showDialog && affectedAccount && financeManagementData) {
+    if (showDialog && financeManagementData) {
         const accounts = [...(financeManagementData.financeManagement.accounts as Account[])].sort(
             ComparatorBuilder.comparing<Account>(a => a.order).build()
         );
@@ -102,8 +89,9 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
         return (
             <FormDialog
                 open={true}
+                dialogOptions={{fullWidth: true, maxWidth: 'sm'}}
                 dialogTitle={
-                    <Typography variant="h4" sx={{color: 'secondary.main'}}>
+                    <Typography variant="h4" component="span" sx={{color: 'secondary.main'}}>
                         Stwórz {billingElementType === 'Income' ? 'dochód' : 'wydatek'}
                     </Typography>
                 }
@@ -116,7 +104,7 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
                     {
                         billingElementType: billingElementType,
                         publicId: '',
-                        affectedAccountPublicId: affectedAccount.publicId,
+                        affectedAccountPublicId: '',
                         amount: new Decimal(0),
                         category: null,
                         date: null,
@@ -132,20 +120,29 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
     }
 
     if (!showDialog) {
+        const actionPalette = billingElementType === 'Income' ? theme.palette.success : theme.palette.error;
+        const actionColor = theme.palette.mode === 'light' ? actionPalette.dark : actionPalette.light;
+
         return (
             <Button
-                sx={{alignSelf: 'center', mt: 1}}
+                variant="outlined"
+                color={billingElementType === 'Income' ? 'success' : 'error'}
+                startIcon={<AddCircleOutlineIcon />}
+                sx={{
+                    alignSelf: 'stretch',
+                    mt: 1,
+                    color: actionColor,
+                    borderColor: actionColor,
+                    fontWeight: 600,
+                    '&:hover': {borderColor: actionColor},
+                }}
+                disabled={loading || !financeManagementData}
                 onClick={() => {
                     setShowDialog(true);
-                    client.cache.evict({id: 'a'});
-                    if (called) {
-                        refetch();
-                    } else {
-                        fetchFinanceManagement();
-                    }
+                    void refetch();
                 }}
             >
-                Wprowadź
+                Dodaj {billingElementType === 'Income' ? 'dochód' : 'wydatek'}
             </Button>
         );
     }
