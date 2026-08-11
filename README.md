@@ -20,6 +20,12 @@ Uruchamia testy w trybie interaktywnym. Jednorazowe uruchomienie testów bez try
 CI=true npm test -- --watchAll=false
 ```
 
+### `npm run test:e2e`
+
+Uruchamia w Google Chrome pełny, destrukcyjny test integracyjny interakcji z danymi. Playwright automatycznie uruchamia lokalny frontend; backend musi być wcześniej dostępny. Szczegóły konfiguracji i zakres operacji opisuje dokument [Testy integracyjne E2E](docs/testy-integracyjne-e2e.md).
+
+Wariant `npm run test:e2e:headed` pozostawia widoczne okno przeglądarki podczas testu.
+
 ### `npm run typecheck`
 
 Sprawdza typy TypeScript bez generowania plików wynikowych.
@@ -36,7 +42,7 @@ Generuje typy i dokumenty TypeScript na podstawie operacji GraphQL oraz konfigur
 
 ### `npm run format` i `npm run format:check`
 
-Odpowiednio formatują pliki TSX za pomocą Prettier albo sprawdzają ich formatowanie bez wprowadzania zmian.
+Odpowiednio formatują pliki TSX oraz pliki testów E2E za pomocą Prettier albo sprawdzają ich formatowanie bez wprowadzania zmian.
 
 ### `npm run update-cubing`
 
@@ -46,7 +52,9 @@ Aktualizuje przechowywaną w repozytorium przeglądarkową wersję biblioteki `c
 
 - [Wytyczne interfejsu użytkownika](docs/wytyczne-interfejsu.md)
 - [Wykorzystywane interfejsy API](docs/uzywane-api.md)
+- [Testy integracyjne E2E](docs/testy-integracyjne-e2e.md)
 - [Ustalenia dotyczące nawigacji i interfejsu kont](docs/agents/nawigacja-i-interfejs-kont.md)
+- [Zasady testów E2E](docs/agents/testy-e2e.md)
 - [Zasady utrzymywania dokumentacji](docs/agents/utrzymywanie-dokumentacji.md)
 
 Dokumentacja techniczna wykorzystanych narzędzi:
