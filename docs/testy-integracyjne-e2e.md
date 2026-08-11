@@ -7,7 +7,7 @@ Testy w katalogu `e2e/` obsługuje Playwright. Uruchamiają one rzeczywistą apl
 - uruchomiony backend;
 - zainstalowana przeglądarka Google Chrome;
 - konto testowe mające dostęp do aplikacji Księgowość i Kostki;
-- dane wymagane przez sprawdzane formularze, między innymi co najmniej jedno konto powiązane z kontem bankowym, dwa widoczne konta oraz kategoria transakcji.
+- dane wymagane przez sprawdzane formularze, między innymi co najmniej jedno konto powiązane z kontem bankowym, dwa widoczne konta w tej samej walucie oraz kategoria transakcji.
 
 Domyślnie Playwright uruchamia frontend poleceniem `npm run start-dev-macos` na macOS albo `npm run start-dev` na pozostałych systemach. Czeka na jego dostępność pod adresem `http://localhost:3000`, a po zakończeniu testów zamyka uruchomiony proces. Jeżeli frontend już działa pod tym adresem, wykorzystuje istniejący serwer.
 
@@ -17,6 +17,12 @@ Logowanie używa loginu `slag` oraz niepustych wartości hasła i kodu jednorazo
 
 ```bash
 npm run test:e2e
+```
+
+Tylko pełny scenariusz sekcji kont można uruchomić poleceniem:
+
+```bash
+npx playwright test e2e/accounts.spec.ts
 ```
 
 Widoczne okno przeglądarki można włączyć poleceniem:
@@ -33,9 +39,21 @@ Konfigurację można nadpisać zmiennymi środowiskowymi:
 
 Raport HTML jest zapisywany w `playwright-report/`, a ślady i zrzuty ekranu nieudanych prób w `test-results/e2e/`. Katalogi te nie są wersjonowane.
 
-## Zakres i wpływ na dane
+## Pełny scenariusz sekcji kont
 
-Zestaw wykonuje kolejno:
+Plik `e2e/accounts.spec.ts` sprawdza wszystkie operacje GraphQL dostępne z widoku kont oraz zarządzania kontami:
+
+1. pobranie ustawień, kont, skarbonek i nieprzypisanych kont bankowych;
+2. utworzenie, zmianę, przesunięcie i usunięcie tymczasowego konta;
+3. odłączenie istniejącego powiązania bankowego, przypisanie go do konta testowego i odtworzenie pierwotnego powiązania;
+4. utworzenie i edycję tymczasowej skarbonki, dodanie i odjęcie tej samej kwoty oraz usunięcie skarbonki;
+5. przelew pomiędzy dwoma kontami, pobranie historii dla bieżącego i poprzedniego miesiąca oraz przelew przychodzącej transakcji dalej z powrotem na konto źródłowe.
+
+Dla każdej operacji test sprawdza nazwę i istotne zmienne żądania, status HTTP, brak błędów GraphQL, dane odpowiedzi i `refetch` oraz widoczny rezultat. Konto i skarbonka są usuwane, powiązanie bankowe jest odtwarzane, a salda wracają do wartości początkowych. W historii pozostają dwa przeciwne przelewy testowe o tej samej kwocie. Blok sprzątający podejmuje również próbę odtworzenia tego stanu po błędzie scenariusza.
+
+## Pozostały scenariusz integracji danych
+
+Plik `e2e/data-interactions.spec.ts` wykonuje kolejno:
 
 1. utworzenie konta z unikalną nazwą testową, przeniesienie na nie powiązania bankowego z innego konta, zmianę nazwy, odtworzenie pierwotnego powiązania i usunięcie konta testowego;
 2. zapis dwóch dochodów i dwóch wydatków na dwóch kontach, sprawdzenie podsumowań, kategorii i sald kont oraz import jednej dostępnej transakcji bankowej;

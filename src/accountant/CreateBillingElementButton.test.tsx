@@ -1,7 +1,8 @@
 import {useMutation, useQuery} from '@apollo/client/react';
-import {render, screen} from '@testing-library/react';
+import {act, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {CreateBillingElementButton} from './CreateBillingElementButton';
+import {BillingPeriodQuery, GetFinanceManagement} from '../types';
 
 jest.mock('@apollo/client/react', () => ({
     useMutation: jest.fn(),
@@ -18,11 +19,13 @@ jest.mock('../utils/dialogs/FormDialog', () => ({
 
 const useQueryMock = useQuery as unknown as jest.Mock;
 const useMutationMock = useMutation as unknown as jest.Mock;
+const mutationMock = jest.fn();
 
 describe('CreateBillingElementButton', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        useMutationMock.mockReturnValue([jest.fn()]);
+        mutationMock.mockResolvedValue({});
+        useMutationMock.mockReturnValue([mutationMock]);
         useQueryMock.mockReturnValue({
             loading: false,
             client: {clearStore: jest.fn()},
@@ -56,5 +59,41 @@ describe('CreateBillingElementButton', () => {
         expect(formProperties.fields.find((field: {key: string}) => field.key === 'affectedAccountPublicId')).toEqual(
             expect.objectContaining({editable: true})
         );
+    });
+
+    it('refreshes the billing period and finance data after saving', async () => {
+        const user = userEvent.setup();
+        render(<CreateBillingElementButton billingElementType="Income" />);
+
+        await user.click(screen.getByRole('button', {name: 'Dodaj dochód'}));
+        const formProperties = mockFormDialog.mock.calls.at(-1)[0];
+        await act(async () => {
+            await formProperties.onConfirm({
+                billingElementType: 'Income',
+                publicId: '',
+                affectedAccountPublicId: 'account-1',
+                amount: 12.34,
+                category: {publicId: 'category-1'},
+                date: {format: () => '2026-08-11'},
+                description: 'Dochód testowy',
+                piggyBank: null,
+            });
+        });
+
+        expect(mutationMock).toHaveBeenCalledWith({
+            variables: {
+                accountPublicId: 'account-1',
+                description: 'Dochód testowy',
+                amount: 12.34,
+                currency: 'PLN',
+                categoryPublicId: 'category-1',
+                date: '2026-08-11',
+                piggyBankPublicId: null,
+                bankTransactionPublicIds: [],
+            },
+            refetchQueries: [BillingPeriodQuery, GetFinanceManagement],
+            awaitRefetchQueries: true,
+        });
+        expect(screen.queryByRole('dialog', {name: 'Formularz elementu rozliczeniowego'})).not.toBeInTheDocument();
     });
 });

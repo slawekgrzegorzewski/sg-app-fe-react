@@ -2,6 +2,7 @@ import {useMutation, useQuery} from '@apollo/client/react';
 import {
     Account,
     BillingCategory,
+    BillingPeriodQuery,
     CreateExpense,
     CreateExpenseMutation,
     CreateIncome,
@@ -29,12 +30,7 @@ export interface CreateBillingElementButtonPros {
 export function CreateBillingElementButton({billingElementType}: CreateBillingElementButtonPros) {
     const [showDialog, setShowDialog] = useState(false);
     const theme = useTheme();
-    const {
-        client,
-        loading,
-        data: financeManagementData,
-        refetch,
-    } = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
+    const {loading, data: financeManagementData, refetch} = useQuery<GetFinanceManagementQuery>(GetFinanceManagement);
 
     const [createIncomeMutation] = useMutation<CreateIncomeMutation>(CreateIncome);
     const [createExpenseMutation] = useMutation<CreateExpenseMutation>(CreateExpense);
@@ -47,7 +43,7 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
             return Promise.reject(new Error('Wybrane konto nie jest dostępne.'));
         }
 
-        const variables = {
+        const mutationOptions = {
             variables: {
                 accountPublicId: billingElementDTO.affectedAccountPublicId!,
                 description: billingElementDTO.description!,
@@ -58,17 +54,17 @@ export function CreateBillingElementButton({billingElementType}: CreateBillingEl
                 piggyBankPublicId: billingElementDTO.piggyBank?.publicId ? billingElementDTO.piggyBank!.publicId : null,
                 bankTransactionPublicIds: [],
             },
+            refetchQueries: [BillingPeriodQuery, GetFinanceManagement],
+            awaitRefetchQueries: true,
         };
         return (
-            billingElementType === 'Income' ? createIncomeMutation(variables) : createExpenseMutation(variables)
-        ).then(() => {
-            reset();
-            return Promise.resolve();
-        });
+            billingElementType === 'Income'
+                ? createIncomeMutation(mutationOptions)
+                : createExpenseMutation(mutationOptions)
+        ).then(reset);
     };
 
     const reset = () => {
-        client.clearStore();
         setShowDialog(false);
     };
 
