@@ -95,9 +95,11 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 Po zakończeniu pracy należy:
 
 1. Obejrzeć widok na dużym ekranie i urządzeniu mobilnym.
-2. Przejść wszystkie zakładki oraz dialogi, w tym zamknięcie przyciskiem, `X`, Escape i kliknięciem w tło.
-3. Sprawdzić stany ładowania, błędu i pustej listy, jeśli można je bezpiecznie odtworzyć.
-4. Sprawdzić konsolę przeglądarki pod kątem nowych błędów i ostrzeżeń.
-5. Uruchomić testy, TypeScript i ESLint.
-6. Przejrzeć diff, aby upewnić się, że zmiana nie objęła niezwiązanych plików.
-7. Nie wykonywać destrukcyjnych operacji na rzeczywistych danych tylko w celu wizualnej weryfikacji.
+2. Sprawdzić zmieniany widok w przeglądarce w każdym dostępnym wariancie motywu, osobno w trybie jasnym i ciemnym. Zwrócić szczególną uwagę na kontrast tekstu, ikon, obramowań i stanów interaktywnych oraz wygląd menu nawigacyjnego, mobilnego i rozwijanego.
+3. Przejść wszystkie zakładki oraz dialogi, w tym zamknięcie przyciskiem, `X`, Escape i kliknięciem w tło.
+4. Sprawdzić stany ładowania, błędu i pustej listy, jeśli można je bezpiecznie odtworzyć.
+5. Sprawdzić konsolę przeglądarki pod kątem nowych błędów i ostrzeżeń.
+6. Jeżeli sprawdzana właściwość jest mierzalna i ryzyko regresji uzasadnia automatyzację, dodać test utrwalający wykonaną weryfikację. Test powinien obejmować wszystkie istotne warianty danych lub konfiguracji, tak jak [`theme-accessibility.test.tsx`](../src/utils/theme/theme-accessibility.test.tsx) obejmuje każdy motyw w trybie jasnym i ciemnym. Kontrola automatyczna nie zastępuje oceny wizualnej ani sprawdzenia rzeczywistego układu, jeżeli środowisko testowe nie odwzorowuje ich wiarygodnie.
+7. Uruchomić testy, TypeScript i ESLint.
+8. Przejrzeć diff, aby upewnić się, że zmiana nie objęła niezwiązanych plików.
+9. Nie wykonywać destrukcyjnych operacji na rzeczywistych danych tylko w celu wizualnej weryfikacji.

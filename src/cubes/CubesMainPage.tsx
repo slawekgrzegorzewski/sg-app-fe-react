@@ -349,7 +349,7 @@ export function CubesMainPage() {
                                 <StopWatch
                                     variant={'h2'}
                                     showControls={false}
-                                    sx={{color: 'black'}}
+                                    sx={{color: 'text.primary'}}
                                     startTrigger={startTrigger}
                                     stopTrigger={stopTrigger}
                                     resetTrigger={resetTrigger}
@@ -370,10 +370,10 @@ export function CubesMainPage() {
                             sx={{
                                 color:
                                     phase === 'INSPECTION_EARLY'
-                                        ? 'green'
+                                        ? 'success.main'
                                         : phase === 'INSPECTION_LATE'
-                                          ? 'red'
-                                          : 'black',
+                                          ? 'error.main'
+                                          : 'text.primary',
                             }}
                             startTrigger={startTrigger}
                             stopTrigger={stopTrigger}
@@ -448,7 +448,7 @@ export function CubesMainPage() {
                                 <StopWatch
                                     showControls={false}
                                     variant="h2"
-                                    sx={{color: phase === 'INSPECTION_EARLY' ? 'green' : 'red'}}
+                                    sx={{color: phase === 'INSPECTION_EARLY' ? 'success.main' : 'error.main'}}
                                     inspectionMode={phase === 'INSPECTION_EARLY' ? 'countdown' : 'overtime'}
                                     inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
                                 />
@@ -466,7 +466,7 @@ export function CubesMainPage() {
                         </Stack>
                     )}
                     {fullScreen && result.current > 0 && phase === 'IDLE' && (
-                        <Stack sx={{color: 'black'}}>
+                        <Stack sx={{color: 'text.primary'}}>
                             <StopWatchDisplay currentTimeInMillis={result.current} />
                         </Stack>
                     )}

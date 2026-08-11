@@ -4,6 +4,7 @@ Ten dokument uzupełnia [`docs/wytyczne-interfejsu.md`](../wytyczne-interfejsu.m
 
 ## Kolory `DrawerAppBar`
 
+- `AppBar` ma włączone `enableColorOnDark`, aby także w ciemnym trybie zachować tło `primary.main` dopasowane do `primary.contrastText`. Bez tego MUI zastępuje tło paska ciemnym kolorem, co w wariantach z jasnym kolorem głównym powoduje zanik ciemnego tekstu i ikon.
 - Tekst i ikony umieszczone bezpośrednio na tle `primary.main` używają `primary.contrastText`. Nie używamy w tym miejscu `secondary.light`, ponieważ część ciemnych wariantów ma jasny kolor główny i nie zapewnia wtedy odpowiedniego kontrastu.
 - Półprzezroczyste separatory oraz tła zaznaczenia wyliczamy przez `alpha(theme.palette.primary.contrastText, opacity)`. Nie wpisujemy na sztywno białych wartości `rgba(...)`.
 - Aktywna strona jest zaznaczona jednocześnie zmianą tła i grubości tekstu oraz ma `aria-current="page"`.
@@ -37,6 +38,8 @@ Ten dokument uzupełnia [`docs/wytyczne-interfejsu.md`](../wytyczne-interfejsu.m
 
 ## Weryfikacja regresji
 
+- Testy dostępności motywów obejmują każdy dostępny wariant w trybie jasnym i ciemnym. Sprawdzają minimalny kontrast `4.5:1` dla paska nawigacji, mobilnej szuflady, rozwijanych menu oraz aktywnych i przygaszonych pozycji.
+- Osobny test `NavigationAppBar` zabezpiecza włączenie `enableColorOnDark`, aby MUI nie zastąpił koloru głównego niedopasowanym ciemnym tłem.
 - Testy `AccountTransactions` obejmują dialog podczas ładowania, błąd oraz ponowienie zapytania.
 - Testy wspólnego `Form` sprawdzają, że nierozstrzygnięty zapis wyłącza przycisk zatwierdzenia i nie pozwala uruchomić operacji ponownie.
 - Po zmianach w tych obszarach uruchamiamy odpowiednie testy komponentów, TypeScript, Prettier i kompilację produkcyjną.

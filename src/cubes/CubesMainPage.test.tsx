@@ -182,11 +182,11 @@ describe('CubesMainPage', () => {
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('INSPECTION_EARLY');
         expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-inspection-mode', 'countdown');
-        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-color', 'green');
+        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-color', 'success.main');
         fireEvent.keyUp(document, {code: 'Space'});
         await screen.findByText('SOLVING');
         expect(screen.getByTestId('stopwatch')).not.toHaveAttribute('data-inspection-mode');
-        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-color', 'black');
+        expect(screen.getByTestId('stopwatch')).toHaveAttribute('data-color', 'text.primary');
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('IDLE');
 
@@ -216,7 +216,7 @@ describe('CubesMainPage', () => {
         expect(await screen.findByText('INSPECTION_EARLY')).toBeInTheDocument();
         const inspectionTarget = screen.getByRole('button', {name: 'Puść, aby uruchomić stoper'});
         expect(within(inspectionTarget).getByTestId('stopwatch')).toHaveAttribute('data-inspection-mode', 'countdown');
-        expect(within(inspectionTarget).getByTestId('stopwatch')).toHaveAttribute('data-color', 'green');
+        expect(within(inspectionTarget).getByTestId('stopwatch')).toHaveAttribute('data-color', 'success.main');
 
         fireEvent.touchEnd(inspectionTarget);
         expect(await screen.findByText('SOLVING')).toBeInTheDocument();

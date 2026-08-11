@@ -1,7 +1,6 @@
 import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import * as React from 'react';
 import {useId, useState} from 'react';
-import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Drawer from '@mui/material/Drawer';
@@ -41,6 +40,7 @@ import {
 import {useApplicationFavicon} from './applications/use-application-favicon';
 import {useApplicationTitle} from './applications/use-application-title';
 import {useParams} from 'react-router-dom';
+import {DRAWER_SECONDARY_ITEM_OPACITY, NavigationAppBar} from './NavigationAppBar';
 
 interface Props {
     window?: () => Window;
@@ -151,11 +151,11 @@ export default function DrawerAppBar(props: Props) {
     if (domainsDataLoading) {
         return (
             <Stack direction="column" sx={{width: '100%', minHeight: '100dvh'}}>
-                <AppBar position="sticky">
+                <NavigationAppBar position="sticky">
                     <Toolbar>
                         <LoadingIndicator label="Ładowanie..." />
                     </Toolbar>
-                </AppBar>
+                </NavigationAppBar>
             </Stack>
         );
     }
@@ -246,7 +246,7 @@ export default function DrawerAppBar(props: Props) {
                                 color: 'primary.contrastText',
                                 pl: 4,
                                 py: 0.75,
-                                opacity: app.id === currentApplicationId ? 1 : 0.8,
+                                opacity: app.id === currentApplicationId ? 1 : DRAWER_SECONDARY_ITEM_OPACITY,
                                 '&.Mui-selected': {
                                     bgcolor: alpha(theme.palette.primary.contrastText, 0.12),
                                     '&:hover': {bgcolor: alpha(theme.palette.primary.contrastText, 0.18)},
@@ -290,7 +290,10 @@ export default function DrawerAppBar(props: Props) {
                                         color: 'primary.contrastText',
                                         pl: 4,
                                         py: 0.75,
-                                        opacity: domain.publicId === currentDomainPublicId ? 1 : 0.8,
+                                        opacity:
+                                            domain.publicId === currentDomainPublicId
+                                                ? 1
+                                                : DRAWER_SECONDARY_ITEM_OPACITY,
                                         '&.Mui-selected': {
                                             bgcolor: alpha(theme.palette.primary.contrastText, 0.12),
                                             '&:hover': {bgcolor: alpha(theme.palette.primary.contrastText, 0.18)},
@@ -350,7 +353,7 @@ export default function DrawerAppBar(props: Props) {
             }}
         >
             <Stack direction="column" sx={{width: '100%', minHeight: '100dvh'}}>
-                <AppBar position="sticky">
+                <NavigationAppBar position="sticky">
                     {domainsData.domainInvitations.length > 0 && (
                         <Toolbar
                             sx={{
@@ -612,7 +615,7 @@ export default function DrawerAppBar(props: Props) {
                             </>
                         )}
                     </Toolbar>
-                </AppBar>
+                </NavigationAppBar>
 
                 <Drawer
                     container={container}
