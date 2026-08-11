@@ -1,4 +1,4 @@
-import {ErrorDisplay} from '../application/components/QueryState';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {useQuery} from '@apollo/client/react';
 import {Account, AccountTransactionShortFragment, GetAccountTransactions, GetAccountTransactionsQuery} from '../types';
 import React, {useState} from 'react';
@@ -45,10 +45,35 @@ export function AccountTransactions({account, accounts, onClose, onTransferCompl
         },
     });
 
+    const renderTransactionsDialog = (content: React.JSX.Element) => (
+        <InformationDialog
+            title={'Transakcje dla konta ' + account.name}
+            open={true}
+            onClose={() => onClose?.() ?? Promise.resolve()}
+            dialogOptions={{fullScreen: isTouchDevice}}
+            sx={[
+                almostFullHeightDialog,
+                {
+                    '& .MuiDialog-paper': {
+                        maxWidth: isTouchDevice ? '100%' : '800px',
+                        width: isTouchDevice ? '100%' : '800px',
+                        ...(isTouchDevice && {
+                            height: '100%',
+                            maxHeight: '100%',
+                            margin: 0,
+                        }),
+                    },
+                },
+            ]}
+        >
+            {content}
+        </InformationDialog>
+    );
+
     if (loading) {
-        return <></>;
+        return renderTransactionsDialog(<LoadingIndicator label="Ładowanie transakcji..." />);
     } else if (error) {
-        return <ErrorDisplay error={error} />;
+        return renderTransactionsDialog(<ErrorDisplay error={error} onRetry={() => void refetch()} />);
     } else if (data) {
         const transactions =
             data.financeManagement.accounts.length === 0
@@ -57,28 +82,7 @@ export function AccountTransactions({account, accounts, onClose, onTransferCompl
 
         return (
             <>
-                <InformationDialog
-                    title={'Transakcje dla konta ' + account.name}
-                    open={true}
-                    onClose={() => {
-                        return onClose?.() ?? Promise.resolve();
-                    }}
-                    dialogOptions={{fullScreen: isTouchDevice}}
-                    sx={[
-                        almostFullHeightDialog,
-                        {
-                            '& .MuiDialog-paper': {
-                                maxWidth: isTouchDevice ? '100%' : '800px',
-                                width: isTouchDevice ? '100%' : '800px',
-                                ...(isTouchDevice && {
-                                    height: '100%',
-                                    maxHeight: '100%',
-                                    margin: 0,
-                                }),
-                            },
-                        },
-                    ]}
-                >
+                {renderTransactionsDialog(
                     <Stack direction="column" spacing={2}>
                         <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
                             <IconButton
@@ -223,7 +227,7 @@ export function AccountTransactions({account, accounts, onClose, onTransferCompl
                             </Stack>
                         )}
                     </Stack>
-                </InformationDialog>
+                )}
                 {transferAction && (
                     <AccountBalanceActionDialog
                         action={transferAction}

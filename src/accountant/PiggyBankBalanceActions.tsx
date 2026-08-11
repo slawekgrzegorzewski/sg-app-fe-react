@@ -12,8 +12,8 @@ const actionButtonSx = (paletteName: 'success' | 'error') => (theme: Theme) => {
         border: '1px solid',
         borderColor: actionColor,
         bgcolor: alpha(actionColor, 0.06),
-        width: 22,
-        height: 22,
+        width: {xs: 40, sm: 28},
+        height: {xs: 40, sm: 28},
         p: 0,
         '&:hover': {
             bgcolor: alpha(actionColor, 0.14),
@@ -42,7 +42,7 @@ export function PiggyBankBalanceActions({piggyBankName, onCredit, onDebit}: Pigg
                     sx={actionButtonSx('success')}
                     onClick={event => handleClick(event, onCredit)}
                 >
-                    <AddRoundedIcon sx={{fontSize: 13}} />
+                    <AddRoundedIcon sx={{fontSize: {xs: 16, sm: 14}}} />
                 </IconButton>
             </Tooltip>
             <Tooltip title="Odejmij środki">
@@ -52,7 +52,7 @@ export function PiggyBankBalanceActions({piggyBankName, onCredit, onDebit}: Pigg
                     sx={actionButtonSx('error')}
                     onClick={event => handleClick(event, onDebit)}
                 >
-                    <RemoveRoundedIcon sx={{fontSize: 13}} />
+                    <RemoveRoundedIcon sx={{fontSize: {xs: 16, sm: 14}}} />
                 </IconButton>
             </Tooltip>
         </Stack>

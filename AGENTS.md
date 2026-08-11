@@ -1,18 +1,35 @@
-# Project instructions
+# Instrukcje projektowe
 
-## English grammar feedback
+## Utrzymywanie wiedzy projektowej
 
-Whenever the user writes conversational English in a prompt, append a short `English review` section to the end of the final response to help them learn English.
+Jeżeli podczas pracy zostanie ustalona nowa trwała decyzja, konwencja albo ograniczenie implementacyjne specyficzne dla tego projektu, przed zakończeniem zadania zapisz je w odpowiednim pliku Markdown w katalogu `docs/agents/`.
 
-- If the English is correct and natural, say so briefly.
-- If it can be improved, provide a corrected version and one or two concise explanations of the most useful corrections.
-- Review the user's natural-language English, not source code, identifiers, file paths, logs, or quoted third-party text.
-- Keep this section secondary to the main task and do not let it delay or interrupt the requested work.
+- Zaktualizuj istniejący dokument tematyczny, jeżeli obejmuje dane zagadnienie; w przeciwnym razie utwórz nowy dokument tematyczny.
+- Zapisuj wynikającą z ustaleń regułę i jej uzasadnienie, a nie chronologiczny zapis rozmowy ani tymczasowe szczegóły analizy.
+- Utrzymuj zgodność tych notatek z implementacją i nadrzędną dokumentacją projektu, taką jak `docs/wytyczne-interfejsu.md`.
+- Nie powielaj informacji, które zostały już jasno opisane w `docs/agents/`; w razie potrzeby odsyłaj do nadrzędnego dokumentu projektowego.
 
-## Local development browser login
+## Język dokumentacji
 
-When browser-based verification on the local development application (`localhost`) requires authentication:
+Cała dokumentacja projektowa, w tym `AGENTS.md` oraz pliki w katalogach `docs/` i `docs/agents/`, musi być pisana po polsku.
 
-- Use `slag` as the login.
-- Use any non-empty string as the password and OTP; the development version does not verify these values.
-- This shortcut applies only to the local development environment. Never assume that it works or is permitted in another environment.
+- Pozostawiaj bez tłumaczenia kod źródłowy, identyfikatory, nazwy API, nazwy własne i techniczne wartości wymagane przez narzędzia.
+- Nowym dokumentom nadawaj polskie nazwy plików, o ile nie istnieje techniczny wymóg użycia konkretnej nazwy angielskiej.
+- Przy aktualizowaniu istniejącego dokumentu popraw także napotkane angielskie fragmenty, które nie są terminami technicznymi.
+
+## Informacja zwrotna o języku angielskim
+
+Jeżeli użytkownik napisze w poleceniu tekst konwersacyjny po angielsku, na końcu odpowiedzi dodaj krótką sekcję `Ocena języka angielskiego`, która pomoże mu w nauce.
+
+- Jeśli angielski jest poprawny i naturalny, krótko to zaznacz.
+- Jeśli tekst można poprawić, podaj poprawioną wersję oraz jedno lub dwa zwięzłe objaśnienia najważniejszych poprawek.
+- Oceniaj tekst użytkownika napisany językiem naturalnym, a nie kod źródłowy, identyfikatory, ścieżki plików, logi ani cytowane teksty osób trzecich.
+- Traktuj tę sekcję jako dodatek do głównego zadania; nie może ona opóźniać ani przerywać realizacji polecenia.
+
+## Logowanie do lokalnej aplikacji podczas weryfikacji w przeglądarce
+
+Jeżeli weryfikacja lokalnej wersji aplikacji (`localhost`) w przeglądarce wymaga uwierzytelnienia:
+
+- Użyj `slag` jako loginu.
+- Jako hasło i kod jednorazowy podaj dowolne niepuste ciągi znaków; wersja deweloperska nie weryfikuje tych wartości.
+- Ten skrót dotyczy wyłącznie lokalnego środowiska deweloperskiego. Nie zakładaj, że działa ani że wolno go stosować w innym środowisku.

@@ -121,12 +121,12 @@ export interface UserRowProps {
 }
 
 function UserRow({
-    user,
-    domain,
-    standOut,
-    showDomainAccessLevelButtons,
-    setDomainAccessLevelDialogOptions,
-}: UserRowProps) {
+                     user,
+                     domain,
+                     standOut,
+                     showDomainAccessLevelButtons,
+                     setDomainAccessLevelDialogOptions,
+                 }: UserRowProps) {
     const changeAccessLabel =
         user.domainAccessLevel === DomainAccessLevel.Admin
             ? `Ustaw użytkownika ${user.login} jako członka domeny ${domain.name}`
@@ -170,9 +170,9 @@ function UserRow({
                             color="inherit"
                         >
                             {user.domainAccessLevel === DomainAccessLevel.Admin ? (
-                                <KeyboardDoubleArrowDownIcon />
+                                <KeyboardDoubleArrowDownIcon/>
                             ) : (
-                                <KeyboardDoubleArrowUpIcon />
+                                <KeyboardDoubleArrowUpIcon/>
                             )}
                         </IconButton>
                     </Tooltip>
@@ -191,7 +191,7 @@ function UserRow({
                             }}
                             color="inherit"
                         >
-                            <PersonRemoveIcon />
+                            <PersonRemoveIcon/>
                         </IconButton>
                     </Tooltip>
                 </Stack>
@@ -254,10 +254,10 @@ function DomainsManagement() {
     function setAccessLevelMessage(domainAccessLevelDialogOptions: DomainAccessLevelData) {
         return domainAccessLevelDialogOptions.accessLevel === SetDomainAccessLevel.Remove
             ? `Czy na pewno chcesz usunąć użytkownika „${domainAccessLevelDialogOptions.login}” ` +
-                  `z domeny „${domainAccessLevelDialogOptions.domainName}”?`
+            `z domeny „${domainAccessLevelDialogOptions.domainName}”?`
             : `Czy na pewno chcesz ustawić użytkownika „${domainAccessLevelDialogOptions.login}” ` +
-                  `jako ${domainAccessLevelDialogOptions!.accessLevel === SetDomainAccessLevel.Admin ? 'administratora' : 'członka'} ` +
-                  `domeny „${domainAccessLevelDialogOptions.domainName}”?`;
+            `jako ${domainAccessLevelDialogOptions!.accessLevel === SetDomainAccessLevel.Admin ? 'administratora' : 'członka'} ` +
+            `domeny „${domainAccessLevelDialogOptions.domainName}”?`;
     }
 
     return (
@@ -310,14 +310,14 @@ function DomainsManagement() {
                                         }}
                                         color="inherit"
                                     >
-                                        <PersonAddIcon />
+                                        <PersonAddIcon/>
                                     </IconButton>
                                 </Tooltip>
                             </Stack>
                             <Stack direction="column" sx={{pl: {xs: 1.5, sm: 3}}}>
                                 <Stack direction="row" alignItems="center" spacing={0.75}>
                                     <Typography color="text.secondary">Administratorzy</Typography>
-                                    <Chip size="small" variant="outlined" label={admins.length} />
+                                    <Chip size="small" variant="outlined" label={admins.length}/>
                                 </Stack>
                                 {admins.map(user => (
                                     <Box key={user.login} sx={{pl: 1.5}}>
@@ -333,7 +333,7 @@ function DomainsManagement() {
                                 {members.length > 0 && (
                                     <Stack direction="row" alignItems="center" spacing={0.75} sx={{mt: 0.5}}>
                                         <Typography color="text.secondary">Członkowie</Typography>
-                                        <Chip size="small" variant="outlined" label={members.length} />
+                                        <Chip size="small" variant="outlined" label={members.length}/>
                                     </Stack>
                                 )}
                                 {members.map(user => (
@@ -378,7 +378,9 @@ function DomainsManagement() {
             )}
             {inviteUserToDomainDataDialogOptions && (
                 <FormDialog
-                    dialogTitle={<Box>Zaproś użytkownika do domeny „{inviteUserToDomainDataDialogOptions.domainName}”</Box>}
+                    dialogTitle={
+                        <Box>Zaproś użytkownika do domeny „{inviteUserToDomainDataDialogOptions.domainName}”</Box>
+                    }
                     open={true}
                     onConfirm={inviteUserToDomain}
                     onCancel={() => {

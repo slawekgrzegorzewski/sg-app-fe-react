@@ -111,7 +111,7 @@ export type FormProps<T> = {
     previewOfChange?(t: T): React.JSX.Element;
     autoSubmit?: boolean;
     showControlButtons?: boolean;
-    onSave: (value: T) => void;
+    onSave: (value: T) => void | Promise<unknown>;
     onCancel: () => void;
     onChange?(value: T): void;
     presentation?: 'default' | 'dialog';
@@ -362,6 +362,7 @@ export default function Form<T>({
                                 variant="contained"
                                 color={submitColor}
                                 type="submit"
+                                disabled={formik.isSubmitting}
                                 sx={theme => {
                                     const semanticPalette =
                                         submitColor === 'success' || submitColor === 'error'
@@ -394,6 +395,7 @@ export default function Form<T>({
                                 variant="text"
                                 color={submitColor ?? 'secondary'}
                                 type="submit"
+                                disabled={formik.isSubmitting}
                                 sx={{flexGrow: 1}}
                                 onClick={e => e.stopPropagation()}
                             >
@@ -420,11 +422,12 @@ export default function Form<T>({
         <Formik
             initialValues={initialValues}
             validationSchema={validationSchema}
-            onSubmit={(values: T, {setSubmitting}: FormikHelpers<FormikValues>) => {
-                setTimeout(() => {
+            onSubmit={async (values: T, {setSubmitting}: FormikHelpers<FormikValues>) => {
+                try {
+                    await onSave(values);
+                } finally {
                     setSubmitting(false);
-                    onSave(values);
-                }, 400);
+                }
             }}
         >
             {Form}

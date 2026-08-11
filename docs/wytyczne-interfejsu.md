@@ -8,7 +8,7 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 - Odstępy powinny być responsywne: mniejsze na telefonie i większe od breakpointu `sm`.
 - Tytuł strony powinien używać spójnej hierarchii nagłówków, zwykle `Typography` z wariantem `h3`.
 - Sekcje grupujemy w obramowanych komponentach `Paper`. Nagłówek sekcji powinien zawierać nazwę oraz, jeśli ma to sens, lekki `Chip` z liczbą elementów.
-- Na desktopie powiązane sekcje mogą znajdować się obok siebie, a na telefonie powinny układać się w jedną kolumnę.
+- Na dużym ekranie powiązane sekcje mogą znajdować się obok siebie, a na telefonie powinny układać się w jedną kolumnę.
 - Nie stosujemy sztywnych szerokości, jeśli mogą powodować przewijanie strony na urządzeniach mobilnych.
 
 ## Listy i prezentacja danych
@@ -18,7 +18,7 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 - Pokazujemy liczbę wszystkich, aktywnych lub ukrytych elementów, jeśli pomaga to zrozumieć zawartość strony.
 - Pusta lista musi mieć jawny, przyjazny komunikat zamiast pozostawienia pustej przestrzeni.
 - Długie nazwy, adresy i identyfikatory nie mogą rozszerzać widoku; stosujemy m.in. `overflowWrap: 'anywhere'`.
-- Tabele, których nie da się sensownie przekształcić na mobile, umieszczamy w kontenerze z poziomym przewijaniem.
+- Tabele, których nie da się sensownie dostosować do urządzeń mobilnych, umieszczamy w kontenerze z poziomym przewijaniem.
 - Daty i liczby prezentujemy zgodnie z polską lokalizacją. Dla liczb finansowych warto stosować cyfry tabelaryczne.
 
 ## Przyciski i akcje
@@ -52,7 +52,7 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 
 ## Responsywność
 
-- Każdy zmieniany widok sprawdzamy co najmniej na szerokości desktopowej i typowego telefonu.
+- Każdy zmieniany widok sprawdzamy co najmniej na szerokości dużego ekranu i typowego telefonu.
 - Na urządzeniu mobilnym najważniejsza zawartość oraz akcje muszą być widoczne bez poziomego przewijania strony.
 - Elementy dotykowe muszą mieć wygodny obszar interakcji, nawet jeśli sama ikona pozostaje mała.
 - Zmiana stanu nie powinna przesuwać aktywnego obszaru spod palca ani powodować zaznaczenia całej strony.
@@ -77,10 +77,10 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 
 ## Nawigacja i `DrawerAppBar`
 
-- Aktualnie wybrana strona musi być wizualnie wyróżniona na desktopie i w menu mobilnym. Kontrolka aktywnej strony powinna mieć również `aria-current="page"`.
+- Aktualnie wybrana strona musi być wizualnie wyróżniona na dużym ekranie i w menu mobilnym. Kontrolka aktywnej strony powinna mieć również `aria-current="page"`.
 - Pasek powinien zachowywać czytelną hierarchię: nazwa aplikacji jest elementem nadrzędnym, strony są nawigacją, a użytkownik, domena i motyw są kontrolkami pomocniczymi.
 - Wygląd `DrawerAppBar` nie może zależeć od sprawdzania identyfikatora konkretnego wariantu motywu. Komponent korzysta z semantycznych kolorów i pozostałych tokenów aktywnego motywu.
-- Mobilny drawer zajmuje pełną wysokość, ma spójne tło, nagłówek i widoczny przycisk zamknięcia.
+- Mobilny panel boczny zajmuje pełną wysokość, ma spójne tło, nagłówek i widoczny przycisk zamknięcia.
 - Pozycje menu mobilnego muszą mieć wygodny obszar dotykowy. Aktywna pozycja jest jednoznacznie zaznaczona i nie polega wyłącznie na zmianie koloru tekstu.
 - Rozwijane sekcje użytkownika, aplikacji i domeny pokazują ikonę kierunku oraz ustawiają `aria-expanded` i `aria-controls`.
 - Kontrolki otwierające menu aplikacji, domeny, użytkownika lub wariantu motywu powinny komunikować stan przez `aria-haspopup` i `aria-expanded`.
@@ -88,13 +88,13 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 - Akcje przy zaproszeniach do domen są prawdziwymi przyciskami z `Tooltip` i jednoznacznym `aria-label`. Nie używamy elementów układu, takich jak `Grid`, jako kontrolek klikanych.
 - Pasek zaproszeń jest responsywny i nie korzysta ze stałej szerokości, która może rozszerzyć ekran telefonu.
 - Podczas pobierania danych domen nie pozostawiamy pustego ekranu. Pokazujemy `LoadingIndicator` albo zachowujemy szkielet paska z lokalnym wskaźnikiem ładowania.
-- Sticky AppBar nie może powodować poziomego przepełnienia ani zasłaniać treści po nawigacji i przewijaniu.
+- Przyklejony `AppBar` nie może powodować poziomego przepełnienia ani zasłaniać treści po nawigacji i przewijaniu.
 
 ## Weryfikacja zmiany
 
 Po zakończeniu pracy należy:
 
-1. Obejrzeć widok na desktopie i urządzeniu mobilnym.
+1. Obejrzeć widok na dużym ekranie i urządzeniu mobilnym.
 2. Przejść wszystkie zakładki oraz dialogi, w tym zamknięcie przyciskiem, `X`, Escape i kliknięciem w tło.
 3. Sprawdzić stany ładowania, błędu i pustej listy, jeśli można je bezpiecznie odtworzyć.
 4. Sprawdzić konsolę przeglądarki pod kątem nowych błędów i ostrzeżeń.

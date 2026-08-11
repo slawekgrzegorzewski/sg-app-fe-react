@@ -1,4 +1,4 @@
-import {render, screen} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as Yup from 'yup';
 import Form, {EditorField, SelectEditorField} from './Form';
@@ -67,5 +67,38 @@ describe('Form', () => {
         expect(screen.getByRole('textbox', {name: 'Opis'})).toHaveClass('MuiFilledInput-input');
         expect(screen.getByRole('button', {name: 'Anuluj'})).toBeVisible();
         expect(screen.getByRole('button', {name: 'Zapisz'})).toHaveClass('MuiButton-contained');
+    });
+
+    it('prevents submitting the same operation again while saving', async () => {
+        const user = userEvent.setup();
+        let finishSaving: () => void = () => undefined;
+        const onSave = jest.fn(
+            () =>
+                new Promise<void>(resolve => {
+                    finishSaving = resolve;
+                })
+        );
+
+        render(
+            <Form
+                presentation="dialog"
+                initialValues={{}}
+                validationSchema={Yup.object({})}
+                fields={[]}
+                onSave={onSave}
+                onCancel={jest.fn()}
+            />
+        );
+
+        const submitButton = screen.getByRole('button', {name: 'Zapisz'});
+        await user.click(submitButton);
+
+        expect(onSave).toHaveBeenCalledTimes(1);
+        expect(submitButton).toBeDisabled();
+        fireEvent.click(submitButton);
+        expect(onSave).toHaveBeenCalledTimes(1);
+
+        await act(async () => finishSaving());
+        await waitFor(() => expect(submitButton).toBeEnabled());
     });
 });

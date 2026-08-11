@@ -1,4 +1,4 @@
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {useQuery} from '@apollo/client/react';
 import {Account, CurrencyInfo} from '../types';
@@ -64,6 +64,48 @@ describe('AccountTransactions', () => {
                 },
             },
         });
+    });
+
+    it('keeps the dialog visible while loading transactions', async () => {
+        (useQuery as unknown as jest.Mock).mockReturnValue({
+            loading: true,
+            error: undefined,
+            data: undefined,
+            refetch: jest.fn(),
+        });
+
+        render(
+            <AccountTransactions
+                account={account}
+                accounts={[account]}
+                onTransferCompleted={jest.fn().mockResolvedValue(undefined)}
+            />
+        );
+
+        expect(screen.getByRole('dialog', {name: 'Transakcje dla konta Konto główne'})).toBeInTheDocument();
+        await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Ładowanie transakcji...'));
+    });
+
+    it('allows retrying after a transactions query error', async () => {
+        const refetch = jest.fn().mockResolvedValue(undefined);
+        (useQuery as unknown as jest.Mock).mockReturnValue({
+            loading: false,
+            error: new Error('Błąd testowy'),
+            data: undefined,
+            refetch,
+        });
+
+        render(
+            <AccountTransactions
+                account={account}
+                accounts={[account]}
+                onTransferCompleted={jest.fn().mockResolvedValue(undefined)}
+            />
+        );
+
+        expect(screen.getByRole('dialog', {name: 'Transakcje dla konta Konto główne'})).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', {name: 'Ponów'}));
+        await waitFor(() => expect(refetch).toHaveBeenCalledTimes(1));
     });
 
     it('offers forwarding only for credits and prefills the transfer from the transaction', async () => {
