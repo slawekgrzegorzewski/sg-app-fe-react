@@ -45,7 +45,9 @@ Aktualizuje przechowywaną w repozytorium przeglądarkową wersję biblioteki `c
 ## Dokumentacja projektu
 
 - [Wytyczne interfejsu użytkownika](docs/wytyczne-interfejsu.md)
-- [Ustalenia dla agentów](docs/agents/)
+- [Wykorzystywane interfejsy API](docs/uzywane-api.md)
+- [Ustalenia dotyczące nawigacji i interfejsu kont](docs/agents/nawigacja-i-interfejs-kont.md)
+- [Zasady utrzymywania dokumentacji](docs/agents/utrzymywanie-dokumentacji.md)
 
 Dokumentacja techniczna wykorzystanych narzędzi:
 

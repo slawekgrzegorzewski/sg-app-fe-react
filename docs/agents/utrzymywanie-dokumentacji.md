@@ -13,3 +13,4 @@
 - W pierwszej kolejności aktualizujemy istniejący dokument tematyczny. Nowy plik tworzymy tylko wtedy, gdy żaden obecny dokument nie obejmuje danego zagadnienia.
 - Dokumentujemy wynikającą z ustaleń regułę oraz jej uzasadnienie. Nie prowadzimy chronologicznego zapisu rozmów ani tymczasowych kroków analizy.
 - Notatki muszą pozostawać zgodne z kodem i nadrzędną dokumentacją projektu.
+- Po dodaniu, usunięciu albo zmianie połączenia sieciowego aktualizujemy `docs/uzywane-api.md`, rozróżniając aktywnie wywoływane operacje od kontraktu jedynie zadeklarowanego w kodzie.
