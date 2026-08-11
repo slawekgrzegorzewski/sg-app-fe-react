@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import {CurrentUserDisplay} from '../application/components/CurrentUserDisplay';
 import {useCurrentUser} from './users/use-current-user';
-import {Collapse, List, ListItemButton, ListItemText, Menu, MenuItem, Stack, Tooltip} from '@mui/material';
+import {alpha, Collapse, List, ListItemButton, ListItemText, Menu, MenuItem, Stack, Tooltip} from '@mui/material';
 import {useApplication} from './applications/use-application';
 import {ApplicationId, ApplicationPage, applications} from './applications/applications-access';
 import {useApplicationNavigation} from './use-application-navigation';
@@ -75,6 +75,7 @@ export default function DrawerAppBar(props: Props) {
     const [drawerAppExpanded, setDrawerAppExpanded] = useState(false);
     const [drawerDomainExpanded, setDrawerDomainExpanded] = useState(false);
     const [drawerUserExpanded, setDrawerUserExpanded] = useState(false);
+    const [pendingInvitationIds, setPendingInvitationIds] = useState<Set<string>>(() => new Set());
 
     const appMenuId = useId();
     const domainMenuId = useId();
@@ -113,6 +114,38 @@ export default function DrawerAppBar(props: Props) {
     const [acceptInvitationToDomainMutation] = useMutation<AcceptInvitationToDomainMutation>(AcceptInvitationToDomain);
     const [rejectInvitationToDomainMutation] = useMutation<RejectInvitationToDomainMutation>(RejectInvitationToDomain);
 
+    const setInvitationPending = (domainPublicId: string, pending: boolean) => {
+        setPendingInvitationIds(currentIds => {
+            const updatedIds = new Set(currentIds);
+            if (pending) {
+                updatedIds.add(domainPublicId);
+            } else {
+                updatedIds.delete(domainPublicId);
+            }
+            return updatedIds;
+        });
+    };
+
+    const acceptInvitation = async (domainPublicId: string) => {
+        setInvitationPending(domainPublicId, true);
+        try {
+            await acceptInvitationToDomainMutation({variables: {domainPublicId}});
+            deleteCurrentUser();
+        } finally {
+            setInvitationPending(domainPublicId, false);
+        }
+    };
+
+    const rejectInvitation = async (domainPublicId: string) => {
+        setInvitationPending(domainPublicId, true);
+        try {
+            await rejectInvitationToDomainMutation({variables: {domainPublicId}});
+            await domainsDataRefetch();
+        } finally {
+            setInvitationPending(domainPublicId, false);
+        }
+    };
+
     const container = windowProp !== undefined ? () => windowProp().document.body : undefined;
 
     if (domainsDataLoading) {
@@ -139,7 +172,7 @@ export default function DrawerAppBar(props: Props) {
     const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
     const pages = Array.from(applications.get(currentApplicationId)?.pages?.values() || []);
 
-    const drawerDivider = <Divider sx={{borderColor: 'rgba(255,255,255,0.2)'}} />;
+    const drawerDivider = <Divider sx={theme => ({borderColor: alpha(theme.palette.primary.contrastText, 0.2)})} />;
 
     const drawer = (
         <Stack sx={{height: '100%', bgcolor: 'primary.main', color: 'primary.contrastText'}}>
@@ -147,11 +180,7 @@ export default function DrawerAppBar(props: Props) {
                 <Typography variant="h6" component="span">
                     {applications.get(currentApplicationId)?.name || currentApplicationId}
                 </Typography>
-                <IconButton
-                    onClick={handleDrawerToggle}
-                    aria-label="Zamknij menu"
-                    sx={{color: 'primary.contrastText'}}
-                >
+                <IconButton onClick={handleDrawerToggle} aria-label="Zamknij menu" sx={{color: 'primary.contrastText'}}>
                     <CloseIcon />
                 </IconButton>
             </Stack>
@@ -170,14 +199,14 @@ export default function DrawerAppBar(props: Props) {
                                 changePage(page.links[0]);
                                 handleDrawerToggle();
                             }}
-                            sx={{
+                            sx={theme => ({
                                 color: 'primary.contrastText',
                                 py: 1,
                                 '&.Mui-selected': {
-                                    bgcolor: 'rgba(255,255,255,0.15)',
-                                    '&:hover': {bgcolor: 'rgba(255,255,255,0.2)'},
+                                    bgcolor: alpha(theme.palette.primary.contrastText, 0.15),
+                                    '&:hover': {bgcolor: alpha(theme.palette.primary.contrastText, 0.2)},
                                 },
-                            }}
+                            })}
                         >
                             <ListItemText
                                 primary={page.label}
@@ -213,16 +242,16 @@ export default function DrawerAppBar(props: Props) {
                                 setDrawerAppExpanded(false);
                                 handleDrawerToggle();
                             }}
-                            sx={{
+                            sx={theme => ({
                                 color: 'primary.contrastText',
                                 pl: 4,
                                 py: 0.75,
                                 opacity: app.id === currentApplicationId ? 1 : 0.8,
                                 '&.Mui-selected': {
-                                    bgcolor: 'rgba(255,255,255,0.12)',
-                                    '&:hover': {bgcolor: 'rgba(255,255,255,0.18)'},
+                                    bgcolor: alpha(theme.palette.primary.contrastText, 0.12),
+                                    '&:hover': {bgcolor: alpha(theme.palette.primary.contrastText, 0.18)},
                                 },
-                            }}
+                            })}
                         >
                             <ListItemText
                                 primary={app.name}
@@ -257,20 +286,24 @@ export default function DrawerAppBar(props: Props) {
                                         setDrawerDomainExpanded(false);
                                         handleDrawerToggle();
                                     }}
-                                    sx={{
+                                    sx={theme => ({
                                         color: 'primary.contrastText',
                                         pl: 4,
                                         py: 0.75,
                                         opacity: domain.publicId === currentDomainPublicId ? 1 : 0.8,
                                         '&.Mui-selected': {
-                                            bgcolor: 'rgba(255,255,255,0.12)',
-                                            '&:hover': {bgcolor: 'rgba(255,255,255,0.18)'},
+                                            bgcolor: alpha(theme.palette.primary.contrastText, 0.12),
+                                            '&:hover': {bgcolor: alpha(theme.palette.primary.contrastText, 0.18)},
                                         },
-                                    }}
+                                    })}
                                 >
                                     <ListItemText
                                         primary={domain.name}
-                                        slotProps={{primary: {fontWeight: domain.publicId === currentDomainPublicId ? 700 : 400}}}
+                                        slotProps={{
+                                            primary: {
+                                                fontWeight: domain.publicId === currentDomainPublicId ? 700 : 400,
+                                            },
+                                        }}
                                     />
                                 </ListItemButton>
                             ))}
@@ -343,10 +376,7 @@ export default function DrawerAppBar(props: Props) {
                                         gap={1}
                                         sx={{minWidth: 0}}
                                     >
-                                        <Typography
-                                            variant="body2"
-                                            sx={{minWidth: 0, overflowWrap: 'anywhere'}}
-                                        >
+                                        <Typography variant="body2" sx={{minWidth: 0, overflowWrap: 'anywhere'}}>
                                             {invitation.name}
                                         </Typography>
                                         <Stack direction="row" spacing={0.5} sx={{flexShrink: 0}}>
@@ -354,12 +384,12 @@ export default function DrawerAppBar(props: Props) {
                                                 <IconButton
                                                     size="small"
                                                     aria-label={`Akceptuj zaproszenie do domeny ${invitation.name}`}
-                                                    onClick={() => {
-                                                        acceptInvitationToDomainMutation({
-                                                            variables: {domainPublicId: invitation.publicId},
-                                                        }).then(deleteCurrentUser);
+                                                    disabled={pendingInvitationIds.has(invitation.publicId)}
+                                                    onClick={() => void acceptInvitation(invitation.publicId)}
+                                                    sx={{
+                                                        color: 'inherit',
+                                                        '&.Mui-disabled': {color: 'inherit', opacity: 0.45},
                                                     }}
-                                                    sx={{color: 'inherit'}}
                                                 >
                                                     <CheckRoundedIcon fontSize="small" />
                                                 </IconButton>
@@ -368,12 +398,12 @@ export default function DrawerAppBar(props: Props) {
                                                 <IconButton
                                                     size="small"
                                                     aria-label={`Odrzuć zaproszenie do domeny ${invitation.name}`}
-                                                    onClick={() => {
-                                                        rejectInvitationToDomainMutation({
-                                                            variables: {domainPublicId: invitation.publicId},
-                                                        }).then(domainsDataRefetch);
+                                                    disabled={pendingInvitationIds.has(invitation.publicId)}
+                                                    onClick={() => void rejectInvitation(invitation.publicId)}
+                                                    sx={{
+                                                        color: 'inherit',
+                                                        '&.Mui-disabled': {color: 'inherit', opacity: 0.45},
                                                     }}
-                                                    sx={{color: 'inherit'}}
                                                 >
                                                     <CloseRoundedIcon fontSize="small" />
                                                 </IconButton>
@@ -449,17 +479,19 @@ export default function DrawerAppBar(props: Props) {
                                         key={page.id}
                                         onClick={() => changePage(page.links[0])}
                                         aria-current={active ? 'page' : undefined}
-                                        sx={{
-                                            color: 'secondary.light',
+                                        sx={theme => ({
+                                            color: 'primary.contrastText',
                                             whiteSpace: 'nowrap',
                                             px: 2,
                                             py: 0.5,
                                             fontWeight: active ? 700 : 400,
-                                            bgcolor: active ? 'action.selected' : 'transparent',
+                                            bgcolor: active
+                                                ? alpha(theme.palette.primary.contrastText, 0.15)
+                                                : 'transparent',
                                             '&:hover': {
-                                                bgcolor: 'action.hover',
+                                                bgcolor: alpha(theme.palette.primary.contrastText, 0.2),
                                             },
-                                        }}
+                                        })}
                                     >
                                         {page.label}
                                     </Button>
@@ -550,7 +582,7 @@ export default function DrawerAppBar(props: Props) {
                                     endIcon={<ArrowDropDownIcon />}
                                     sx={{
                                         display: {xs: 'none', sm: 'inline-flex'},
-                                        color: 'secondary.light',
+                                        color: 'primary.contrastText',
                                         ml: 1,
                                         px: 1.5,
                                         py: 0.5,
