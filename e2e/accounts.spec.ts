@@ -5,6 +5,8 @@ const LOGIN = process.env.E2E_LOGIN ?? 'slag';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'e2e';
 const OTP = process.env.E2E_OTP ?? 'e2e';
 const TRANSFER_AMOUNT = 0.37;
+const FOREIGN_CURRENCY_SOURCE_AMOUNT = 0.41;
+const FOREIGN_CURRENCY_DESTINATION_AMOUNT = 1.73;
 const PIGGY_BANK_AMOUNT = 4.56;
 const INITIAL_MONTHLY_TOP_UP = 3.21;
 const UPDATED_MONTHLY_TOP_UP = 6.54;
@@ -323,12 +325,30 @@ function twoVisibleAccountsInTheSameCurrency(accounts: Account[]): [Account, Acc
     return [matchingAccounts![0], matchingAccounts![1]];
 }
 
+function twoVisibleAccountsInDifferentCurrencies(accounts: Account[]): [Account, Account] {
+    const visibleAccounts = accounts.filter(candidate => candidate.visible);
+    const sourceAccount = visibleAccounts.find(account =>
+        visibleAccounts.some(
+            candidate => candidate.currentBalance.currency.code !== account.currentBalance.currency.code
+        )
+    );
+    const destinationAccount = visibleAccounts.find(
+        account => account.currentBalance.currency.code !== sourceAccount?.currentBalance.currency.code
+    );
+
+    expect(sourceAccount, 'Do testu są wymagane dwa widoczne konta w różnych walutach').toBeDefined();
+    expect(destinationAccount, 'Do testu są wymagane dwa widoczne konta w różnych walutach').toBeDefined();
+    return [sourceAccount!, destinationAccount!];
+}
+
 async function reverseTransferAfterFailure(
     page: Page,
     domainPublicId: string,
     sourceAccount: Account,
     destinationAccount: Account,
-    description: string
+    description: string,
+    fromAmount = TRANSFER_AMOUNT,
+    toAmount = TRANSFER_AMOUNT
 ): Promise<void> {
     await page.goto(`/ACCOUNTANT/${domainPublicId}/accounts`);
     await expect(page.getByRole('heading', {name: 'Konta', exact: true})).toBeVisible();
@@ -339,7 +359,14 @@ async function reverseTransferAfterFailure(
         dialog.getByRole('combobox', {name: 'Na konto'}),
         `${sourceAccount.name} (${sourceAccount.currentBalance.currency.code})`
     );
-    await dialog.getByRole('spinbutton', {name: 'Kwota', exact: true}).fill(String(TRANSFER_AMOUNT));
+    const differentCurrencies =
+        sourceAccount.currentBalance.currency.code !== destinationAccount.currentBalance.currency.code;
+    await dialog
+        .getByRole('spinbutton', {name: differentCurrencies ? 'Kwota z' : 'Kwota', exact: true})
+        .fill(String(fromAmount));
+    if (differentCurrencies) {
+        await dialog.getByRole('spinbutton', {name: 'Kwota na', exact: true}).fill(String(toAmount));
+    }
     await dialog.getByRole('textbox', {name: 'Opis'}).fill(`${description} — sprzątanie`);
     await performGraphQlOperation(page, 'CreateTransfer', () =>
         dialog.getByRole('button', {name: 'Zapisz', exact: true}).click()
@@ -1166,6 +1193,163 @@ test('obsługuje wszystkie interakcje sekcji kont z GraphQL API', async ({page},
         for (const failure of cleanupFailures) {
             testInfo.annotations.push({type: 'błąd sprzątania', description: failure});
             console.warn(`[E2E] ${failure}`);
+        }
+    }
+});
+
+test('wykonuje przelew między kontami w różnych walutach i pokazuje prawidłowe salda', async ({page}, testInfo) => {
+    test.setTimeout(120_000);
+
+    const transferDescription = `E2E przelew różnowalutowy ${RUN_ID}`;
+    let domainPublicId = '';
+    let transferToReverse:
+        | {
+              source: Account;
+              destination: Account;
+          }
+        | undefined;
+
+    try {
+        domainPublicId = await login(page);
+        const financeManagement = await openAccountsPage(page, domainPublicId);
+        const [sourceAccount, destinationAccount] = twoVisibleAccountsInDifferentCurrencies(
+            financeManagement.data.financeManagement.accounts
+        );
+        const sourceCurrency = sourceAccount.currentBalance.currency.code;
+        const destinationCurrency = destinationAccount.currentBalance.currency.code;
+        const initialSourceBalance = sourceAccount.currentBalance.amount;
+        const initialDestinationBalance = destinationAccount.currentBalance.amount;
+
+        await test.step('przelewa różne kwoty między kontami w różnych walutach', async () => {
+            await page.getByRole('button', {name: `Przelej z konta ${sourceAccount.name}`, exact: true}).click();
+            const dialog = page.getByRole('dialog', {name: `Przelej z konta ${sourceAccount.name}`, exact: true});
+            await expect(dialog.getByRole('combobox', {name: 'Z konta'})).toBeDisabled();
+            await chooseOption(
+                page,
+                dialog.getByRole('combobox', {name: 'Na konto'}),
+                `${destinationAccount.name} (${destinationCurrency})`
+            );
+            await dialog
+                .getByRole('spinbutton', {name: 'Kwota z', exact: true})
+                .fill(String(FOREIGN_CURRENCY_SOURCE_AMOUNT));
+            await dialog
+                .getByRole('spinbutton', {name: 'Kwota na', exact: true})
+                .fill(String(FOREIGN_CURRENCY_DESTINATION_AMOUNT));
+            await dialog.getByRole('textbox', {name: 'Opis'}).fill(transferDescription);
+
+            const {mutation, refetch} = await performGraphQlOperationWithRefetch<
+                {createTransfer: string},
+                FinanceManagementData
+            >(page, 'CreateTransfer', 'GetFinanceManagement', () =>
+                dialog.getByRole('button', {name: 'Zapisz', exact: true}).click()
+            );
+            transferToReverse = {source: sourceAccount, destination: destinationAccount};
+
+            expect(mutation.variables).toMatchObject({
+                fromAccountPublicId: sourceAccount.publicId,
+                toAccountPublicId: destinationAccount.publicId,
+                description: transferDescription,
+                bankTransactionPublicIds: [],
+            });
+            expectNumericVariable(mutation, 'fromAmount', FOREIGN_CURRENCY_SOURCE_AMOUNT);
+            expectNumericVariable(mutation, 'toAmount', FOREIGN_CURRENCY_DESTINATION_AMOUNT);
+            expect(mutation.variables.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+            expect(mutation.data.createTransfer).toBeTruthy();
+
+            const sourceAfterTransfer = refetch.data.financeManagement.accounts.find(
+                account => account.publicId === sourceAccount.publicId
+            );
+            const destinationAfterTransfer = refetch.data.financeManagement.accounts.find(
+                account => account.publicId === destinationAccount.publicId
+            );
+            expect(sourceAfterTransfer!.currentBalance.amount).toBeCloseTo(
+                initialSourceBalance - FOREIGN_CURRENCY_SOURCE_AMOUNT,
+                8
+            );
+            expect(destinationAfterTransfer!.currentBalance.amount).toBeCloseTo(
+                initialDestinationBalance + FOREIGN_CURRENCY_DESTINATION_AMOUNT,
+                8
+            );
+            await expect(accountButton(page, sourceAccount.name)).toContainText(
+                await formatMoney(page, initialSourceBalance - FOREIGN_CURRENCY_SOURCE_AMOUNT, sourceCurrency)
+            );
+            await expect(accountButton(page, destinationAccount.name)).toContainText(
+                await formatMoney(
+                    page,
+                    initialDestinationBalance + FOREIGN_CURRENCY_DESTINATION_AMOUNT,
+                    destinationCurrency
+                )
+            );
+        });
+
+        await test.step('odwraca przelew i przywraca salda obu walut', async () => {
+            await page.getByRole('button', {name: `Przelej z konta ${destinationAccount.name}`, exact: true}).click();
+            const dialog = page.getByRole('dialog', {
+                name: `Przelej z konta ${destinationAccount.name}`,
+                exact: true,
+            });
+            await chooseOption(
+                page,
+                dialog.getByRole('combobox', {name: 'Na konto'}),
+                `${sourceAccount.name} (${sourceCurrency})`
+            );
+            await dialog
+                .getByRole('spinbutton', {name: 'Kwota z', exact: true})
+                .fill(String(FOREIGN_CURRENCY_DESTINATION_AMOUNT));
+            await dialog
+                .getByRole('spinbutton', {name: 'Kwota na', exact: true})
+                .fill(String(FOREIGN_CURRENCY_SOURCE_AMOUNT));
+            await dialog.getByRole('textbox', {name: 'Opis'}).fill(`${transferDescription} — odwrócenie`);
+
+            const {mutation, refetch} = await performGraphQlOperationWithRefetch<
+                {createTransfer: string},
+                FinanceManagementData
+            >(page, 'CreateTransfer', 'GetFinanceManagement', () =>
+                dialog.getByRole('button', {name: 'Zapisz', exact: true}).click()
+            );
+            transferToReverse = undefined;
+
+            expect(mutation.variables).toMatchObject({
+                fromAccountPublicId: destinationAccount.publicId,
+                toAccountPublicId: sourceAccount.publicId,
+                bankTransactionPublicIds: [],
+            });
+            expectNumericVariable(mutation, 'fromAmount', FOREIGN_CURRENCY_DESTINATION_AMOUNT);
+            expectNumericVariable(mutation, 'toAmount', FOREIGN_CURRENCY_SOURCE_AMOUNT);
+            expect(mutation.data.createTransfer).toBeTruthy();
+            expect(
+                refetch.data.financeManagement.accounts.find(account => account.publicId === sourceAccount.publicId)!
+                    .currentBalance.amount
+            ).toBeCloseTo(initialSourceBalance, 8);
+            expect(
+                refetch.data.financeManagement.accounts.find(
+                    account => account.publicId === destinationAccount.publicId
+                )!.currentBalance.amount
+            ).toBeCloseTo(initialDestinationBalance, 8);
+            await expect(accountButton(page, sourceAccount.name)).toContainText(
+                await formatMoney(page, initialSourceBalance, sourceCurrency)
+            );
+            await expect(accountButton(page, destinationAccount.name)).toContainText(
+                await formatMoney(page, initialDestinationBalance, destinationCurrency)
+            );
+        });
+    } finally {
+        if (domainPublicId && transferToReverse) {
+            try {
+                await reverseTransferAfterFailure(
+                    page,
+                    domainPublicId,
+                    transferToReverse.source,
+                    transferToReverse.destination,
+                    transferDescription,
+                    FOREIGN_CURRENCY_DESTINATION_AMOUNT,
+                    FOREIGN_CURRENCY_SOURCE_AMOUNT
+                );
+            } catch (error) {
+                const failure = `nie udało się odwrócić przelewu różnowalutowego: ${String(error)}`;
+                testInfo.annotations.push({type: 'błąd sprzątania', description: failure});
+                console.warn(`[E2E] ${failure}`);
+            }
         }
     }
 });

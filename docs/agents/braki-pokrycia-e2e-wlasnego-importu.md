@@ -4,6 +4,8 @@
 
 Pełny przepływ „Własny import” na stronie okresów rozliczeniowych nie ma jeszcze testu E2E. Jest to świadomie odłożony zakres do kontynuacji. Test podstawowego tworzenia dochodów i wydatków nie zastępuje tego pokrycia, ponieważ własny import używa mutacji `ImportBankTransactions`, pozwala połączyć wiele transakcji oraz tworzy kilka elementów jednocześnie.
 
+Bezpośredni przelew między kontami w różnych walutach jest sprawdzany osobno w `e2e/accounts.spec.ts`, łącznie z niezależnymi kwotami źródłową i docelową oraz wynikowymi saldami w interfejsie. Poniższy brak dotyczy wyłącznie utworzenia takiego transferu przez przepływ „Własny import”.
+
 Scenariusze wymagają deterministycznych danych bankowych. Dane testowe powinny określać identyfikatory transakcji, przypisane konta, waluty i kwoty, aby test nie wybierał przypadkowo pierwszej pozycji dostępnej w środowisku.
 
 ## Wspólne skutki wymagające weryfikacji
