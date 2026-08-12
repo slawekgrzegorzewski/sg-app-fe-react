@@ -23,17 +23,16 @@ export function InstitutionPickerButton({onPick, label = 'Dodaj'}: InstitutionPi
             >
                 {label}
             </Button>
-            {showPickInstitutionDialog && (
-                <InstitutionPicker
-                    onPick={pickedInstitution => {
-                        setShowPickInstitutionDialog(false);
-                        onPick(pickedInstitution);
-                    }}
-                    onClose={() => {
-                        setShowPickInstitutionDialog(false);
-                    }}
-                />
-            )}
+            <InstitutionPicker
+                open={showPickInstitutionDialog}
+                onPick={pickedInstitution => {
+                    setShowPickInstitutionDialog(false);
+                    onPick(pickedInstitution);
+                }}
+                onClose={() => {
+                    setShowPickInstitutionDialog(false);
+                }}
+            />
         </>
     );
 }

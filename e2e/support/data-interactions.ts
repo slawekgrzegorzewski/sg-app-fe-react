@@ -35,24 +35,34 @@ export async function performGraphQlOperation<TData = unknown>(
 ): Promise<ObservedGraphQlOperation<TData>> {
     const responsePromise = page
         .waitForResponse(response => graphQlOperationName(response.request()) === operationName, {timeout: 20_000})
-        .then(response => ({response}));
-    const failurePromise = page
-        .waitForEvent('requestfailed', {
-            predicate: request => graphQlOperationName(request) === operationName,
-            timeout: 20_000,
-        })
-        .then(request => ({request}));
+        .then(async response => ({
+            response,
+            responseBody: (await response.json()) as GraphQlResponse<TData>,
+        }));
+    let rejectNetworkFailure: (reason: Error) => void = () => {};
+    const failurePromise = new Promise<never>((_resolve, reject) => {
+        rejectNetworkFailure = reject;
+    });
+    const onRequestFailed = (request: Request) => {
+        if (graphQlOperationName(request) === operationName) {
+            rejectNetworkFailure(
+                new Error(
+                    `Nie udało się połączyć z API podczas operacji ${operationName}: ${request.failure()?.errorText ?? 'nieznany błąd sieci'}`
+                )
+            );
+        }
+    };
+    page.on('requestfailed', onRequestFailed);
 
-    await action();
-    const result = await Promise.race([responsePromise, failurePromise]);
-    if ('request' in result) {
-        throw new Error(
-            `Nie udało się połączyć z API podczas operacji ${operationName}: ${result.request.failure()?.errorText ?? 'nieznany błąd sieci'}`
-        );
+    let result;
+    try {
+        await action();
+        result = await Promise.race([responsePromise, failurePromise]);
+    } finally {
+        page.off('requestfailed', onRequestFailed);
     }
 
-    const {response} = result;
-    const responseBody = (await response.json()) as GraphQlResponse<TData>;
+    const {response, responseBody} = result;
 
     expect(response.ok(), `Operacja ${operationName} zwróciła HTTP ${response.status()}`).toBeTruthy();
     expect(responseBody.errors, `Operacja ${operationName} zwróciła błędy GraphQL`).toBeUndefined();

@@ -17,6 +17,10 @@ Po każdej zmianie uruchom analizę kodu dla wszystkich zmodyfikowanych plików,
 - Nie wyciszaj ostrzeżeń ani nie wprowadzaj szerokich refaktoryzacji wyłącznie po to, aby uzyskać pusty raport analizy.
 - Jeżeli problemu nie można bezpiecznie poprawić w zakresie bieżącego zadania, pozostaw kod bez zmian i krótko opisz problem w podsumowaniu.
 
+## Zamykanie terminala po wykonaniu polecenia
+
+Po każdym użyciu narzędzia `@webstorm/execute_terminal_command` zamknij utworzone albo wykorzystane przez nie okno terminala. Nie pozostawiaj w IDE otwartych okien terminala po zakończeniu polecenia, niezależnie od tego, czy polecenie zakończyło się powodzeniem, błędem, czy przekroczeniem limitu czasu.
+
 ## Język dokumentacji
 
 Cała dokumentacja projektowa, w tym `AGENTS.md` oraz pliki w katalogach `docs/` i `docs/agents/`, musi być pisana po polsku.

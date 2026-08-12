@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {useState} from 'react';
 import {useQuery} from '@apollo/client/react';
 import {GetAvailableInstitutions, GetAvailableInstitutionsQuery, Institution} from '../../types';
 import PickDialog from '../../utils/dialogs/PickDialog';
@@ -8,13 +7,13 @@ import {Box, Card, CardActionArea, CardContent, CardMedia, Theme} from '@mui/mat
 import Typography from '@mui/material/Typography';
 
 export interface InstitutionPickerProps {
+    open: boolean;
     onPick: (value: Institution) => void;
     onClose: () => void;
 }
 
-export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): React.JSX.Element {
+export function InstitutionPicker({open, onPick, onClose}: InstitutionPickerProps): React.JSX.Element {
     const {data} = useQuery<GetAvailableInstitutionsQuery>(GetAvailableInstitutions, {variables: {country: 'pl'}});
-    const [picked, setPicked] = useState(false);
 
     const institutions = data?.bankPermissions?.availableInstitutions ?? [];
 
@@ -22,10 +21,9 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
         <PickDialog
             title={'Wybierz bank do podłączenia'}
             options={institutions}
-            open={!picked && institutions.length > 0}
+            open={open}
             onClose={() => onClose()}
             onPick={value => {
-                setPicked(true);
                 onPick(value);
             }}
             idExtractor={function (institution: Institution | null): string {
@@ -52,9 +50,11 @@ export function InstitutionPicker({onPick, onClose}: InstitutionPickerProps): Re
                 );
             }}
             elementContainerProvider={(sx: SxProps<Theme>, additionalProperties: any, institution: Institution) => {
+                const actionAreaProperties = {...additionalProperties};
+                delete actionAreaProperties.key;
                 return (
                     <Card key={institution.id} variant="outlined" sx={{...sx}}>
-                        <CardActionArea {...additionalProperties} sx={{height: '100%'}}>
+                        <CardActionArea {...actionAreaProperties} sx={{height: '100%'}}>
                             <CardMedia
                                 component="img"
                                 image={institution.logo}

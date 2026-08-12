@@ -130,8 +130,8 @@ async function performGraphQlOperation<TData>(
     action: () => Promise<unknown>
 ): Promise<ObservedGraphQlOperation<TData>> {
     const operationPromise = waitForGraphQlOperation<TData>(page, operationName);
-    await action();
-    return operationPromise;
+    const [operation] = await Promise.all([operationPromise, action()]);
+    return operation;
 }
 
 async function performGraphQlOperationWithRefetch<TMutationData, TQueryData>(
@@ -158,9 +158,11 @@ async function openAccountsPage(
     const settingsPromise = waitForGraphQlOperation(page, 'GetAccountantSettings');
     const financeManagementPromise = waitForGraphQlOperation<FinanceManagementData>(page, 'GetFinanceManagement');
 
-    await page.goto(`/ACCOUNTANT/${domainPublicId}/accounts`);
-    await settingsPromise;
-    const financeManagement = await financeManagementPromise;
+    const [, financeManagement] = await Promise.all([
+        settingsPromise,
+        financeManagementPromise,
+        page.goto(`/ACCOUNTANT/${domainPublicId}/accounts`),
+    ]);
     await expect(page.getByRole('heading', {name: 'Konta', exact: true})).toBeVisible();
     return financeManagement;
 }
@@ -475,13 +477,15 @@ test('obsługuje wszystkie interakcje sekcji kont z GraphQL API', async ({page},
                     page,
                     'GetFinanceManagementWithNotAssignedBankAccounts'
                 );
-                await page
-                    .getByRole('button', {
-                        name: `Ukrytych: ${hiddenAccountsCount}. Przejdź do Ustawienia, Konta`,
-                        exact: true,
-                    })
-                    .click();
-                const settingsQuery = await settingsQueryPromise;
+                const [settingsQuery] = await Promise.all([
+                    settingsQueryPromise,
+                    page
+                        .getByRole('button', {
+                            name: `Ukrytych: ${hiddenAccountsCount}. Przejdź do Ustawienia, Konta`,
+                            exact: true,
+                        })
+                        .click(),
+                ]);
                 await expect(page).toHaveURL(new RegExp(`/ACCOUNTANT/${domainPublicId}/settings$`));
                 await expect(page.getByRole('tab', {name: 'Konta', exact: true})).toHaveAttribute(
                     'aria-selected',
