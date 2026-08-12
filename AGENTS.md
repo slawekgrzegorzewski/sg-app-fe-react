@@ -9,6 +9,14 @@ Jeżeli podczas pracy zostanie ustalona nowa trwała decyzja, konwencja albo ogr
 - Utrzymuj zgodność tych notatek z implementacją i nadrzędną dokumentacją projektu, taką jak `docs/wytyczne-interfejsu.md`.
 - Nie powielaj informacji, które zostały już jasno opisane w `docs/agents/`; w razie potrzeby odsyłaj do nadrzędnego dokumentu projektowego.
 
+## Analiza kodu po zmianach
+
+Po każdej zmianie uruchom analizę kodu dla wszystkich zmodyfikowanych plików, korzystając z inspekcji IDE, lintera albo innego narzędzia właściwego dla danego typu pliku.
+
+- Popraw wykryte problemy, które są oczywiste, proste do usunięcia i nie wymagają decyzji projektowej ani ryzykownej zmiany zachowania.
+- Nie wyciszaj ostrzeżeń ani nie wprowadzaj szerokich refaktoryzacji wyłącznie po to, aby uzyskać pusty raport analizy.
+- Jeżeli problemu nie można bezpiecznie poprawić w zakresie bieżącego zadania, pozostaw kod bez zmian i krótko opisz problem w podsumowaniu.
+
 ## Język dokumentacji
 
 Cała dokumentacja projektowa, w tym `AGENTS.md` oraz pliki w katalogach `docs/` i `docs/agents/`, musi być pisana po polsku.

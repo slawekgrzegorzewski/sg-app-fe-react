@@ -2,7 +2,7 @@ import {expect, type Locator, type Page, type Request, type TestInfo} from '@pla
 
 export const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const LOGIN = process.env.E2E_LOGIN ?? 'slag';
+const LOGIN = process.env.E2E_LOGIN ?? 'e2e.playwright';
 const PASSWORD = process.env.E2E_PASSWORD ?? 'e2e';
 const OTP = process.env.E2E_OTP ?? 'e2e';
 
@@ -92,7 +92,10 @@ export async function login(page: Page): Promise<string> {
     }
 
     await page.waitForURL(url => /^\/[A-Z_]+\/[^/]+/.test(url.pathname));
-    const domainPublicId = process.env.E2E_DOMAIN_PUBLIC_ID ?? new URL(page.url()).pathname.split('/')[2];
+    const domainPublicId =
+        process.env.E2E_DOMAIN_PUBLIC_ID ??
+        new URL(page.url()).pathname.split('/')[2] ??
+        'e7c51293-86fe-47bc-94a8-98769790bcdb';
     expect(domainPublicId, 'Nie udało się ustalić publicznego identyfikatora domeny').toBeTruthy();
     return domainPublicId;
 }

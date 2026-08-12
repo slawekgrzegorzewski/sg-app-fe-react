@@ -78,9 +78,7 @@ query GetLoans {
 }
 
 query SingleLoan($loanId: UUID!) {
-    singleLoan(input: {
-        publicId: $loanId
-    }) {
+    singleLoan(input: {publicId: $loanId}) {
         publicId
         name
         paymentDate
@@ -138,26 +136,25 @@ query SingleLoan($loanId: UUID!) {
     }
 }
 
-mutation CreateLoan (
-    $name: String!,
-    $paymentDate: LocalDate!,
-    $numberOfInstallments: Int!,
-    $paidAmount: BigDecimal!,
-    $paidCurrency: Currency!,
-    $rateStrategyConfigId: UUID!,
+mutation CreateLoan(
+    $name: String!
+    $paymentDate: LocalDate!
+    $numberOfInstallments: Int!
+    $paidAmount: BigDecimal!
+    $paidCurrency: Currency!
+    $rateStrategyConfigId: UUID!
     $repaymentDayStrategyConfigId: UUID!
 ) {
-    createLoan(input: {
-        name: $name,
-        paymentDate: $paymentDate,
-        numberOfInstallments: $numberOfInstallments,
-        paidAmount: {
-            amount: $paidAmount,
-            currency: $paidCurrency
+    createLoan(
+        input: {
+            name: $name
+            paymentDate: $paymentDate
+            numberOfInstallments: $numberOfInstallments
+            paidAmount: {amount: $paidAmount, currency: $paidCurrency}
+            rateStrategyConfigId: $rateStrategyConfigId
+            repaymentDayStrategyConfigId: $repaymentDayStrategyConfigId
         }
-        rateStrategyConfigId: $rateStrategyConfigId,
-        repaymentDayStrategyConfigId: $repaymentDayStrategyConfigId
-    }){
+    ) {
         publicId
         paymentDate
         name
@@ -190,14 +187,8 @@ mutation CreateLoan (
     }
 }
 
-mutation UpdateLoan (
-    $loanId: UUID!,
-    $name: String!
-) {
-    updateLoan(input: {
-        loanId: $loanId
-        name: $name
-    }){
+mutation UpdateLoan($loanId: UUID!, $name: String!) {
+    updateLoan(input: {loanId: $loanId, name: $name}) {
         publicId
         paymentDate
         name
@@ -230,38 +221,25 @@ mutation UpdateLoan (
     }
 }
 
-mutation DeleteLoan (
+mutation DeleteLoan($loanId: UUID!) {
+    deleteLoan(input: {loanId: $loanId})
+}
+
+mutation CreateInstallment(
     $loanId: UUID!
-) {
-    deleteLoan(input: {
-        loanId: $loanId
-    })
-}
-
-mutation CreateInstallment (
-    $loanId: UUID!,
-    $paidAt: LocalDate!,
-    $repaidInterest: BigDecimal!,
-    $repaidAmount: BigDecimal!,
-    $overpayment: BigDecimal!,
-    $currency: Currency!,
+    $paidAt: LocalDate!
+    $repaidInterest: BigDecimal!
+    $repaidAmount: BigDecimal!
+    $overpayment: BigDecimal!
+    $currency: Currency!
 ) {
     createInstallment(
         input: {
             loanId: $loanId
             paidAt: $paidAt
-            repaidInterest: {
-                amount: $repaidInterest,
-                currency: $currency
-            }
-            repaidAmount: {
-                amount: $repaidAmount,
-                currency: $currency
-            }
-            overpayment: {
-                amount: $overpayment,
-                currency: $currency
-            }
+            repaidInterest: {amount: $repaidInterest, currency: $currency}
+            repaidAmount: {amount: $repaidAmount, currency: $currency}
+            overpayment: {amount: $overpayment, currency: $currency}
         }
     ) {
         publicId
@@ -290,22 +268,12 @@ mutation CreateInstallment (
     }
 }
 
-mutation DeleteInstallment ($installmentPublicId: UUID!) {
-    deleteInstallment(
-        installmentPublicId: $installmentPublicId
-    )
+mutation DeleteInstallment($installmentPublicId: UUID!) {
+    deleteInstallment(installmentPublicId: $installmentPublicId)
 }
 
-mutation CreateNthDayOfMonthRepaymentDayStrategyConfig (
-    $name: String!,
-    $dayOfMonth: Int!
-) {
-    createNthDayOfMonthRepaymentDayStrategyConfig(
-        input: {
-            name: $name,
-            dayOfMonth: $dayOfMonth
-        }
-    ) {
+mutation CreateNthDayOfMonthRepaymentDayStrategyConfig($name: String!, $dayOfMonth: Int!) {
+    createNthDayOfMonthRepaymentDayStrategyConfig(input: {name: $name, dayOfMonth: $dayOfMonth}) {
         publicId
         name
         ... on NthDayOfMonthRepaymentDayStrategyConfig {
@@ -314,26 +282,22 @@ mutation CreateNthDayOfMonthRepaymentDayStrategyConfig (
     }
 }
 
-mutation DeleteRateStrategyConfig ($publicId: UUID!) {
-    deleteRateStrategyConfig(
-        input: {
-            publicId: $publicId
-        }
-    )
+mutation DeleteRateStrategyConfig($publicId: UUID!) {
+    deleteRateStrategyConfig(input: {publicId: $publicId})
 }
 
-mutation CreateConstantForNFirstInstallmentRateStrategyConfig (
-    $name: String!,
-    $constantRate:BigDecimal!,
-    $variableRateMargin:BigDecimal!,
-    $becomesVariableRateAfterNInstallments:Int!
+mutation CreateConstantForNFirstInstallmentRateStrategyConfig(
+    $name: String!
+    $constantRate: BigDecimal!
+    $variableRateMargin: BigDecimal!
+    $becomesVariableRateAfterNInstallments: Int!
 ) {
     createConstantForNFirstInstallmentRateStrategyConfig(
         input: {
-            name:$name,
-            constantRate:$constantRate,
-            variableRateMargin:$variableRateMargin,
-            becomesVariableRateAfterNInstallments:$becomesVariableRateAfterNInstallments
+            name: $name
+            constantRate: $constantRate
+            variableRateMargin: $variableRateMargin
+            becomesVariableRateAfterNInstallments: $becomesVariableRateAfterNInstallments
         }
     ) {
         publicId
@@ -346,32 +310,28 @@ mutation CreateConstantForNFirstInstallmentRateStrategyConfig (
     }
 }
 
-mutation DeleteRepaymentDayStrategyConfig ($publicId: UUID!) {
-    deleteRepaymentDayStrategyConfig(
-        input: {
-            publicId: $publicId
-        }
-    )
+mutation DeleteRepaymentDayStrategyConfig($publicId: UUID!) {
+    deleteRepaymentDayStrategyConfig(input: {publicId: $publicId})
 }
 
-query SimulateLoan (
+query SimulateLoan(
     $loanAmount: BigDecimal!
     $repaymentStart: LocalDate!
-    $rate:BigDecimal!
-    $wibor:BigDecimal!
-    $numberOfInstallments:Int!
-    $overpaymentMonthlyBudget:BigDecimal!
-    $overpaymentYearlyBudget:BigDecimal!
+    $rate: BigDecimal!
+    $wibor: BigDecimal!
+    $numberOfInstallments: Int!
+    $overpaymentMonthlyBudget: BigDecimal!
+    $overpaymentYearlyBudget: BigDecimal!
 ) {
     simulateLoan(
         loanCalculationParams: {
-            loanAmount:$loanAmount
-            repaymentStart:$repaymentStart
-            rate:$rate
-            wibor:$wibor
-            numberOfInstallments:$numberOfInstallments
-            overpaymentMonthlyBudget:$overpaymentMonthlyBudget
-            overpaymentYearlyBudget:$overpaymentYearlyBudget
+            loanAmount: $loanAmount
+            repaymentStart: $repaymentStart
+            rate: $rate
+            wibor: $wibor
+            numberOfInstallments: $numberOfInstallments
+            overpaymentMonthlyBudget: $overpaymentMonthlyBudget
+            overpaymentYearlyBudget: $overpaymentYearlyBudget
         }
     ) {
         installment
@@ -384,17 +344,13 @@ query SimulateLoan (
     }
 }
 
-query SimulateExistingLoan (
-    $loanId: UUID!,
-    $monthlyBudget: MonetaryAmountInput,
+query SimulateExistingLoan(
+    $loanId: UUID!
+    $monthlyBudget: MonetaryAmountInput
     $yearlyOverpayment: MonetaryAmountInput
 ) {
     simulateExistingLoan(
-        loanSimulationParams: {
-            loanId:$loanId
-            monthlyBudget:$monthlyBudget
-            yearlyOverpayment:$yearlyOverpayment
-        }
+        loanSimulationParams: {loanId: $loanId, monthlyBudget: $monthlyBudget, yearlyOverpayment: $yearlyOverpayment}
     ) {
         installment
         repaidCapital

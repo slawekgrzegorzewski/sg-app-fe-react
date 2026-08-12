@@ -190,11 +190,7 @@ function formatTableDate(isoDate: string): string {
     return `${day}.${month}.${year}`;
 }
 
-function expectNumericVariable(
-    operation: ObservedGraphQlOperation<unknown>,
-    variableName: string,
-    expectedValue: number
-): void {
+function expectNumericVariable(operation: ObservedGraphQlOperation, variableName: string, expectedValue: number): void {
     expect(Number(operation.variables[variableName]), `Zmienna ${variableName}`).toBeCloseTo(expectedValue, 8);
 }
 
@@ -303,15 +299,18 @@ test.describe('pożyczki', () => {
             const {rateStrategy, rateStrategyIndex} = await test.step('tworzy strategię oprocentowania', async () => {
                 await page.getByRole('button', {name: 'Dodaj sposób naliczania', exact: true}).click();
                 const dialog = page.getByRole('dialog', {name: 'Dodaj sposób naliczania odsetek', exact: true});
-                await dialog.getByRole('textbox', {name: 'Nazwa'}).fill(rateStrategyName);
+                await dialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(rateStrategyName);
                 await dialog
-                    .getByRole('spinbutton', {name: 'Stałe oprocentowanie'})
+                    .getByRole('spinbutton', {name: 'Stałe oprocentowanie', exact: true})
                     .fill(String(CONSTANT_RATE_PERCENT));
                 await dialog
-                    .getByRole('spinbutton', {name: 'Liczba miesięcy kiedy stałe oprocentowanie obowiązuje'})
+                    .getByRole('spinbutton', {
+                        name: 'Liczba miesięcy kiedy stałe oprocentowanie obowiązuje',
+                        exact: true,
+                    })
                     .fill(String(CONSTANT_RATE_INSTALLMENTS));
                 await dialog
-                    .getByRole('spinbutton', {name: 'Marża po stałym oprocentowaniu'})
+                    .getByRole('spinbutton', {name: 'Marża po stałym oprocentowaniu', exact: true})
                     .fill(String(VARIABLE_RATE_MARGIN_PERCENT));
 
                 const result = await performGraphQlOperationWithRefetch<
@@ -411,7 +410,7 @@ test.describe('pożyczki', () => {
                 const dialog = page.getByRole('dialog', {name: 'Dodaj pożyczkę', exact: true});
                 await expectNoGraphQlOperation(page, ['CreateLoan'], async () => {
                     await dialog.getByRole('button', {name: 'Dodaj pożyczkę', exact: true}).click();
-                    await expect(dialog.getByText('Wymagana', {exact: true})).toBeVisible();
+                    await expect(dialog.getByText('Wymagana', {exact: true})).toHaveCount(3);
                     await expect(dialog.getByRole('spinbutton', {name: 'Liczba rat'})).toHaveAttribute(
                         'aria-invalid',
                         'true'
@@ -481,8 +480,10 @@ test.describe('pożyczki', () => {
                 await expect(section.getByText(`Liczba: ${initialLoanCount + 1}`, {exact: true})).toBeVisible();
                 const row = entityRow(section, loanName);
                 await expect(row).toContainText(await formatMoney(page, LOAN_AMOUNT, 'PLN'));
-                await expect(row).toContainText(rateStrategyName);
-                await expect(row).toContainText(repaymentDayStrategyName);
+                await expect(row).toContainText(`Oprocentowanie stałe ${CONSTANT_RATE_PERCENT} %`);
+                await expect(row).toContainText(`${CONSTANT_RATE_INSTALLMENTS} miesiącach`);
+                await expect(row).toContainText(`marżą ${VARIABLE_RATE_MARGIN_PERCENT} %`);
+                await expect(row).toContainText('dwudziesty trzeci dzień miesiąca');
                 return created;
             });
 
@@ -747,8 +748,11 @@ test.describe('pożyczki', () => {
             });
 
             await test.step('wraca do listy i anuluje usuwanie pożyczki bez mutacji', async () => {
-                await page.getByRole('button', {name: 'Wróć do pożyczek', exact: true}).click();
-                const refreshedList = await openLoansPage(page, domainPublicId);
+                const [refreshedList] = await Promise.all([
+                    waitForGraphQlData<LoansData>(page, 'GetLoans'),
+                    page.getByRole('button', {name: 'Wróć do pożyczek', exact: true}).click(),
+                ]);
+                await expect(page.getByRole('heading', {name: 'Pożyczki', exact: true})).toBeVisible();
                 expect(refreshedList.loans.loans.find(loan => loan.publicId === createdLoan.publicId)).toMatchObject({
                     name: updatedLoanName,
                     installments: [{publicId: createdInstallment.publicId}],

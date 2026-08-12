@@ -7,6 +7,12 @@ function entityRow(page: Page, entityName: string): Locator {
         .locator('xpath=ancestor::div[descendant::button[contains(@aria-label, "Edytuj element")]][1]');
 }
 
+async function openAccountsSettingsPage(page: Page, domainPublicId: string): Promise<void> {
+    await openAccountantPage(page, domainPublicId, '/settings');
+    await page.getByRole('tab', {name: 'Konta', exact: true}).click();
+    await expect(page.getByRole('tabpanel', {name: 'Konta'})).toBeVisible();
+}
+
 async function disconnectBankAccount(
     page: Page,
     accountName: string,
@@ -41,7 +47,7 @@ async function assignBankAccount(
 }
 
 async function deleteAccountIfPresent(page: Page, domainPublicId: string, accountName: string): Promise<void> {
-    await openAccountantPage(page, domainPublicId, '/settings');
+    await openAccountsSettingsPage(page, domainPublicId);
     const accountNameElement = page.getByText(accountName, {exact: true});
     if ((await accountNameElement.count()) === 0) {
         return;
@@ -66,7 +72,7 @@ test.describe('ustawienia księgowości', () => {
         let bankAccountToRestore: {accountName: string; iban: string} | undefined;
         let bankAccountAssignment: 'original' | 'unassigned' | 'test-account' = 'original';
 
-        await openAccountantPage(page, domainPublicId, '/settings');
+        await openAccountsSettingsPage(page, domainPublicId);
 
         try {
             await page.getByRole('button', {name: 'Dodaj konto'}).click();
@@ -127,7 +133,7 @@ test.describe('ustawienia księgowości', () => {
         } finally {
             try {
                 if (bankAccountToRestore && bankAccountAssignment !== 'original') {
-                    await openAccountantPage(page, domainPublicId, '/settings');
+                    await openAccountsSettingsPage(page, domainPublicId);
                     if (bankAccountAssignment === 'test-account' && accountToClean) {
                         await disconnectBankAccount(page, accountToClean, () => {
                             bankAccountAssignment = 'unassigned';

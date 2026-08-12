@@ -1,8 +1,10 @@
 import {defineConfig, devices} from '@playwright/test';
+import path from 'node:path';
 
 const configuredBaseUrl = process.env.E2E_BASE_URL;
 const baseURL = configuredBaseUrl ?? 'http://localhost:3000';
 const localFrontendCommand = process.platform === 'darwin' ? 'npm run start-dev-macos' : 'npm run start-dev';
+const authStatePath = path.resolve('test-results/e2e/.auth/user.json');
 
 export default defineConfig({
     testDir: './e2e',
@@ -30,10 +32,31 @@ export default defineConfig({
     },
     projects: [
         {
-            name: 'Google Chrome',
+            name: 'przygotowanie danych',
+            testMatch: /bootstrap\.setup\.ts/,
             use: {
                 ...devices['Desktop Chrome'],
                 channel: 'chrome',
+            },
+        },
+        {
+            name: 'Google Chrome',
+            testIgnore: [/bootstrap\.setup\.ts/, /billing-periods\.spec\.ts/],
+            dependencies: ['przygotowanie danych'],
+            use: {
+                ...devices['Desktop Chrome'],
+                channel: 'chrome',
+                storageState: authStatePath,
+            },
+        },
+        {
+            name: 'okresy rozliczeniowe na końcu',
+            testMatch: /billing-periods\.spec\.ts/,
+            dependencies: ['Google Chrome'],
+            use: {
+                ...devices['Desktop Chrome'],
+                channel: 'chrome',
+                storageState: authStatePath,
             },
         },
     ],

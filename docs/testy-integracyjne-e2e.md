@@ -6,12 +6,12 @@ Testy w katalogu `e2e/` obsługuje Playwright. Uruchamiają one rzeczywistą apl
 
 - uruchomiony backend;
 - zainstalowana przeglądarka Google Chrome;
-- konto testowe mające dostęp do aplikacji Księgowość i Kostki;
+- konto fixture `e2e.playwright` mające dostęp do domeny `e7c51293-86fe-47bc-94a8-98769790bcdb`, aplikacji Księgowość i Kostki;
 - dane wymagane przez sprawdzane formularze, między innymi co najmniej jedno konto powiązane z kontem bankowym, dwa widoczne konta w tej samej walucie oraz kategoria transakcji.
 
 Domyślnie Playwright uruchamia frontend poleceniem `npm run start-dev-macos` na macOS albo `npm run start-dev` na pozostałych systemach. Czeka na jego dostępność pod adresem `http://localhost:3000`, a po zakończeniu testów zamyka uruchomiony proces. Jeżeli frontend już działa pod tym adresem, wykorzystuje istniejący serwer.
 
-Logowanie używa loginu `slag` oraz niepustych wartości hasła i kodu jednorazowego właściwych dla środowiska deweloperskiego.
+Logowanie używa fixture użytkownika `e2e.playwright`. Hasło i OTP są domyślnie ustawione na niepuste wartości `e2e`; można je nadpisać zmiennymi środowiskowymi.
 
 ## Uruchamianie
 

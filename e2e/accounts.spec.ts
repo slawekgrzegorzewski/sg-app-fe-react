@@ -1,9 +1,6 @@
 import {expect, test, type Locator, type Page, type Request} from '@playwright/test';
+import {login, RUN_ID} from './support/data-interactions';
 
-const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-const LOGIN = process.env.E2E_LOGIN ?? 'slag';
-const PASSWORD = process.env.E2E_PASSWORD ?? 'e2e';
-const OTP = process.env.E2E_OTP ?? 'e2e';
 const TRANSFER_AMOUNT = 0.37;
 const FOREIGN_CURRENCY_SOURCE_AMOUNT = 0.41;
 const FOREIGN_CURRENCY_DESTINATION_AMOUNT = 1.73;
@@ -152,24 +149,6 @@ async function performGraphQlOperationWithRefetch<TMutationData, TQueryData>(
     await action();
     const [mutation, refetch] = await operationsPromise;
     return {mutation, refetch};
-}
-
-async function login(page: Page): Promise<string> {
-    await page.goto('/login');
-
-    if (await page.getByRole('textbox', {name: 'Login'}).isVisible()) {
-        await page.getByRole('textbox', {name: 'Login'}).fill(LOGIN);
-        await page.getByLabel('Hasło').fill(PASSWORD);
-        await page.getByRole('textbox', {name: 'OTP'}).fill(OTP);
-        await performGraphQlOperation(page, 'PerformLogin', () =>
-            page.getByRole('button', {name: /^Zaloguj się$/i}).click()
-        );
-    }
-
-    await page.waitForURL(url => /^\/[A-Z_]+\/[^/]+/.test(url.pathname));
-    const domainPublicId = process.env.E2E_DOMAIN_PUBLIC_ID ?? new URL(page.url()).pathname.split('/')[2];
-    expect(domainPublicId, 'Nie udało się ustalić publicznego identyfikatora domeny').toBeTruthy();
-    return domainPublicId;
 }
 
 async function openAccountsPage(
