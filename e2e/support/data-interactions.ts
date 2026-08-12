@@ -11,6 +11,11 @@ type GraphQlResponse<TData = unknown> = {
     errors?: Array<{message?: string}>;
 };
 
+export type ObservedGraphQlOperation<TData = unknown> = {
+    responseBody: GraphQlResponse<TData>;
+    variables: Record<string, unknown>;
+};
+
 function graphQlOperationName(request: Request): string | undefined {
     if (!request.url().endsWith('/graphql') || request.method() !== 'POST') {
         return undefined;
@@ -23,11 +28,11 @@ function graphQlOperationName(request: Request): string | undefined {
     }
 }
 
-export async function performGraphQlOperation(
+export async function performGraphQlOperation<TData = unknown>(
     page: Page,
     operationName: string,
     action: () => Promise<unknown>
-): Promise<GraphQlResponse> {
+): Promise<ObservedGraphQlOperation<TData>> {
     const responsePromise = page
         .waitForResponse(response => graphQlOperationName(response.request()) === operationName, {timeout: 20_000})
         .then(response => ({response}));
@@ -47,11 +52,14 @@ export async function performGraphQlOperation(
     }
 
     const {response} = result;
-    const responseBody = (await response.json()) as GraphQlResponse;
+    const responseBody = (await response.json()) as GraphQlResponse<TData>;
 
     expect(response.ok(), `Operacja ${operationName} zwróciła HTTP ${response.status()}`).toBeTruthy();
     expect(responseBody.errors, `Operacja ${operationName} zwróciła błędy GraphQL`).toBeUndefined();
-    return responseBody;
+    return {
+        responseBody,
+        variables: (response.request().postDataJSON() as {variables?: Record<string, unknown>}).variables ?? {},
+    };
 }
 
 export function waitForGraphQlData<TData>(page: Page, operationName: string): Promise<TData> {
