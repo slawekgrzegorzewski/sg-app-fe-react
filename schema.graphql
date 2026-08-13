@@ -992,9 +992,8 @@ input CubeResultsQuery {
 }
 
 type CubeResults {
-    numberOfSolves: Int!
-    todayAverageInMillis: Int!
-    recentResults: [CubeResult!]!
+    todayStats: CubeDayStats!
+    todayResults: [CubeResult!]!
     stats(month: YearMonth!): [CubeDayStats!]!
     topTenAllTime: [CubeResult!]!
 }

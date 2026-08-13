@@ -3,9 +3,8 @@ import {login, performGraphQlOperation, waitForGraphQlData} from './support/data
 
 type CubeResultsData = {
     cubeResults: {
-        numberOfSolves: number;
-        todayAverageInMillis: number;
-        recentResults: Array<{timeInMillis: number; date: string}>;
+        todayStats: {min?: number | null; numberOfTries: number};
+        todayResults: Array<{timeInMillis: number; date: string}>;
     };
 };
 
@@ -52,6 +51,12 @@ function summarizeCubeStats(stats: CubeDayStats[]) {
     };
 }
 
+function averageCubeTime(results: Array<{timeInMillis: number}>): number | null {
+    return results.length === 0
+        ? null
+        : Math.round(results.reduce((total, result) => total + result.timeInMillis, 0) / results.length);
+}
+
 async function recordCubeSolve(
     page: Page,
     timeInMillis: number,
@@ -70,8 +75,8 @@ async function recordCubeSolve(
     const updatedResultsPromise = waitForGraphQlData<CubeResultsData>(page, 'GetCubeResults');
     await performGraphQlOperation(page, 'StoreCubeResult', () => page.keyboard.press('Enter'));
     const updatedResults = await updatedResultsPromise;
-    await expect(page.getByRole('group', {name: 'Liczba ułożeń'}).getByRole('heading')).toHaveText(
-        String(expectedNumberOfSolves)
+    await expect(page.getByRole('group', {name: 'Dzisiejsza średnia'}).getByRole('heading')).toHaveText(
+        `${formatCubeTime(averageCubeTime(updatedResults.cubeResults.todayResults))} z ${expectedNumberOfSolves} ułożeń`
     );
     return updatedResults;
 }
@@ -85,12 +90,15 @@ test.describe('kostki i statystyki kostek', () => {
         await page.goto(`/CUBES/${domainPublicId}`);
         await expect(page.getByRole('heading', {name: 'Układanie kostek'})).toBeVisible();
         const initialResults = await initialResultsPromise;
-        const solvesGroup = page.getByRole('group', {name: 'Liczba ułożeń'});
         const averageGroup = page.getByRole('group', {name: 'Dzisiejsza średnia'});
-        await expect(solvesGroup.getByRole('heading')).toHaveText(String(initialResults.cubeResults.numberOfSolves));
-        await expect(averageGroup.getByRole('heading')).toHaveText(
-            `${initialResults.cubeResults.todayAverageInMillis / 1000} s`
+        const averageHeading = averageGroup.getByRole('heading');
+        const initialNumberOfSolves = initialResults.cubeResults.todayStats.numberOfTries;
+        const initialTodayAverageInMillis = averageCubeTime(initialResults.cubeResults.todayResults);
+        const expectedInitialAverage = `${formatCubeTime(initialTodayAverageInMillis)} z ${initialNumberOfSolves} ułożeń`;
+        await expect(page.getByRole('group', {name: 'Dzisiejszy najlepszy wynik'}).getByRole('heading')).toHaveText(
+            formatCubeTime(initialResults.cubeResults.todayStats.min)
         );
+        await expect(averageHeading).toHaveText(expectedInitialAverage);
 
         const initialStatsPromise = waitForGraphQlData<CubeStatsData>(page, 'GetCubeStats');
         await page.goto(`/CUBES/${domainPublicId}/stats`);
@@ -123,30 +131,27 @@ test.describe('kostki i statystyki kostek', () => {
 
         let finalResults = initialResults;
         for (const [index, solveTime] of solveTimes.entries()) {
-            finalResults = await recordCubeSolve(
-                page,
-                solveTime,
-                initialResults.cubeResults.numberOfSolves + index + 1
-            );
-            expect(finalResults.cubeResults.numberOfSolves).toBe(initialResults.cubeResults.numberOfSolves + index + 1);
+            finalResults = await recordCubeSolve(page, solveTime, initialNumberOfSolves + index + 1);
+            expect(finalResults.cubeResults.todayStats.numberOfTries).toBe(initialNumberOfSolves + index + 1);
         }
 
         const initialTodayNumberOfSolves = initialTodayStats?.numberOfTries ?? 0;
         const expectedTodayAverage =
-            (initialResults.cubeResults.todayAverageInMillis * initialTodayNumberOfSolves +
+            ((initialTodayAverageInMillis ?? 0) * initialTodayNumberOfSolves +
                 solveTimes.reduce((sum, time) => sum + time, 0)) /
             (initialTodayNumberOfSolves + solveTimes.length);
+        const finalTodayAverageInMillis = averageCubeTime(finalResults.cubeResults.todayResults);
         expect(
-            Math.abs(finalResults.cubeResults.todayAverageInMillis - expectedTodayAverage),
+            Math.abs((finalTodayAverageInMillis ?? 0) - expectedTodayAverage),
             'Dzisiejsza średnia powinna uwzględniać 25 nowych wyników'
         ).toBeLessThanOrEqual(1);
         await expect(averageGroup.getByRole('heading')).toHaveText(
-            `${finalResults.cubeResults.todayAverageInMillis / 1000} s`
+            `${formatCubeTime(finalTodayAverageInMillis)} z ${finalResults.cubeResults.todayStats.numberOfTries} ułożeń`
         );
         const recentResultsTable = page.getByRole('table', {name: 'Ostatnie wyniki kostki'});
         await expect(recentResultsTable).toBeVisible();
         await expect(recentResultsTable.getByText(formatCubeTime(solveTimes.at(-1)!))).toBeVisible();
-        const displayedRecentResultsCount = finalResults.cubeResults.recentResults.length;
+        const displayedRecentResultsCount = finalResults.cubeResults.todayResults.length;
         await expect(recentResultsTable.getByRole('row')).toHaveCount(Math.min(displayedRecentResultsCount, 5) + 1);
         for (let pageIndex = 0; pageIndex < Math.ceil(displayedRecentResultsCount / 5); pageIndex++) {
             const from = pageIndex * 5 + 1;

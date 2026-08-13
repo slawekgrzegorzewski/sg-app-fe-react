@@ -40,7 +40,7 @@ import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Paper from '@mui/material/Paper';
 import {formatCubeTime} from './CubeStatsPage';
 
-function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['recentResults']}) {
+function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['todayResults']}) {
     const theme = useTheme();
     const compactViewport = useMediaQuery(theme.breakpoints.down('sm'));
     const orderedResults = [...results].sort((left, right) => dayjs(right.date).valueOf() - dayjs(left.date).valueOf());
@@ -69,7 +69,7 @@ function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['
                             <TableRow>
                                 <TableCell sx={{width: 56}}>Lp.</TableCell>
                                 <TableCell>Wynik</TableCell>
-                                <TableCell align="right">Data</TableCell>
+                                <TableCell align="right">Godzina</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -82,7 +82,7 @@ function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['
                                         {formatCubeTime(result.timeInMillis)}
                                     </TableCell>
                                     <TableCell align="right" sx={{whiteSpace: 'nowrap', color: 'text.secondary'}}>
-                                        {dayjs(result.date).locale('pl').format('D MMM, HH:mm')}
+                                        {dayjs(result.date).format('HH:mm')}
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -112,6 +112,14 @@ function isTextEditingTarget(target: EventTarget | null): boolean {
         target instanceof HTMLElement &&
         (target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
     );
+}
+
+export function averageCubeTime(results: Array<{timeInMillis: number}>): number | null {
+    if (results.length === 0) {
+        return null;
+    }
+
+    return Math.round(results.reduce((total, result) => total + result.timeInMillis, 0) / results.length);
 }
 
 export function CubesMainPage() {
@@ -205,6 +213,7 @@ export function CubesMainPage() {
 
     const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType}});
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
+    const todayAverageInMillis = data ? averageCubeTime(data.cubeResults.todayResults) : null;
 
     const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});
 
@@ -347,13 +356,16 @@ export function CubesMainPage() {
                         </FormControl>
                     </Stack>
                     <Stack direction="row" flexWrap="wrap" gap={1.5} sx={{width: '100%'}}>
-                        <CubeStatCard label="Liczba ułożeń" value={data.cubeResults.numberOfSolves} />
+                        <CubeStatCard
+                            label="Dzisiejszy najlepszy wynik"
+                            value={formatCubeTime(data.cubeResults.todayStats.min)}
+                        />
                         <CubeStatCard
                             label="Dzisiejsza średnia"
-                            value={`${data.cubeResults.todayAverageInMillis / 1000} s`}
+                            value={`${formatCubeTime(todayAverageInMillis)} z ${data.cubeResults.todayStats.numberOfTries} ułożeń`}
                         />
                     </Stack>
-                    <RecentResults results={data.cubeResults.recentResults} />
+                    <RecentResults results={data.cubeResults.todayResults} />
                     <Typography variant="caption" color="text.secondary">
                         Blokada wygaszania ekranu: {wakeLock ? 'włączona' : 'wyłączona'}
                     </Typography>

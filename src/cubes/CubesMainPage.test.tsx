@@ -3,7 +3,7 @@ import {fireEvent, render, screen, waitFor, within} from '@testing-library/react
 import userEvent from '@testing-library/user-event';
 import {validateCubingScramble} from './cubing-api';
 import {generateCubingScramble} from './cubing-scramble';
-import {CubesMainPage} from './CubesMainPage';
+import {averageCubeTime, CubesMainPage} from './CubesMainPage';
 import {useIsTouchDevice} from '../utils/use-is-touch-screen';
 
 jest.mock('@apollo/client/react', () => ({
@@ -83,9 +83,8 @@ describe('CubesMainPage', () => {
         useQueryMock.mockReturnValue({
             data: {
                 cubeResults: {
-                    numberOfSolves: 10,
-                    todayAverageInMillis: 12_000,
-                    recentResults: [
+                    todayStats: {min: 8_765, numberOfTries: 2},
+                    todayResults: [
                         {timeInMillis: 9_876, date: '2026-08-13T12:20:00'},
                         {timeInMillis: 8_765, date: '2026-08-13T12:30:00'},
                     ],
@@ -105,10 +104,14 @@ describe('CubesMainPage', () => {
 
         expect(screen.getByRole('heading', {name: 'Układanie kostek'})).toBeInTheDocument();
         expect(
-            within(screen.getByRole('group', {name: 'Liczba ułożeń'})).getByRole('heading', {name: '10'})
+            within(screen.getByRole('group', {name: 'Dzisiejszy najlepszy wynik'})).getByRole('heading', {
+                name: '00:08.765',
+            })
         ).toBeVisible();
         expect(
-            within(screen.getByRole('group', {name: 'Dzisiejsza średnia'})).getByRole('heading', {name: '12 s'})
+            within(screen.getByRole('group', {name: 'Dzisiejsza średnia'})).getByRole('heading', {
+                name: '00:09.321 z 2 ułożeń',
+            })
         ).toBeVisible();
         expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'THREE'});
         expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'THREE');
@@ -116,7 +119,9 @@ describe('CubesMainPage', () => {
         expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(3);
         expect(within(recentResultsTable).getByText('00:08.765')).toBeInTheDocument();
         expect(within(recentResultsTable).getByText('00:09.876')).toBeInTheDocument();
-        expect(within(recentResultsTable).getAllByRole('row')[1]).toHaveTextContent('00:08.765');
+        expect(within(recentResultsTable).getByText('Godzina')).toBeInTheDocument();
+        expect(within(recentResultsTable).getAllByRole('row')[1]).toHaveTextContent('12:30');
+        expect(within(recentResultsTable).getAllByRole('row')[1]).not.toHaveTextContent('2026-08-13');
 
         await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
         await user.click(screen.getByRole('option', {name: '4×4'}));
@@ -135,7 +140,7 @@ describe('CubesMainPage', () => {
     it('shows a friendly empty state when there are no recent results', () => {
         useQueryMock.mockReturnValue({
             data: {
-                cubeResults: {numberOfSolves: 0, todayAverageInMillis: 0, recentResults: []},
+                cubeResults: {todayStats: {min: null, numberOfTries: 0}, todayResults: []},
             },
             refetch,
         });
@@ -151,9 +156,8 @@ describe('CubesMainPage', () => {
         useQueryMock.mockReturnValue({
             data: {
                 cubeResults: {
-                    numberOfSolves: 21,
-                    todayAverageInMillis: 1_000,
-                    recentResults: Array.from({length: 21}, (_, index) => ({
+                    todayStats: {min: 1, numberOfTries: 21},
+                    todayResults: Array.from({length: 21}, (_, index) => ({
                         timeInMillis: index + 1,
                         date: `2026-08-${String(index + 1).padStart(2, '0')}T12:00:00`,
                     })),
@@ -173,6 +177,11 @@ describe('CubesMainPage', () => {
         expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(6);
         expect(screen.getByText('6–10 z 21')).toBeInTheDocument();
         expect(within(recentResultsTable).getByText('00:00.016')).toBeInTheDocument();
+    });
+
+    it('calculates the average solve time from today’s results', () => {
+        expect(averageCubeTime([{timeInMillis: 1_000}, {timeInMillis: 2_500}])).toBe(1_750);
+        expect(averageCubeTime([])).toBeNull();
     });
 
     it('generates a cubing.js scramble for newly supported puzzle types', async () => {

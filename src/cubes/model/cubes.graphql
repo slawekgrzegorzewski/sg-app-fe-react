@@ -1,8 +1,10 @@
 query GetCubeResults($cubeType: CubeType!) {
     cubeResults(cubeResultsQuery: {cubeType: $cubeType}) {
-        numberOfSolves
-        todayAverageInMillis
-        recentResults {
+        todayStats {
+            min
+            numberOfTries
+        }
+        todayResults {
             timeInMillis
             date
         }
