@@ -5,6 +5,7 @@ type CubeResultsData = {
     cubeResults: {
         numberOfSolves: number;
         todayAverageInMillis: number;
+        recentResults: Array<{timeInMillis: number; date: string}>;
     };
 };
 
@@ -112,13 +113,7 @@ test.describe('kostki i statystyki kostek', () => {
 
         const recordTime = initialBestTime === null ? 100 : initialBestTime - 1;
         const slowerTimeBase = Math.max(initialBestTime ?? 1_000, 1_000);
-        const solveTimes = [
-            slowerTimeBase + 400,
-            slowerTimeBase + 300,
-            slowerTimeBase + 200,
-            slowerTimeBase + 100,
-            recordTime,
-        ];
+        const solveTimes = [...Array.from({length: 24}, (_, index) => slowerTimeBase + 400 + index * 10), recordTime];
 
         const resultsBeforeSolvesPromise = waitForGraphQlData<CubeResultsData>(page, 'GetCubeResults');
         await page.goto(`/CUBES/${domainPublicId}`);
@@ -143,11 +138,26 @@ test.describe('kostki i statystyki kostek', () => {
             (initialTodayNumberOfSolves + solveTimes.length);
         expect(
             Math.abs(finalResults.cubeResults.todayAverageInMillis - expectedTodayAverage),
-            'Dzisiejsza średnia powinna uwzględniać pięć nowych wyników'
+            'Dzisiejsza średnia powinna uwzględniać 25 nowych wyników'
         ).toBeLessThanOrEqual(1);
         await expect(averageGroup.getByRole('heading')).toHaveText(
             `${finalResults.cubeResults.todayAverageInMillis / 1000} s`
         );
+        const recentResultsTable = page.getByRole('table', {name: 'Ostatnie wyniki kostki'});
+        await expect(recentResultsTable).toBeVisible();
+        await expect(recentResultsTable.getByText(formatCubeTime(solveTimes.at(-1)!))).toBeVisible();
+        const displayedRecentResultsCount = finalResults.cubeResults.recentResults.length;
+        await expect(recentResultsTable.getByRole('row')).toHaveCount(Math.min(displayedRecentResultsCount, 5) + 1);
+        for (let pageIndex = 0; pageIndex < Math.ceil(displayedRecentResultsCount / 5); pageIndex++) {
+            const from = pageIndex * 5 + 1;
+            const to = Math.min((pageIndex + 1) * 5, displayedRecentResultsCount);
+            await expect(page.getByText(`${from}–${to} z ${displayedRecentResultsCount}`)).toBeVisible();
+            if (to < displayedRecentResultsCount) {
+                const nextPageButton = page.getByRole('button', {name: 'Następna strona'});
+                await expect(nextPageButton).toBeEnabled();
+                await nextPageButton.dispatchEvent('click');
+            }
+        }
 
         const finalStatsPromise = waitForGraphQlData<CubeStatsData>(page, 'GetCubeStats');
         await page.goto(`/CUBES/${domainPublicId}/stats`);

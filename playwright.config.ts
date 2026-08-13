@@ -41,12 +41,20 @@ export default defineConfig({
         },
         {
             name: 'Google Chrome',
-            testIgnore: [/bootstrap\.setup\.ts/, /billing-periods\.spec\.ts/],
+            testIgnore: [/bootstrap\.setup\.ts/, /billing-periods\.spec\.ts/, /cubes\.spec\.ts/],
             dependencies: ['przygotowanie danych'],
             use: {
                 ...devices['Desktop Chrome'],
                 channel: 'chrome',
                 storageState: authStatePath,
+            },
+        },
+        {
+            name: 'Google Chrome kostki',
+            testMatch: /cubes\.spec\.ts/,
+            use: {
+                ...devices['Desktop Chrome'],
+                channel: 'chrome',
             },
         },
         {

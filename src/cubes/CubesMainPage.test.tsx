@@ -85,6 +85,10 @@ describe('CubesMainPage', () => {
                 cubeResults: {
                     numberOfSolves: 10,
                     todayAverageInMillis: 12_000,
+                    recentResults: [
+                        {timeInMillis: 9_876, date: '2026-08-13T12:20:00'},
+                        {timeInMillis: 8_765, date: '2026-08-13T12:30:00'},
+                    ],
                 },
             },
             refetch,
@@ -108,6 +112,11 @@ describe('CubesMainPage', () => {
         ).toBeVisible();
         expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'THREE'});
         expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'THREE');
+        const recentResultsTable = screen.getByRole('table', {name: 'Ostatnie wyniki kostki'});
+        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(3);
+        expect(within(recentResultsTable).getByText('00:08.765')).toBeInTheDocument();
+        expect(within(recentResultsTable).getByText('00:09.876')).toBeInTheDocument();
+        expect(within(recentResultsTable).getAllByRole('row')[1]).toHaveTextContent('00:08.765');
 
         await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
         await user.click(screen.getByRole('option', {name: '4×4'}));
@@ -121,6 +130,49 @@ describe('CubesMainPage', () => {
         await waitFor(() => expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'MEGAMINX'}));
         expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'MEGAMINX');
         expect(screen.getByRole('button', {name: 'Scramble'})).toBeEnabled();
+    });
+
+    it('shows a friendly empty state when there are no recent results', () => {
+        useQueryMock.mockReturnValue({
+            data: {
+                cubeResults: {numberOfSolves: 0, todayAverageInMillis: 0, recentResults: []},
+            },
+            refetch,
+        });
+
+        render(<CubesMainPage />);
+
+        expect(screen.getByText('Brak zapisanych wyników.')).toBeInTheDocument();
+        expect(screen.queryByRole('table', {name: 'Ostatnie wyniki kostki'})).not.toBeInTheDocument();
+    });
+
+    it('shows all results and paginates five rows at a time', async () => {
+        const user = userEvent.setup();
+        useQueryMock.mockReturnValue({
+            data: {
+                cubeResults: {
+                    numberOfSolves: 21,
+                    todayAverageInMillis: 1_000,
+                    recentResults: Array.from({length: 21}, (_, index) => ({
+                        timeInMillis: index + 1,
+                        date: `2026-08-${String(index + 1).padStart(2, '0')}T12:00:00`,
+                    })),
+                },
+            },
+            refetch,
+        });
+
+        render(<CubesMainPage />);
+
+        const recentResultsTable = screen.getByRole('table', {name: 'Ostatnie wyniki kostki'});
+        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(6);
+        expect(screen.getByText('1–5 z 21')).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', {name: 'Następna strona'}));
+
+        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(6);
+        expect(screen.getByText('6–10 z 21')).toBeInTheDocument();
+        expect(within(recentResultsTable).getByText('00:00.016')).toBeInTheDocument();
     });
 
     it('generates a cubing.js scramble for newly supported puzzle types', async () => {

@@ -3,12 +3,20 @@ import * as React from 'react';
 import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
 import {
     Alert,
+    Chip,
     Dialog,
     FormControl,
     InputLabel,
     MenuItem,
     Select,
     Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TablePagination,
+    TableRow,
     TextField,
     useMediaQuery,
     useTheme,
@@ -29,6 +37,75 @@ import {CubingVisualizer} from './CubingVisualizer';
 import {validateCubingScramble} from './cubing-api';
 import {CubeStatCard} from './CubeStatCard';
 import TouchAppIcon from '@mui/icons-material/TouchApp';
+import Paper from '@mui/material/Paper';
+import {formatCubeTime} from './CubeStatsPage';
+
+function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['recentResults']}) {
+    const theme = useTheme();
+    const compactViewport = useMediaQuery(theme.breakpoints.down('sm'));
+    const orderedResults = [...results].sort((left, right) => dayjs(right.date).valueOf() - dayjs(left.date).valueOf());
+    const [page, setPage] = useState(0);
+    const rowsPerPage = 5;
+    const paginatedResults = orderedResults.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+
+    useEffect(() => {
+        setPage(0);
+    }, [results, compactViewport]);
+
+    return (
+        <Stack spacing={1} sx={{width: '100%'}}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+                <Typography variant="h4">Ostatnie wyniki</Typography>
+                <Chip size="small" label={orderedResults.length} />
+            </Stack>
+            {orderedResults.length === 0 ? (
+                <Paper variant="outlined" sx={{p: 2, textAlign: 'center'}}>
+                    <Typography color="text.secondary">Brak zapisanych wyników.</Typography>
+                </Paper>
+            ) : (
+                <TableContainer component={Paper} variant="outlined">
+                    <Table size="small" aria-label="Ostatnie wyniki kostki">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{width: 56}}>Lp.</TableCell>
+                                <TableCell>Wynik</TableCell>
+                                <TableCell align="right">Data</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {paginatedResults.map((result, index) => (
+                                <TableRow key={`${result.date}-${result.timeInMillis}-${index}`}>
+                                    <TableCell component="th" scope="row" sx={{color: 'text.secondary'}}>
+                                        {page * rowsPerPage + index + 1}.
+                                    </TableCell>
+                                    <TableCell sx={{fontVariantNumeric: 'tabular-nums', fontWeight: 'bold'}}>
+                                        {formatCubeTime(result.timeInMillis)}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{whiteSpace: 'nowrap', color: 'text.secondary'}}>
+                                        {dayjs(result.date).locale('pl').format('D MMM, HH:mm')}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <TablePagination
+                        component="div"
+                        count={orderedResults.length}
+                        page={page}
+                        onPageChange={(_event, nextPage) => setPage(nextPage)}
+                        rowsPerPage={rowsPerPage}
+                        rowsPerPageOptions={[rowsPerPage]}
+                        labelRowsPerPage="Wyników na stronie:"
+                        labelDisplayedRows={({from, to, count}) => `${from}–${to} z ${count}`}
+                        getItemAriaLabel={type =>
+                            type === 'previous' ? 'Poprzednia strona' : type === 'next' ? 'Następna strona' : type
+                        }
+                    />
+                </TableContainer>
+            )}
+        </Stack>
+    );
+}
 
 function isTextEditingTarget(target: EventTarget | null): boolean {
     return (
@@ -276,6 +353,7 @@ export function CubesMainPage() {
                             value={`${data.cubeResults.todayAverageInMillis / 1000} s`}
                         />
                     </Stack>
+                    <RecentResults results={data.cubeResults.recentResults} />
                     <Typography variant="caption" color="text.secondary">
                         Blokada wygaszania ekranu: {wakeLock ? 'włączona' : 'wyłączona'}
                     </Typography>

@@ -1,4 +1,4 @@
-import {expect, test, type Locator, type Page, type Request} from '@playwright/test';
+import {expect, test, type Locator, type Page, type Request, type Response} from '@playwright/test';
 import {login, RUN_ID} from './support/data-interactions';
 
 const TRANSFER_AMOUNT = 0.37;
@@ -103,25 +103,44 @@ async function waitForGraphQlOperation<TData>(
     page: Page,
     operationName: string
 ): Promise<ObservedGraphQlOperation<TData>> {
-    const response = await page.waitForResponse(
-        candidate => graphQlOperationName(candidate.request()) === operationName,
-        {timeout: 20_000}
-    );
-    const requestBody = response.request().postDataJSON() as GraphQlRequestBody;
-    const responseBody = (await response.json()) as GraphQlResponse<TData>;
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            page.off('response', onResponse);
+            reject(new Error(`Nie odebrano operacji GraphQL ${operationName} w ciągu 20 sekund`));
+        }, 20_000);
 
-    expect(requestBody.operationName).toBe(operationName);
-    expect(response.ok(), `Operacja ${operationName} zwróciła HTTP ${response.status()}`).toBeTruthy();
-    expect(
-        responseBody.errors,
-        `Operacja ${operationName} zwróciła błędy GraphQL dla zmiennych ${JSON.stringify(requestBody.variables ?? {})}`
-    ).toBeUndefined();
-    expect(responseBody.data, `Operacja ${operationName} nie zwróciła danych`).toBeDefined();
+        const onResponse = (response: Response) => {
+            if (graphQlOperationName(response.request()) !== operationName) {
+                return;
+            }
 
-    return {
-        data: responseBody.data!,
-        variables: requestBody.variables ?? {},
-    };
+            const requestBody = response.request().postDataJSON() as GraphQlRequestBody;
+            void response
+                .body()
+                .then((body: Buffer) => {
+                    const responseBody = (JSON.parse(body.toString('utf8')) ?? {}) as GraphQlResponse<TData>;
+
+                    expect(requestBody.operationName).toBe(operationName);
+                    expect(response.ok(), `Operacja ${operationName} zwróciła HTTP ${response.status()}`).toBeTruthy();
+                    expect(
+                        responseBody.errors,
+                        `Operacja ${operationName} zwróciła błędy GraphQL dla zmiennych ${JSON.stringify(requestBody.variables ?? {})}`
+                    ).toBeUndefined();
+                    expect(responseBody.data, `Operacja ${operationName} nie zwróciła danych`).toBeDefined();
+
+                    clearTimeout(timeoutId);
+                    page.off('response', onResponse);
+                    resolve({data: responseBody.data!, variables: requestBody.variables ?? {}});
+                })
+                .catch((error: unknown) => {
+                    clearTimeout(timeoutId);
+                    page.off('response', onResponse);
+                    reject(error);
+                });
+        };
+
+        page.on('response', onResponse);
+    });
 }
 
 async function performGraphQlOperation<TData>(
