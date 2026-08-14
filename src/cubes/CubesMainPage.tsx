@@ -3,6 +3,7 @@ import * as React from 'react';
 import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
 import {
     Alert,
+    Box,
     Chip,
     Dialog,
     FormControl,
@@ -45,7 +46,7 @@ function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['
     const compactViewport = useMediaQuery(theme.breakpoints.down('sm'));
     const orderedResults = [...results].sort((left, right) => dayjs(right.date).valueOf() - dayjs(left.date).valueOf());
     const [page, setPage] = useState(0);
-    const rowsPerPage = 5;
+    const rowsPerPage = compactViewport ? 3 : 5;
     const paginatedResults = orderedResults.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
     useEffect(() => {
@@ -355,17 +356,39 @@ export function CubesMainPage() {
                             </Select>
                         </FormControl>
                     </Stack>
-                    <Stack direction="row" flexWrap="wrap" gap={1.5} sx={{width: '100%'}}>
-                        <CubeStatCard
-                            label="Dzisiejszy najlepszy wynik"
-                            value={formatCubeTime(data.cubeResults.todayStats.min)}
-                        />
-                        <CubeStatCard
-                            label="Dzisiejsza średnia"
-                            value={`${formatCubeTime(todayAverageInMillis)} z ${data.cubeResults.todayStats.numberOfTries} ułożeń`}
-                        />
-                    </Stack>
-                    <RecentResults results={data.cubeResults.todayResults} />
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(0, 1fr) 145px',
+                            gap: 2,
+                            width: '100%',
+                            alignItems: 'start',
+                        }}
+                    >
+                        <RecentResults results={data.cubeResults.todayResults} />
+                        <Stack spacing={1} sx={{width: 145, maxWidth: '100%', height: '100%'}}>
+                            <Stack direction="row" alignItems="center" sx={{minHeight: 23}}>
+                                <Typography variant="h4">Dziś</Typography>
+                            </Stack>
+                            <Stack
+                                spacing={1.5}
+                                sx={{
+                                    pt: '1px',
+                                    flexGrow: 1,
+                                    justifyContent: {xs: 'space-between', md: 'flex-start'},
+                                }}
+                            >
+                                <CubeStatCard
+                                    label="Średnia"
+                                    value={`${formatCubeTime(todayAverageInMillis)} z ${data.cubeResults.todayStats.numberOfTries} ułożeń`}
+                                />
+                                <CubeStatCard
+                                    label="Najlepszy wynik"
+                                    value={formatCubeTime(data.cubeResults.todayStats.min)}
+                                />
+                            </Stack>
+                        </Stack>
+                    </Box>
                     <Typography variant="caption" color="text.secondary">
                         Blokada wygaszania ekranu: {wakeLock ? 'włączona' : 'wyłączona'}
                     </Typography>

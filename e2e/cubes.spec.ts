@@ -75,7 +75,7 @@ async function recordCubeSolve(
     const updatedResultsPromise = waitForGraphQlData<CubeResultsData>(page, 'GetCubeResults');
     await performGraphQlOperation(page, 'StoreCubeResult', () => page.keyboard.press('Enter'));
     const updatedResults = await updatedResultsPromise;
-    await expect(page.getByRole('group', {name: 'Dzisiejsza średnia'}).getByRole('heading')).toHaveText(
+    await expect(page.getByRole('group', {name: 'Średnia'}).getByRole('heading')).toHaveText(
         `${formatCubeTime(averageCubeTime(updatedResults.cubeResults.todayResults))} z ${expectedNumberOfSolves} ułożeń`
     );
     return updatedResults;
@@ -90,12 +90,23 @@ test.describe('kostki i statystyki kostek', () => {
         await page.goto(`/CUBES/${domainPublicId}`);
         await expect(page.getByRole('heading', {name: 'Układanie kostek'})).toBeVisible();
         const initialResults = await initialResultsPromise;
-        const averageGroup = page.getByRole('group', {name: 'Dzisiejsza średnia'});
+        const averageGroup = page.getByRole('group', {name: 'Średnia'});
         const averageHeading = averageGroup.getByRole('heading');
+        const statsLayout = averageGroup.locator('xpath=../../..');
+        await expect(statsLayout).toHaveCSS('grid-template-columns', /\S+\s+\S+/);
+        await expect(averageGroup.locator('xpath=..').getByRole('group')).toHaveCount(2);
+        await expect(averageGroup.locator('xpath=..').getByRole('group').nth(0)).toHaveAttribute(
+            'aria-label',
+            'Średnia'
+        );
+        await expect(averageGroup.locator('xpath=..').getByRole('group').nth(1)).toHaveAttribute(
+            'aria-label',
+            'Najlepszy wynik'
+        );
         const initialNumberOfSolves = initialResults.cubeResults.todayStats.numberOfTries;
         const initialTodayAverageInMillis = averageCubeTime(initialResults.cubeResults.todayResults);
         const expectedInitialAverage = `${formatCubeTime(initialTodayAverageInMillis)} z ${initialNumberOfSolves} ułożeń`;
-        await expect(page.getByRole('group', {name: 'Dzisiejszy najlepszy wynik'}).getByRole('heading')).toHaveText(
+        await expect(page.getByRole('group', {name: 'Najlepszy wynik'}).getByRole('heading')).toHaveText(
             formatCubeTime(initialResults.cubeResults.todayStats.min)
         );
         await expect(averageHeading).toHaveText(expectedInitialAverage);
@@ -163,6 +174,18 @@ test.describe('kostki i statystyki kostek', () => {
                 await nextPageButton.dispatchEvent('click');
             }
         }
+
+        await page.setViewportSize({width: 390, height: 844});
+        await expect(recentResultsTable.getByRole('row')).toHaveCount(Math.min(displayedRecentResultsCount, 3) + 1);
+        await expect(
+            page.getByText(`1–${Math.min(displayedRecentResultsCount, 3)} z ${displayedRecentResultsCount}`)
+        ).toBeVisible();
+
+        await page.setViewportSize({width: 1280, height: 720});
+        await expect(recentResultsTable.getByRole('row')).toHaveCount(Math.min(displayedRecentResultsCount, 5) + 1);
+        await expect(
+            page.getByText(`1–${Math.min(displayedRecentResultsCount, 5)} z ${displayedRecentResultsCount}`)
+        ).toBeVisible();
 
         const finalStatsPromise = waitForGraphQlData<CubeStatsData>(page, 'GetCubeStats');
         await page.goto(`/CUBES/${domainPublicId}/stats`);

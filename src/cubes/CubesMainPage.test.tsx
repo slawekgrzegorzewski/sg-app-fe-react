@@ -104,12 +104,12 @@ describe('CubesMainPage', () => {
 
         expect(screen.getByRole('heading', {name: 'Układanie kostek'})).toBeInTheDocument();
         expect(
-            within(screen.getByRole('group', {name: 'Dzisiejszy najlepszy wynik'})).getByRole('heading', {
+            within(screen.getByRole('group', {name: 'Najlepszy wynik'})).getByRole('heading', {
                 name: '00:08.765',
             })
         ).toBeVisible();
         expect(
-            within(screen.getByRole('group', {name: 'Dzisiejsza średnia'})).getByRole('heading', {
+            within(screen.getByRole('group', {name: 'Średnia'})).getByRole('heading', {
                 name: '00:09.321 z 2 ułożeń',
             })
         ).toBeVisible();
