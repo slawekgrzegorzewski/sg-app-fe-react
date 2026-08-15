@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-screen-queries, jest/valid-expect, jest/no-conditional-expect -- Playwright assertions inside controlled E2E branches are intentional. */
 import {expect, type Locator, type Page, type Request, test, type TestInfo} from '@playwright/test';
 import {
     chooseFirstOption,

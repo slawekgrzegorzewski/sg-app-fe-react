@@ -207,6 +207,7 @@ export function SimpleCrudList<T>({
                     ...(rowStyle?.(entity, index) || {}),
                 })}
                 selectEntityListener={(entity: T) => {
+                    selectEntityListener?.(entity);
                     if (!settingsPresentation && rowClickIsTrigger) {
                         selectEntity(entity);
                     }

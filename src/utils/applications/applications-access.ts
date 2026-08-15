@@ -1,13 +1,13 @@
 import {User} from "../../types";
 
-export const ApplicationIds: string[] = ["ACCOUNTANT", "CUBES", "CHECKER", "SYR", "IPR"] as string[];
+export const ApplicationIds: string[] = ["ACCOUNTANT", "CUBES", "CHECKER", "SYR", "IPR", "STRENGTH_TRAINING"] as string[];
 export type ApplicationId = typeof ApplicationIds[number];
 
 function isOfApplicationId(keyInput: string): keyInput is ApplicationId {
     return ApplicationIds.includes(keyInput);
 }
 
-export const ApplicationPageIds: string[] = ['IPR', 'TIME_RECORD'] as string[];
+export const ApplicationPageIds: string[] = ['IPR', 'TIME_RECORD', 'EXERCISE_CATALOG'] as string[];
 export type ApplicationPageId = typeof ApplicationPageIds[number];
 
 export type Application = {
@@ -74,10 +74,28 @@ export const applications = new Map<ApplicationId, Application>([
             ['IP_SETTING', {id: 'IP_SETTING', links: ['ipsettings'], label: 'Ustawienia'} as ApplicationPage]
         ])
     } as Application],
+    ["STRENGTH_TRAINING", {
+        id: "STRENGTH_TRAINING",
+        name: "Trening siłowy",
+        pages: new Map<ApplicationPageId, ApplicationPage>([
+            [
+                'EXERCISE_CATALOG',
+                {
+                    id: 'EXERCISE_CATALOG',
+                    links: ['catalog', 'variant-dimensions', '', '/', 'home'],
+                    label: 'Katalog ćwiczeń'
+                } as ApplicationPage
+            ]
+        ])
+    } as Application],
 ]);
 
 export default function getUserApplications(user: User): Application[] {
-    const userApplicationIds = [...(new Set<string>(user.roles.map(role => role.split("_")[0])))]
+    const userApplicationIds = [...(
+        new Set<string>(
+            user.roles.map(role => (applications.has(role as ApplicationId) ? role : role.split("_")[0]))
+        )
+    )]
         .filter(applicationId => isOfApplicationId(applicationId))
         .map(applicationId => applicationId as ApplicationId)
         .filter(a => applications.get(a) !== undefined);

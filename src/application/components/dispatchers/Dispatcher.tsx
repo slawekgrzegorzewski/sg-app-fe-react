@@ -11,6 +11,7 @@ import {useApplicationAndDomain} from '../../../utils/use-application-and-domain
 import {AccountantDispatcher} from './AccountantDispatcher';
 import {CubesMainPage} from '../../../cubes/CubesMainPage';
 import {CubeStatsPage} from '../../../cubes/CubeStatsPage';
+import {StrengthTrainingCatalogPage} from '../../../strength-training/StrengthTrainingCatalogPage';
 
 export function Dispatcher() {
     let {page} = useParams();
@@ -45,6 +46,11 @@ export function Dispatcher() {
         }
         if (isRequestForPage('CUBE_STATS')) {
             return <CubeStatsPage />;
+        }
+        return <></>;
+    } else if (application.id === 'STRENGTH_TRAINING') {
+        if (!page || isRequestForPage('EXERCISE_CATALOG')) {
+            return <StrengthTrainingCatalogPage />;
         }
         return <></>;
     }

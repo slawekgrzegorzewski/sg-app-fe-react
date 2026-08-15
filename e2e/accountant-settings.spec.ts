@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-screen-queries, jest/valid-expect, jest/no-conditional-expect -- Playwright assertions inside controlled E2E branches are intentional. */
 import {expect, type Locator, type Page, type Request, type Route, test} from '@playwright/test';
 import {
     login,
@@ -13,12 +14,12 @@ const ADMIN_OTP = process.env.E2E_OTP ?? 'e2e';
 const ADMIN_NAME = 'E2E PLAYWRIGHT';
 
 type DomainsData = {
-    domainInvitations: Array<{ publicId: string; name: string }>;
+    domainInvitations: Array<{publicId: string; name: string}>;
     settings: {
         domains: Array<{
             publicId: string;
             name: string;
-            users: Array<{ login: string; domainAccessLevel: 'ADMIN' | 'MEMBER' }>;
+            users: Array<{login: string; domainAccessLevel: 'ADMIN' | 'MEMBER'}>;
         }>;
     };
 };
@@ -27,28 +28,28 @@ type BankPermissionsData = {
     bankPermissions: {
         granted: Array<{
             publicId: string;
-            bankAccounts: Array<{ publicId: string; iban: string }>;
+            bankAccounts: Array<{publicId: string; iban: string}>;
         }>;
-        toProcess: Array<{ publicId: string }>;
-        toRecreate: Array<{ id: string; name: string }>;
+        toProcess: Array<{publicId: string}>;
+        toRecreate: Array<{id: string; name: string}>;
     };
 };
 
 type AvailableInstitutionsData = {
     bankPermissions: {
-        availableInstitutions: Array<{ id: string; name: string; bic: string }>;
+        availableInstitutions: Array<{id: string; name: string; bic: string}>;
     };
 };
 
 type FinanceManagementData = {
     financeManagement: {
-        billingCategories: Array<{ publicId: string; name: string; description: string }>;
+        billingCategories: Array<{publicId: string; name: string; description: string}>;
         piggyBanks: Array<{
             publicId: string;
             name: string;
             description: string;
-            balance: { amount: number; currency: { code: string } };
-            monthlyTopUp: { amount: number; currency: { code: string } };
+            balance: {amount: number; currency: {code: string}};
+            monthlyTopUp: {amount: number; currency: {code: string}};
             savings: boolean;
         }>;
     };
@@ -59,7 +60,7 @@ function graphQlOperationName(request: Request): string | undefined {
         return undefined;
     }
     try {
-        return (request.postDataJSON() as { operationName?: string }).operationName;
+        return (request.postDataJSON() as {operationName?: string}).operationName;
     } catch {
         return undefined;
     }
@@ -106,11 +107,11 @@ async function performGraphQlOperationBeforeNavigation<TData>(
     operationName: string,
     action: () => Promise<unknown>
 ): Promise<{
-    responseBody: { data?: TData; errors?: Array<{ message?: string }> };
-    variables: Record<string, unknown>
+    responseBody: {data?: TData; errors?: Array<{message?: string}>};
+    variables: Record<string, unknown>;
 }> {
     type Observation = {
-        responseBody: { data?: TData; errors?: Array<{ message?: string }> };
+        responseBody: {data?: TData; errors?: Array<{message?: string}>};
         variables: Record<string, unknown>;
         ok: boolean;
         status: number;
@@ -135,7 +136,7 @@ async function performGraphQlOperationBeforeNavigation<TData>(
             await route.fulfill({response, body});
             const result = {
                 responseBody,
-                variables: (request.postDataJSON() as { variables?: Record<string, unknown> }).variables ?? {},
+                variables: (request.postDataJSON() as {variables?: Record<string, unknown>}).variables ?? {},
                 ok: response.ok(),
                 status: response.status(),
             };
@@ -190,14 +191,14 @@ async function logout(page: Page, displayedUserName: string): Promise<void> {
 
 async function loginAs(
     page: Page,
-    credentials: { login: string; password: string; otp: string }
-): Promise<{ domainPublicId: string; name: string }> {
+    credentials: {login: string; password: string; otp: string}
+): Promise<{domainPublicId: string; name: string}> {
     await page.goto('/login');
     await page.getByRole('textbox', {name: 'Login'}).fill(credentials.login);
     await page.getByLabel('Hasło').fill(credentials.password);
     await page.getByRole('textbox', {name: 'OTP'}).fill(credentials.otp);
     const result = await performGraphQlOperation<{
-        login: { user: { login: string; name: string; domainPublicId: string } };
+        login: {user: {login: string; name: string; domainPublicId: string}};
     }>(page, 'PerformLogin', () => page.getByRole('button', {name: /^Zaloguj się$/i}).click());
     const authenticatedUser = result.responseBody.data!.login.user;
     expect(authenticatedUser.login).toBe(credentials.login);
@@ -207,7 +208,7 @@ async function loginAs(
 
 async function registerUser(
     page: Page,
-    user: { firstName: string; lastName: string; login: string; email: string; password: string; otp: string }
+    user: {firstName: string; lastName: string; login: string; email: string; password: string; otp: string}
 ): Promise<void> {
     await page.goto('/register');
     await page.getByRole('textbox', {name: 'Imię', exact: true}).fill(user.firstName);
@@ -217,7 +218,7 @@ async function registerUser(
     const passwordFields = page.locator('input[type="password"]');
     await passwordFields.nth(0).fill(user.password);
     await passwordFields.nth(1).fill(user.password);
-    const registration = await performGraphQlOperation<{ register: { mfaCode: string; qrLink: string } }>(
+    const registration = await performGraphQlOperation<{register: {mfaCode: string; qrLink: string}}>(
         page,
         'PerformRegistration',
         () => page.getByRole('button', {name: 'Zarejestruj się', exact: true}).click()
@@ -234,7 +235,7 @@ async function registerUser(
     expect(registration.responseBody.data!.register.qrLink).toBeTruthy();
     await expect(page.getByText('Konfigurowanie MFA', {exact: true})).toBeVisible();
     await page.getByRole('textbox', {name: 'Przepisz kod z aplikacji', exact: true}).fill(user.otp);
-    const setupMfa = await performGraphQlOperation<{ setupMFA: boolean }>(page, 'SetupMFA', () =>
+    const setupMfa = await performGraphQlOperation<{setupMFA: boolean}>(page, 'SetupMFA', () =>
         page.getByRole('button', {name: 'Zapisz', exact: true}).click()
     );
     expect(setupMfa.variables).toEqual({login: user.login, password: user.password, otp: user.otp});
@@ -273,7 +274,7 @@ async function exerciseNamedCrud(page: Page, config: NamedCrudConfig): Promise<v
     dialog = page.getByRole('dialog', {name: config.createDialogName, exact: true});
     await dialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(config.name);
     const creation = await performGraphQlOperationWithRefetch<
-        Record<string, { publicId: string; name: string }>,
+        Record<string, {publicId: string; name: string}>,
         unknown
     >(page, config.createOperation, config.refetchOperation, () =>
         dialog.getByRole('button', {name: config.addLabel, exact: true}).click()
@@ -286,14 +287,17 @@ async function exerciseNamedCrud(page: Page, config: NamedCrudConfig): Promise<v
     await row.getByRole('button', {name: new RegExp(`Edytuj element .* w sekcji ${config.sectionName}`)}).click();
     dialog = page.getByRole('dialog', {name: config.editDialogName, exact: true});
     await dialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(config.updatedName);
-    const update = await performGraphQlOperationWithRefetch<Record<string, {
-        publicId: string;
-        name: string
-    }>, unknown>(
-        page,
-        config.updateOperation,
-        config.refetchOperation,
-        () => dialog.getByRole('button', {name: 'Zapisz zmiany', exact: true}).click()
+    const update = await performGraphQlOperationWithRefetch<
+        Record<
+            string,
+            {
+                publicId: string;
+                name: string;
+            }
+        >,
+        unknown
+    >(page, config.updateOperation, config.refetchOperation, () =>
+        dialog.getByRole('button', {name: 'Zapisz zmiany', exact: true}).click()
     );
     expect(update.mutation.variables).toEqual({publicId: created.publicId, name: config.updatedName});
     expect(update.mutation.responseBody.data![config.updateResultField]).toMatchObject({
@@ -354,8 +358,7 @@ async function clearSessionAndOpenLogin(page: Page): Promise<void> {
 async function disconnectBankAccount(
     page: Page,
     accountName: string,
-    onMutationCompleted: () => void = () => {
-    }
+    onMutationCompleted: () => void = () => {}
 ): Promise<void> {
     const row = entityRow(page, accountName);
     await row.getByRole('button', {name: `Odłącz konto bankowe od ${accountName}`, exact: true}).click();
@@ -372,8 +375,7 @@ async function assignBankAccount(
     page: Page,
     accountName: string,
     bankAccountIban: string,
-    onMutationCompleted: () => void = () => {
-    }
+    onMutationCompleted: () => void = () => {}
 ): Promise<void> {
     const row = entityRow(page, accountName);
     await row.getByRole('button', {name: 'Przypisz konto', exact: true}).click();
@@ -409,7 +411,7 @@ test.describe('ustawienia księgowości', () => {
         const createdName = `E2E konto ${RUN_ID}`;
         const updatedName = `${createdName} zmienione`;
         let accountToClean = createdName;
-        let bankAccountToRestore: { accountName: string; iban: string } | undefined;
+        let bankAccountToRestore: {accountName: string; iban: string} | undefined;
         let bankAccountAssignment: 'original' | 'unassigned' | 'test-account' = 'original';
 
         await openAccountsSettingsPage(page, domainPublicId);
@@ -516,8 +518,8 @@ test.describe('ustawienia księgowości', () => {
 
         const setCompanyMode = async (enabled: boolean) => {
             const update = await performGraphQlOperationWithRefetch<
-                { updateAccountantSettings: string },
-                { settings: { accountantSettings: { isCompany: boolean } } }
+                {updateAccountantSettings: string},
+                {settings: {accountantSettings: {isCompany: boolean}}}
             >(page, 'UpdateAccountantSettings', 'GetAccountantSettings', () => companyMode.click());
             expect(update.mutation.variables).toEqual({isCompany: enabled});
             expect(update.mutation.responseBody.data!.updateAccountantSettings).toBeTruthy();
@@ -583,7 +585,7 @@ test.describe('ustawienia księgowości', () => {
             await dialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(categoryName);
             await dialog.getByRole('textbox', {name: 'Opis', exact: true}).fill(categoryDescription);
             const creation = await performGraphQlOperationWithRefetch<
-                { createBillingCategory: { publicId: string; name: string; description: string } },
+                {createBillingCategory: {publicId: string; name: string; description: string}},
                 FinanceManagementData
             >(page, 'CreateBillingCategory', 'GetFinanceManagementWithNotAssignedBankAccounts', () =>
                 dialog.getByRole('button', {name: 'Dodaj kategorię', exact: true}).click()
@@ -601,7 +603,7 @@ test.describe('ustawienia księgowości', () => {
             await dialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(updatedCategoryName);
             await dialog.getByRole('textbox', {name: 'Opis', exact: true}).fill(updatedCategoryDescription);
             const update = await performGraphQlOperationWithRefetch<
-                { updateBillingCategory: { publicId: string; name: string; description: string } },
+                {updateBillingCategory: {publicId: string; name: string; description: string}},
                 FinanceManagementData
             >(page, 'UpdateBillingCategory', 'GetFinanceManagementWithNotAssignedBankAccounts', () =>
                 dialog.getByRole('button', {name: 'Zapisz zmiany', exact: true}).click()
@@ -626,7 +628,7 @@ test.describe('ustawienia księgowości', () => {
             await row.getByRole('button', {name: /Usuń element .* z sekcji Kategorie wydatków/}).click();
             confirmation = page.getByRole('dialog', {name: 'Usunąć kategorię?', exact: true});
             const deletion = await performGraphQlOperationWithRefetch<
-                { deleteBillingCategory: string },
+                {deleteBillingCategory: string},
                 FinanceManagementData
             >(page, 'DeleteBillingCategory', 'GetFinanceManagementWithNotAssignedBankAccounts', () =>
                 confirmation.getByRole('button', {name: 'Usuń', exact: true}).click()
@@ -710,7 +712,7 @@ test.describe('ustawienia księgowości', () => {
         domainDialog = page.getByRole('dialog', {name: 'Dodaj domenę', exact: true});
         await domainDialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(domainName);
         const domainCreation = await performGraphQlOperationWithRefetch<
-            { createDomain: { publicId: string; name: string } },
+            {createDomain: {publicId: string; name: string}},
             DomainsData
         >(page, 'CreateDomain', 'DomainsData', () =>
             domainDialog.getByRole('button', {name: 'Dodaj domenę', exact: true}).click()
@@ -729,7 +731,7 @@ test.describe('ustawienia księgowości', () => {
         domainDialog = page.getByRole('dialog', {name: 'Edytuj domenę', exact: true});
         await domainDialog.getByRole('textbox', {name: 'Nazwa', exact: true}).fill(updatedDomainName);
         const domainUpdate = await performGraphQlOperationWithRefetch<
-            { updateDomain: { publicId: string; name: string } },
+            {updateDomain: {publicId: string; name: string}},
             DomainsData
         >(page, 'UpdateDomain', 'DomainsData', () =>
             domainDialog.getByRole('button', {name: 'Zapisz zmiany', exact: true}).click()
@@ -754,7 +756,7 @@ test.describe('ustawienia księgowości', () => {
                 exact: true,
             });
             await dialog.getByRole('textbox', {name: 'Login użytkownika', exact: true}).fill(invitedUser.login);
-            const invitation = await performGraphQlOperationWithRefetch<{ inviteUserToDomain: string }, DomainsData>(
+            const invitation = await performGraphQlOperationWithRefetch<{inviteUserToDomain: string}, DomainsData>(
                 page,
                 'InviteUserToDomain',
                 'DomainsData',
@@ -786,14 +788,12 @@ test.describe('ustawienia księgowości', () => {
                 exact: true,
             });
             await expect(rejectButton).toBeVisible();
-            const rejection = await performGraphQlOperationWithRefetch<{
-                rejectInvitationToDomain: string
-            }, DomainsData>(
-                page,
-                'RejectInvitationToDomain',
-                'DomainsData',
-                () => rejectButton.click()
-            );
+            const rejection = await performGraphQlOperationWithRefetch<
+                {
+                    rejectInvitationToDomain: string;
+                },
+                DomainsData
+            >(page, 'RejectInvitationToDomain', 'DomainsData', () => rejectButton.click());
             expect(rejection.mutation.variables).toEqual({domainPublicId});
             expect(rejection.mutation.responseBody.data!.rejectInvitationToDomain).toBeTruthy();
             invitationPending = false;
@@ -809,7 +809,7 @@ test.describe('ustawienia księgowości', () => {
                 name: `Akceptuj zaproszenie do domeny ${currentDomainName}`,
                 exact: true,
             });
-            const acceptance = await performGraphQlOperationBeforeNavigation<{ acceptInvitationToDomain: string }>(
+            const acceptance = await performGraphQlOperationBeforeNavigation<{acceptInvitationToDomain: string}>(
                 page,
                 'AcceptInvitationToDomain',
                 () => acceptButton.click()
@@ -833,13 +833,13 @@ test.describe('ustawienia księgowości', () => {
             });
             await promoteButton.click();
             confirmation = page.getByRole('dialog', {name: 'Potwierdź zmianę', exact: true});
-            const promotion = await performGraphQlOperationWithRefetch<{
-                setUserDomainAccessLevel: string
-            }, DomainsData>(
-                page,
-                'SetUserDomainAccessLevel',
-                'DomainsData',
-                () => confirmation.getByRole('button', {name: 'Zmień uprawnienia', exact: true}).click()
+            const promotion = await performGraphQlOperationWithRefetch<
+                {
+                    setUserDomainAccessLevel: string;
+                },
+                DomainsData
+            >(page, 'SetUserDomainAccessLevel', 'DomainsData', () =>
+                confirmation.getByRole('button', {name: 'Zmień uprawnienia', exact: true}).click()
             );
             expect(promotion.mutation.variables).toEqual({
                 domainPublicId,
@@ -859,13 +859,13 @@ test.describe('ustawienia księgowości', () => {
             });
             await demoteButton.click();
             confirmation = page.getByRole('dialog', {name: 'Potwierdź zmianę', exact: true});
-            const demotion = await performGraphQlOperationWithRefetch<{
-                setUserDomainAccessLevel: string
-            }, DomainsData>(
-                page,
-                'SetUserDomainAccessLevel',
-                'DomainsData',
-                () => confirmation.getByRole('button', {name: 'Zmień uprawnienia', exact: true}).click()
+            const demotion = await performGraphQlOperationWithRefetch<
+                {
+                    setUserDomainAccessLevel: string;
+                },
+                DomainsData
+            >(page, 'SetUserDomainAccessLevel', 'DomainsData', () =>
+                confirmation.getByRole('button', {name: 'Zmień uprawnienia', exact: true}).click()
             );
             expect(demotion.mutation.variables).toEqual({
                 domainPublicId,
@@ -897,7 +897,7 @@ test.describe('ustawienia księgowości', () => {
                 if (await removeButton.isVisible()) {
                     await removeButton.click();
                     const confirmation = page.getByRole('dialog', {name: 'Potwierdź zmianę', exact: true});
-                    await performGraphQlOperationWithRefetch<{ setUserDomainAccessLevel: string }, DomainsData>(
+                    await performGraphQlOperationWithRefetch<{setUserDomainAccessLevel: string}, DomainsData>(
                         page,
                         'SetUserDomainAccessLevel',
                         'DomainsData',
@@ -908,7 +908,9 @@ test.describe('ustawienia księgowości', () => {
         }
     });
 
-    test('pokazuje dostępy bankowe, anuluje wybór banku i obsługuje błąd odświeżenia rachunku', async ({page}, testInfo) => {
+    test('pokazuje dostępy bankowe, anuluje wybór banku i obsługuje błąd odświeżenia rachunku', async ({
+        page,
+    }, testInfo) => {
         const domainPublicId = await login(page);
         await openAccountantPage(page, domainPublicId, '/settings');
         const permissionsPromise = waitForGraphQlData<BankPermissionsData>(page, 'GetBankPermissions');
@@ -955,11 +957,11 @@ test.describe('ustawienia księgowości', () => {
         );
         await page.getByRole('button', {name: 'Odśwież dane', exact: true}).first().click();
         const refreshResponse = await refreshResponsePromise;
-        const refreshBody = (await refreshResponse.json()) as { errors?: Array<{ message?: string }> };
+        const refreshBody = (await refreshResponse.json()) as {errors?: Array<{message?: string}>};
 
-        expect(
-            (refreshResponse.request().postDataJSON() as { variables?: Record<string, unknown> }).variables
-        ).toEqual({bankAccountPublicId: refreshableBankAccount.publicId});
+        expect((refreshResponse.request().postDataJSON() as {variables?: Record<string, unknown>}).variables).toEqual({
+            bankAccountPublicId: refreshableBankAccount.publicId,
+        });
         expect(refreshResponse.ok()).toBeTruthy();
         expect(refreshBody.errors).toHaveLength(1);
         expect(refreshBody.errors![0].message).toContain('500');

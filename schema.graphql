@@ -34,6 +34,8 @@ type Query {
     monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
 
     cubeResults(cubeResultsQuery: CubeResultsQuery!): CubeResults!
+
+    strengthTraining: StrengthTrainingQuery!
 }
 
 type Mutation{
@@ -117,6 +119,8 @@ type Mutation{
     deleteBankAccountAssignment(deleteBankAccountAssignmentInput: DeleteBankAccountAssignmentInput!): String!
 
     saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
+
+    strengthTraining: StrengthTrainingMutation!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
@@ -1016,4 +1020,96 @@ input SaveCubeResultInput {
     cubeType: CubeType!
     timestampOfSolve: LocalDateTime!
     timeInMillis: Int!
+}
+
+type StrengthTrainingQuery {
+    exerciseFamilies(exerciseFamilyPublicId: UUID): [StrengthTrainingExerciseFamily!]!
+    variantDimensions(variantDimensionPublicId: UUID): [StrengthTrainingVariantDimension!]!
+}
+
+type StrengthTrainingMutation {
+    createExerciseFamily(input: CreateStrengthTrainingExerciseFamilyInput!): StrengthTrainingExerciseFamily!
+    createVariantDimension(input: CreateStrengthTrainingVariantDimensionInput!): StrengthTrainingVariantDimension!
+    createVariantValue(input: CreateStrengthTrainingVariantValueInput!): StrengthTrainingVariantValue!
+    assignDimensionToFamily(input: AssignStrengthTrainingDimensionToFamilyInput!): StrengthTrainingExerciseFamilyDimension!
+    setAllowedVariantValues(input: SetAllowedStrengthTrainingVariantValuesInput!): [StrengthTrainingExerciseFamilyVariantValue!]!
+}
+
+type StrengthTrainingExerciseFamily {
+    publicId: UUID!
+    scope: StrengthTrainingCatalogScope!
+    name: String!
+    exerciseType: StrengthTrainingExerciseType!
+    active: Boolean!
+    dimensions: [StrengthTrainingExerciseFamilyDimension!]!
+}
+
+type StrengthTrainingVariantDimension {
+    publicId: UUID!
+    scope: StrengthTrainingCatalogScope!
+    name: String!
+    active: Boolean!
+    values: [StrengthTrainingVariantValue!]!
+}
+
+type StrengthTrainingVariantValue {
+    publicId: UUID!
+    scope: StrengthTrainingCatalogScope!
+    name: String!
+    active: Boolean!
+}
+
+type StrengthTrainingExerciseFamilyDimension {
+    publicId: UUID!
+    scope: StrengthTrainingCatalogScope!
+    position: Int!
+    required: Boolean!
+    variantDimension: StrengthTrainingVariantDimension!
+    allowedValues: [StrengthTrainingExerciseFamilyVariantValue!]!
+}
+
+type StrengthTrainingExerciseFamilyVariantValue {
+    publicId: UUID!
+    scope: StrengthTrainingCatalogScope!
+    defaultValue: Boolean!
+    variantValue: StrengthTrainingVariantValue!
+}
+
+enum StrengthTrainingExerciseType {
+    WEIGHT_REPS
+    BODYWEIGHT_REPS
+    DURATION
+    DISTANCE
+}
+
+enum StrengthTrainingCatalogScope {
+    SYSTEM
+    DOMAIN
+}
+
+input CreateStrengthTrainingExerciseFamilyInput {
+    name: String!
+    exerciseType: StrengthTrainingExerciseType!
+}
+
+input CreateStrengthTrainingVariantDimensionInput {
+    name: String!
+}
+
+input CreateStrengthTrainingVariantValueInput {
+    variantDimensionPublicId: UUID!
+    name: String!
+}
+
+input AssignStrengthTrainingDimensionToFamilyInput {
+    exerciseFamilyPublicId: UUID!
+    variantDimensionPublicId: UUID!
+    position: Int!
+    required: Boolean! = true
+}
+
+input SetAllowedStrengthTrainingVariantValuesInput {
+    familyDimensionPublicId: UUID!
+    variantValuePublicIds: [UUID!]!
+    defaultValuePublicId: UUID
 }

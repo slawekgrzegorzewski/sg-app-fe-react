@@ -1,0 +1,126 @@
+query GetStrengthTrainingExerciseCatalog {
+    strengthTraining {
+        exerciseFamilies {
+            publicId
+            name
+            scope
+            exerciseType
+            active
+            dimensions {
+                publicId
+                scope
+                position
+                required
+                variantDimension {
+                    publicId
+                    scope
+                    name
+                }
+                allowedValues {
+                    publicId
+                    scope
+                    defaultValue
+                    variantValue {
+                        publicId
+                        scope
+                        name
+                    }
+                }
+            }
+        }
+        variantDimensions {
+            publicId
+            name
+            scope
+            active
+            values {
+                publicId
+                name
+                scope
+                active
+            }
+        }
+    }
+}
+
+mutation CreateStrengthTrainingExerciseFamily($name: String!, $exerciseType: StrengthTrainingExerciseType!) {
+    strengthTraining {
+        createExerciseFamily(input: {name: $name, exerciseType: $exerciseType}) {
+            publicId
+            name
+            scope
+            exerciseType
+            active
+        }
+    }
+}
+
+mutation CreateStrengthTrainingVariantDimension($name: String!) {
+    strengthTraining {
+        createVariantDimension(input: {name: $name}) {
+            publicId
+            name
+            scope
+            active
+        }
+    }
+}
+
+mutation CreateStrengthTrainingVariantValue($variantDimensionPublicId: UUID!, $name: String!) {
+    strengthTraining {
+        createVariantValue(input: {variantDimensionPublicId: $variantDimensionPublicId, name: $name}) {
+            publicId
+            name
+            scope
+            active
+        }
+    }
+}
+
+mutation AssignStrengthTrainingDimensionToFamily(
+    $exerciseFamilyPublicId: UUID!
+    $variantDimensionPublicId: UUID!
+    $position: Int!
+    $required: Boolean!
+) {
+    strengthTraining {
+        assignDimensionToFamily(
+            input: {
+                exerciseFamilyPublicId: $exerciseFamilyPublicId
+                variantDimensionPublicId: $variantDimensionPublicId
+                position: $position
+                required: $required
+            }
+        ) {
+            publicId
+            position
+            required
+            variantDimension {
+                name
+            }
+        }
+    }
+}
+
+mutation SetAllowedStrengthTrainingVariantValues(
+    $familyDimensionPublicId: UUID!
+    $variantValuePublicIds: [UUID!]!
+    $defaultValuePublicId: UUID
+) {
+    strengthTraining {
+        setAllowedVariantValues(
+            input: {
+                familyDimensionPublicId: $familyDimensionPublicId
+                variantValuePublicIds: $variantValuePublicIds
+                defaultValuePublicId: $defaultValuePublicId
+            }
+        ) {
+            publicId
+            defaultValue
+            variantValue {
+                publicId
+                name
+            }
+        }
+    }
+}

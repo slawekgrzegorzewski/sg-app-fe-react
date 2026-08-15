@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-screen-queries, jest/valid-expect -- Playwright Page locators are intentional in E2E tests; expect messages are supported by Playwright. */
 import {expect, test, type Locator, type Page} from '@playwright/test';
 import path from 'node:path';
 import {

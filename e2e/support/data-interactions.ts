@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-screen-queries, jest/valid-expect -- Playwright Page locators are intentional in E2E tests; expect messages are supported by Playwright. */
 import {expect, type Locator, type Page, type Request, type TestInfo} from '@playwright/test';
 
 export const RUN_ID = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;

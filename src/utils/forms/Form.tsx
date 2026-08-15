@@ -81,6 +81,7 @@ export type BooleanEditorField = Omit<RegularEditorField, 'type'> & {
 export type SelectEditorField = Omit<RegularEditorField, 'type'> & {
     type: 'SELECT';
     selectOptions: SelectOption[];
+    selectOptionsSupplier?: (values: any) => SelectOption[];
 };
 
 export type AutocompleteEditorField = Omit<RegularEditorField, 'type'> & {
@@ -106,6 +107,8 @@ export type EditorField =
 
 export type FormProps<T> = {
     fields: EditorField[];
+    fieldsSupplier?: (values: T) => EditorField[];
+    generatedValuesSupplier?: (values: T) => Partial<T>;
     initialValues: T;
     validationSchema: Yup.ObjectSchema<any>;
     previewOfChange?(t: T): React.JSX.Element;
@@ -121,6 +124,8 @@ export type FormProps<T> = {
 
 export default function Form<T>({
     fields,
+    fieldsSupplier,
+    generatedValuesSupplier,
     initialValues,
     validationSchema,
     previewOfChange,
@@ -171,6 +176,10 @@ export default function Form<T>({
     }
 
     function createTextField(editorField: EditorField, formik: any) {
+        const selectOptions = isSelectEditorField(editorField)
+            ? editorField.selectOptionsSupplier?.(formik.values) ?? editorField.selectOptions
+            : [];
+
         return (
             <TextField
                 {...getFieldUniqueProps(editorField)}
@@ -203,7 +212,7 @@ export default function Form<T>({
                 helperText={formik.touched[editorField.key] && formik.errors[editorField.key]}
             >
                 {isSelectEditorField(editorField) &&
-                    editorField.selectOptions.map(option => (
+                    selectOptions.map(option => (
                         <MenuItem key={option.key} value={option.key}>
                             {option.displayElement}
                         </MenuItem>
@@ -316,9 +325,30 @@ export default function Form<T>({
     }
 
     const Form = (formik: any) => {
+        const generatedValuesRef = React.useRef<Record<string, unknown>>({});
+
         React.useEffect(() => {
             onChange?.(formik.values as T);
         }, [formik.values]);
+
+        React.useEffect(() => {
+            const generatedValues = generatedValuesSupplier?.(formik.values as T);
+            if (!generatedValues) {
+                return;
+            }
+            Object.entries(generatedValues).forEach(([key, value]) => {
+                const previousGeneratedValue = generatedValuesRef.current[key];
+                const mayGenerate =
+                    !(key in generatedValuesRef.current) || formik.values[key] === previousGeneratedValue;
+                if (!mayGenerate) {
+                    return;
+                }
+                generatedValuesRef.current[key] = value;
+                if (formik.values[key] !== value) {
+                    formik.setFieldValue(key, value, false);
+                }
+            });
+        }, [formik]);
 
         return (
             <form onSubmit={formik.handleSubmit} style={{width: '100%'}}>
@@ -328,7 +358,7 @@ export default function Form<T>({
                     alignItems={presentation === 'dialog' ? 'stretch' : 'center'}
                     sx={{width: '100%'}}
                 >
-                    {fields
+                    {(fieldsSupplier?.(formik.values as T) ?? fields)
                         .filter(field => field.type !== 'HIDDEN')
                         .map(editorField => {
                             if (isDatepickerEditorField(editorField)) {

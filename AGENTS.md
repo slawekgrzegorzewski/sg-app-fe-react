@@ -21,6 +21,10 @@ Po każdej zmianie uruchom analizę kodu dla wszystkich zmodyfikowanych plików,
 
 Po każdym użyciu narzędzia `@webstorm/execute_terminal_command` zamknij utworzone albo wykorzystane przez nie okno terminala. Nie pozostawiaj w IDE otwartych okien terminala po zakończeniu polecenia, niezależnie od tego, czy polecenie zakończyło się powodzeniem, błędem, czy przekroczeniem limitu czasu.
 
+## Korzystanie z MCP IntelliJ
+
+Korzystaj z MCP wystawionego przez IntelliJ IDEA, skonfigurowanego w `.codex/config.toml`, do analizy projektu, wyszukiwania symboli i odwołań, inspekcji oraz budowania i uruchamiania testów. Gdy narzędzie IntelliJ MCP zapewnia daną funkcję, preferuj je przed poleceniem powłoki.
+
 ## Język dokumentacji
 
 Cała dokumentacja projektowa, w tym `AGENTS.md` oraz pliki w katalogach `docs/` i `docs/agents/`, musi być pisana po polsku.

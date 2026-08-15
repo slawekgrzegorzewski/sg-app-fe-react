@@ -1,3 +1,4 @@
+/* eslint-disable testing-library/prefer-screen-queries, jest/valid-expect, jest/no-conditional-expect -- Playwright Page locators and asynchronous GraphQL response assertions are intentional in E2E tests. */
 import {expect, test, type Locator, type Page, type Request, type Response} from '@playwright/test';
 import {login, RUN_ID} from './support/data-interactions';
 
