@@ -27,6 +27,14 @@ Konfiguracja ćwiczenia obejmuje wymiary wariantów i przypisane do nich możliw
 
 Elementy katalogu z zakresem `SYSTEM` są tylko do odczytu dla użytkownika domeny. Interfejs nie pokazuje dodawania wartości na podstronie systemowego wymiaru; dane domenowe można tworzyć w osobnym wymiarze i przypisywać do widocznej rodziny zgodnie z kontraktem API.
 
+Strona „Plany” korzysta z `strengthTraining.plans`, `createPlan`, `updatePlan` i `deletePlan`. Wyświetla wszystkie plany domeny, umożliwia utworzenie planu z nazwą, opisem i zakresem dat, edycję nazwy, opisu i daty zakończenia oraz usunięcie planu, jeżeli jego `canDelete` ma wartość `true`. Data rozpoczęcia jest ustalana podczas tworzenia i nie jest zmieniana przez formularz edycji.
+
+Kliknięcie planu otwiera podstronę zarządzania jego dniami treningowymi. Dni treningowe są tworzone mutacją `createWorkoutTemplate`, a ich `position` jest nadawana jako kolejny numer po istniejących dniach.
+
+Na podstronie planu można edytować nazwę i opis dnia treningowego mutacją `updateWorkoutTemplate`. Usuwanie korzysta z `deleteWorkoutTemplate` i jest dostępne wyłącznie dla dni z `canDelete = true`.
+
+Formularz edycji dnia zawiera dynamiczną sekcję ćwiczeń. Wiersze wskazują ćwiczenie z katalogu przez dynamiczne `exercisePresets`, a cała lista jest zapisywana mutacją `updateTemplateExercises` po zapisaniu dnia. Dla każdego wiersza dostępny jest także dialog wyboru rodziny ćwiczenia i własnych wartości wariantów z katalogu.
+
 Nazwa ćwiczenia jest oparta na nazwie encji `ExerciseFamily` oraz konfiguracji wariantów. W interfejsie encja ta jest zawsze nazywana „Ćwiczenie”.
 
 Wartości wariantów nie są prezentowane jako globalna lista. Użytkownik otwiera je akcją „Wartości” przy wybranym wariancie. Podstrona jest dostępna pod ścieżką `variant-dimensions/<variantDimensionPublicId>` i pokazuje wyłącznie wartości tego wariantu.

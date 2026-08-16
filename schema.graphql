@@ -9,1107 +9,1251 @@ scalar YearMonth
 scalar Year
 
 type Query {
-    financeManagement: FinanceManagement!
-    billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!
-    bankTransactionsToImport: [BankTransactionToImport!]!
+financeManagement: FinanceManagement!
+billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!
+bankTransactionsToImport: [BankTransactionToImport!]!
 
-    settings: Settings!
-    domainInvitations: [DomainSimple!]!
-    bankPermissions: BankPermissions!
+settings: Settings!
+domainInvitations: [DomainSimple!]!
+bankPermissions: BankPermissions!
 
-    intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
-    intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput!): IntellectualPropertiesRecordsResponse
-    allTimeRecordCategories: [TimeRecordCategory!]!
-    tasks(input: TasksQueryInput!): TasksResponse!
-    timeRecords(input: TimeRecordsQueryInput!): TimeRecordsResponse!
+intellectualPropertiesReport(input: IntellectualPropertyReportQuery!): IntellectualPropertyReportResponse
+intellectualPropertiesRecords(input: IntellectualPropertiesRecordsQueryInput!): IntellectualPropertiesRecordsResponse
+allTimeRecordCategories: [TimeRecordCategory!]!
+tasks(input: TasksQueryInput!): TasksResponse!
+timeRecords(input: TimeRecordsQueryInput!): TimeRecordsResponse!
 
-    loans: Loans!
-    simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
-    simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
-    singleLoan(input: LoanQuery): Loan!
+loans: Loans!
+simulateLoan(loanCalculationParams: LoanCalculationParams): [LoanCalculationInstallment!]!
+simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
+singleLoan(input: LoanQuery): Loan!
 
-    monthLedger(ledgerQuery: LedgerQuery): [RevenueAndExpenseEntry!]!
-    allClients: [Client!]!
-    allSuppliers: [Supplier!]!
-    monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
+monthLedger(ledgerQuery: LedgerQuery): [RevenueAndExpenseEntry!]!
+allClients: [Client!]!
+allSuppliers: [Supplier!]!
+monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
 
-    cubeResults(cubeResultsQuery: CubeResultsQuery!): CubeResults!
+cubeResults(cubeResultsQuery: CubeResultsQuery!): CubeResults!
 
-    strengthTraining: StrengthTrainingQuery!
+strengthTraining: StrengthTrainingQuery!
 }
 
 type Mutation{
-    login(loginParameters:LoginParameters!): AuthenticationInfo!
-    loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
-    switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!
-    register(registrationParameters:RegistrationParameters!): MFAData!
-    setupMFA(mfaParameters:MFAParameters!): Boolean!
+login(loginParameters:LoginParameters!): AuthenticationInfo!
+loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
+switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!
+register(registrationParameters:RegistrationParameters!): MFAData!
+setupMFA(mfaParameters:MFAParameters!): Boolean!
 
-    createDomain(domainCreationInput: DomainCreationInput!): DomainSimple!
-    updateDomain(domainUpdateInput: DomainUpdateInput!): DomainSimple!
-    inviteUserToDomain(domainInvitationInput: DomainInvitationInput!): String!
-    acceptInvitationToDomain(domainInvitationResponseInput: DomainInvitationResponseInput!): String!
-    rejectInvitationToDomain(domainInvitationResponseInput: DomainInvitationResponseInput!): String!
-    setUserDomainAccessLevel(domainSetAccessLevelInput: DomainSetAccessLevelInput!): String!
+createDomain(domainCreationInput: DomainCreationInput!): DomainSimple!
+updateDomain(domainUpdateInput: DomainUpdateInput!): DomainSimple!
+inviteUserToDomain(domainInvitationInput: DomainInvitationInput!): String!
+acceptInvitationToDomain(domainInvitationResponseInput: DomainInvitationResponseInput!): String!
+rejectInvitationToDomain(domainInvitationResponseInput: DomainInvitationResponseInput!): String!
+setUserDomainAccessLevel(domainSetAccessLevelInput: DomainSetAccessLevelInput!): String!
 
-    updateAccountantSettings(accountantSettingsUpdateInput: AccountantSettingsUpdateInput!): String!
-    createAccount(accountCreationInput: AccountCreationInput!): Account!
-    updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
-    deleteAccount(accountPublicId: UUID!): String!
-    reorderAccount(accountReorderInput: AccountReorderInput!): String!
-    createBillingCategory(billingCategoryCreationInput: BillingCategoryCreationInput!): BillingCategory!
-    updateBillingCategory(billingCategoryUpdateInput: BillingCategoryUpdateInput!): BillingCategory!
-    deleteBillingCategory(billingCategoryPublicId: UUID!): String!
-    createPiggyBank(piggyBankCreationInput: PiggyBankCreationInput!): PiggyBank!
-    updatePiggyBank(piggyBankUpdateInput: PiggyBankUpdateInput!): PiggyBank!
-    deletePiggyBank(piggyBankPublicId: UUID!): String!
-    createBillingPeriod(yearMonth: YearMonth!): BillingPeriod!
-    finishBillingPeriod(yearMonth: YearMonth!): String!
-    createIncome(createIncomeInput: CreateBillingElementInput!): String!
-    createExpense(createExpenseInput: CreateBillingElementInput!): String!
-    createTransfer(createTransferInput: CreateTransferInput!): String!
-    mutuallyCancel(mutuallyCancelInput: MutuallyCancelInput!): String!
-    importBankTransactions(importBankTransactionsInput: ImportBankTransactionsInput!): String!
+updateAccountantSettings(accountantSettingsUpdateInput: AccountantSettingsUpdateInput!): String!
+createAccount(accountCreationInput: AccountCreationInput!): Account!
+updateAccount(accountUpdateInput: AccountUpdateInput!): Account!
+deleteAccount(accountPublicId: UUID!): String!
+reorderAccount(accountReorderInput: AccountReorderInput!): String!
+createBillingCategory(billingCategoryCreationInput: BillingCategoryCreationInput!): BillingCategory!
+updateBillingCategory(billingCategoryUpdateInput: BillingCategoryUpdateInput!): BillingCategory!
+deleteBillingCategory(billingCategoryPublicId: UUID!): String!
+createPiggyBank(piggyBankCreationInput: PiggyBankCreationInput!): PiggyBank!
+updatePiggyBank(piggyBankUpdateInput: PiggyBankUpdateInput!): PiggyBank!
+deletePiggyBank(piggyBankPublicId: UUID!): String!
+createBillingPeriod(yearMonth: YearMonth!): BillingPeriod!
+finishBillingPeriod(yearMonth: YearMonth!): String!
+createIncome(createIncomeInput: CreateBillingElementInput!): String!
+createExpense(createExpenseInput: CreateBillingElementInput!): String!
+createTransfer(createTransferInput: CreateTransferInput!): String!
+mutuallyCancel(mutuallyCancelInput: MutuallyCancelInput!): String!
+importBankTransactions(importBankTransactionsInput: ImportBankTransactionsInput!): String!
 
-    addIPR(input: IntellectualPropertyData): IntellectualProperty
-    updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
-    deleteIPR(intellectualPropertyId: Int!): String!
-    createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
-    updateTask(taskId: Int!, taskData: TaskData!): String!
-    deleteTask(taskId: Int!): String!
-    uploadTaskAttachment(input: TaskAttachmentUploadData!): Boolean
-    deleteTaskAttachment(input: TaskAttachmentDeleteData!): Boolean
-    createTimeRecord(timeRecordData: TimeRecordData!): String!
-    updateTimeRecord(timeRecordId: Int!, timeRecordData: TimeRecordData!): String!
-    assignCategoryToTimeRecord(timeRecordId: Int!, timeRecordCategoryId: Int): String!
-    deleteTimeRecord(timeRecordId: Int!): String!
-    createTimeRecordCategory(name: String!): TimeRecordCategory!
-    updateTimeRecordCategory(timeRecordId: Int!, name: String!): String!
-    deleteTimeRecordCategory(timeRecordId:Int!): String!
+addIPR(input: IntellectualPropertyData): IntellectualProperty
+updateIPR(intellectualPropertyId: Int!, input: IntellectualPropertyData): IntellectualProperty
+deleteIPR(intellectualPropertyId: Int!): String!
+createTask(intellectualPropertyId: Int!, taskData: TaskData!): String!
+updateTask(taskId: Int!, taskData: TaskData!): String!
+deleteTask(taskId: Int!): String!
+uploadTaskAttachment(input: TaskAttachmentUploadData!): Boolean
+deleteTaskAttachment(input: TaskAttachmentDeleteData!): Boolean
+createTimeRecord(timeRecordData: TimeRecordData!): String!
+updateTimeRecord(timeRecordId: Int!, timeRecordData: TimeRecordData!): String!
+assignCategoryToTimeRecord(timeRecordId: Int!, timeRecordCategoryId: Int): String!
+deleteTimeRecord(timeRecordId: Int!): String!
+createTimeRecordCategory(name: String!): TimeRecordCategory!
+updateTimeRecordCategory(timeRecordId: Int!, name: String!): String!
+deleteTimeRecordCategory(timeRecordId:Int!): String!
 
-    triggerTranslatedPJMVersesCheck: String!
+triggerTranslatedPJMVersesCheck: String!
 
-    createLoan(input: LoanCreationInput): Loan!
-    updateLoan(input: LoanUpdateInput): Loan!
-    deleteLoan(input: LoanDeleteInput): String!
-    createInstallment(input: InstallmentCreationInput!): Installment!
-    deleteInstallment(installmentPublicId: UUID!): String!
-    createConstantForNFirstInstallmentRateStrategyConfig(input: ConstantForNFirstInstallmentRateStrategyConfigCreationInput!): RateStrategyConfig!
-    deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
-    createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
-    deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
+createLoan(input: LoanCreationInput): Loan!
+updateLoan(input: LoanUpdateInput): Loan!
+deleteLoan(input: LoanDeleteInput): String!
+createInstallment(input: InstallmentCreationInput!): Installment!
+deleteInstallment(installmentPublicId: UUID!): String!
+createConstantForNFirstInstallmentRateStrategyConfig(input: ConstantForNFirstInstallmentRateStrategyConfigCreationInput!): RateStrategyConfig!
+deleteRateStrategyConfig(input: RateStrategyConfigDeleteInput!): String!
+createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
+deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
 
-    addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput):RevenueAndExpenseEntry
-    createClient(clientCreationInput: ClientCreationInput!): Client!
-    updateClient(clientUpdateInput: ClientUpdateInput!): Client!
-    deleteClient(clientPublicId:UUID!): String!
-    createSupplier(supplierCreationInput: SupplierCreationInput!): Supplier!
-    updateSupplier(supplierUpdateInput: SupplierUpdateInput!): Supplier!
-    deleteSupplier(supplierPublicId:UUID!): String!
-    createBill(billCreationInput: BillCreationInput!): FinancialDocument!
-    updateBill(billUpdateInput: BillUpdateInput!): FinancialDocument!
-    createInvoice(invoiceCreationInput: InvoiceCreationInput!): Invoice!
-    updateInvoice(invoiceUpdateInput: InvoiceUpdateInput!): Invoice!
-    deleteFinancialDocument(financialDocumentPublicId: UUID!): String!
+addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput):RevenueAndExpenseEntry
+createClient(clientCreationInput: ClientCreationInput!): Client!
+updateClient(clientUpdateInput: ClientUpdateInput!): Client!
+deleteClient(clientPublicId:UUID!): String!
+createSupplier(supplierCreationInput: SupplierCreationInput!): Supplier!
+updateSupplier(supplierUpdateInput: SupplierUpdateInput!): Supplier!
+deleteSupplier(supplierPublicId:UUID!): String!
+createBill(billCreationInput: BillCreationInput!): FinancialDocument!
+updateBill(billUpdateInput: BillUpdateInput!): FinancialDocument!
+createInvoice(invoiceCreationInput: InvoiceCreationInput!): Invoice!
+updateInvoice(invoiceUpdateInput: InvoiceUpdateInput!): Invoice!
+deleteFinancialDocument(financialDocumentPublicId: UUID!): String!
 
-    startPermissionRequest(bankPermissionRequest: BankPermissionRequest!):  [BankPermission!]!
-    confirmPermission(confirmPermissionRequest: ConfirmPermissionRequest!): String!
-    triggerFetchBankAccountData(fetchBankAccountDataInput: FetchBankAccountDataInput!): String!
-    assignBankAccountToAccount(assignBankAccountToAccountInput: AssignBankAccountToAccountInput!): String!
-    deleteBankAccountAssignment(deleteBankAccountAssignmentInput: DeleteBankAccountAssignmentInput!): String!
+startPermissionRequest(bankPermissionRequest: BankPermissionRequest!):  [BankPermission!]!
+confirmPermission(confirmPermissionRequest: ConfirmPermissionRequest!): String!
+triggerFetchBankAccountData(fetchBankAccountDataInput: FetchBankAccountDataInput!): String!
+assignBankAccountToAccount(assignBankAccountToAccountInput: AssignBankAccountToAccountInput!): String!
+deleteBankAccountAssignment(deleteBankAccountAssignmentInput: DeleteBankAccountAssignmentInput!): String!
 
-    saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
+saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
 
-    strengthTraining: StrengthTrainingMutation!
+strengthTraining: StrengthTrainingMutation!
 }
 
 input IntellectualPropertiesRecordsQueryInput {
-    yearMonthFilter: YearMonth
-    onlyReportsWithoutAttachments: Boolean! = false
-    onlyReportsHavingTasksWithNoAttachments: Boolean! = false
+yearMonthFilter: YearMonth
+onlyReportsWithoutAttachments: Boolean! = false
+onlyReportsHavingTasksWithNoAttachments: Boolean! = false
 }
 
 input TasksQueryInput {
-    description: String! = ""
+description: String! = ""
 }
 
 input TimeRecordsQueryInput {
-    yearMonthFilter: YearMonth
+yearMonthFilter: YearMonth
 }
 
 input IntellectualPropertyReportQuery {
-    year: Year!
+year: Year!
 }
 
 type IntellectualPropertiesRecordsResponse {
-    reports: [IntellectualProperty!]!
-    stats: TimeRecordsStats!
+reports: [IntellectualProperty!]!
+stats: TimeRecordsStats!
 }
 
 type TimeRecordsReport {
-    description: String!
-    ipHours: BigDecimal!
-    nonIPHours: BigDecimal!
+description: String!
+ipHours: BigDecimal!
+nonIPHours: BigDecimal!
 }
 
 type IntellectualPropertyMonthReport {
-    yearMonth: YearMonth!
-    ipHours: BigDecimal!
-    nonIPHours: BigDecimal!
-    ipPercentage: BigDecimal!
-    timeRecordReports: [TimeRecordsReport!]!
-    nonCategorizedTimeRecords: [TimeRecord!]!
+yearMonth: YearMonth!
+ipHours: BigDecimal!
+nonIPHours: BigDecimal!
+ipPercentage: BigDecimal!
+timeRecordReports: [TimeRecordsReport!]!
+nonCategorizedTimeRecords: [TimeRecord!]!
 }
 
 type IntellectualPropertiesReport {
-    year: Year!
-    ipHours: BigDecimal!
-    nonIPHours: BigDecimal!
-    ipPercentage: BigDecimal!
-    countOfDifferentIPs: Int!
-    monthReports: [IntellectualPropertyMonthReport!]!
+year: Year!
+ipHours: BigDecimal!
+nonIPHours: BigDecimal!
+ipPercentage: BigDecimal!
+countOfDifferentIPs: Int!
+monthReports: [IntellectualPropertyMonthReport!]!
 }
 
 type IntellectualPropertyReportResponse {
-    report: IntellectualPropertiesReport!
-    timeRecordCategories: [TimeRecordCategory!]!
-    availableYears: [Year!]
+report: IntellectualPropertiesReport!
+timeRecordCategories: [TimeRecordCategory!]!
+availableYears: [Year!]
 }
 
 type TimeRecordsStats {
-    firstTimeRecord: LocalDate!
-    lastTimeRecord: LocalDate!
+firstTimeRecord: LocalDate!
+lastTimeRecord: LocalDate!
 }
 
 type TasksResponse {
-    tasks: [Task!]!
+tasks: [Task!]!
 }
 
 type TimeRecordsResponse {
-    taskWithSelectedTimeRecords: [Task!]!
-    nonIPTimeRecords: [TimeRecord!]!
-    stats: TimeRecordsStats!
+taskWithSelectedTimeRecords: [Task!]!
+nonIPTimeRecords: [TimeRecord!]!
+stats: TimeRecordsStats!
 }
 
 input LoginParameters{
-    login:String!
-    password: String!
-    otp:String!
-    domainPublicId: UUID
+login:String!
+password: String!
+otp:String!
+domainPublicId: UUID
 }
 
 input LoginWithGoogleTokenParameters{
-    googleToken: String!
+googleToken: String!
 }
 
 input SwitchDomainParameters {
-    domainPublicId: UUID
+domainPublicId: UUID
 }
 
 input RegistrationParameters{
-    firstName:String!
-    lastName:String!
-    login:String!
-    email: String!
-    password: String!
-    repeatedPassword: String!
+firstName:String!
+lastName:String!
+login:String!
+email: String!
+password: String!
+repeatedPassword: String!
 }
 
 input MFAParameters{
-    login: String!
-    password: String!
-    otp: String!
+login: String!
+password: String!
+otp: String!
 }
 
 input LoanCalculationParams {
-    loanAmount: BigDecimal!,
-    repaymentStart: LocalDate!,
-    rate: BigDecimal!,
-    wibor: BigDecimal!,
-    numberOfInstallments: Int!,
-    overpaymentMonthlyBudget: BigDecimal!,
-    overpaymentYearlyBudget: BigDecimal!
+loanAmount: BigDecimal!,
+repaymentStart: LocalDate!,
+rate: BigDecimal!,
+wibor: BigDecimal!,
+numberOfInstallments: Int!,
+overpaymentMonthlyBudget: BigDecimal!,
+overpaymentYearlyBudget: BigDecimal!
 }
 
 input LoanSimulationParams {
-    loanId: UUID!,
-    monthlyBudget: MonetaryAmountInput,
-    yearlyOverpayment: MonetaryAmountInput
+loanId: UUID!,
+monthlyBudget: MonetaryAmountInput,
+yearlyOverpayment: MonetaryAmountInput
 }
 
 type LoanCalculationInstallment {
-    paymentFrom: LocalDate!
-    paymentTo: LocalDate!,
-    remainingCapitalAtTheBeginning: BigDecimal!,
-    installment: BigDecimal!,
-    repaidCapital: BigDecimal!,
-    paidInterest: BigDecimal!,
-    overpayment: BigDecimal!
+paymentFrom: LocalDate!
+paymentTo: LocalDate!,
+remainingCapitalAtTheBeginning: BigDecimal!,
+installment: BigDecimal!,
+repaidCapital: BigDecimal!,
+paidInterest: BigDecimal!,
+overpayment: BigDecimal!
 }
 
 input IntellectualPropertyData{
-    description: String!
+description: String!
 }
 
 input TaskData{
-    coAuthors: String!,
-    description: String!
+coAuthors: String!,
+description: String!
 }
 
 input TaskAttachmentUploadData {
-    file: Upload!,
-    taskId: Int!
+file: Upload!,
+taskId: Int!
 }
 
 input TaskAttachmentDeleteData {
-    fileName: String!,
-    taskId: Int!
+fileName: String!,
+taskId: Int!
 }
 
 enum AssignmentAction {
-    NOP, ASSIGN, UNASSIGN
+NOP, ASSIGN, UNASSIGN
 }
 
 input TimeRecordData {
-    taskId: Int,
-    date: LocalDate!,
-    numberOfHours: BigDecimal!,
-    description: String!,
-    assignmentAction: AssignmentAction!
+taskId: Int,
+date: LocalDate!,
+numberOfHours: BigDecimal!,
+description: String!,
+assignmentAction: AssignmentAction!
 }
 
 type User {
-    login: String!
-    name: String!,
-    email: String!,
-    roles: [String!]!
-    domainPublicId: UUID!,
-    domains: [DomainSimple!]!
+login: String!
+name: String!,
+email: String!,
+roles: [String!]!
+domainPublicId: UUID!,
+domains: [DomainSimple!]!
 }
 
 type AuthenticationInfo {
-    jwt: String!
-    user: User!
+jwt: String!
+user: User!
 }
 
 type MFAData {
-    mfaCode: String!
-    qrLink: String!
+mfaCode: String!
+qrLink: String!
 }
 
 type DomainSimple {
-    publicId: UUID!,
-    name: String!
+publicId: UUID!,
+name: String!
 }
 
 type Domain {
-    publicId: UUID!,
-    name: String!
-    users: [DomainUser!]!
+publicId: UUID!,
+name: String!
+users: [DomainUser!]!
 }
 
 input DomainCreationInput {
-    name: String!
+name: String!
 }
 
 input DomainUpdateInput {
-    publicId: UUID!,
-    name: String!
+publicId: UUID!,
+name: String!
 }
 
 input DomainInvitationInput {
-    publicId: UUID!,
-    invitedUserLogin: String!
+publicId: UUID!,
+invitedUserLogin: String!
 }
 
 input DomainInvitationResponseInput {
-    publicId: UUID!
+publicId: UUID!
 }
 
 input DomainSetAccessLevelInput {
-    publicId: UUID!
-    userLogin: String!
-    domainAccessLevel: SetDomainAccessLevel!
+publicId: UUID!
+userLogin: String!
+domainAccessLevel: SetDomainAccessLevel!
 }
 
 type DomainUser {
-    login: String!
-    domainAccessLevel: DomainAccessLevel!
+login: String!
+domainAccessLevel: DomainAccessLevel!
 }
 
 enum SetDomainAccessLevel {
-    ADMIN, MEMBER, REMOVE
+ADMIN, MEMBER, REMOVE
 }
 
 enum DomainAccessLevel {
-    ADMIN, MEMBER
+ADMIN, MEMBER
 }
 
 type IntellectualProperty {
-    id: Int!,
-    description: String!,
-    tasks: [Task!],
-    domain: DomainSimple!
+id: Int!,
+description: String!,
+tasks: [Task!],
+domain: DomainSimple!
 }
 
 type Task {
-    id: Int!,
-    attachments: [String!],
-    coAuthors: String!,
-    description: String!,
-    timeRecords: [TimeRecord!]
+id: Int!,
+attachments: [String!],
+coAuthors: String!,
+description: String!,
+timeRecords: [TimeRecord!]
 }
 
 type TimeRecord {
-    id: Int!,
-    date: LocalDate!,
-    numberOfHours: BigDecimal!,
-    description: String,
-    timeRecordCategory: TimeRecordCategory,
-    domain: DomainSimple!
+id: Int!,
+date: LocalDate!,
+numberOfHours: BigDecimal!,
+description: String,
+timeRecordCategory: TimeRecordCategory,
+domain: DomainSimple!
 }
 
 type TimeRecordCategory {
-    id: Int!,
-    name: String!,
-    domain: DomainSimple!
+id: Int!,
+name: String!,
+domain: DomainSimple!
 }
 
 type RevenueAndExpenseEntry {
-    publicId: UUID!,
-    domain: DomainSimple!,
-    entryOrder: Int!,
-    entryDate: LocalDate!,
-    accountingDocumentNumber: String!,
-    counterparty: String!,
-    counterpartyAddress: String!,
-    description: String!,
-    providedGoodsAndServicesValue: BigDecimal!,
-    otherIncome: BigDecimal!,
-    totalIncome: BigDecimal!,
-    purchasedGoodsAndMaterialsValue: BigDecimal!,
-    additionalCostOfPurchase: BigDecimal!,
-    remunerationInCashOrInKind: BigDecimal!,
-    otherExpense: BigDecimal!,
-    totalExpense: BigDecimal!,
-    comments: String!
+publicId: UUID!,
+domain: DomainSimple!,
+entryOrder: Int!,
+entryDate: LocalDate!,
+accountingDocumentNumber: String!,
+counterparty: String!,
+counterpartyAddress: String!,
+description: String!,
+providedGoodsAndServicesValue: BigDecimal!,
+otherIncome: BigDecimal!,
+totalIncome: BigDecimal!,
+purchasedGoodsAndMaterialsValue: BigDecimal!,
+additionalCostOfPurchase: BigDecimal!,
+remunerationInCashOrInKind: BigDecimal!,
+otherExpense: BigDecimal!,
+totalExpense: BigDecimal!,
+comments: String!
 }
 
 input RevenueAndExpenseEntryInput {
-    publicId: UUID,
-    entryOrder: Int!,
-    entryDate: LocalDate!,
-    accountingDocumentNumber: String!,
-    counterparty: String!,
-    counterpartyAddress: String!,
-    description: String!,
-    providedGoodsAndServicesValue: BigDecimal!,
-    otherIncome: BigDecimal!,
-    totalIncome: BigDecimal!,
-    purchasedGoodsAndMaterialsValue: BigDecimal!,
-    additionalCostOfPurchase: BigDecimal!,
-    remunerationInCashOrInKind: BigDecimal!,
-    otherExpense: BigDecimal!,
-    totalExpense: BigDecimal!,
-    comments: String!
+publicId: UUID,
+entryOrder: Int!,
+entryDate: LocalDate!,
+accountingDocumentNumber: String!,
+counterparty: String!,
+counterpartyAddress: String!,
+description: String!,
+providedGoodsAndServicesValue: BigDecimal!,
+otherIncome: BigDecimal!,
+totalIncome: BigDecimal!,
+purchasedGoodsAndMaterialsValue: BigDecimal!,
+additionalCostOfPurchase: BigDecimal!,
+remunerationInCashOrInKind: BigDecimal!,
+otherExpense: BigDecimal!,
+totalExpense: BigDecimal!,
+comments: String!
 }
 
 type CurrencyInfo {
-    code: Currency!
-    description: String!
+code: Currency!
+description: String!
 }
 
 type FinanceManagement {
-    id: ID!
-    supportedCurrencies: [CurrencyInfo!]!
-    accounts(publicId:UUID):[Account!]!
-    billingCategories:[BillingCategory!]!
-    piggyBanks:[PiggyBank!]!
+id: ID!
+supportedCurrencies: [CurrencyInfo!]!
+accounts(publicId:UUID):[Account!]!
+billingCategories:[BillingCategory!]!
+piggyBanks:[PiggyBank!]!
 }
 
 type Account {
-    publicId:UUID!,
-    order:Int!,
-    name:String!,
-    currentBalance:MonetaryAmount!,
-    creditLimit:MonetaryAmount!,
-    balanceIndex:Int,
-    transactions(yearMonth: YearMonth): [AccountTransaction!]!
-    visible:Boolean!,
-    bankAccount:BankAccount,
-    domain:DomainSimple,
+publicId:UUID!,
+order:Int!,
+name:String!,
+currentBalance:MonetaryAmount!,
+creditLimit:MonetaryAmount!,
+balanceIndex:Int,
+transactions(yearMonth: YearMonth): [AccountTransaction!]!
+visible:Boolean!,
+bankAccount:BankAccount,
+domain:DomainSimple,
 }
 
 type AccountTransaction {
-    publicId: String!
-    description: String!
-    source: Account
-    destination: Account
-    debit: MonetaryAmount
-    credit: MonetaryAmount
-    timeOfTransaction: LocalDateTime!
+publicId: String!
+description: String!
+source: Account
+destination: Account
+debit: MonetaryAmount
+credit: MonetaryAmount
+timeOfTransaction: LocalDateTime!
 }
 
 input AccountCreationInput {
-    name:String!,
-    creditLimit:MonetaryAmountInput!,
-    balanceIndex:Int,
-    visible:Boolean!,
-    bankAccountPublicId:UUID
+name:String!,
+creditLimit:MonetaryAmountInput!,
+balanceIndex:Int,
+visible:Boolean!,
+bankAccountPublicId:UUID
 }
 
 input AccountUpdateInput {
-    publicId:UUID!,
-    name:String!,
-    creditLimit:MonetaryAmountInput!,
-    balanceIndex:Int,
-    visible:Boolean!,
-    bankAccountPublicId:UUID
+publicId:UUID!,
+name:String!,
+creditLimit:MonetaryAmountInput!,
+balanceIndex:Int,
+visible:Boolean!,
+bankAccountPublicId:UUID
 }
 
 input AccountReorderInput {
-    accountPublicId:UUID!,
-    putBetween: AccountPutBetweenInput!
+accountPublicId:UUID!,
+putBetween: AccountPutBetweenInput!
 }
 
 input AccountPutBetweenInput {
-    beforeAccountPublicId:UUID,
-    afterAccountPublicId:UUID,
+beforeAccountPublicId:UUID,
+afterAccountPublicId:UUID,
 }
 
 type BillingPeriodResponse {
-    billingPeriod: BillingPeriod
-    creationBlockers: BillingPeriodCreationBlockers!
+billingPeriod: BillingPeriod
+creationBlockers: BillingPeriodCreationBlockers!
 }
 
 type BillingPeriod {
-    publicId: UUID!
-    name: String!
-    period: YearMonth!
-    incomes: [Income!]!
-    expenses: [Expense!]!
-    monthSummary: MonthSummary
+publicId: UUID!
+name: String!
+period: YearMonth!
+incomes: [Income!]!
+expenses: [Expense!]!
+monthSummary: MonthSummary
 }
 
 type BillingPeriodCreationBlockers {
-    alreadyExists: Boolean!
-    notForCurrentMonth: Boolean!
-    unfinishedBillingPeriods: Boolean!
+alreadyExists: Boolean!
+notForCurrentMonth: Boolean!
+unfinishedBillingPeriods: Boolean!
 }
 
 type Income {
-    publicId: UUID!
-    description: String!
-    amount: BigDecimal!
-    currency: Currency!
-    category: BillingCategoryShort!
-    date: LocalDate!
+publicId: UUID!
+description: String!
+amount: BigDecimal!
+currency: Currency!
+category: BillingCategoryShort!
+date: LocalDate!
 }
 
 type Expense {
-    publicId: UUID!
-    description: String!
-    amount: BigDecimal!
-    currency: Currency!
-    category: BillingCategoryShort!
-    date: LocalDate!
+publicId: UUID!
+description: String!
+amount: BigDecimal!
+currency: Currency!
+category: BillingCategoryShort!
+date: LocalDate!
 }
 
 type MonthSummary {
-    savings: [MonthSummarySavings!]!
-    accounts: [MonthSummaryAccount!]!
-    piggyBanks: [MonthSummaryPiggyBank!]!
+savings: [MonthSummarySavings!]!
+accounts: [MonthSummaryAccount!]!
+piggyBanks: [MonthSummaryPiggyBank!]!
 }
 type MonthSummarySavings {
-    currency: Currency!,
-    amount: BigDecimal!
+currency: Currency!,
+amount: BigDecimal!
 }
 type MonthSummaryAccount {
-    publicId: String!
-    name: String!
-    currency: Currency!
-    currentBalance: BigDecimal!
-    lastTransactionIdIncludedInBalance: Int!
+publicId: String!
+name: String!
+currency: Currency!
+currentBalance: BigDecimal!
+lastTransactionIdIncludedInBalance: Int!
 }
 
 type MonthSummaryPiggyBank {
-    name: String!
-    description: String!
-    balance: BigDecimal!
-    currency: Currency!
-    savings: Boolean!
-    monthlyTopUp: BigDecimal!
+name: String!
+description: String!
+balance: BigDecimal!
+currency: Currency!
+savings: Boolean!
+monthlyTopUp: BigDecimal!
 }
 
 type BillingCategory {
-    publicId: UUID!
-    name: String!
-    description: String!
-    domain:DomainSimple!
+publicId: UUID!
+name: String!
+description: String!
+domain:DomainSimple!
 }
 
 type BillingCategoryShort {
-    name: String!
-    description: String!
+name: String!
+description: String!
 }
 
 input BillingCategoryCreationInput {
-    name: String!
-    description: String!
+name: String!
+description: String!
 }
 
 input BillingCategoryUpdateInput {
-    publicId: UUID!
-    name: String
-    description: String
+publicId: UUID!
+name: String
+description: String
 }
 
 type PiggyBank {
-    publicId: UUID!
-    name: String!
-    description: String!
-    balance: MonetaryAmount!
-    monthlyTopUp: MonetaryAmount!
-    savings: Boolean!
-    domain:DomainSimple!
+publicId: UUID!
+name: String!
+description: String!
+balance: MonetaryAmount!
+monthlyTopUp: MonetaryAmount!
+savings: Boolean!
+domain:DomainSimple!
 }
 
 input PiggyBankCreationInput {
-    name: String!
-    description: String!
-    monthlyTopUp: MonetaryAmountInput!
-    savings: Boolean!
+name: String!
+description: String!
+monthlyTopUp: MonetaryAmountInput!
+savings: Boolean!
 }
 
 input PiggyBankUpdateInput {
-    publicId: UUID!
-    name: String
-    description: String
-    balance: MonetaryAmountInput
-    monthlyTopUp: MonetaryAmountInput
-    savings: Boolean
+publicId: UUID!
+name: String
+description: String
+balance: MonetaryAmountInput
+monthlyTopUp: MonetaryAmountInput
+savings: Boolean
 }
 
 input CreateBillingElementInput{
-    accountPublicId: UUID!
-    description:String!
-    amount:BigDecimal!
-    currency:Currency!
-    categoryPublicId:UUID!
-    date:LocalDate!
-    piggyBankPublicId: UUID
-    bankTransactionPublicIds: [UUID!]!
+accountPublicId: UUID!
+description:String!
+amount:BigDecimal!
+currency:Currency!
+categoryPublicId:UUID!
+date:LocalDate!
+piggyBankPublicId: UUID
+bankTransactionPublicIds: [UUID!]!
 }
 
 input CreateTransferInput{
-    fromAccountPublicId: UUID!
-    toAccountPublicId: UUID!
-    fromAmount:BigDecimal!
-    toAmount:BigDecimal!
-    date:LocalDate!
-    description:String!
-    bankTransactionPublicIds: [UUID!]!
+fromAccountPublicId: UUID!
+toAccountPublicId: UUID!
+fromAmount:BigDecimal!
+toAmount:BigDecimal!
+date:LocalDate!
+description:String!
+bankTransactionPublicIds: [UUID!]!
 }
 
 input MutuallyCancelInput{
-    transactionsPublicId: [UUID!]!
+transactionsPublicId: [UUID!]!
 }
 
 input ImportBankTransactionsInput{
-    bankTransactionPublicIds: [UUID!]!
-    expenses:[CreateBillingElementInput!]!
-    incomes:[CreateBillingElementInput!]!
-    transfers: [CreateTransferInput!]
+bankTransactionPublicIds: [UUID!]!
+expenses:[CreateBillingElementInput!]!
+incomes:[CreateBillingElementInput!]!
+transfers: [CreateTransferInput!]
 }
 
 type BankAccount {
-    publicId: UUID!,
-    iban: String!
+publicId: UUID!,
+iban: String!
 }
 
 interface RateStrategyConfig {
-    publicId: UUID!,
-    name: String!
+publicId: UUID!,
+name: String!
 }
 
 type ConstantForNFirstInstallmentRateStrategyConfig implements RateStrategyConfig {
-    publicId: UUID!,
-    name: String!
-    constantRate: BigDecimal!
-    variableRateMargin: BigDecimal!
-    becomesVariableRateAfterNInstallments: Int!
+publicId: UUID!,
+name: String!
+constantRate: BigDecimal!
+variableRateMargin: BigDecimal!
+becomesVariableRateAfterNInstallments: Int!
 }
 
 input ConstantForNFirstInstallmentRateStrategyConfigCreationInput {
-    name: String!
-    constantRate: BigDecimal!
-    variableRateMargin: BigDecimal!
-    becomesVariableRateAfterNInstallments: Int!
+name: String!
+constantRate: BigDecimal!
+variableRateMargin: BigDecimal!
+becomesVariableRateAfterNInstallments: Int!
 }
 
 input RateStrategyConfigDeleteInput {
-    publicId: UUID!
+publicId: UUID!
 }
 
 interface RepaymentDayStrategyConfig {
-    publicId: UUID!,
-    name: String!
+publicId: UUID!,
+name: String!
 }
 
 type NthDayOfMonthRepaymentDayStrategyConfig implements RepaymentDayStrategyConfig {
-    publicId: UUID!,
-    name: String!
-    dayOfMonth: Int!
+publicId: UUID!,
+name: String!
+dayOfMonth: Int!
 }
 
 input NthDayOfMonthRepaymentDayStrategyConfigInput {
-    name: String!
-    dayOfMonth: Int!
+name: String!
+dayOfMonth: Int!
 }
 
 input RepaymentDayStrategyConfigDeleteInput {
-    publicId: UUID!
+publicId: UUID!
 }
 
 type Loans {
-    rateStrategyConfigs: [RateStrategyConfig!]!
-    repaymentDayStrategyConfigs: [RepaymentDayStrategyConfig!]!
-    loans: [Loan!]!
+rateStrategyConfigs: [RateStrategyConfig!]!
+repaymentDayStrategyConfigs: [RepaymentDayStrategyConfig!]!
+loans: [Loan!]!
 }
 
 type MonetaryAmount {
-    amount: BigDecimal!
-    currency: CurrencyInfo!
+amount: BigDecimal!
+currency: CurrencyInfo!
 }
 
 input MonetaryAmountInput {
-    amount: BigDecimal!
-    currency: Currency!
+amount: BigDecimal!
+currency: Currency!
 }
 
 type Installment {
-    publicId: UUID!
-    paidAt: LocalDate!
-    repaidInterest: MonetaryAmount!
-    repaidAmount: MonetaryAmount!
-    overpayment: MonetaryAmount!
+publicId: UUID!
+paidAt: LocalDate!
+repaidInterest: MonetaryAmount!
+repaidAmount: MonetaryAmount!
+overpayment: MonetaryAmount!
 }
 
 type Loan {
-    publicId: UUID!
-    name: String!
-    paymentDate: LocalDate!
-    numberOfInstallments: Int!
-    repaymentDayStrategyConfig: RepaymentDayStrategyConfig!
-    rateStrategyConfig: RateStrategyConfig!
-    paidAmount: MonetaryAmount!
-    installments: [Installment!]!
+publicId: UUID!
+name: String!
+paymentDate: LocalDate!
+numberOfInstallments: Int!
+repaymentDayStrategyConfig: RepaymentDayStrategyConfig!
+rateStrategyConfig: RateStrategyConfig!
+paidAmount: MonetaryAmount!
+installments: [Installment!]!
 }
 
 input LoanQuery {
-    publicId: UUID!
+publicId: UUID!
 }
 
 input LoanCreationInput {
-    name: String!
-    paymentDate: LocalDate!
-    numberOfInstallments: Int!
-    repaymentDayStrategyConfigId: UUID!
-    rateStrategyConfigId: UUID!
-    paidAmount: MonetaryAmountInput!
+name: String!
+paymentDate: LocalDate!
+numberOfInstallments: Int!
+repaymentDayStrategyConfigId: UUID!
+rateStrategyConfigId: UUID!
+paidAmount: MonetaryAmountInput!
 }
 
 input LoanUpdateInput {
-    loanId: UUID!
-    name: String!
+loanId: UUID!
+name: String!
 }
 
 input LoanDeleteInput {
-    loanId: UUID!
+loanId: UUID!
 }
 
 input InstallmentCreationInput {
-    loanId: UUID!
-    paidAt: LocalDate!
-    repaidInterest: MonetaryAmountInput!
-    repaidAmount: MonetaryAmountInput!
-    overpayment: MonetaryAmountInput!
+loanId: UUID!
+paidAt: LocalDate!
+repaidInterest: MonetaryAmountInput!
+repaidAmount: MonetaryAmountInput!
+overpayment: MonetaryAmountInput!
 }
 
 input LedgerQuery {
-    yearMonth: YearMonth!
+yearMonth: YearMonth!
 }
 
 interface OtherParty {
-    publicId: UUID!
-    name: String!
-    domain: DomainSimple!
+publicId: UUID!
+name: String!
+domain: DomainSimple!
 }
 
 type Client implements OtherParty{
-    publicId: UUID!
-    name: String!
-    domain: DomainSimple!
+publicId: UUID!
+name: String!
+domain: DomainSimple!
 }
 
 type Supplier implements OtherParty{
-    publicId: UUID!
-    name: String!
-    domain: DomainSimple!
+publicId: UUID!
+name: String!
+domain: DomainSimple!
 }
 
 input ClientCreationInput {
-    name: String!
+name: String!
 }
 
 input ClientUpdateInput {
-    publicId: UUID!
-    name: String!
+publicId: UUID!
+name: String!
 }
 
 input SupplierCreationInput {
-    name: String!
+name: String!
 }
 
 input SupplierUpdateInput {
-    publicId: UUID!
-    name: String!
+publicId: UUID!
+name: String!
 }
 
 enum FinancialDocumentKind {
-    BILL_OF_PURCHASE
-    BILL_OF_SALE
-    CREDIT_INVOICE
-    DEBIT_INVOICE
+BILL_OF_PURCHASE
+BILL_OF_SALE
+CREDIT_INVOICE
+DEBIT_INVOICE
 }
 
 enum BillType {
-    BILL_OF_SALE
-    BILL_OF_PURCHASE
+BILL_OF_SALE
+BILL_OF_PURCHASE
 }
 
 input BillCreationInput {
-    type: BillType!
-    otherPartyId: UUID!
-    name:String!
-    description: String!
-    amount: MonetaryAmountInput!
-    createdAt: LocalDate!
+type: BillType!
+otherPartyId: UUID!
+name:String!
+description: String!
+amount: MonetaryAmountInput!
+createdAt: LocalDate!
 }
 
 input BillUpdateInput {
-    type: BillType!
-    billPublicId: UUID!
-    otherPartyId: UUID!
-    name:String!
-    description: String!
-    amount: MonetaryAmountInput!
-    createdAt: LocalDate!
+type: BillType!
+billPublicId: UUID!
+otherPartyId: UUID!
+name:String!
+description: String!
+amount: MonetaryAmountInput!
+createdAt: LocalDate!
 }
 
 enum InvoiceType {
-    CREDIT
-    DEBIT
+CREDIT
+DEBIT
 }
 
 input InvoiceCreationInput {
-    type: InvoiceType!
-    name:String
-    otherPartyId: UUID!
-    amount: MonetaryAmountInput!
-    vat: MonetaryAmountInput!
-    createdAt: LocalDate!
-    dueTo: LocalDate!
-    description: String!
+type: InvoiceType!
+name:String
+otherPartyId: UUID!
+amount: MonetaryAmountInput!
+vat: MonetaryAmountInput!
+createdAt: LocalDate!
+dueTo: LocalDate!
+description: String!
 }
 
 
 input InvoiceUpdateInput {
-    type: InvoiceType!
-    invoicePublicId: UUID!
-    name:String
-    otherPartyId: UUID!
-    amount: MonetaryAmountInput!
-    vat: MonetaryAmountInput!
-    createdAt: LocalDate!
-    dueTo: LocalDate!
-    description: String!
+type: InvoiceType!
+invoicePublicId: UUID!
+name:String
+otherPartyId: UUID!
+amount: MonetaryAmountInput!
+vat: MonetaryAmountInput!
+createdAt: LocalDate!
+dueTo: LocalDate!
+description: String!
 }
 
 interface FinancialDocument {
-    publicId:UUID!
-    name:String!
-    otherParty:OtherParty!
-    amount:MonetaryAmount!
-    createdAt:LocalDate!
-    description:String!
-    domain:DomainSimple!
+publicId:UUID!
+name:String!
+otherParty:OtherParty!
+amount:MonetaryAmount!
+createdAt:LocalDate!
+description:String!
+domain:DomainSimple!
 }
 
 type BillOfPurchase implements FinancialDocument {
-    publicId:UUID!
-    name:String!
-    otherParty:Supplier!
-    amount:MonetaryAmount!
-    createdAt:LocalDate!
-    description:String!
-    domain:DomainSimple!
+publicId:UUID!
+name:String!
+otherParty:Supplier!
+amount:MonetaryAmount!
+createdAt:LocalDate!
+description:String!
+domain:DomainSimple!
 }
 
 type BillOfSale implements FinancialDocument {
-    publicId:UUID!
-    name:String!
-    otherParty:Client!
-    amount:MonetaryAmount!
-    createdAt:LocalDate!
-    description:String!
-    domain:DomainSimple!
+publicId:UUID!
+name:String!
+otherParty:Client!
+amount:MonetaryAmount!
+createdAt:LocalDate!
+description:String!
+domain:DomainSimple!
 }
 
 interface Invoice implements FinancialDocument {
-    publicId:UUID!
-    name:String!
-    otherParty:OtherParty!
-    amount:MonetaryAmount!
-    vat:MonetaryAmount!
-    createdAt:LocalDate!
-    dueTo:LocalDate!
-    description:String!
-    domain:DomainSimple!
+publicId:UUID!
+name:String!
+otherParty:OtherParty!
+amount:MonetaryAmount!
+vat:MonetaryAmount!
+createdAt:LocalDate!
+dueTo:LocalDate!
+description:String!
+domain:DomainSimple!
 }
 
 type CreditInvoice implements Invoice & FinancialDocument {
-    publicId:UUID!
-    name:String!
-    otherParty:Client!
-    amount:MonetaryAmount!
-    vat:MonetaryAmount!
-    createdAt:LocalDate!
-    dueTo:LocalDate!
-    description:String!
-    domain:DomainSimple!
+publicId:UUID!
+name:String!
+otherParty:Client!
+amount:MonetaryAmount!
+vat:MonetaryAmount!
+createdAt:LocalDate!
+dueTo:LocalDate!
+description:String!
+domain:DomainSimple!
 }
 
 type DebitInvoice implements Invoice & FinancialDocument {
-    publicId:UUID!
-    name:String!
-    otherParty:Supplier!
-    amount:MonetaryAmount!
-    vat:MonetaryAmount!
-    createdAt:LocalDate!
-    dueTo:LocalDate!
-    description:String!
-    domain:DomainSimple!
+publicId:UUID!
+name:String!
+otherParty:Supplier!
+amount:MonetaryAmount!
+vat:MonetaryAmount!
+createdAt:LocalDate!
+dueTo:LocalDate!
+description:String!
+domain:DomainSimple!
 }
 
 type Settings {
-    id: ID!
-    accountantSettings: AccountantSettings!
-    domains: [Domain!]!
+id: ID!
+accountantSettings: AccountantSettings!
+domains: [Domain!]!
 }
 
 type AccountantSettings {
-    isCompany:Boolean!
+isCompany:Boolean!
 }
 
 input AccountantSettingsUpdateInput {
-    isCompany:Boolean!
+isCompany:Boolean!
 }
 
 type BankPermissions {
-    availableInstitutions(country: String!): [Institution!]!
-    granted: [BankPermission!]!
-    toProcess: [BankPermission!]!
-    toRecreate: [Institution!]!
-    bankAccountsNotAssignedToAccount: [BankAccount!]!
+availableInstitutions(country: String!): [Institution!]!
+granted: [BankPermission!]!
+toProcess: [BankPermission!]!
+toRecreate: [Institution!]!
+bankAccountsNotAssignedToAccount: [BankAccount!]!
 }
 
 type BankPermission{
-    publicId: UUID!
-    createdAt:LocalDateTime!
-    givenAt:LocalDateTime
-    withdrawnAt: LocalDateTime
-    bankAccounts: [BankAccount!]!
-    institutionId: String!
-    institution: Institution
-    reference: String
-    ssn: String
-    confirmationLink: URL
-    requisitionId: UUID!
+publicId: UUID!
+createdAt:LocalDateTime!
+givenAt:LocalDateTime
+withdrawnAt: LocalDateTime
+bankAccounts: [BankAccount!]!
+institutionId: String!
+institution: Institution
+reference: String
+ssn: String
+confirmationLink: URL
+requisitionId: UUID!
 }
 
 type Institution {
-    id: String!
-    name: String!
-    bic: String!
-    transactionTotalDays: Int!
-    countries: [String]
-    logo: String!
+id: String!
+name: String!
+bic: String!
+transactionTotalDays: Int!
+countries: [String]
+logo: String!
 }
 
 input BankPermissionRequest{
-    institutionId:String!
-    maxHistoricalDays:Int!
-    redirect:URL!
-    userLanguage:String!
+institutionId:String!
+maxHistoricalDays:Int!
+redirect:URL!
+userLanguage:String!
 }
 
 input ConfirmPermissionRequest {
-    reference: String!
+reference: String!
 }
 
 input FetchBankAccountDataInput {
-    bankAccountPublicId: UUID!
+bankAccountPublicId: UUID!
 }
 
 input AssignBankAccountToAccountInput{
-    bankAccountPublicId: UUID!
-    accountPublicId: UUID!
+bankAccountPublicId: UUID!
+accountPublicId: UUID!
 }
 
 input DeleteBankAccountAssignmentInput{
-    accountPublicId: UUID!
+accountPublicId: UUID!
 }
 
 type BankTransactionToImport {
-    id:Int!
-    conversionRate:BigDecimal!
-    credit:BigDecimal!
-    debit:BigDecimal!
-    description:String!
-    timeOfTransaction:LocalDateTime!
-    destinationAccountPublicId:UUID
-    sourceAccountPublicId:UUID
-    creditBankAccountPublicId:UUID
-    debitBankAccountPublicId:UUID
-    transactionPublicId:UUID!
-    creditTransactionPublicId:UUID
-    debitTransactionPublicId:UUID
+id:Int!
+conversionRate:BigDecimal!
+credit:BigDecimal!
+debit:BigDecimal!
+description:String!
+timeOfTransaction:LocalDateTime!
+destinationAccountPublicId:UUID
+sourceAccountPublicId:UUID
+creditBankAccountPublicId:UUID
+debitBankAccountPublicId:UUID
+transactionPublicId:UUID!
+creditTransactionPublicId:UUID
+debitTransactionPublicId:UUID
 }
 
 enum CubeType {
-    TWO, THREE, FOUR, FIVE, SIX, SEVEN, MEGAMINX, PYRAMINX, SKEWB, SQUARE_1
+TWO, THREE, FOUR, FIVE, SIX, SEVEN, MEGAMINX, PYRAMINX, SKEWB, SQUARE_1
 }
 
 input CubeResultsQuery {
-    cubeType: CubeType!
+cubeType: CubeType!
 }
 
 type CubeResults {
-    todayStats: CubeDayStats!
-    todayResults: [CubeResult!]!
-    stats(month: YearMonth!): [CubeDayStats!]!
-    topTenAllTime: [CubeResult!]!
+todayStats: CubeDayStats!
+todayResults: [CubeResult!]!
+stats(month: YearMonth!): [CubeDayStats!]!
+topTenAllTime: [CubeResult!]!
 }
 
 type CubeDayStats {
-    day: LocalDate!
-    min: Int
-    max: Int
-    minAo5: Int
-    minAo30: Int
-    numberOfTries: Int!
+day: LocalDate!
+min: Int
+max: Int
+minAo5: Int
+minAo30: Int
+numberOfTries: Int!
 }
 
 type CubeResult {
-    timeInMillis: Int!
-    date: LocalDateTime!
+timeInMillis: Int!
+date: LocalDateTime!
 }
 
 input SaveCubeResultInput {
-    cubeType: CubeType!
-    timestampOfSolve: LocalDateTime!
-    timeInMillis: Int!
+cubeType: CubeType!
+timestampOfSolve: LocalDateTime!
+timeInMillis: Int!
 }
 
 type StrengthTrainingQuery {
-    exerciseFamilies(exerciseFamilyPublicId: UUID): [StrengthTrainingExerciseFamily!]!
-    variantDimensions(variantDimensionPublicId: UUID): [StrengthTrainingVariantDimension!]!
+exerciseFamilies(exerciseFamilyPublicId: UUID): [StrengthTrainingExerciseFamily!]!
+variantDimensions(variantDimensionPublicId: UUID): [StrengthTrainingVariantDimension!]!
+exercisePresets(search: String!, limit: Int = 20): [StrengthTrainingExercisePreset!]!
+plans(planPublicId: UUID): [StrengthTrainingPlan!]!
+activePlan: StrengthTrainingPlan
+plansActiveInRange(from: LocalDate!, to: LocalDate!): [StrengthTrainingPlan!]!
+workoutSessions(workoutSessionPublicId: UUID): [StrengthTrainingWorkoutSession!]!
 }
 
 type StrengthTrainingMutation {
-    createExerciseFamily(input: CreateStrengthTrainingExerciseFamilyInput!): StrengthTrainingExerciseFamily!
-    createVariantDimension(input: CreateStrengthTrainingVariantDimensionInput!): StrengthTrainingVariantDimension!
-    createVariantValue(input: CreateStrengthTrainingVariantValueInput!): StrengthTrainingVariantValue!
-    assignDimensionToFamily(input: AssignStrengthTrainingDimensionToFamilyInput!): StrengthTrainingExerciseFamilyDimension!
-    setAllowedVariantValues(input: SetAllowedStrengthTrainingVariantValuesInput!): [StrengthTrainingExerciseFamilyVariantValue!]!
+createExerciseFamily(input: CreateStrengthTrainingExerciseFamilyInput!): StrengthTrainingExerciseFamily!
+createVariantDimension(input: CreateStrengthTrainingVariantDimensionInput!): StrengthTrainingVariantDimension!
+createVariantValue(input: CreateStrengthTrainingVariantValueInput!): StrengthTrainingVariantValue!
+assignDimensionToFamily(input: AssignStrengthTrainingDimensionToFamilyInput!): StrengthTrainingExerciseFamilyDimension!
+setAllowedVariantValues(input: SetAllowedStrengthTrainingVariantValuesInput!): [StrengthTrainingExerciseFamilyVariantValue!]!
+createPlan(input: CreateStrengthTrainingPlanInput!): StrengthTrainingPlan!
+updatePlan(input: UpdateStrengthTrainingPlanInput!): StrengthTrainingPlan!
+deletePlan(publicId: UUID!): Boolean!
+createWorkoutTemplate(input: CreateStrengthTrainingWorkoutTemplateInput!): StrengthTrainingWorkoutTemplate!
+updateWorkoutTemplate(input: UpdateStrengthTrainingWorkoutTemplateInput!): StrengthTrainingWorkoutTemplate!
+deleteWorkoutTemplate(publicId: UUID!): Boolean!
+createTemplateExercise(input: CreateStrengthTrainingTemplateExerciseInput!): StrengthTrainingTemplateExercise!
+updateTemplateExercises(input: UpdateStrengthTrainingTemplateExercisesInput!): [StrengthTrainingTemplateExercise!]!
+createTemplateSet(input: CreateStrengthTrainingTemplateSetInput!): StrengthTrainingTemplateSet!
+startWorkoutSession(input: StartStrengthTrainingWorkoutSessionInput!): StrengthTrainingWorkoutSession!
+addPerformedExercise(input: AddStrengthTrainingPerformedExerciseInput!): StrengthTrainingPerformedExercise!
+addPerformedSet(input: AddStrengthTrainingPerformedSetInput!): StrengthTrainingPerformedSet!
+completeWorkoutSession(publicId: UUID!): StrengthTrainingWorkoutSession!
 }
 
 type StrengthTrainingExerciseFamily {
-    publicId: UUID!
-    scope: StrengthTrainingCatalogScope!
-    name: String!
-    exerciseType: StrengthTrainingExerciseType!
-    active: Boolean!
-    dimensions: [StrengthTrainingExerciseFamilyDimension!]!
+publicId: UUID!
+scope: StrengthTrainingCatalogScope!
+name: String!
+exerciseType: StrengthTrainingExerciseType!
+active: Boolean!
+dimensions: [StrengthTrainingExerciseFamilyDimension!]!
+}
+
+type StrengthTrainingExercisePreset {
+publicId: UUID!
+exerciseFamilyPublicId: UUID!
+exerciseFamilyName: String!
+name: String!
+variantSignature: String!
+variantValuePublicIds: [UUID!]!
 }
 
 type StrengthTrainingVariantDimension {
-    publicId: UUID!
-    scope: StrengthTrainingCatalogScope!
-    name: String!
-    active: Boolean!
-    values: [StrengthTrainingVariantValue!]!
+publicId: UUID!
+scope: StrengthTrainingCatalogScope!
+name: String!
+active: Boolean!
+values: [StrengthTrainingVariantValue!]!
 }
 
 type StrengthTrainingVariantValue {
-    publicId: UUID!
-    scope: StrengthTrainingCatalogScope!
-    name: String!
-    active: Boolean!
+publicId: UUID!
+scope: StrengthTrainingCatalogScope!
+name: String!
+active: Boolean!
 }
 
 type StrengthTrainingExerciseFamilyDimension {
-    publicId: UUID!
-    scope: StrengthTrainingCatalogScope!
-    position: Int!
-    required: Boolean!
-    variantDimension: StrengthTrainingVariantDimension!
-    allowedValues: [StrengthTrainingExerciseFamilyVariantValue!]!
+publicId: UUID!
+scope: StrengthTrainingCatalogScope!
+position: Int!
+required: Boolean!
+variantDimension: StrengthTrainingVariantDimension!
+allowedValues: [StrengthTrainingExerciseFamilyVariantValue!]!
 }
 
 type StrengthTrainingExerciseFamilyVariantValue {
-    publicId: UUID!
-    scope: StrengthTrainingCatalogScope!
-    defaultValue: Boolean!
-    variantValue: StrengthTrainingVariantValue!
+publicId: UUID!
+scope: StrengthTrainingCatalogScope!
+defaultValue: Boolean!
+variantValue: StrengthTrainingVariantValue!
 }
 
 enum StrengthTrainingExerciseType {
-    WEIGHT_REPS
-    BODYWEIGHT_REPS
-    DURATION
-    DISTANCE
+WEIGHT_REPS
+BODYWEIGHT_REPS
+DURATION
+DISTANCE
 }
 
 enum StrengthTrainingCatalogScope {
-    SYSTEM
-    DOMAIN
+SYSTEM
+DOMAIN
 }
 
 input CreateStrengthTrainingExerciseFamilyInput {
-    name: String!
-    exerciseType: StrengthTrainingExerciseType!
+name: String!
+exerciseType: StrengthTrainingExerciseType!
 }
 
 input CreateStrengthTrainingVariantDimensionInput {
-    name: String!
+name: String!
 }
 
 input CreateStrengthTrainingVariantValueInput {
-    variantDimensionPublicId: UUID!
-    name: String!
+variantDimensionPublicId: UUID!
+name: String!
 }
 
 input AssignStrengthTrainingDimensionToFamilyInput {
-    exerciseFamilyPublicId: UUID!
-    variantDimensionPublicId: UUID!
-    position: Int!
-    required: Boolean! = true
+exerciseFamilyPublicId: UUID!
+variantDimensionPublicId: UUID!
+position: Int!
+required: Boolean! = true
 }
 
 input SetAllowedStrengthTrainingVariantValuesInput {
-    familyDimensionPublicId: UUID!
-    variantValuePublicIds: [UUID!]!
-    defaultValuePublicId: UUID
+familyDimensionPublicId: UUID!
+variantValuePublicIds: [UUID!]!
+defaultValuePublicId: UUID
+}
+
+type StrengthTrainingPlan {
+publicId: UUID!
+name: String!
+description: String
+startedAt: LocalDate
+finishedAt: LocalDate
+canDelete: Boolean!
+templates: [StrengthTrainingWorkoutTemplate!]!
+}
+
+type StrengthTrainingWorkoutTemplate {
+publicId: UUID!
+name: String!
+position: Int!
+description: String
+canDelete: Boolean!
+exercises: [StrengthTrainingTemplateExercise!]!
+}
+
+type StrengthTrainingTemplateExercise {
+publicId: UUID!
+exerciseFamilyPublicId: UUID!
+name: String!
+variantSignature: String!
+variantValuePublicIds: [UUID!]!
+position: Int!
+notes: String
+sets: [StrengthTrainingTemplateSet!]!
+}
+
+type StrengthTrainingTemplateSet {
+publicId: UUID!
+position: Int!
+setType: StrengthTrainingSetType!
+targetWeightKg: BigDecimal
+targetRepsMin: Int
+targetRepsMax: Int
+targetRpe: BigDecimal
+restSeconds: Int
+notes: String
+}
+
+type StrengthTrainingWorkoutSession {
+publicId: UUID!
+workoutTemplatePublicId: UUID
+templateName: String
+status: StrengthTrainingWorkoutSessionStatus!
+startedAt: LocalDateTime!
+completedAt: LocalDateTime
+bodyWeightKg: BigDecimal
+notes: String
+performedExercises: [StrengthTrainingPerformedExercise!]!
+}
+
+type StrengthTrainingPerformedExercise {
+publicId: UUID!
+exerciseFamilyPublicId: UUID!
+exerciseName: String!
+variantSignature: String!
+variantValuePublicIds: [UUID!]!
+position: Int!
+notes: String
+sets: [StrengthTrainingPerformedSet!]!
+}
+
+type StrengthTrainingPerformedSet {
+publicId: UUID!
+setNumber: Int!
+setType: StrengthTrainingSetType!
+weightKg: BigDecimal
+repetitions: Int
+durationSeconds: Int
+distanceMeters: BigDecimal
+rpe: BigDecimal
+status: StrengthTrainingPerformedSetStatus!
+performedAt: LocalDateTime
+notes: String
+}
+
+enum StrengthTrainingSetType { WARMUP WORKING DROPSET AMRAP OTHER }
+enum StrengthTrainingPerformedSetStatus { PLANNED IN_PROGRESS COMPLETED SKIPPED }
+enum StrengthTrainingWorkoutSessionStatus { IN_PROGRESS COMPLETED CANCELLED }
+
+input CreateStrengthTrainingPlanInput { name: String!, description: String, startedAt: LocalDate!, finishedAt: LocalDate }
+input UpdateStrengthTrainingPlanInput { planPublicId: UUID!, name: String!, description: String, finishedAt: LocalDate }
+input CreateStrengthTrainingWorkoutTemplateInput { planPublicId: UUID!, name: String!, position: Int!, description: String }
+input UpdateStrengthTrainingWorkoutTemplateInput { templatePublicId: UUID!, name: String!, description: String }
+input CreateStrengthTrainingTemplateExerciseInput { templatePublicId: UUID!, exerciseFamilyPublicId: UUID!, name: String, variantValuePublicIds: [UUID!]!, position: Int!, notes: String }
+input UpdateStrengthTrainingTemplateExercisesInput { templatePublicId: UUID!, exercises: [UpdateStrengthTrainingTemplateExerciseInput!]! }
+input UpdateStrengthTrainingTemplateExerciseInput { publicId: UUID, exerciseFamilyPublicId: UUID!, name: String, variantValuePublicIds: [UUID!]!, position: Int!, notes: String }
+input CreateStrengthTrainingTemplateSetInput {
+templateExercisePublicId: UUID!
+position: Int!
+setType: StrengthTrainingSetType!
+targetWeightKg: BigDecimal
+targetRepsMin: Int
+targetRepsMax: Int
+targetRpe: BigDecimal
+restSeconds: Int
+notes: String
+}
+input StartStrengthTrainingWorkoutSessionInput { templatePublicId: UUID, bodyWeightKg: BigDecimal, notes: String }
+input AddStrengthTrainingPerformedExerciseInput { sessionPublicId: UUID!, exerciseFamilyPublicId: UUID!, name: String, variantValuePublicIds: [UUID!]!, position: Int!, notes: String }
+input AddStrengthTrainingPerformedSetInput {
+performedExercisePublicId: UUID!
+setNumber: Int!
+setType: StrengthTrainingSetType!
+weightKg: BigDecimal
+repetitions: Int
+durationSeconds: Int
+distanceMeters: BigDecimal
+rpe: BigDecimal
+status: StrengthTrainingPerformedSetStatus! = PLANNED
+performedAt: LocalDateTime
+notes: String
 }

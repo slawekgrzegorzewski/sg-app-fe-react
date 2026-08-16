@@ -10,7 +10,7 @@ export interface FormDialogProps<T> {
     onConfirm: (object: T) => Promise<void>;
     onCancel: () => Promise<void>;
     formProps: Omit<FormProps<T>, 'onSave' | 'onCancel'>;
-    children?: React.JSX.Element;
+    children?: React.ReactNode;
 }
 
 export function FormDialog<T>(props: FormDialogProps<T>) {

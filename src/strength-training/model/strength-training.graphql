@@ -124,3 +124,185 @@ mutation SetAllowedStrengthTrainingVariantValues(
         }
     }
 }
+
+query GetStrengthTrainingPlans {
+    strengthTraining {
+        plans {
+            publicId
+            name
+            description
+            startedAt
+            finishedAt
+            canDelete
+            templates {
+                publicId
+                name
+                position
+                description
+                canDelete
+            }
+        }
+    }
+}
+
+query GetStrengthTrainingPlan($planPublicId: UUID!) {
+    strengthTraining {
+        plans(planPublicId: $planPublicId) {
+            publicId
+            name
+            description
+            startedAt
+            finishedAt
+            templates {
+                publicId
+                name
+                position
+                description
+                canDelete
+                exercises {
+                    publicId
+                    exerciseFamilyPublicId
+                    name
+                    variantSignature
+                    variantValuePublicIds
+                    position
+                    notes
+                }
+            }
+        }
+    }
+}
+
+query GetStrengthTrainingExercisePresets($search: String!, $limit: Int = 20) {
+    strengthTraining {
+        exercisePresets(search: $search, limit: $limit) {
+            publicId
+            exerciseFamilyPublicId
+            exerciseFamilyName
+            name
+            variantSignature
+            variantValuePublicIds
+        }
+    }
+}
+
+mutation CreateStrengthTrainingPlan(
+    $name: String!
+    $description: String
+    $startedAt: LocalDate!
+    $finishedAt: LocalDate
+) {
+    strengthTraining {
+        createPlan(input: {name: $name, description: $description, startedAt: $startedAt, finishedAt: $finishedAt}) {
+            publicId
+            name
+            description
+            startedAt
+            finishedAt
+            canDelete
+            templates {
+                publicId
+                name
+                position
+                description
+                canDelete
+            }
+        }
+    }
+}
+
+mutation DeleteStrengthTrainingPlan($publicId: UUID!) {
+    strengthTraining {
+        deletePlan(publicId: $publicId)
+    }
+}
+
+mutation UpdateStrengthTrainingPlan(
+    $planPublicId: UUID!
+    $name: String!
+    $description: String
+    $finishedAt: LocalDate
+) {
+    strengthTraining {
+        updatePlan(
+            input: {planPublicId: $planPublicId, name: $name, description: $description, finishedAt: $finishedAt}
+        ) {
+            publicId
+            name
+            description
+            startedAt
+            finishedAt
+            canDelete
+            templates {
+                publicId
+                name
+                position
+                description
+                canDelete
+            }
+        }
+    }
+}
+
+mutation CreateStrengthTrainingWorkoutTemplate(
+    $planPublicId: UUID!
+    $name: String!
+    $position: Int!
+    $description: String
+) {
+    strengthTraining {
+        createWorkoutTemplate(
+            input: {planPublicId: $planPublicId, name: $name, position: $position, description: $description}
+        ) {
+            publicId
+            name
+            position
+            description
+            canDelete
+            exercises {
+                publicId
+            }
+        }
+    }
+}
+
+mutation UpdateStrengthTrainingWorkoutTemplate($templatePublicId: UUID!, $name: String!, $description: String) {
+    strengthTraining {
+        updateWorkoutTemplate(input: {templatePublicId: $templatePublicId, name: $name, description: $description}) {
+            publicId
+            name
+            position
+            description
+            canDelete
+            exercises {
+                publicId
+            }
+        }
+    }
+}
+
+mutation DeleteStrengthTrainingWorkoutTemplate($publicId: UUID!) {
+    strengthTraining {
+        deleteWorkoutTemplate(publicId: $publicId)
+    }
+}
+
+mutation UpdateStrengthTrainingTemplateExercises(
+    $templatePublicId: UUID!
+    $exercises: [UpdateStrengthTrainingTemplateExerciseInput!]!
+) {
+    strengthTraining {
+        updateTemplateExercises(input: {templatePublicId: $templatePublicId, exercises: $exercises}) {
+            publicId
+            exerciseFamilyPublicId
+            name
+            variantSignature
+            variantValuePublicIds
+            position
+            notes
+            sets {
+                publicId
+            }
+        }
+    }
+}

@@ -32,10 +32,11 @@ export interface SimpleCrudListProps<T> {
         rowClickIsTrigger?: boolean;
         dialogTitle: string;
         trigger?: React.RefObject<(t: T) => void>;
-        onUpdate?(t: T): Promise<void>;
+        onUpdate?(value: any, entity: T): Promise<void>;
+        children?: React.ReactNode | ((entity: T) => React.ReactNode);
     };
     deleteSettings?: {
-        showControl?: boolean;
+        showControl?: boolean | ((t: T) => boolean);
         trigger?: React.RefObject<(t: T) => void>;
         confirmationTitle?: DialogCopy<T>;
         confirmationMessage?: DialogCopy<T>;
@@ -74,7 +75,13 @@ export function SimpleCrudList<T>({
         showControl: false,
         dialogTitle: '',
     },
-    editSettings: {rowClickIsTrigger = true, dialogTitle: editDialogTitle, trigger: editTrigger, onUpdate} = {
+    editSettings: {
+        rowClickIsTrigger = true,
+        dialogTitle: editDialogTitle,
+        trigger: editTrigger,
+        onUpdate,
+        children: editChildren,
+    } = {
         rowClickIsTrigger: false,
         dialogTitle: '',
     },
@@ -103,6 +110,12 @@ export function SimpleCrudList<T>({
     const settingsPresentation = presentation === 'settings';
     const editButtonClick: React.MutableRefObject<() => void> = useRef<() => void>(() => {});
 
+    function isDeleteControlVisible(entity: T | null): boolean {
+        return (
+            entity !== null && (typeof showDeleteControl === 'function' ? showDeleteControl(entity) : showDeleteControl)
+        );
+    }
+
     useEffect(() => {
         if (createTrigger) {
             createTrigger.current = editButtonClick.current;
@@ -121,7 +134,6 @@ export function SimpleCrudList<T>({
     function selectEntity(t: T) {
         setSelectedEntity(t);
         setShowEditDialog(true);
-        selectEntityListener?.(t);
     }
 
     function selectEntityForDeletion(t: T) {
@@ -139,7 +151,7 @@ export function SimpleCrudList<T>({
     const editDialogTitleElement = (
         <Stack direction={'row'} justifyContent={'space-between'} alignItems={'center'}>
             <Box>{editDialogTitle}</Box>
-            {!settingsPresentation && onDelete && showDeleteControl && (
+            {!settingsPresentation && onDelete && isDeleteControlVisible(selectedEntity) && (
                 <Tooltip title="Usuń">
                     <IconButton aria-label="Usuń" color="primary" size="small" onClick={() => showDeleteConfirmation()}>
                         <DeleteOutlineRoundedIcon fontSize="small" />
@@ -179,7 +191,7 @@ export function SimpleCrudList<T>({
                                         </IconButton>
                                     </Tooltip>
                                 )}
-                                {onDelete && showDeleteControl && (
+                                {onDelete && isDeleteControlVisible(entity) && (
                                     <Tooltip title="Usuń">
                                         <IconButton
                                             size="small"
@@ -296,7 +308,7 @@ export function SimpleCrudList<T>({
                     dialogTitle={editDialogTitleElement}
                     open={showEditDialog}
                     onConfirm={async value => {
-                        await onUpdate(value);
+                        await onUpdate(value, selectedEntity);
                         setShowEditDialog(false);
                         setSelectedEntity(null);
                     }}
@@ -306,6 +318,7 @@ export function SimpleCrudList<T>({
                     }}
                     formProps={formSupplier(selectedEntity)}
                     dialogOptions={dialogOptions}
+                    children={typeof editChildren === 'function' ? editChildren(selectedEntity) : editChildren}
                 />
             )}
             {selectedEntity && onDelete && (

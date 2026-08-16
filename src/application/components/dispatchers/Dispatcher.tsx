@@ -12,9 +12,11 @@ import {AccountantDispatcher} from './AccountantDispatcher';
 import {CubesMainPage} from '../../../cubes/CubesMainPage';
 import {CubeStatsPage} from '../../../cubes/CubeStatsPage';
 import {StrengthTrainingCatalogPage} from '../../../strength-training/StrengthTrainingCatalogPage';
+import {StrengthTrainingPlansPage} from '../../../strength-training/StrengthTrainingPlansPage';
+import {StrengthTrainingPlanPage} from '../../../strength-training/StrengthTrainingPlanPage';
 
 export function Dispatcher() {
-    let {page} = useParams();
+    let {page, param1: planPublicId} = useParams();
     const {user} = useCurrentUser();
     const {currentApplicationId, currentDomainPublicId} = useApplicationAndDomain();
     const application = applications.get(currentApplicationId!)!;
@@ -49,6 +51,12 @@ export function Dispatcher() {
         }
         return <></>;
     } else if (application.id === 'STRENGTH_TRAINING') {
+        if (isRequestForPage('STRENGTH_TRAINING_PLANS')) {
+            if (planPublicId) {
+                return <StrengthTrainingPlanPage />;
+            }
+            return <StrengthTrainingPlansPage />;
+        }
         if (!page || isRequestForPage('EXERCISE_CATALOG')) {
             return <StrengthTrainingCatalogPage />;
         }

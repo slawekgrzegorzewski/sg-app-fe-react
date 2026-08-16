@@ -1,107 +1,146 @@
-import {User} from "../../types";
+import {User} from '../../types';
 
-export const ApplicationIds: string[] = ["ACCOUNTANT", "CUBES", "CHECKER", "SYR", "IPR", "STRENGTH_TRAINING"] as string[];
-export type ApplicationId = typeof ApplicationIds[number];
+export const ApplicationIds: string[] = [
+    'ACCOUNTANT',
+    'CUBES',
+    'CHECKER',
+    'SYR',
+    'IPR',
+    'STRENGTH_TRAINING',
+] as string[];
+export type ApplicationId = (typeof ApplicationIds)[number];
 
 function isOfApplicationId(keyInput: string): keyInput is ApplicationId {
     return ApplicationIds.includes(keyInput);
 }
 
-export const ApplicationPageIds: string[] = ['IPR', 'TIME_RECORD', 'EXERCISE_CATALOG'] as string[];
-export type ApplicationPageId = typeof ApplicationPageIds[number];
+export const ApplicationPageIds: string[] = [
+    'IPR',
+    'TIME_RECORD',
+    'EXERCISE_CATALOG',
+    'STRENGTH_TRAINING_PLANS',
+] as string[];
+export type ApplicationPageId = (typeof ApplicationPageIds)[number];
 
 export type Application = {
-    id: ApplicationId,
-    name: string,
-    pages: Map<ApplicationPageId, ApplicationPage>
-}
+    id: ApplicationId;
+    name: string;
+    pages: Map<ApplicationPageId, ApplicationPage>;
+};
 
 export type ApplicationPage = {
-    id: ApplicationPageId,
-    links: string[],
-    label: string
-}
+    id: ApplicationPageId;
+    links: string[];
+    label: string;
+};
 
 const defaultApplication = {
-    id: "HOME",
-    name: "Strona domowa",
+    id: 'HOME',
+    name: 'Strona domowa',
     pages: new Map<ApplicationPageId, ApplicationPage>([
-        ['HOME', {id: 'HOME', links: ['', '/', 'home'], label: 'Strona domowa'} as ApplicationPage]
-    ])
+        ['HOME', {id: 'HOME', links: ['', '/', 'home'], label: 'Strona domowa'} as ApplicationPage],
+    ]),
 } as Application;
 
 export const applications = new Map<ApplicationId, Application>([
-    ["HOME", defaultApplication],
-    ["ACCOUNTANT", {
-        id: "ACCOUNTANT",
-        name: "Księgowość",
-        pages: new Map<ApplicationPageId, ApplicationPage>([
-            ['BILLING_PERIODS', {
-                id: 'BILLING_PERIODS',
-                links: ['', '/', 'home'],
-                label: 'Miesiące'
-            } as ApplicationPage],
-            ['ACCOUNTS', {id: 'ACCOUNTS', links: ['accounts'], label: 'Konta'} as ApplicationPage],
-            ['LOANS', {id: 'LOANS', links: ['loans'], label: 'Pożyczki'} as ApplicationPage],
-            ['SETTINGS', {id: 'SETTINGS', links: ['settings'], label: 'Ustawienia'} as ApplicationPage]
-        ])
-    } as Application],
-    ["CUBES", {
-        id: "CUBES",
-        name: "Kostka rubika",
-        pages: new Map<ApplicationPageId, ApplicationPage>([
-            ['CUBE_MAIN', {
-                id: 'CUBE_MAIN',
-                links: ['', '/'],
-                label: 'Kostki'
-            } as ApplicationPage],
-            ['CUBE_STATS', {
-                id: 'CUBE_STATS',
-                links: ['stats'],
-                label: 'Statystyki'
-            } as ApplicationPage]
-        ])
-    } as Application],
-    ["CHECKER", {id: "CHECKER", name: "Sprawdzanie stron"} as Application],
-    ["SYR", {id: "SYR", name: "Raporty roczne ŚJ"} as Application],
-    ["IPR", {
-        id: "IPR",
-        name: "Raporty własności intelektualnej",
-        pages: new Map<ApplicationPageId, ApplicationPage>([
-            ['IPR', {id: 'IPR', links: ['iprs', '', 'home'], label: 'Raporty IP'} as ApplicationPage],
-            ['TIME_RECORD', {id: 'TIME_RECORD', links: ['timerecord'], label: 'Raporty czasu'} as ApplicationPage],
-            ['IP_REPORTS', {id: 'IP_REPORTS', links: ['ipreports'], label: 'Raporty roczne'} as ApplicationPage],
-            ['IP_SETTING', {id: 'IP_SETTING', links: ['ipsettings'], label: 'Ustawienia'} as ApplicationPage]
-        ])
-    } as Application],
-    ["STRENGTH_TRAINING", {
-        id: "STRENGTH_TRAINING",
-        name: "Trening siłowy",
-        pages: new Map<ApplicationPageId, ApplicationPage>([
-            [
-                'EXERCISE_CATALOG',
-                {
-                    id: 'EXERCISE_CATALOG',
-                    links: ['catalog', 'variant-dimensions', '', '/', 'home'],
-                    label: 'Katalog ćwiczeń'
-                } as ApplicationPage
-            ]
-        ])
-    } as Application],
+    ['HOME', defaultApplication],
+    [
+        'ACCOUNTANT',
+        {
+            id: 'ACCOUNTANT',
+            name: 'Księgowość',
+            pages: new Map<ApplicationPageId, ApplicationPage>([
+                [
+                    'BILLING_PERIODS',
+                    {
+                        id: 'BILLING_PERIODS',
+                        links: ['', '/', 'home'],
+                        label: 'Miesiące',
+                    } as ApplicationPage,
+                ],
+                ['ACCOUNTS', {id: 'ACCOUNTS', links: ['accounts'], label: 'Konta'} as ApplicationPage],
+                ['LOANS', {id: 'LOANS', links: ['loans'], label: 'Pożyczki'} as ApplicationPage],
+                ['SETTINGS', {id: 'SETTINGS', links: ['settings'], label: 'Ustawienia'} as ApplicationPage],
+            ]),
+        } as Application,
+    ],
+    [
+        'CUBES',
+        {
+            id: 'CUBES',
+            name: 'Kostka rubika',
+            pages: new Map<ApplicationPageId, ApplicationPage>([
+                [
+                    'CUBE_MAIN',
+                    {
+                        id: 'CUBE_MAIN',
+                        links: ['', '/'],
+                        label: 'Kostki',
+                    } as ApplicationPage,
+                ],
+                [
+                    'CUBE_STATS',
+                    {
+                        id: 'CUBE_STATS',
+                        links: ['stats'],
+                        label: 'Statystyki',
+                    } as ApplicationPage,
+                ],
+            ]),
+        } as Application,
+    ],
+    ['CHECKER', {id: 'CHECKER', name: 'Sprawdzanie stron'} as Application],
+    ['SYR', {id: 'SYR', name: 'Raporty roczne ŚJ'} as Application],
+    [
+        'IPR',
+        {
+            id: 'IPR',
+            name: 'Raporty własności intelektualnej',
+            pages: new Map<ApplicationPageId, ApplicationPage>([
+                ['IPR', {id: 'IPR', links: ['iprs', '', 'home'], label: 'Raporty IP'} as ApplicationPage],
+                ['TIME_RECORD', {id: 'TIME_RECORD', links: ['timerecord'], label: 'Raporty czasu'} as ApplicationPage],
+                ['IP_REPORTS', {id: 'IP_REPORTS', links: ['ipreports'], label: 'Raporty roczne'} as ApplicationPage],
+                ['IP_SETTING', {id: 'IP_SETTING', links: ['ipsettings'], label: 'Ustawienia'} as ApplicationPage],
+            ]),
+        } as Application,
+    ],
+    [
+        'STRENGTH_TRAINING',
+        {
+            id: 'STRENGTH_TRAINING',
+            name: 'Trening siłowy',
+            pages: new Map<ApplicationPageId, ApplicationPage>([
+                [
+                    'EXERCISE_CATALOG',
+                    {
+                        id: 'EXERCISE_CATALOG',
+                        links: ['catalog', 'variant-dimensions', '', '/', 'home'],
+                        label: 'Katalog ćwiczeń',
+                    } as ApplicationPage,
+                ],
+                [
+                    'STRENGTH_TRAINING_PLANS',
+                    {id: 'STRENGTH_TRAINING_PLANS', links: ['plans'], label: 'Plany'} as ApplicationPage,
+                ],
+            ]),
+        } as Application,
+    ],
 ]);
 
 export default function getUserApplications(user: User): Application[] {
-    const userApplicationIds = [...(
-        new Set<string>(
-            user.roles.map(role => (applications.has(role as ApplicationId) ? role : role.split("_")[0]))
-        )
-    )]
+    const userApplicationIds = [
+        ...new Set<string>(
+            user.roles.map(role => (applications.has(role as ApplicationId) ? role : role.split('_')[0]))
+        ),
+    ]
         .filter(applicationId => isOfApplicationId(applicationId))
         .map(applicationId => applicationId as ApplicationId)
         .filter(a => applications.get(a) !== undefined);
     return userApplicationIds.length === 0
         ? [defaultApplication]
-        : userApplicationIds.map(applicationKey => getOrThrow(applications, applicationKey, "Application not known: " + applicationKey));
+        : userApplicationIds.map(applicationKey =>
+              getOrThrow(applications, applicationKey, 'Application not known: ' + applicationKey)
+          );
 }
 
 function getOrThrow<K, V>(fromMap: Map<K, V>, key: K, errorMessage: string): V {
