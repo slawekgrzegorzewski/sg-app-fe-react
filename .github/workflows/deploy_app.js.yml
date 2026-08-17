@@ -31,9 +31,7 @@ jobs:
     - run: npm run build-prod
     - name: create react.tar
       run: |
-        cd ./build/
-        tar -cvf react.tar *    
-        mv react.tar ../
+        tar -czf react.tar -C build .
     - name: copy file via ssh password
       uses: appleboy/scp-action@master
       with:
@@ -42,7 +40,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: 10000
         source: "react.tar"
-        target: "/home/slawek"
+        target: "/tmp/"
     - name: unpack and deploy application files
       uses: appleboy/ssh-action@master
       with:
@@ -51,7 +49,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: 10000
         script: |
-          mkdir -p /home/slawek/Cluster/permanent_data/sg-application-gateway/react
-          rm -rf /home/slawek/Cluster/permanent_data/sg-application-gateway/react/*
-          tar -xf /home/slawek/react.tar -C /home/slawek/Cluster/permanent_data/sg-application-gateway/react/
-          rm /home/slawek/react.tar
+          rm -rf /srv/cluster/www/gateway/react/*
+          mkdir -p /srv/cluster/www/gateway/react/
+          tar -xf /tmp/react.tar -C /srv/cluster/www/gateway/react/
+          rm /tmp/react.tar
