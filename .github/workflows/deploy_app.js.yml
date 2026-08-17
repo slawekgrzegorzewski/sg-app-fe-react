@@ -51,7 +51,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: 10000
         script: |
-          mkdir -p /home/slawek/Cluster/permanent_data/sg-application-gateway/react
-          rm -rf /home/slawek/Cluster/permanent_data/sg-application-gateway/react/*
-          tar -xf /home/slawek/react.tar -C /home/slawek/Cluster/permanent_data/sg-application-gateway/react/
+          mkdir -p /home/slawek/Cluster/permanent_data/core_gateway/html/react
+          rm -rf /home/slawek/Cluster/permanent_data/core_gateway/html/react/*
+          tar -xf /home/slawek/react.tar -C /home/slawek/Cluster/permanent_data/core_gateway/html/react/
           rm /home/slawek/react.tar
