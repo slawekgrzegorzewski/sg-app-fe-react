@@ -1,55 +1,140 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: deploy application
+name: Deploy frontend
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY_PUSH: ${{ secrets.SG_REGISTRY_URL }}
+  IMAGE_REPOSITORY: frontend
+  IMAGE_TAG: sha-${{ github.sha }}-${{ github.run_number }}
+
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [24.13.1]
-        
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run codegen
-    - run: npm run typecheck
-    - run: npm test
-    - run: npm run build-prod
-    - name: create react.tar
-      run: |
-        tar -czf react.tar -C build .
-    - name: copy file via ssh password
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        port: 10000
-        source: "react.tar"
-        target: "/tmp/"
-    - name: unpack and deploy application files
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        port: 10000
-        script: |
-          rm -rf /srv/cluster/www/gateway/react/*
-          mkdir -p /srv/cluster/www/gateway/react/
-          tar -xf /tmp/react.tar -C /srv/cluster/www/gateway/react/
-          rm /tmp/react.tar
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.13.1
+          cache: npm
+
+      - name: Verify application
+        run: |
+          npm ci
+          npm run codegen
+          npm run typecheck
+          npm test
+
+  build-amd64:
+    needs: verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to private registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY_PUSH }}
+          username: ${{ secrets.SG_REGISTRY_USER }}
+          password: ${{ secrets.SG_REGISTRY_PASSWORD }}
+
+      - name: Build and push amd64 image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: ${{ env.REGISTRY_PUSH }}/${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}-amd64
+          cache-from: type=gha,scope=frontend-amd64
+          cache-to: type=gha,mode=max,scope=frontend-amd64
+
+  build-arm64:
+    needs: verify
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to private registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY_PUSH }}
+          username: ${{ secrets.SG_REGISTRY_USER }}
+          password: ${{ secrets.SG_REGISTRY_PASSWORD }}
+
+      - name: Build and push arm64 image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: ${{ env.REGISTRY_PUSH }}/${{ env.IMAGE_REPOSITORY }}:${{ env.IMAGE_TAG }}-arm64
+          cache-from: type=gha,scope=frontend-arm64
+          cache-to: type=gha,mode=max,scope=frontend-arm64
+
+  publish-multiarch:
+    needs: [build-amd64, build-arm64]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to private registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY_PUSH }}
+          username: ${{ secrets.SG_REGISTRY_USER }}
+          password: ${{ secrets.SG_REGISTRY_PASSWORD }}
+
+      - name: Create multi-architecture image manifest
+        run: |
+          docker buildx imagetools create \
+            --tag "${REGISTRY_PUSH}/${IMAGE_REPOSITORY}:${IMAGE_TAG}" \
+            "${REGISTRY_PUSH}/${IMAGE_REPOSITORY}:${IMAGE_TAG}-amd64" \
+            "${REGISTRY_PUSH}/${IMAGE_REPOSITORY}:${IMAGE_TAG}-arm64"
+
+  deploy:
+    needs: publish-multiarch
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Deploy selected frontend image
+        uses: appleboy/ssh-action@v1
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 10000
+          envs: IMAGE_TAG
+          script: |
+            set -Eeuo pipefail
+            /srv/cluster/current/tools/set-image-tag.sh frontend "$IMAGE_TAG"
+            /srv/cluster/current/tools/start-stack.sh application
