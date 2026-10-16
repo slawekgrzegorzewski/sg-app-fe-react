@@ -36,7 +36,7 @@ const router = createBrowserRouter(
     [
         {
             path: '',
-            element: <Navigate to={process.env.REACT_APP_BROWSER_DEFAULT_REDIRECT || '/login'} />,
+            element: <Navigate to={process.env.REACT_APP_BROWSER_DEFAULT_REDIRECT || '/ACCOUNTANT/'} />,
         },
         {
             path: '/login/:googleToken?',

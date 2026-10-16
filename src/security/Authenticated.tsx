@@ -11,31 +11,43 @@ import {
 import {ApolloProvider, useMutation} from '@apollo/client/react';
 import {ErrorLink} from '@apollo/client/link/error';
 import {CombinedGraphQLErrors} from '@apollo/client/errors';
-import React, {useEffect, useRef} from 'react';
+import {SetContextLink} from '@apollo/client/link/context';
+import React, {useEffect, useRef, useState} from 'react';
 import {Navigate, useParams} from 'react-router-dom';
-import {logOut, readJwtToken, useCurrentUser} from '../utils/users/use-current-user';
+import {logOut, useCurrentUser} from '../utils/users/use-current-user';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
-import {Institution, SwitchDomain, SwitchDomainMutation} from '../types';
-import getUserApplications from '../utils/applications/applications-access';
+import {GetCurrentUser, GetCurrentUserQuery, Institution, SwitchDomain, SwitchDomainMutation, User} from '../types';
+import getUserApplications, {ApplicationId, applications} from '../utils/applications/applications-access';
 import {logError} from '../utils/logger';
 import {backdropHandle} from '../utils/GlobalBackdropContext';
 import {getBackendUrl} from '../utils/backend-url';
+import {getKeycloakAccessToken, initializeKeycloak} from './keycloak';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 
 const httpLink = new UploadHttpLink({uri: getBackendUrl() + '/graphql'});
 
-const authMiddleware = new ApolloLink((operation, forward) => {
-    operation.setContext(({headers = {}}) => {
-        const jwtToken = readJwtToken();
-        return {
-            headers: {
-                ...headers,
-                ...(jwtToken ? {authorization: 'Bearer ' + jwtToken} : {}),
-                locale: navigator.language,
-                'Apollo-Require-Preflight': 'true',
-            },
-        };
-    });
-    return forward(operation);
+function currentDomainPublicId(): string | undefined {
+    const basename = (process.env.REACT_APP_BROWSER_HISTORY_BASENAME || '').replace(/\/$/, '');
+    const pathname = window.location.pathname;
+    if (basename && !pathname.startsWith(`${basename}/`)) {
+        return undefined;
+    }
+    const [, applicationId, domainPublicId] = pathname.slice(basename.length).split('/');
+    return applications.has(applicationId as ApplicationId) ? domainPublicId || undefined : undefined;
+}
+
+const authMiddleware = new SetContextLink(async ({headers = {}}) => {
+    const token = await getKeycloakAccessToken();
+    const domainPublicId = currentDomainPublicId();
+    return {
+        headers: {
+            ...headers,
+            authorization: `Bearer ${token}`,
+            ...(domainPublicId ? {domainId: domainPublicId} : {}),
+            locale: navigator.language,
+            'Apollo-Require-Preflight': 'true',
+        },
+    };
 });
 
 const backdropLink = new ApolloLink((operation, forward) => {
@@ -129,16 +141,16 @@ const apolloClient = new ApolloClient({
     link: ApolloLink.from([backdropLink, errorHandlerLink, authMiddleware, httpLink]),
 });
 
-function AssureCorrectDomainJWT({children}: {children: React.JSX.Element}) {
+function AssureCorrectDomain({children}: {children: React.JSX.Element}) {
     const [switchDomainMutation] = useMutation<SwitchDomainMutation>(SwitchDomain);
-    const {user, setCurrentUser} = useCurrentUser();
+    const {user, saveCurrentUser} = useCurrentUser();
     const {domainPublicId} = useParams();
 
-    const domainMatchesToken = !domainPublicId || domainPublicId === user?.user.domainPublicId;
+    const domainMatchesUser = !domainPublicId || domainPublicId === user?.user.domainPublicId;
     const switchRequestedFor = useRef<string | null>(null);
 
     useEffect(() => {
-        if (domainMatchesToken || !domainPublicId) {
+        if (domainMatchesUser || !domainPublicId) {
             return;
         }
         if (switchRequestedFor.current === domainPublicId) {
@@ -155,8 +167,7 @@ function AssureCorrectDomainJWT({children}: {children: React.JSX.Element}) {
                 if (!switched || switchRequestedFor.current !== domainPublicId) {
                     return;
                 }
-                setCurrentUser({
-                    jwtToken: switched.jwt,
+                saveCurrentUser({
                     user: switched.user,
                     applications: getUserApplications(switched.user),
                 });
@@ -167,20 +178,95 @@ function AssureCorrectDomainJWT({children}: {children: React.JSX.Element}) {
                 }
                 logError(`Could not switch to domain ${domainPublicId}`, error);
             });
-    }, [domainMatchesToken, domainPublicId, switchDomainMutation, setCurrentUser]);
+    }, [domainMatchesUser, domainPublicId, switchDomainMutation, saveCurrentUser]);
 
-    if (!domainMatchesToken) {
+    if (!domainMatchesUser) {
         return <></>;
     }
     return <>{children}</>;
 }
 
 export function Authenticated({children}: {children: React.JSX.Element}) {
-    const {user} = useCurrentUser();
+    const {user, saveCurrentUser} = useCurrentUser();
     const {applicationId, domainPublicId} = useParams();
+    const [profileReady, setProfileReady] = useState(false);
+    const [authError, setAuthError] = useState<Error | null>(null);
+    const [authAttempt, setAuthAttempt] = useState(0);
+
+    useEffect(() => {
+        let cancelled = false;
+        async function loadProfile() {
+            try {
+                const authenticated = await initializeKeycloak();
+                if (!authenticated) {
+                    if (!cancelled) {
+                        setAuthError(new Error('Uwierzytelnienie w Keycloak nie powiodło się.'));
+                    }
+                    return;
+                }
+                if (cancelled) {
+                    return;
+                }
+                const {data} = await apolloClient.query<GetCurrentUserQuery>({
+                    query: GetCurrentUser,
+                    fetchPolicy: 'network-only',
+                });
+                const profile = data?.currentUser;
+                if (!profile) {
+                    if (!cancelled) {
+                        setAuthError(new Error('Serwer nie zwrócił danych konta.'));
+                    }
+                    return;
+                }
+                const currentUser: User = {
+                    login: profile.login,
+                    name: profile.name,
+                    email: profile.email,
+                    roles: profile.roles,
+                    domainPublicId: profile.domain.publicId,
+                    domains: profile.domains,
+                };
+                if (!cancelled) {
+                    saveCurrentUser({user: currentUser, applications: getUserApplications(currentUser)});
+                    setProfileReady(true);
+                    setAuthError(null);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setAuthError(error instanceof Error ? error : new Error(String(error)));
+                }
+            }
+        }
+        void loadProfile();
+        return () => {
+            cancelled = true;
+        };
+    }, [authAttempt, saveCurrentUser]);
+
+    if (authError) {
+        return (
+            <ErrorDisplay
+                title="Nie udało się uruchomić sesji"
+                error={authError}
+                onRetry={() => {
+                    setAuthError(null);
+                    setAuthAttempt(attempt => attempt + 1);
+                }}
+            />
+        );
+    }
+
+    if (!profileReady) {
+        return <LoadingIndicator label="Trwa ładowanie konta..." />;
+    }
 
     if (!user) {
-        return <Navigate to={'/login'} />;
+        return (
+            <ErrorDisplay
+                title="Brak danych konta"
+                error={{message: 'Brak danych konta wymaganych do uruchomienia aplikacji.'}}
+            />
+        );
     }
 
     if (!domainPublicId) {
@@ -189,7 +275,7 @@ export function Authenticated({children}: {children: React.JSX.Element}) {
 
     return (
         <ApolloProvider client={apolloClient}>
-            <AssureCorrectDomainJWT>{children}</AssureCorrectDomainJWT>
+            <AssureCorrectDomain>{children}</AssureCorrectDomain>
         </ApolloProvider>
     );
 }

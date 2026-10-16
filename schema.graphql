@@ -9,6 +9,7 @@ scalar YearMonth
 scalar Year
 
 type Query {
+    currentUser: CurrentUserProfile!
     financeManagement: FinanceManagement!
     billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!
     bankTransactionsToImport: [BankTransactionToImport!]!
@@ -284,6 +285,15 @@ type User {
     email: String!,
     roles: [String!]!
     domainPublicId: UUID!,
+    domains: [DomainSimple!]!
+}
+
+type CurrentUserProfile {
+    login: String!
+    name: String!
+    email: String!
+    roles: [String!]!
+    domain: DomainSimple!
     domains: [DomainSimple!]!
 }
 

@@ -1,0 +1,16 @@
+query GetCurrentUser {
+    currentUser {
+        login
+        name
+        email
+        roles
+        domain {
+            publicId
+            name
+        }
+        domains {
+            publicId
+            name
+        }
+    }
+}
