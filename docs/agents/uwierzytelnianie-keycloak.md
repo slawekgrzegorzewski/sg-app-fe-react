@@ -12,3 +12,4 @@
 - Istniejące operacje logowania i zmiany domeny nadal występują w aplikacji. JWT zwracany przez te operacje nie jest używany do chronionych żądań ani zapisywany.
 - Wylogowanie czyści lokalny profil i kończy sesję Keycloak, aby kolejne wejście do części chronionej wymagało ponownego uwierzytelnienia.
 - Pakiet `keycloak-js` publikuje deklaracje typów przez pole `exports`, którego projektowa konfiguracja TypeScript z `moduleResolution: node` nie odczytuje. Mapowanie `paths` w `tsconfig.json` wskazuje jego deklarację bez zmiany rozwiązywania modułów dla całej aplikacji.
+- `keycloak-js` dostarcza kod ESM, którego Jest uruchamiany przez `react-scripts` nie przekształca z `node_modules`. Testy komponentów, które tylko pośrednio importują adapter, powinny mockować projektowy moduł `security/keycloak`; zachowanie adaptera sprawdzamy osobno w `keycloak.test.ts`.

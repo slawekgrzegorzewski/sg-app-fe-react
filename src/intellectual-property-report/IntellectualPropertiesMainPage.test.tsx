@@ -10,6 +10,10 @@ jest.mock('@apollo/client/react', () => ({
     useMutation: jest.fn(),
 }));
 
+jest.mock('../security/keycloak', () => ({
+    getKeycloakAccessToken: jest.fn(),
+}));
+
 jest.mock('react-router-dom', () => ({
     useNavigate: () => jest.fn(),
     useParams: () => ({domainPublicId: 'domain-1'}),
