@@ -27,7 +27,6 @@ export function ConfirmLoginWithGoogle({googleToken}: {googleToken: string}) {
                     return;
                 }
                 setCurrentUser({
-                    jwtToken: loggedIn.jwt,
                     user: loggedIn.user,
                     applications: getUserApplications(loggedIn.user),
                 });

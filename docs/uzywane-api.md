@@ -10,8 +10,9 @@ Dokument opisuje połączenia sieciowe wykonywane bezpośrednio przez kod aplika
 | GraphQL z uwierzytelnieniem   | `${adresBackendu}/graphql`                                   | domeny oraz moduły Księgowość, Kostki, Raporty własności intelektualnej i Pożyczki |
 | HTTP/REST z uwierzytelnieniem | `${adresBackendu}/task/{taskId}/attachment/{attachmentName}` | pobieranie załącznika zadania                                                      |
 | Zewnętrzny skrypt Google      | `https://accounts.google.com/gsi/client`                     | pozyskanie poświadczenia Google Identity Services                                  |
+| Keycloak                      | `https://auth.grzegorzewski.pl`                              | logowanie i odnawianie tokena dostępu dla uwierzytelnionych żądań                  |
 
-W plikach `.graphql` zdefiniowano łącznie 93 operacje: 23 zapytania i 70 mutacji. Kod aplikacji wywołuje 85 z nich: 21 zapytań i 64 mutacje. Nie znaleziono subskrypcji GraphQL, połączeń WebSocket, `EventSource`, biblioteki Axios ani innych bezpośrednich wywołań `fetch` poza pobieraniem załącznika zadania.
+W plikach `.graphql` zdefiniowano łącznie 94 operacje: 24 zapytania i 70 mutacji. Kod aplikacji wywołuje 86 z nich: 22 zapytania i 64 mutacje. Nie znaleziono subskrypcji GraphQL, połączeń WebSocket, `EventSource`, biblioteki Axios ani innych bezpośrednich wywołań `fetch` poza pobieraniem załącznika zadania.
 
 ## Konfiguracja adresu serwera
 
@@ -35,13 +36,14 @@ Klient skonfigurowany w [`src/index.tsx`](../src/index.tsx) używa `HttpLink` i 
 
 ### Klient uwierzytelniony
 
-Klient skonfigurowany w [`Authenticated.tsx`](../src/security/Authenticated.tsx) używa `UploadHttpLink` i punktu wejścia `/graphql`. Każda operacja otrzymuje:
+Klient skonfigurowany w [`Authenticated.tsx`](../src/security/Authenticated.tsx) używa `UploadHttpLink` i punktu wejścia `/graphql`. Przed wysłaniem operacji adapter Keycloak odnawia token dostępu, jeśli jego ważność jest krótsza niż 30 sekund. Każda operacja otrzymuje:
 
-- `Authorization: Bearer {jwt}` — jeśli token JWT jest dostępny;
+- `Authorization: Bearer {token Keycloak}`;
+- `domainId: {publicId domeny z bieżącej trasy}`, jeśli trasa wskazuje domenę;
 - `locale: {język przeglądarki}`;
 - `Apollo-Require-Preflight: true`.
 
-`UploadHttpLink` umożliwia przesyłanie plików za pomocą wieloczęściowych żądań GraphQL. Mechanizm jest używany przez mutację `UploadTaskAttachment` ze skalarem `Upload`. Błędy uwierzytelnienia `401`, `UNAUTHENTICATED` i `UNAUTHORIZED` powodują wylogowanie, a pozostałe błędy są rejestrowane wspólnie.
+`UploadHttpLink` umożliwia przesyłanie plików za pomocą wieloczęściowych żądań GraphQL. Mechanizm jest używany przez mutację `UploadTaskAttachment` ze skalarem `Upload`. Błędy uwierzytelnienia `401`, `UNAUTHENTICATED` i `UNAUTHORIZED` powodują wylogowanie z Keycloak, a pozostałe błędy są rejestrowane wspólnie. Po uwierzytelnieniu zapytanie `GetCurrentUser` pobiera profil i aktywną domenę z backendu. JWT zwracany przez stare operacje logowania nie jest przechowywany ani wysyłany do chronionego API.
 
 ### Używane operacje według obszaru
 
@@ -49,7 +51,7 @@ Klient skonfigurowany w [`Authenticated.tsx`](../src/security/Authenticated.tsx)
 
 Zapytania:
 
-- `DomainsData`.
+- `GetCurrentUser`, `DomainsData`.
 
 Mutacje:
 
@@ -143,9 +145,9 @@ Nie należy traktować tych operacji jako aktywnie wykorzystywanego API bez pono
 
 Kod aplikacji wykonuje jedno bezpośrednie wywołanie `fetch`, zdefiniowane w [`TaskView.tsx`](../src/intellectual-property-report/TaskView.tsx):
 
-| Metoda | Ścieżka                                      | Uwierzytelnienie              | Parametry                    | Odpowiedź                                        |
-| ------ | -------------------------------------------- | ----------------------------- | ---------------------------- | ------------------------------------------------ |
-| `POST` | `/task/{taskId}/attachment/{attachmentName}` | `Authorization: Bearer {jwt}` | `domainId` w ciągu zapytania | dane binarne odczytywane przez `response.blob()` |
+| Metoda | Ścieżka                                      | Uwierzytelnienie                         | Parametry                    | Odpowiedź                                        |
+| ------ | -------------------------------------------- | ---------------------------------------- | ---------------------------- | ------------------------------------------------ |
+| `POST` | `/task/{taskId}/attachment/{attachmentName}` | `Authorization: Bearer {token Keycloak}` | `domainId` w ciągu zapytania | dane binarne odczytywane przez `response.blob()` |
 
 Endpoint służy do pobrania załącznika zadania. Otrzymany obiekt `Blob` jest udostępniany użytkownikowi jako plik przez tymczasowy adres `URL.createObjectURL`.
 
@@ -154,6 +156,8 @@ Wysyłanie i usuwanie załączników nie korzysta z REST: odbywa się odpowiedni
 ## Integracje zewnętrzne poza GraphQL i REST
 
 Komponent [`LoginWithGoogleButton.tsx`](../src/security/login/LoginWithGoogleButton.tsx) ładuje skrypt Google Identity Services z `https://accounts.google.com/gsi/client`. Skrypt przekazuje poświadczenie do funkcji przeglądarkowej `handleCredentialResponse`, a aplikacja przesyła je następnie do własnego serwera mutacją GraphQL `LoginWithGoogle`.
+
+Adapter [`keycloak-js`](../src/security/keycloak.ts) łączy się z `https://auth.grzegorzewski.pl` i klientem `sg-frontend`. Realm `sg-test` obowiązuje w konfiguracjach deweloperskich, a `sg` w produkcji. Adapter używa `login-required` oraz PKCE `S256`; tokeny pozostają w jego pamięci. Integracja uruchamia się po wejściu do chronionej części aplikacji. Szczegóły trwałej konwencji opisuje [dokument uwierzytelniania](agents/uwierzytelnianie-keycloak.md).
 
 Połączenia wykonywane wewnętrznie przez skrypt Google są zarządzane przez Google Identity Services i nie są jawnie definiowane w kodzie aplikacji.
 

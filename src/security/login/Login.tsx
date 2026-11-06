@@ -23,10 +23,9 @@ export function Login() {
 
     function performLogin() {
         loginGraphqlMutation().then(value => {
-            const {jwt, user} = value.data!.login!;
+            const {user} = value.data!.login!;
             const applications: Application[] = getUserApplications(user);
             setCurrentUser({
-                jwtToken: jwt,
                 user: user,
                 applications: applications,
             });

@@ -25,10 +25,11 @@ import {EditorField} from '../utils/forms/Form';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pl';
 import {styled} from '@mui/system';
-import {useCurrentUser} from '../utils/users/use-current-user';
 import {ShowInformationButton} from '../utils/buttons/ShowInformationButton';
 import {useParams} from 'react-router-dom';
 import {getBackendUrl} from '../utils/backend-url';
+import {getKeycloakAccessToken} from '../security/keycloak';
+import {logError} from '../utils/logger';
 
 const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -49,7 +50,6 @@ export function TaskView(properties: {
 }) {
     const {task, refetchDataCallback, dialogOptions} = properties;
     const {domainPublicId} = useParams();
-    const {user} = useCurrentUser();
     const [updateTaskMutation, updateTaskMutationResult] = useMutation<UpdateTaskMutation>(UpdateTask);
     const [deleteTaskMutation, deleteTaskMutationResult] = useMutation<DeleteTaskMutation>(DeleteTask);
     const [uploadTaskAttachmentMutation, uploadTaskAttachmentMutationResult] =
@@ -63,22 +63,32 @@ export function TaskView(properties: {
         return refetchDataCallback();
     };
 
-    const downloadAttachment = (attachmentName: string) => {
-        fetch(`${getBackendUrl()}/task/${task.id}/attachment/${attachmentName}?domainId=${domainPublicId!}`, {
-            method: 'POST',
-            headers: {Authorization: `Bearer ${user!.jwtToken}`},
-        })
-            .then(response => response.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', attachmentName);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-            });
+    const downloadAttachment = async (attachmentName: string) => {
+        try {
+            const token = await getKeycloakAccessToken();
+            const response = await fetch(
+                `${getBackendUrl()}/task/${task.id}/attachment/${attachmentName}?domainId=${domainPublicId!}`,
+                {
+                    method: 'POST',
+                    headers: {Authorization: `Bearer ${token}`},
+                }
+            );
+            if (!response.ok) {
+                logError('Could not download attachment', new Error(`HTTP ${response.status}`));
+                return;
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', attachmentName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            logError(`Could not download attachment ${attachmentName}`, error);
+        }
     };
 
     const deleteTaskAttachment = async (data: {fileName: string; taskId: number}) => {
