@@ -1,10 +1,12 @@
-import {Alert, Button, Stack, Typography} from '@mui/material';
+import {Alert, Button, Stack, TextField, Typography} from '@mui/material';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {RefObject} from 'react';
 import {connectSmartCube, SmartCubeConnection} from 'smartcube-web-bluetooth';
 import {applyCubeMove, scrambleStates, SOLVED_CUBE} from './smart-cube-state';
 import {INSPECTION_ALLOWANCE_MILLIS} from './phase';
 import {deriveCubingScramble} from './cubing-api';
+import {formatStopWatchTime} from './StopWatchDisplay';
+import {CubeQuaternion, normalizeGyroQuaternion, relativeGyroQuaternion} from './gyro-orientation';
 
 type Props = {
     scramble: string;
@@ -17,27 +19,40 @@ type Props = {
     onCancel: () => void;
     onFacelets: (facelets: string | null) => void;
     onConnectionChange: (connected: boolean) => void;
+    onCubeElapsed?: (elapsed: number | null) => void;
+    savedElapsed?: number;
+    onOrientation?: (orientation: CubeQuaternion | null) => void;
+    onOrientationReset?: () => void;
     confirmRef: RefObject<() => boolean>;
     isTouchDevice: boolean;
 };
 
-export function SmartCube({scramble, enabled, solving, inspection, onInspection, onStart, onStop, onCancel, onFacelets, onConnectionChange, confirmRef, isTouchDevice}: Props) {
+export function SmartCube({scramble, enabled, solving, inspection, onInspection, onStart, onStop, onCancel, onFacelets, onConnectionChange, onCubeElapsed, savedElapsed, onOrientation, onOrientationReset, confirmRef, isTouchDevice}: Props) {
     const [connection, setConnection] = useState<SmartCubeConnection | null>(null);
     const connectionRef = useRef<SmartCubeConnection | null>(null);
     const mounted = useRef(false);
     const unsubscribe = useRef<(() => void) | null>(null);
     const [connecting, setConnecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [macRequest, setMacRequest] = useState<string | null>(null);
+    const [macInput, setMacInput] = useState('');
+    const macResolver = useRef<((value: string | null) => void) | null>(null);
+    const macCancelled = useRef(false);
     const [facelets, setFacelets] = useState<string | null>(null);
     const stateRef = useRef<string | null>(null);
     const startedAt = useRef<number | null>(null);
+    const gyroBasis = useRef<CubeQuaternion | null>(null);
+    const latestGyro = useRef<CubeQuaternion | null>(null);
+    const [gyroAvailable, setGyroAvailable] = useState(false);
+    const cubeStartedAt = useRef<number | null>(null);
+    const [cubeElapsed, setCubeElapsed] = useState<number | null>(null);
     const inspectionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const inspectionDeadline = useRef(0);
     const inspecting = useRef(false);
     const [scrambled, setScrambled] = useState(false);
     const scrambledRef = useRef(false);
-    const callbacks = useRef({onInspection, onStart, onStop, onCancel, onFacelets, onConnectionChange});
-    callbacks.current = {onInspection, onStart, onStop, onCancel, onFacelets, onConnectionChange};
+    const callbacks = useRef({onInspection, onStart, onStop, onCancel, onFacelets, onConnectionChange, onCubeElapsed, onOrientation});
+    callbacks.current = {onInspection, onStart, onStop, onCancel, onFacelets, onConnectionChange, onCubeElapsed, onOrientation};
     const states = useMemo(() => {
         try { return scramble.trim() ? scrambleStates(scramble) : []; } catch { return []; }
     }, [scramble]);
@@ -49,6 +64,8 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
             inspectionTimer.current = null;
             inspecting.current = false;
             startedAt.current = null;
+            cubeStartedAt.current = null;
+            setCubeElapsed(null);
         }
     }, [inspection, solving, enabled]);
 
@@ -56,6 +73,8 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
         mounted.current = true;
         return () => {
             mounted.current = false;
+            macResolver.current?.(null);
+            macResolver.current = null;
             if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
             unsubscribe.current?.();
             void connectionRef.current?.disconnect();
@@ -65,8 +84,14 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
     const connect = async () => {
         setConnecting(true);
         setError(null);
+        macCancelled.current = false;
         try {
-            const conn = await connectSmartCube();
+            const conn = await connectSmartCube(async (device, isFallbackCall) => {
+                if (!isFallbackCall || !mounted.current) return null;
+                setMacInput('');
+                setMacRequest(device.name || 'kostki');
+                return new Promise<string | null>(resolve => { macResolver.current = resolve; });
+            });
             if (!mounted.current) {
                 await conn.disconnect();
                 return;
@@ -85,6 +110,10 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
                     connectionRef.current = null;
                     setConnection(null);
                     callbacks.current.onConnectionChange(false);
+                    gyroBasis.current = null;
+                    latestGyro.current = null;
+                    setGyroAvailable(false);
+                    callbacks.current.onOrientation?.(null);
                     stateRef.current = null;
                     setFacelets(null);
                     callbacks.current.onFacelets(null);
@@ -94,6 +123,14 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
                     scrambledRef.current = false;
                     setScrambled(false);
                     startedAt.current = null;
+                } else if (event.type === 'GYRO') {
+                    const orientation = normalizeGyroQuaternion(event.quaternion);
+                    if (orientation) {
+                        if (!latestGyro.current) setGyroAvailable(true);
+                        latestGyro.current = orientation;
+                        gyroBasis.current ??= orientation;
+                        callbacks.current.onOrientation?.(relativeGyroQuaternion(gyroBasis.current, orientation));
+                    }
                 } else if (event.type === 'FACELETS' && event.facelets.length === 54) {
                     stateRef.current = event.facelets;
                     setFacelets(event.facelets);
@@ -126,6 +163,13 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
                     if (next === SOLVED_CUBE) scrambledRef.current = false;
                     setScrambled(scrambledRef.current);
                     const now = performance.now();
+                    const cubeTime = event.cubeTimestamp;
+                    if ((startedAt.current !== null || inspecting.current) && typeof cubeTime === 'number' && Number.isFinite(cubeTime)) {
+                        if (cubeStartedAt.current === null) cubeStartedAt.current = cubeTime;
+                        const elapsed = cubeTime >= cubeStartedAt.current ? Math.round(cubeTime - cubeStartedAt.current) : null;
+                        setCubeElapsed(elapsed);
+                        callbacks.current.onCubeElapsed?.(elapsed);
+                    }
                     if (startedAt.current !== null) {
                         if (next === SOLVED_CUBE) {
                             const elapsed = Math.max(1, Math.round(now - startedAt.current));
@@ -150,16 +194,25 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
             if (conn.capabilities.facelets) await conn.sendCommand({type: 'REQUEST_FACELETS'});
             else setError('Kostka nie udostępnia odczytu stanu ścianek.');
         } catch (e) {
-            if (mounted.current) setError(e instanceof Error ? e.message : 'Nie udało się połączyć z kostką.');
+            if (mounted.current && !macCancelled.current) setError(e instanceof Error ? e.message : 'Nie udało się połączyć z kostką.');
             if (connectionRef.current) await connectionRef.current.disconnect();
         } finally {
             if (mounted.current) setConnecting(false);
         }
     };
 
+    const submitMac = (value: string | null) => {
+        macCancelled.current = value === null;
+        macResolver.current?.(value);
+        macResolver.current = null;
+        setMacRequest(null);
+    };
+
     const confirmScramble = useCallback((): boolean => {
         if (!enabled || inspecting.current || !connectionRef.current || !scrambledRef.current || !stateRef.current || stateRef.current === SOLVED_CUBE) return false;
         inspecting.current = true;
+        cubeStartedAt.current = null;
+        setCubeElapsed(null);
         callbacks.current.onInspection(deriveCubingScramble(stateRef.current));
         const deadline = performance.now() + INSPECTION_ALLOWANCE_MILLIS;
         inspectionDeadline.current = deadline;
@@ -182,7 +235,35 @@ export function SmartCube({scramble, enabled, solving, inspection, onInspection,
         <Button variant="outlined" disabled={connecting} onClick={() => connection ? void connection.disconnect() : void connect()}>
             {connecting ? 'Łączenie…' : connection ? `Rozłącz ${connection.deviceName}` : 'Połącz smart kostkę'}
         </Button>
+        {macRequest && <Stack spacing={1} alignItems="center" component="form" onSubmit={event => {
+            event.preventDefault();
+            if (/^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(macInput.trim())) submitMac(macInput.trim().toUpperCase());
+        }}>
+            <Typography>Nie udało się odczytać adresu MAC urządzenia {macRequest}. Podaj go ręcznie.</Typography>
+            <TextField label="Adres MAC kostki" value={macInput} onChange={event => setMacInput(event.target.value)}
+                placeholder="XX:XX:XX:XX:XX:XX" helperText="Format: 6 par znaków szesnastkowych oddzielonych dwukropkami." />
+            <Stack direction="row" spacing={1}>
+                <Button type="submit" variant="contained" disabled={!/^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(macInput.trim())}>Połącz</Button>
+                <Button onClick={() => submitMac(null)}>Anuluj</Button>
+            </Stack>
+        </Stack>}
         {error && <Alert severity="error">{error}</Alert>}
+        {connection && <Stack spacing={0.5} alignItems="center">
+            <Button variant="outlined" disabled={!gyroAvailable} onClick={() => {
+                if (!latestGyro.current) return;
+                gyroBasis.current = latestGyro.current;
+                callbacks.current.onOrientation?.(relativeGyroQuaternion(latestGyro.current, latestGyro.current));
+                onOrientationReset?.();
+            }}>Resetuj położenie kostki</Button>
+            <Typography color="text.secondary" variant="body2" align="center">
+                Ustaw kostkę zieloną ścianką do przodu, a białą do góry, i naciśnij przycisk.
+                {!gyroAvailable && ' Oczekiwanie na dane żyroskopu.'}
+            </Typography>
+        </Stack>}
+        {connection && cubeElapsed !== null && <Typography color="text.secondary" variant="body2">
+            Czas kostki (od pierwszego do ostatniego ruchu): {formatStopWatchTime(cubeElapsed)}
+            {savedElapsed !== undefined && savedElapsed > 0 && <> · Różnica względem zapisywanego czasu: {cubeElapsed - savedElapsed >= 0 ? '+' : '−'}{formatStopWatchTime(Math.abs(cubeElapsed - savedElapsed))}</>}
+        </Typography>}
         {connection && isTouchDevice && <Button variant="contained" onClick={confirmScramble} disabled={!enabled || !scrambled || !facelets || facelets === SOLVED_CUBE}>
             Scramble gotowy — rozpocznij inspekcję
         </Button>}

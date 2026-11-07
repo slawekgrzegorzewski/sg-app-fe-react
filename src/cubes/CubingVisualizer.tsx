@@ -1,11 +1,13 @@
 import {Alert, Box, Stack} from '@mui/material';
 import {useEffect, useRef, useState} from 'react';
+import type {RefObject} from 'react';
 import {CubeType} from '../types';
 import {getCubeTypeOption} from './cube-types';
 import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
 import {findCubeMove} from './smart-cube-state';
+import {CubeQuaternion} from './gyro-orientation';
 
-export function CubingVisualizer({cubeType, scramble, facelets = null}: {cubeType: CubeType; scramble: string; facelets?: string | null}) {
+export function CubingVisualizer({cubeType, scramble, facelets = null, orientation, orientationResetVersion = 0}: {cubeType: CubeType; scramble: string; facelets?: string | null; orientation?: RefObject<CubeQuaternion | null>; orientationResetVersion?: number}) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const playerRef = useRef<Awaited<ReturnType<typeof createCubingTwistyPlayer>> | null>(null);
     const previousFacelets = useRef<string | null>(null);
@@ -96,6 +98,56 @@ export function CubingVisualizer({cubeType, scramble, facelets = null}: {cubeTyp
         }
         return () => { disposed = true; };
     }, [cubeType, scramble, facelets, playerVersion]);
+
+    useEffect(() => {
+        const player = playerRef.current;
+        if (!player || !orientation || orientationResetVersion === 0) return;
+        player.cameraLatitude = 0;
+        player.cameraLongitude = 10;
+    }, [cubeType, orientation, orientationResetVersion, playerVersion]);
+
+    useEffect(() => {
+        const player = playerRef.current;
+        if (!player || !orientation) return;
+        let disposed = false;
+        let frame = 0;
+        let lastOrientation: CubeQuaternion | null = null;
+        let scene: {quaternion: {set: (x: number, y: number, z: number, w: number) => unknown}} | null = null;
+        let vantage: {scheduleRender: () => void} | null = null;
+
+        const update = async () => {
+            try {
+                if (!vantage || !scene) {
+                    const candidate = (await player.experimentalCurrentVantages())[Symbol.iterator]().next().value;
+                    if (disposed) return;
+                    if (candidate?.scene) {
+                        const loadedScene = await candidate.scene.scene();
+                        if (disposed) return;
+                        vantage = candidate;
+                        scene = loadedScene;
+                    }
+                }
+                const current = orientation.current;
+                if (vantage && scene && current && current !== lastOrientation) {
+                    scene.quaternion.set(current.x, current.y, current.z, current.w);
+                    vantage.scheduleRender();
+                    lastOrientation = current;
+                }
+                if (!disposed) frame = requestAnimationFrame(() => { void update(); });
+            } catch {
+                // The experimental scene API may be unavailable; keep the normal viewer usable.
+            }
+        };
+        void update();
+        return () => {
+            disposed = true;
+            cancelAnimationFrame(frame);
+            if (scene && vantage) {
+                scene.quaternion.set(0, 0, 0, 1);
+                vantage.scheduleRender();
+            }
+        };
+    }, [cubeType, orientation, playerVersion]);
 
     return (
         <Stack alignItems="center">

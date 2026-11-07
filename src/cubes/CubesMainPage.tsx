@@ -41,6 +41,7 @@ import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Paper from '@mui/material/Paper';
 import {formatCubeTime} from './CubeStatsPage';
 import {SmartCube} from './SmartCube';
+import {CubeQuaternion} from './gyro-orientation';
 
 function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['todayResults']}) {
     const theme = useTheme();
@@ -152,6 +153,10 @@ export function CubesMainPage() {
     const [phase, setPhase] = useState<Phase>('IDLE');
     const [smartInspection, setSmartInspection] = useState(false);
     const [smartConnected, setSmartConnected] = useState(false);
+    const orientation = useRef<CubeQuaternion | null>(null);
+    const [hasOrientation, setHasOrientation] = useState(false);
+    const [orientationResetVersion, setOrientationResetVersion] = useState(0);
+    const [cubeElapsed, setCubeElapsed] = useState<number | null>(null);
     const confirmSmartScramble = useRef<() => boolean>(() => false);
     const smartSpaceHeld = useRef(false);
     const result = useRef(0);
@@ -222,6 +227,7 @@ export function CubesMainPage() {
         setIsValidatingScramble(false);
         setIsGeneratingScramble(false);
         setSmartInspection(false);
+        setCubeElapsed(null);
         setPhase('IDLE');
         forceUpdate();
     });
@@ -407,6 +413,9 @@ export function CubesMainPage() {
                                     reset.current();
                                     setSmartFacelets(null);
                                     setSmartConnected(false);
+                                    orientation.current = null;
+                                    setHasOrientation(false);
+                                    setOrientationResetVersion(0);
                                     setCubeType(event.target.value as CubeType);
                                 }}
                             >
@@ -503,7 +512,7 @@ export function CubesMainPage() {
                         }
                         sx={{width: '100%'}}
                     />
-                    <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} facelets={smartFacelets} />
+                    <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} facelets={smartFacelets} orientation={hasOrientation ? orientation : undefined} orientationResetVersion={orientationResetVersion} />
                     {cubeType === CubeType.Three && (
                         <SmartCube
                             scramble={scramble}
@@ -550,7 +559,18 @@ export function CubesMainPage() {
                             }}
                             onCancel={() => reset.current()}
                             onFacelets={setSmartFacelets}
-                            onConnectionChange={setSmartConnected}
+                            onConnectionChange={connected => {
+                                setSmartConnected(connected);
+                                if (!connected) setOrientationResetVersion(0);
+                            }}
+                            onOrientationReset={() => setOrientationResetVersion(version => version + 1)}
+                            onOrientation={value => {
+                                const wasAvailable = orientation.current !== null;
+                                orientation.current = value;
+                                if (wasAvailable !== (value !== null)) setHasOrientation(value !== null);
+                            }}
+                            onCubeElapsed={setCubeElapsed}
+                            savedElapsed={result.current}
                             confirmRef={confirmSmartScramble}
                             isTouchDevice={isTouchDevice}
                         />
@@ -580,8 +600,9 @@ export function CubesMainPage() {
                             >
                                 <Typography>Blokada ekranu: {wakeLock ? 'włączona' : 'wyłączona'}</Typography>
                                 {smartFacelets && <Box onTouchStart={event => event.stopPropagation()}>
-                                    <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets} />
+                                    <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets} orientation={hasOrientation ? orientation : undefined} orientationResetVersion={orientationResetVersion} />
                                 </Box>}
+                                {cubeElapsed !== null && <Typography>Czas kostki (od pierwszego do ostatniego ruchu): {formatCubeTime(cubeElapsed)}</Typography>}
                                 <StopWatch
                                     variant={'h2'}
                                     showControls={false}

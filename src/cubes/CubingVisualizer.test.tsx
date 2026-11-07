@@ -1,4 +1,4 @@
-import {render, screen, waitFor} from '@testing-library/react';
+import {act, render, screen, waitFor} from '@testing-library/react';
 import {CubeType} from '../types';
 import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
 import {CubingVisualizer} from './CubingVisualizer';
@@ -111,4 +111,43 @@ describe('CubingVisualizer', () => {
         expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith(null);
         expect(player.pause).toHaveBeenCalled();
     });
+    it('applies gyro orientation to the scene and clears it when unavailable', async () => {
+        const set = jest.fn();
+        const scheduleRender = jest.fn();
+        const player = Object.assign(createPlayer(), {
+            experimentalCurrentVantages: jest.fn().mockResolvedValue([{scene: {scene: async () => ({quaternion: {set}})}, scheduleRender}]),
+        });
+        createCubingTwistyPlayerMock.mockResolvedValue(player);
+        const orientation = {current: {x: 0, y: 0.5, z: 0, w: 0.866}};
+        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} />);
+        await waitFor(() => expect(set).toHaveBeenCalledWith(0, 0.5, 0, 0.866));
+        orientation.current = {x: 0.5, y: 0, z: 0, w: 0.866};
+        await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+        expect(set).toHaveBeenCalledWith(0.5, 0, 0, 0.866);
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" />);
+        expect(set).toHaveBeenLastCalledWith(0, 0, 0, 1);
+        expect(scheduleRender).toHaveBeenCalled();
+    });
+
+    it('ustawia kamerę przy kalibracji i przy późniejszym otwarciu widoku', async () => {
+        const player = createPlayer();
+        createCubingTwistyPlayerMock.mockResolvedValue(player);
+        const orientation = {current: {x: 0, y: 0, z: 0, w: 1}};
+        const {rerender, unmount} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} />);
+        await waitFor(() => expect(player.isConnected).toBe(true));
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} orientationResetVersion={1} />);
+        await waitFor(() => expect(player).toHaveProperty('cameraLatitude', 0));
+        expect(player).toHaveProperty('cameraLongitude', 10);
+        Object.assign(player, {cameraLatitude: 25, cameraLongitude: 30});
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} orientationResetVersion={2} />);
+        expect(player).toHaveProperty('cameraLatitude', 0);
+        expect(player).toHaveProperty('cameraLongitude', 10);
+        unmount();
+        const nextPlayer = createPlayer();
+        createCubingTwistyPlayerMock.mockResolvedValue(nextPlayer);
+        render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} orientationResetVersion={2} />);
+        await waitFor(() => expect(nextPlayer).toHaveProperty('cameraLatitude', 0));
+        expect(nextPlayer).toHaveProperty('cameraLongitude', 10);
+    });
+
 });
