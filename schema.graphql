@@ -1030,6 +1030,7 @@ input SaveCubeResultInput {
     cubeType: CubeType!
     timestampOfSolve: LocalDateTime!
     timeInMillis: Int!
+    scramble: String
 }
 
 type StrengthTrainingQuery {

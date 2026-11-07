@@ -1,10 +1,15 @@
 import {useMutation, useQuery} from '@apollo/client/react';
-import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {validateCubingScramble} from './cubing-api';
+import {deriveCubingScramble, validateCubingScramble} from './cubing-api';
 import {generateCubingScramble} from './cubing-scramble';
 import {averageCubeTime, CubesMainPage} from './CubesMainPage';
 import {useIsTouchDevice} from '../utils/use-is-touch-screen';
+import {Subject} from 'rxjs';
+import {connectSmartCube, SmartCubeEvent} from 'smartcube-web-bluetooth';
+import {SOLVED_CUBE} from './smart-cube-state';
+
+jest.mock('smartcube-web-bluetooth', () => ({connectSmartCube: jest.fn()}));
 
 jest.mock('@apollo/client/react', () => ({
     useMutation: jest.fn(),
@@ -17,6 +22,7 @@ jest.mock('./cubing-scramble', () => ({
 
 jest.mock('./cubing-api', () => ({
     validateCubingScramble: jest.fn(),
+    deriveCubingScramble: jest.fn(),
 }));
 
 jest.mock('./CubingVisualizer', () => ({
@@ -95,8 +101,35 @@ describe('CubesMainPage', () => {
         useMutationMock.mockReturnValue([storeCubeResult]);
         generateCubingScrambleMock.mockResolvedValue("R U R'");
         validateCubingScrambleMock.mockResolvedValue(undefined);
+        (deriveCubingScramble as jest.Mock).mockResolvedValue('R');
         useIsTouchDeviceMock.mockReturnValue(false);
     });
+
+    async function confirmMixedCube(events: Subject<SmartCubeEvent>) {
+        render(<CubesMainPage />);
+        fireEvent.click(screen.getByRole('button', {name: 'Połącz smart kostkę'}));
+        await screen.findByText('Oczekiwanie na stan kostki…');
+        act(() => events.next({type: 'FACELETS', facelets: SOLVED_CUBE, timestamp: 0}));
+        const move = (value: string) => act(() => events.next({type: 'MOVE', move: value, face: 0, direction: 0, localTimestamp: 0, cubeTimestamp: 0, timestamp: 0}));
+        move('F');
+        move('R');
+        fireEvent.keyDown(document, {code: 'Space'});
+        fireEvent.keyUp(document, {code: 'Space'});
+        await act(async () => { await Promise.resolve(); });
+        return move;
+    }
+
+    async function confirmCubeWithPendingSolver() {
+        const events = new Subject<SmartCubeEvent>();
+        (connectSmartCube as jest.Mock).mockResolvedValue({
+            deviceName: 'GAN', events$: events, capabilities: {facelets: true},
+            sendCommand: jest.fn(), disconnect: jest.fn(),
+        });
+        let resolve: (value: string) => void = () => {};
+        (deriveCubingScramble as jest.Mock).mockReturnValue(new Promise<string>(done => { resolve = done; }));
+        const move = await confirmMixedCube(events);
+        return {move, resolve};
+    }
 
     it('loads results and a visualizer for the selected cube type', async () => {
         const user = userEvent.setup();
@@ -297,5 +330,95 @@ describe('CubesMainPage', () => {
                 block: 'end',
             })
         );
+    });
+
+    it('confirms the connected cube scramble with space without starting the manual stopwatch', async () => {
+        const events = new Subject<SmartCubeEvent>();
+        (connectSmartCube as jest.Mock).mockResolvedValue({
+            deviceName: 'GAN', events$: events, capabilities: {facelets: true},
+            sendCommand: jest.fn(), disconnect: jest.fn(),
+        });
+        render(<CubesMainPage />);
+        const connectButton = screen.getByRole('button', {name: 'Połącz smart kostkę'});
+        fireEvent.click(connectButton);
+        await screen.findByText('Oczekiwanie na stan kostki…');
+        expect(screen.queryByRole('button', {name: 'Scramble gotowy — rozpocznij inspekcję'})).not.toBeInTheDocument();
+        act(() => events.next({type: 'FACELETS', facelets: SOLVED_CUBE, timestamp: 0}));
+        fireEvent.keyDown(document, {code: 'Space'});
+        fireEvent.keyUp(document, {code: 'Space'});
+        expect(screen.getByText('IDLE')).toBeInTheDocument();
+        act(() => events.next({type: 'MOVE', move: 'R', face: 0, direction: 0, localTimestamp: 0, cubeTimestamp: 0, timestamp: 0}));
+        expect(screen.getByText(/Naciśnij spację/)).toBeInTheDocument();
+        const scrambleField = screen.getByRole('textbox', {name: 'Scramble'});
+        fireEvent.keyDown(scrambleField, {code: 'Space'});
+        fireEvent.keyUp(scrambleField, {code: 'Space'});
+        expect(screen.getByText('IDLE')).toBeInTheDocument();
+        await act(async () => { connectButton.focus(); });
+        expect(fireEvent.keyDown(connectButton, {code: 'Space', cancelable: true})).toBe(false);
+        fireEvent.keyDown(connectButton, {code: 'Space', repeat: true});
+        expect(fireEvent.keyUp(connectButton, {code: 'Space', cancelable: true})).toBe(false);
+        expect(screen.getByText('INSPECTION_EARLY')).toBeInTheDocument();
+        expect(screen.queryByText('SOLVING')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.getByRole('textbox', {name: 'Scramble'})).toHaveValue('R'));
+        act(() => events.next({type: 'MOVE', move: "R'", face: 0, direction: 1, localTimestamp: 0, cubeTimestamp: 0, timestamp: 0}));
+        expect(screen.getByText('IDLE')).toBeInTheDocument();
+    });
+
+    it('po zatwierdzeniu wpisuje scramble i zapisuje go z wynikiem nawet po wolnych obliczeniach', async () => {
+        const {move, resolve} = await confirmCubeWithPendingSolver();
+        expect(screen.getByText('Wyznaczanie scramble’a ze stanu kostki…')).toBeInTheDocument();
+        expect(screen.queryByRole('button', {name: 'Wyznacz scramble ze stanu kostki'})).not.toBeInTheDocument();
+        move("R'");
+        move("F'");
+        fireEvent.keyDown(document, {code: 'Enter'});
+        expect(storeCubeResult).not.toHaveBeenCalled();
+        await act(async () => { resolve('F R'); });
+        await waitFor(() => expect(storeCubeResult).toHaveBeenCalledWith({variables: expect.objectContaining({scramble: 'F R'})}));
+    });
+
+    it('nie zapisuje błędnego scramble’a po awarii solvera i pozwala wpisać go ręcznie', async () => {
+        const events = new Subject<SmartCubeEvent>();
+        (connectSmartCube as jest.Mock).mockResolvedValue({
+            deviceName: 'GAN', events$: events, capabilities: {facelets: true},
+            sendCommand: jest.fn(), disconnect: jest.fn(),
+        });
+        (deriveCubingScramble as jest.Mock).mockRejectedValue(new Error('Błąd solvera'));
+        const move = await confirmMixedCube(events);
+        expect(await screen.findByText(/Nie udało się wyznaczyć scramble’a: Błąd solvera/)).toBeInTheDocument();
+        move("R'");
+        move("F'");
+        fireEvent.keyDown(document, {code: 'Enter'});
+        expect(storeCubeResult).not.toHaveBeenCalled();
+        await screen.findByText(/Wpisz go ręcznie przed zapisem/);
+        fireEvent.change(screen.getByRole('textbox', {name: 'Scramble'}), {target: {value: 'F R'}});
+        fireEvent.keyDown(document, {code: 'Enter'});
+        await waitFor(() => expect(storeCubeResult).toHaveBeenCalledWith({variables: expect.objectContaining({scramble: 'F R'})}));
+    });
+
+    it('ignoruje wynik solvera po resecie próby', async () => {
+        const {resolve} = await confirmCubeWithPendingSolver();
+        fireEvent.keyDown(document, {code: 'KeyR'});
+        await act(async () => { resolve('F R'); });
+        expect(screen.getByRole('textbox', {name: 'Scramble'})).toHaveValue('');
+        expect(storeCubeResult).not.toHaveBeenCalled();
+    });
+
+    it('zachowuje wynik i scramble po błędzie zapisu oraz pozwala ponowić próbę', async () => {
+        const events = new Subject<SmartCubeEvent>();
+        (connectSmartCube as jest.Mock).mockResolvedValue({
+            deviceName: 'GAN', events$: events, capabilities: {facelets: true},
+            sendCommand: jest.fn(), disconnect: jest.fn(),
+        });
+        (deriveCubingScramble as jest.Mock).mockResolvedValue('F R');
+        storeCubeResult.mockRejectedValueOnce(new Error('Błąd zapisu'));
+        const move = await confirmMixedCube(events);
+        await waitFor(() => expect(screen.getByRole('textbox', {name: 'Scramble'})).toHaveValue('F R'));
+        move("R'");
+        move("F'");
+        fireEvent.keyDown(document, {code: 'Enter'});
+        expect(await screen.findByText('Błąd zapisu')).toBeInTheDocument();
+        expect(screen.getByRole('textbox', {name: 'Scramble'})).toHaveValue('F R');
+        fireEvent.keyDown(document, {code: 'Enter'});
+        await waitFor(() => expect(storeCubeResult).toHaveBeenCalledTimes(2));
     });
 });

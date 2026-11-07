@@ -40,6 +40,7 @@ import {CubeStatCard} from './CubeStatCard';
 import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Paper from '@mui/material/Paper';
 import {formatCubeTime} from './CubeStatsPage';
+import {SmartCube} from './SmartCube';
 
 function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['todayResults']}) {
     const theme = useTheme();
@@ -133,7 +134,15 @@ export function CubesMainPage() {
     const cubeTypeRef = useRef(cubeType);
     cubeTypeRef.current = cubeType;
     const [scramble, setScramble] = useState('');
+    const scrambleRef = useRef(scramble);
+    scrambleRef.current = scramble;
+    const [derivingSmartScramble, setDerivingSmartScramble] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const smartScrambleId = useRef(0);
+    const smartScramblePromise = useRef<Promise<string | null> | null>(null);
+    const savingResult = useRef<symbol | null>(null);
     const [visualizedScramble, setVisualizedScramble] = useState('');
+    const [smartFacelets, setSmartFacelets] = useState<string | null>(null);
     const [scrambleError, setScrambleError] = useState<string | null>(null);
     const [scrambleValidationError, setScrambleValidationError] = useState<string | null>(null);
     const [isValidatingScramble, setIsValidatingScramble] = useState(false);
@@ -141,9 +150,18 @@ export function CubesMainPage() {
     const scrambleGenerationId = useRef(0);
     const scrambleValidationId = useRef(0);
     const [phase, setPhase] = useState<Phase>('IDLE');
+    const [smartInspection, setSmartInspection] = useState(false);
+    const [smartConnected, setSmartConnected] = useState(false);
+    const confirmSmartScramble = useRef<() => boolean>(() => false);
+    const smartSpaceHeld = useRef(false);
     const result = useRef(0);
     const resultActionsRef = useRef<HTMLDivElement | null>(null);
     const becomeLateInspectionTimeOutId = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        const attemptId = smartScrambleId;
+        return () => { attemptId.current++; };
+    }, []);
 
     const generateScrambleForSelectedCube = useCallback(() => {
         const generationId = ++scrambleGenerationId.current;
@@ -186,30 +204,59 @@ export function CubesMainPage() {
     }, []);
 
     const reset = useRef(() => {
+        smartScrambleId.current++;
+        savingResult.current = null;
+        smartScramblePromise.current = null;
+        setDerivingSmartScramble(false);
+        setSaveError(null);
         scrambleGenerationId.current++;
         scrambleValidationId.current++;
         result.current = 0;
         resetTrigger.current();
         releaseWakeLock();
         setScramble('');
+        scrambleRef.current = '';
         setVisualizedScramble('');
         setScrambleError(null);
         setScrambleValidationError(null);
         setIsValidatingScramble(false);
         setIsGeneratingScramble(false);
+        setSmartInspection(false);
         setPhase('IDLE');
         forceUpdate();
     });
-    const save = useRef(() => {
-        let resultCopy = result.current;
-        reset.current();
-        storeCubeResultMutation({
-            variables: {
-                cubeType: cubeTypeRef.current,
-                timestampOfSolve: dayjs().format('YYYY-MM-DD HH:mm:ss.SSS'),
-                timeInMillis: resultCopy,
-            },
-        }).then(() => refetch());
+    const save = useRef(async () => {
+        if (savingResult.current || result.current <= 0) return;
+        const saveId = Symbol('cube-result-save');
+        savingResult.current = saveId;
+        const attempt = smartScrambleId.current;
+        const resultCopy = result.current;
+        const type = cubeTypeRef.current;
+        const timestamp = dayjs().format('YYYY-MM-DD HH:mm:ss.SSS');
+        try {
+            const pending = smartScramblePromise.current;
+            if (pending && await pending === null) {
+                if (attempt === smartScrambleId.current) setSaveError('Nie udało się wyznaczyć scramble’a. Wpisz go ręcznie przed zapisem.');
+                return;
+            }
+            if (attempt !== smartScrambleId.current) return;
+            const scrambleCopy = scrambleRef.current.trim();
+            if (scrambleCopy.length > 255) {
+                setSaveError('Scramble może zawierać maksymalnie 255 znaków.');
+                return;
+            }
+            await storeCubeResultMutation({
+                variables: {cubeType: type, timestampOfSolve: timestamp, timeInMillis: resultCopy, scramble: scrambleCopy},
+            });
+            if (attempt === smartScrambleId.current) {
+                reset.current();
+                await refetch();
+            }
+        } catch (error) {
+            if (attempt === smartScrambleId.current) setSaveError(error instanceof Error ? error.message : 'Nie udało się zapisać wyniku.');
+        } finally {
+            if (savingResult.current === saveId) savingResult.current = null;
+        }
     });
 
     const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType}});
@@ -239,7 +286,15 @@ export function CubesMainPage() {
             if (isTextEditingTarget(e.target)) {
                 return;
             }
-            if (e.code === 'Space') {
+            if (e.code === 'Space' && (smartSpaceHeld.current || (smartConnected && phase === 'IDLE' && result.current === 0))) {
+                e.preventDefault();
+                if (!smartSpaceHeld.current && !e.repeat) {
+                    smartSpaceHeld.current = true;
+                    confirmSmartScramble.current();
+                }
+                return;
+            }
+            if (e.code === 'Space' && !smartInspection) {
                 if (phase === 'IDLE' && result.current === 0) {
                     beginInspection();
                 } else if (phase === 'SOLVING') {
@@ -247,7 +302,7 @@ export function CubesMainPage() {
                     setPhase('IDLE');
                 }
             }
-            if (e.code === 'KeyS' && phase === 'IDLE') {
+            if (e.code === 'KeyS' && phase === 'IDLE' && !derivingSmartScramble) {
                 generateScrambleForSelectedCube();
             }
             if (e.code === 'KeyR') {
@@ -255,15 +310,20 @@ export function CubesMainPage() {
                 clearInspectionTimeout();
             }
             if (e.code === 'Enter' && phase === 'IDLE' && result.current > 0) {
-                save.current();
+                void save.current();
             }
         };
 
         const keyUpListener = (e: KeyboardEvent) => {
+            if (e.code === 'Space' && smartSpaceHeld.current) {
+                smartSpaceHeld.current = false;
+                e.preventDefault();
+                return;
+            }
             if (isTextEditingTarget(e.target)) {
                 return;
             }
-            if (e.code !== 'Space') {
+            if (e.code !== 'Space' || smartInspection) {
                 return;
             }
             clearInspectionTimeout();
@@ -279,7 +339,7 @@ export function CubesMainPage() {
             document.removeEventListener('keydown', keyDownListener);
             document.removeEventListener('keyup', keyUpListener);
         };
-    }, [phase, clearInspectionTimeout, beginInspection, generateScrambleForSelectedCube]);
+    }, [phase, smartInspection, smartConnected, derivingSmartScramble, clearInspectionTimeout, beginInspection, generateScrambleForSelectedCube]);
 
     useEffect(() => clearInspectionTimeout, [clearInspectionTimeout]);
 
@@ -345,6 +405,8 @@ export function CubesMainPage() {
                                 disabled={phase !== 'IDLE' || result.current > 0}
                                 onChange={event => {
                                     reset.current();
+                                    setSmartFacelets(null);
+                                    setSmartConnected(false);
                                     setCubeType(event.target.value as CubeType);
                                 }}
                             >
@@ -395,7 +457,7 @@ export function CubesMainPage() {
                     <Stack direction="row" spacing={1}>
                         <Button
                             variant="contained"
-                            disabled={isGeneratingScramble}
+                            disabled={isGeneratingScramble || derivingSmartScramble || phase !== 'IDLE'}
                             onClick={generateScrambleForSelectedCube}
                         >
                             {isGeneratingScramble ? 'Generowanie…' : 'Scramble'}
@@ -409,14 +471,19 @@ export function CubesMainPage() {
                             Nie udało się wygenerować scrambla: {scrambleError}
                         </Alert>
                     )}
+                    {saveError && <Alert severity="error" sx={{width: '100%'}}>{saveError}</Alert>}
                     <TextField
                         label="Scramble"
+                        disabled={phase !== 'IDLE' || derivingSmartScramble}
                         value={scramble}
                         onChange={event => {
                             scrambleGenerationId.current++;
                             scrambleValidationId.current++;
                             setIsGeneratingScramble(false);
                             setScrambleError(null);
+                            smartScramblePromise.current = null;
+                            setSaveError(null);
+                            scrambleRef.current = event.target.value;
                             setScramble(event.target.value);
                         }}
                         multiline
@@ -424,7 +491,9 @@ export function CubesMainPage() {
                         maxRows={4}
                         error={scrambleValidationError !== null}
                         helperText={
-                            isValidatingScramble
+                            derivingSmartScramble
+                                ? 'Wyznaczanie scramble’a ze stanu kostki…'
+                                : isValidatingScramble
                                 ? 'Sprawdzanie…'
                                 : scrambleValidationError
                                   ? `Niepoprawny scramble: ${scrambleValidationError}`
@@ -434,7 +503,58 @@ export function CubesMainPage() {
                         }
                         sx={{width: '100%'}}
                     />
-                    <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} />
+                    <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} facelets={smartFacelets} />
+                    {cubeType === CubeType.Three && (
+                        <SmartCube
+                            scramble={scramble}
+                            enabled={phase === 'IDLE' && result.current === 0}
+                            solving={phase === 'SOLVING'}
+                            inspection={smartInspection}
+                            onInspection={promise => {
+                                const id = ++smartScrambleId.current;
+                                scrambleGenerationId.current++;
+                                scrambleValidationId.current++;
+                                setIsGeneratingScramble(false);
+                                setScrambleError(null);
+                                setSaveError(null);
+                                setDerivingSmartScramble(true);
+                                setScramble('');
+                                scrambleRef.current = '';
+                                smartScramblePromise.current = promise.then(derived => {
+                                    if (id === smartScrambleId.current) {
+                                        scrambleRef.current = derived;
+                                        setScramble(derived);
+                                        setDerivingSmartScramble(false);
+                                    }
+                                    return derived;
+                                }).catch(error => {
+                                    if (id === smartScrambleId.current) {
+                                        setDerivingSmartScramble(false);
+                                        setSaveError(`Nie udało się wyznaczyć scramble’a: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+                                    }
+                                    return null;
+                                });
+                                setSmartInspection(true);
+                                setPhase('INSPECTION_EARLY');
+                            }}
+                            onStart={() => {
+                                clearInspectionTimeout();
+                                setSmartInspection(false);
+                                setPhase('SOLVING');
+                                start.current();
+                            }}
+                            onStop={elapsed => {
+                                stop.current();
+                                result.current = elapsed;
+                                setPhase('IDLE');
+                            }}
+                            onCancel={() => reset.current()}
+                            onFacelets={setSmartFacelets}
+                            onConnectionChange={setSmartConnected}
+                            confirmRef={confirmSmartScramble}
+                            isTouchDevice={isTouchDevice}
+                        />
+                    )}
                     <Typography variant="caption" color="text.secondary">
                         Przeciągnij, aby obrócić widok.
                     </Typography>
@@ -459,6 +579,9 @@ export function CubesMainPage() {
                                 alignItems={'center'}
                             >
                                 <Typography>Blokada ekranu: {wakeLock ? 'włączona' : 'wyłączona'}</Typography>
+                                {smartFacelets && <Box onTouchStart={event => event.stopPropagation()}>
+                                    <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets} />
+                                </Box>}
                                 <StopWatch
                                     variant={'h2'}
                                     showControls={false}
@@ -494,7 +617,10 @@ export function CubesMainPage() {
                         />
                     )}
                     <Typography>{phase}</Typography>
-                    {fullScreen && (result.current === 0 || phase !== 'IDLE') && (
+                    {fullScreen && smartInspection && (
+                        <StopWatch showControls={false} variant="h2" inspectionMode="countdown" inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS} />
+                    )}
+                    {fullScreen && !smartInspection && !smartConnected && (result.current === 0 || phase !== 'IDLE') && (
                         <Stack
                             role="button"
                             tabIndex={0}
@@ -601,7 +727,7 @@ export function CubesMainPage() {
                                 variant="contained"
                                 size="large"
                                 aria-label="Zapisz wynik"
-                                onClick={() => save.current()}
+                                onClick={() => void save.current()}
                                 sx={{
                                     flex: 1,
                                     minHeight: 144,

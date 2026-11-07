@@ -28,8 +28,8 @@ query GetCubeStats($cubeType: CubeType!, $month: YearMonth!) {
     }
 }
 
-mutation StoreCubeResult($cubeType: CubeType!, $timeInMillis: Int!, $timestampOfSolve: LocalDateTime!) {
+mutation StoreCubeResult($cubeType: CubeType!, $timeInMillis: Int!, $timestampOfSolve: LocalDateTime!, $scramble: String) {
     saveCubeResult(
-        saveCubeResultInput: {cubeType: $cubeType, timeInMillis: $timeInMillis, timestampOfSolve: $timestampOfSolve}
+        saveCubeResultInput: {cubeType: $cubeType, timeInMillis: $timeInMillis, timestampOfSolve: $timestampOfSolve, scramble: $scramble}
     )
 }
