@@ -36,7 +36,7 @@ Klient skonfigurowany w [`src/index.tsx`](../src/index.tsx) używa `HttpLink` i 
 
 ### Klient uwierzytelniony
 
-Klient skonfigurowany w [`Authenticated.tsx`](../src/security/Authenticated.tsx) używa `UploadHttpLink` i punktu wejścia `/graphql`. Przed wysłaniem operacji adapter Keycloak odnawia token dostępu, jeśli jego ważność jest krótsza niż 30 sekund. Każda operacja otrzymuje:
+Klient skonfigurowany w [`Authenticated.tsx`](../src/security/Authenticated.tsx) używa `UploadHttpLink` i punktu wejścia `/graphql`. Przed wysłaniem operacji adapter Keycloak odnawia token dostępu, jeśli jego ważność jest krótsza niż 60 sekund. Każda operacja otrzymuje:
 
 - `Authorization: Bearer {token Keycloak}`;
 - `domainId: {publicId domeny z bieżącej trasy}`, jeśli trasa wskazuje domenę;
@@ -157,7 +157,7 @@ Wysyłanie i usuwanie załączników nie korzysta z REST: odbywa się odpowiedni
 
 Komponent [`LoginWithGoogleButton.tsx`](../src/security/login/LoginWithGoogleButton.tsx) ładuje skrypt Google Identity Services z `https://accounts.google.com/gsi/client`. Skrypt przekazuje poświadczenie do funkcji przeglądarkowej `handleCredentialResponse`, a aplikacja przesyła je następnie do własnego serwera mutacją GraphQL `LoginWithGoogle`.
 
-Adapter [`keycloak-js`](../src/security/keycloak.ts) łączy się z `https://auth.grzegorzewski.pl` i klientem `sg-frontend`. Realm `sg-test` obowiązuje w konfiguracjach deweloperskich, a `sg` w produkcji. Adapter używa `login-required` oraz PKCE `S256`; tokeny pozostają w jego pamięci. Integracja uruchamia się po wejściu do chronionej części aplikacji. Szczegóły trwałej konwencji opisuje [dokument uwierzytelniania](agents/uwierzytelnianie-keycloak.md).
+Adapter [`keycloak-js`](../src/security/keycloak.ts) łączy się z `https://auth.grzegorzewski.pl` i klientem `sg-frontend`. Realm `sg-test` obowiązuje w konfiguracjach deweloperskich, a `sg` w produkcji. Adapter używa `login-required` oraz PKCE `S256`; tokeny pozostają w jego pamięci. Integracja uruchamia się po wejściu do chronionej części aplikacji. Po uwierzytelnieniu sprawdza token co 30 sekund również bez żądań API i w karcie w tle; odnawia go przy mniej niż 60 sekundach ważności. Dodatkowe sprawdzenie następuje po powrocie do karty, odzyskaniu fokusu okna i sieci. Zegary mogą być wstrzymane przez przeglądarkę; maksymalny czas sesji Keycloak pozostaje wiążący. Szczegóły trwałej konwencji opisuje [dokument uwierzytelniania](agents/uwierzytelnianie-keycloak.md).
 
 Połączenia wykonywane wewnętrznie przez skrypt Google są zarządzane przez Google Identity Services i nie są jawnie definiowane w kodzie aplikacji.
 
