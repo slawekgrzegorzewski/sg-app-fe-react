@@ -1031,6 +1031,7 @@ input SaveCubeResultInput {
     timestampOfSolve: LocalDateTime!
     timeInMillis: Int!
     scramble: String
+    recording: String
 }
 
 type StrengthTrainingQuery {

@@ -1,5 +1,7 @@
 # Szczegóły implementacji treningu siłowego
 
+Model domeny i bazy danych ma jedno źródło w [backendzie](../../../sg-app/docs/strength-training/projekt-modelu-danych.md). Dokument opisuje także elementy planowane; bieżący zakres interfejsu określono poniżej.
+
 ## Zakres dokumentu
 
 Dokument opisuje ustalenia dotyczące katalogu ćwiczeń aplikacji `STRENGTH_TRAINING`, formularzy konfiguracji oraz przypadków brzegowych obsługiwanych przez interfejs.
@@ -42,7 +44,7 @@ Najważniejsze pliki implementacji:
 - Formularz pokazuje tylko warianty, które nie są jeszcze przypisane do danego ćwiczenia.
 - Pozycja wariantu:
   - musi być dodatnią liczbą całkowitą;
-- musi być unikatowa w ramach jednego ćwiczenia;
+  - musi być unikatowa w ramach jednego ćwiczenia;
   - jest automatycznie ustawiana na pierwszą wolną pozycję, np. dla pozycji `1, 3` formularz proponuje `2`.
 - Jeśli wszystkie warianty są już przypisane, przycisk **„Dodaj wariant”** jest ukryty.
 

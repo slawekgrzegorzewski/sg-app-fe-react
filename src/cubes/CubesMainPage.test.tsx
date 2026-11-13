@@ -420,5 +420,10 @@ describe('CubesMainPage', () => {
         expect(screen.getByRole('textbox', {name: 'Scramble'})).toHaveValue('F R');
         fireEvent.keyDown(document, {code: 'Enter'});
         await waitFor(() => expect(storeCubeResult).toHaveBeenCalledTimes(2));
+        const recording = JSON.parse(storeCubeResult.mock.calls[0][0].variables.recording);
+        expect(recording).toEqual(expect.objectContaining({version: 1, initialFacelets: expect.any(String)}));
+        expect(recording.events.map((sample: any) => sample.event.move)).toEqual(["R'", "F'"]);
+        expect(storeCubeResult.mock.calls[1][0].variables.recording).toBe(storeCubeResult.mock.calls[0][0].variables.recording);
+
     });
 });

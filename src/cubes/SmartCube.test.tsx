@@ -5,9 +5,11 @@ import {connectSmartCube, SmartCubeEvent} from 'smartcube-web-bluetooth';
 import {SmartCube} from './SmartCube';
 import {SOLVED_CUBE} from './smart-cube-state';
 import {deriveCubingScramble} from './cubing-api';
+import {downloadSmartCubeRecording} from './smart-cube-recording';
 
 jest.mock('smartcube-web-bluetooth', () => ({connectSmartCube: jest.fn()}));
 jest.mock('./cubing-api', () => ({deriveCubingScramble: jest.fn()}));
+jest.mock('./smart-cube-recording', () => ({downloadSmartCubeRecording: jest.fn()}));
 
 async function setup(scramble = 'R U') {
     const events = new Subject<SmartCubeEvent>();
@@ -122,6 +124,11 @@ test('własny scramble można potwierdzić, a po 15 sekundach stoper startuje sa
     cube.move("R'");
     cube.move("F'");
     expect(cube.onStop).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Pobierz surowe dane solve’a'}));
+    expect(downloadSmartCubeRecording).toHaveBeenLastCalledWith(expect.objectContaining({solveStartedAt: expect.any(Number), events: [
+        expect.objectContaining({event: expect.objectContaining({move: "R'"})}),
+        expect.objectContaining({event: expect.objectContaining({move: "F'"})}),
+    ]}));
 });
 
 test('anulowanie inspekcji i rozłączenie nie uruchamiają stopera', async () => {
@@ -138,6 +145,7 @@ test('anulowanie inspekcji i rozłączenie nie uruchamiają stopera', async () =
     act(() => { jest.advanceTimersByTime(15000); });
     expect(cube.onCancel).toHaveBeenCalledTimes(1);
     expect(cube.onFacelets).toHaveBeenLastCalledWith(null);
+    expect(screen.queryByRole('button', {name: 'Pobierz surowe dane solve’a'})).not.toBeInTheDocument();
     expect(cube.onStart).not.toHaveBeenCalled();
 });
 
@@ -186,4 +194,30 @@ test('kalibruje orientację żyroskopu i czyści ją po rozłączeniu', async ()
     act(() => cube.events.next({type: 'DISCONNECT', timestamp: 3}));
     expect(screen.queryByRole('button', {name: 'Resetuj położenie kostki'})).not.toBeInTheDocument();
     expect(cube.onOrientation).toHaveBeenLastCalledWith(null);
+});
+
+test('zachowuje surowe ruchy i próbki żyroskopu od inspekcji do ostatniego ruchu', async () => {
+    const cube = await setup();
+    cube.facelets(SOLVED_CUBE);
+    cube.move('R');
+    cube.move('U');
+    const initialGyro = {type: 'GYRO' as const, quaternion: {x: 0, y: 0, z: 0, w: 1}, timestamp: 100};
+    act(() => cube.events.next(initialGyro));
+    cube.confirm();
+    const gyro = {type: 'GYRO' as const, quaternion: {x: 0.1, y: 0.2, z: 0.3, w: 0.9}, velocity: {x: 1, y: 2, z: 3}, timestamp: 123};
+    act(() => cube.events.next(gyro));
+    cube.move("U'", 1000);
+    cube.move("R'", 2500);
+    cube.move('R', 3000);
+    fireEvent.click(screen.getByRole('button', {name: 'Pobierz surowe dane solve’a'}));
+    expect(downloadSmartCubeRecording).toHaveBeenCalledWith(expect.objectContaining({
+        initialFacelets: expect.any(String), initialGyro, solveStartedAt: expect.any(Number),
+        events: [
+            expect.objectContaining({event: gyro, receivedAt: expect.any(Number)}),
+            expect.objectContaining({event: expect.objectContaining({move: "U'", cubeTimestamp: 1000})}),
+            expect.objectContaining({event: expect.objectContaining({move: "R'", cubeTimestamp: 2500})}),
+        ],
+    }));
+    fireEvent.click(screen.getByText('Anuluj'));
+    expect(screen.queryByRole('button', {name: 'Pobierz surowe dane solve’a'})).not.toBeInTheDocument();
 });

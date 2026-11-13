@@ -5,7 +5,7 @@ import {CubeType} from '../types';
 import {getCubeTypeOption} from './cube-types';
 import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
 import {findCubeMove} from './smart-cube-state';
-import {CubeQuaternion} from './gyro-orientation';
+import type {CubeQuaternion} from './quaternion';
 
 export function CubingVisualizer({cubeType, scramble, facelets = null, orientation, orientationResetVersion = 0}: {cubeType: CubeType; scramble: string; facelets?: string | null; orientation?: RefObject<CubeQuaternion | null>; orientationResetVersion?: number}) {
     const containerRef = useRef<HTMLDivElement | null>(null);

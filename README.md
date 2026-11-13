@@ -55,7 +55,8 @@ Aktualizuje przechowywaną w repozytorium przeglądarkową wersję biblioteki `c
 - [Testy integracyjne E2E](docs/testy-integracyjne-e2e.md)
 - [Ustalenia dotyczące nawigacji i interfejsu kont](docs/agents/nawigacja-i-interfejs-kont.md)
 - [Zasady testów E2E](docs/agents/testy-e2e.md)
-- [Zasady utrzymywania dokumentacji](docs/agents/utrzymywanie-dokumentacji.md)
+- [Pełny indeks dokumentacji frontendu](docs/README.md)
+- [Wspólne zasady dokumentacji](../sg-app-workspace/docs/zasady-dokumentacji.md)
 
 Dokumentacja techniczna wykorzystanych narzędzi:
 

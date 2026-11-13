@@ -1,3 +1,4 @@
+import type {SmartCubeRecording} from './smart-cube-recording';
 import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from './phase';
 import * as React from 'react';
 import {useCallback, useEffect, useReducer, useRef, useState} from 'react';
@@ -41,9 +42,10 @@ import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Paper from '@mui/material/Paper';
 import {formatCubeTime} from './CubeStatsPage';
 import {SmartCube} from './SmartCube';
-import {CubeQuaternion} from './gyro-orientation';
+import {CubeQuaternion} from './quaternion';
+import {GyroReading, GyroReadout} from './GyroReadout';
 
-function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['todayResults']}) {
+function RecentResults({results}: { results: GetCubeResultsQuery['cubeResults']['todayResults'] }) {
     const theme = useTheme();
     const compactViewport = useMediaQuery(theme.breakpoints.down('sm'));
     const orderedResults = [...results].sort((left, right) => dayjs(right.date).valueOf() - dayjs(left.date).valueOf());
@@ -59,7 +61,7 @@ function RecentResults({results}: {results: GetCubeResultsQuery['cubeResults']['
         <Stack spacing={1} sx={{width: '100%'}}>
             <Stack direction="row" alignItems="center" spacing={1}>
                 <Typography variant="h4">Ostatnie wyniki</Typography>
-                <Chip size="small" label={orderedResults.length} />
+                <Chip size="small" label={orderedResults.length}/>
             </Stack>
             {orderedResults.length === 0 ? (
                 <Paper variant="outlined" sx={{p: 2, textAlign: 'center'}}>
@@ -117,7 +119,7 @@ function isTextEditingTarget(target: EventTarget | null): boolean {
     );
 }
 
-export function averageCubeTime(results: Array<{timeInMillis: number}>): number | null {
+export function averageCubeTime(results: Array<{ timeInMillis: number }>): number | null {
     if (results.length === 0) {
         return null;
     }
@@ -154,6 +156,7 @@ export function CubesMainPage() {
     const [smartInspection, setSmartInspection] = useState(false);
     const [smartConnected, setSmartConnected] = useState(false);
     const orientation = useRef<CubeQuaternion | null>(null);
+    const gyroReading = useRef<GyroReading | null>(null);
     const [hasOrientation, setHasOrientation] = useState(false);
     const [orientationResetVersion, setOrientationResetVersion] = useState(0);
     const [cubeElapsed, setCubeElapsed] = useState<number | null>(null);
@@ -165,7 +168,9 @@ export function CubesMainPage() {
 
     useEffect(() => {
         const attemptId = smartScrambleId;
-        return () => { attemptId.current++; };
+        return () => {
+            attemptId.current++;
+        };
     }, []);
 
     const generateScrambleForSelectedCube = useCallback(() => {
@@ -208,7 +213,9 @@ export function CubesMainPage() {
         }
     }, []);
 
+    const completedRecording = useRef<SmartCubeRecording | null>(null);
     const reset = useRef(() => {
+        completedRecording.current = null;
         smartScrambleId.current++;
         savingResult.current = null;
         smartScramblePromise.current = null;
@@ -252,7 +259,15 @@ export function CubesMainPage() {
                 return;
             }
             await storeCubeResultMutation({
-                variables: {cubeType: type, timestampOfSolve: timestamp, timeInMillis: resultCopy, scramble: scrambleCopy},
+                variables: {
+                    cubeType: type,
+                    timestampOfSolve: timestamp,
+                    timeInMillis: resultCopy,
+                    scramble: scrambleCopy,
+                    ...(completedRecording.current
+                        ? {recording: JSON.stringify(completedRecording.current)}
+                        : {})
+                },
             });
             if (attempt === smartScrambleId.current) {
                 reset.current();
@@ -269,7 +284,8 @@ export function CubesMainPage() {
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
     const todayAverageInMillis = data ? averageCubeTime(data.cubeResults.todayResults) : null;
 
-    const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});
+    const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {
+    });
 
     const start: React.RefObject<() => void> = useRef<() => void>(() => {
         requestWakeLock();
@@ -285,7 +301,8 @@ export function CubesMainPage() {
         return stopTrigger.current();
     });
 
-    const resetTrigger: React.RefObject<() => void> = useRef<() => void>(() => {});
+    const resetTrigger: React.RefObject<() => void> = useRef<() => void>(() => {
+    });
 
     useEffect(() => {
         const keyDownListener = (e: KeyboardEvent) => {
@@ -414,6 +431,7 @@ export function CubesMainPage() {
                                     setSmartFacelets(null);
                                     setSmartConnected(false);
                                     orientation.current = null;
+                                    gyroReading.current = null;
                                     setHasOrientation(false);
                                     setOrientationResetVersion(0);
                                     setCubeType(event.target.value as CubeType);
@@ -436,7 +454,7 @@ export function CubesMainPage() {
                             alignItems: 'start',
                         }}
                     >
-                        <RecentResults results={data.cubeResults.todayResults} />
+                        <RecentResults results={data.cubeResults.todayResults}/>
                         <Stack spacing={1} sx={{width: 145, maxWidth: '100%', height: '100%'}}>
                             <Stack direction="row" alignItems="center" sx={{minHeight: 23}}>
                                 <Typography variant="h4">Dziś</Typography>
@@ -503,16 +521,32 @@ export function CubesMainPage() {
                             derivingSmartScramble
                                 ? 'Wyznaczanie scramble’a ze stanu kostki…'
                                 : isValidatingScramble
-                                ? 'Sprawdzanie…'
-                                : scrambleValidationError
-                                  ? `Niepoprawny scramble: ${scrambleValidationError}`
-                                  : scramble.trim()
-                                    ? 'Scramble jest poprawny.'
-                                    : 'Wpisz lub wygeneruj scramble.'
+                                    ? 'Sprawdzanie…'
+                                    : scrambleValidationError
+                                        ? `Niepoprawny scramble: ${scrambleValidationError}`
+                                        : scramble.trim()
+                                            ? 'Scramble jest poprawny.'
+                                            : 'Wpisz lub wygeneruj scramble.'
                         }
                         sx={{width: '100%'}}
                     />
-                    <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} facelets={smartFacelets} orientation={hasOrientation ? orientation : undefined} orientationResetVersion={orientationResetVersion} />
+                    <Box sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                            xs: 'minmax(0, 1fr)',
+                            md: smartConnected ? 'minmax(0, 1fr) 220px' : 'minmax(0, 1fr)'
+                        },
+                        gap: 2,
+                        width: '100%',
+                        alignItems: 'start'
+                    }}>
+                        <Box sx={{minWidth: 0, display: 'flex', justifyContent: 'center'}}>
+                            <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} facelets={smartFacelets}
+                                              orientation={hasOrientation ? orientation : undefined}
+                                              orientationResetVersion={orientationResetVersion}/>
+                        </Box>
+                        {smartConnected && <GyroReadout reading={gyroReading}/>}
+                    </Box>
                     {cubeType === CubeType.Three && (
                         <SmartCube
                             scramble={scramble}
@@ -552,7 +586,8 @@ export function CubesMainPage() {
                                 setPhase('SOLVING');
                                 start.current();
                             }}
-                            onStop={elapsed => {
+                            onStop={(elapsed, recording) => {
+                                completedRecording.current = recording ?? null;
                                 stop.current();
                                 result.current = elapsed;
                                 setPhase('IDLE');
@@ -564,6 +599,9 @@ export function CubesMainPage() {
                                 if (!connected) setOrientationResetVersion(0);
                             }}
                             onOrientationReset={() => setOrientationResetVersion(version => version + 1)}
+                            onGyro={value => {
+                                gyroReading.current = value;
+                            }}
                             onOrientation={value => {
                                 const wasAvailable = orientation.current !== null;
                                 orientation.current = value;
@@ -600,9 +638,12 @@ export function CubesMainPage() {
                             >
                                 <Typography>Blokada ekranu: {wakeLock ? 'włączona' : 'wyłączona'}</Typography>
                                 {smartFacelets && <Box onTouchStart={event => event.stopPropagation()}>
-                                    <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets} orientation={hasOrientation ? orientation : undefined} orientationResetVersion={orientationResetVersion} />
+                                    <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets}
+                                                      orientation={hasOrientation ? orientation : undefined}
+                                                      orientationResetVersion={orientationResetVersion}/>
                                 </Box>}
-                                {cubeElapsed !== null && <Typography>Czas kostki (od pierwszego do ostatniego ruchu): {formatCubeTime(cubeElapsed)}</Typography>}
+                                {cubeElapsed !== null && <Typography>Czas kostki (od pierwszego do ostatniego
+                                    ruchu): {formatCubeTime(cubeElapsed)}</Typography>}
                                 <StopWatch
                                     variant={'h2'}
                                     showControls={false}
@@ -620,8 +661,8 @@ export function CubesMainPage() {
                                 phase === 'INSPECTION_EARLY'
                                     ? 'countdown'
                                     : phase === 'INSPECTION_LATE'
-                                      ? 'overtime'
-                                      : undefined
+                                        ? 'overtime'
+                                        : undefined
                             }
                             inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
                             sx={{
@@ -629,8 +670,8 @@ export function CubesMainPage() {
                                     phase === 'INSPECTION_EARLY'
                                         ? 'success.main'
                                         : phase === 'INSPECTION_LATE'
-                                          ? 'error.main'
-                                          : 'text.primary',
+                                            ? 'error.main'
+                                            : 'text.primary',
                             }}
                             startTrigger={startTrigger}
                             stopTrigger={stopTrigger}
@@ -639,7 +680,8 @@ export function CubesMainPage() {
                     )}
                     <Typography>{phase}</Typography>
                     {fullScreen && smartInspection && (
-                        <StopWatch showControls={false} variant="h2" inspectionMode="countdown" inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS} />
+                        <StopWatch showControls={false} variant="h2" inspectionMode="countdown"
+                                   inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}/>
                     )}
                     {fullScreen && !smartInspection && !smartConnected && (result.current === 0 || phase !== 'IDLE') && (
                         <Stack
@@ -667,8 +709,8 @@ export function CubesMainPage() {
                                     phase === 'INSPECTION_LATE'
                                         ? 'error.main'
                                         : phase === 'INSPECTION_EARLY'
-                                          ? 'success.main'
-                                          : 'primary.main',
+                                            ? 'success.main'
+                                            : 'primary.main',
                                 borderRadius: 2,
                                 bgcolor: 'action.hover',
                                 justifyContent: 'center',
@@ -713,7 +755,7 @@ export function CubesMainPage() {
                                     inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
                                 />
                             ) : (
-                                <TouchAppIcon sx={{fontSize: 56}} color="primary" />
+                                <TouchAppIcon sx={{fontSize: 56}} color="primary"/>
                             )}
                             <Typography variant="h6">
                                 {isInspection(phase) ? 'Puść, aby uruchomić stoper' : 'Dotknij i przytrzymaj'}
@@ -727,7 +769,7 @@ export function CubesMainPage() {
                     )}
                     {fullScreen && result.current > 0 && phase === 'IDLE' && (
                         <Stack sx={{color: 'text.primary'}}>
-                            <StopWatchDisplay currentTimeInMillis={result.current} />
+                            <StopWatchDisplay currentTimeInMillis={result.current}/>
                         </Stack>
                     )}
                     {fullScreen && result.current > 0 && phase === 'IDLE' && (
