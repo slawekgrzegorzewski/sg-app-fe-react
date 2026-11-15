@@ -1,15 +1,16 @@
+import {CubeFacelets} from './cube-facelets';
 import type {SmartCubeEvent} from 'smartcube-web-bluetooth';
 
-type SensorEvent = Extract<SmartCubeEvent, {type: 'MOVE' | 'GYRO'}>;
+type SensorEvent = Extract<SmartCubeEvent, { type: 'MOVE' | 'GYRO' }>;
 
 export type SmartCubeRecording = {
     version: 1;
-    initialFacelets: string;
-    initialGyro: Extract<SmartCubeEvent, {type: 'GYRO'}> | null;
+    initialFacelets: CubeFacelets;
+    initialGyro: Extract<SmartCubeEvent, { type: 'GYRO' }> | null;
     timeOrigin: number;
     inspectionStartedAt: number;
     solveStartedAt: number | null;
-    events: Array<{receivedAt: number; event: SensorEvent}>;
+    events: Array<{ receivedAt: number; event: SensorEvent }>;
 };
 
 export function downloadSmartCubeRecording(recording: SmartCubeRecording): void {

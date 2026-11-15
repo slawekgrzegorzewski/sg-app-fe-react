@@ -12,7 +12,17 @@ Dokument opisuje połączenia sieciowe wykonywane bezpośrednio przez kod aplika
 | Zewnętrzny skrypt Google      | `https://accounts.google.com/gsi/client`                     | pozyskanie poświadczenia Google Identity Services                                  |
 | Keycloak                      | `https://auth.grzegorzewski.pl`                              | logowanie i odnawianie tokena dostępu dla uwierzytelnionych żądań                  |
 
-W plikach `.graphql` zdefiniowano łącznie 94 operacje: 24 zapytania i 70 mutacji. Kod aplikacji wywołuje 86 z nich: 22 zapytania i 64 mutacje. Nie znaleziono subskrypcji GraphQL, połączeń WebSocket, `EventSource`, biblioteki Axios ani innych bezpośrednich wywołań `fetch` poza pobieraniem załącznika zadania.
+W plikach `.graphql` zdefiniowano łącznie 97 operacji: 25 zapytań i 72 mutacje. Kod aplikacji wywołuje 89 z nich: 23 zapytania i 66 mutacji. Nie znaleziono subskrypcji GraphQL, połączeń WebSocket, `EventSource`, biblioteki Axios ani innych bezpośrednich wywołań `fetch` poza pobieraniem załącznika zadania.
+
+## Trenażer CFOP
+
+Aktywne operacje w `src/cubes/trainer/cube-trainer.graphql` to `GetCubeTrainer`
+(katalog przypadków, warianty, preferencja i ostatnie próby),
+`PreferCubeTrainerAlgorithm` (wybór wariantu do nauki) oraz `SaveCubeTrainerAttempt`
+(zapis próby). Korzystają z uwierzytelnionego `/graphql`.
+Pole `CubeTrainerCase.groupName` w `GetCubeTrainer` opisuje grupę przypadku
+używaną do filtrowania katalogu F2L i OLL.
+Szczegóły: [trenażer CFOP](agents/trenazer-cfop.md).
 
 ## Konfiguracja adresu serwera
 
@@ -94,6 +104,11 @@ Zapytania:
 Mutacje:
 
 - `StoreCubeResult`.
+
+Integracja smart kostki odczytuje poziom baterii przez `REQUEST_BATTERY`
+i zdarzenia `BATTERY`, gdy urządzenie deklaruje tę możliwość. Odczyt odbywa się
+po połączeniu oraz co 60 sekund przez istniejące połączenie Bluetooth,
+bez dodatkowego API backendu.
 
 Biblioteka `cubing.js` jest przechowywana lokalnie w projekcie i kopiowana do `public/vendor/cubing`; nie stanowi wywołania API serwera aplikacji.
 

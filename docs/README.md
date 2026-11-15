@@ -8,11 +8,14 @@
 - [Odświeżanie danych GraphQL](agents/odswiezanie-danych-graphql.md)
 - [Adapter i sesja Keycloak](agents/uwierzytelnianie-keycloak.md)
 - [Inteligentne kostki](agents/smart-kostki.md)
+- [Trenażer CFOP](agents/trenazer-cfop.md)
 - [Trening siłowy: nazewnictwo i zakres API](agents/trening-silowy.md)
 - [Trening siłowy: implementacja interfejsu](strength-training/implementacja-interfejsu.md)
 - [Projekt modelu danych treningów w backendzie](../../sg-app/docs/strength-training/projekt-modelu-danych.md) — bez kopii w frontendzie
 
 ## Testy i budowanie
+
+- [Formatowanie TypeScript i TSX](agents/formatowanie-typescript.md)
 
 - [Uruchamianie testów integracyjnych E2E](testy-integracyjne-e2e.md)
 - [Zasady scenariuszy Playwrighta](agents/testy-e2e.md)

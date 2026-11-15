@@ -1,78 +1,171 @@
-const faces = 'URFDLB';
-export const SOLVED_CUBE = [...faces].map(face => face.repeat(9)).join('');
+import {CubeMove, parseCubeMove} from './cube-move';
+import {CubeFacelets, parseCubeFacelets} from './cube-facelets';
+import {CUBE_FACES, CubeFace, CubePiece} from './cube-pieces';
+
+export const SOLVED_CUBE = parseCubeFacelets(
+    CUBE_FACES.map(
+        face => face.repeat(9)).join(''));
 
 type Vector = [number, number, number];
-type Sticker = {position: Vector; normal: Vector};
 
-function sticker(face: string, row: number, col: number): Sticker {
+enum Axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+}
+
+enum RotationDirection {
+    Positive = 1,
+    Negative = -1,
+}
+
+type Sticker = { position: Vector; normal: Vector; };
+
+function sticker(face: CubeFace, row: number, col: number): Sticker {
     switch (face) {
-        case 'U': return {position: [col - 1, 1, row - 1], normal: [0, 1, 0]};
-        case 'R': return {position: [1, 1 - row, 1 - col], normal: [1, 0, 0]};
-        case 'F': return {position: [col - 1, 1 - row, 1], normal: [0, 0, 1]};
-        case 'D': return {position: [col - 1, -1, 1 - row], normal: [0, -1, 0]};
-        case 'L': return {position: [-1, 1 - row, col - 1], normal: [-1, 0, 0]};
-        default: return {position: [1 - col, 1 - row, -1], normal: [0, 0, -1]};
+        case 'U':
+            return {
+                position: [col - 1, 1, row - 1],
+                normal: [0, 1, 0]
+            };
+        case 'R':
+            return {
+                position: [1, 1 - row, 1 - col],
+                normal: [1, 0, 0]
+            };
+        case 'F':
+            return {
+                position: [col - 1, 1 - row, 1],
+                normal: [0, 0, 1]
+            };
+        case 'D':
+            return {
+                position: [col - 1, -1, 1 - row],
+                normal: [0, -1, 0]
+            };
+        case 'L':
+            return {
+                position: [-1, 1 - row, col - 1],
+                normal: [-1, 0, 0]
+            };
+        default:
+            return {
+                position: [1 - col, 1 - row, -1],
+                normal: [0, 0, -1]
+            };
     }
 }
 
-const stickers = [...faces].flatMap(face => Array.from({length: 9}, (_, i) => sticker(face, Math.floor(i / 3), i % 3)));
-const key = (s: Sticker) => [...s.position, ...s.normal].join(',');
-const indices = new Map(stickers.map((s, i) => [key(s), i]));
+const stickers = CUBE_FACES
+    .flatMap(face => Array.from(
+        {length: 9},
+        (_, i) => sticker(face, Math.floor(i / 3), i % 3)));
 
-export function faceletIndicesForPiece(piece: string): number[] {
-    const normals = [...piece].map(face => sticker(face, 1, 1).normal);
-    const position = normals.reduce<Vector>((sum, normal) => [sum[0] + normal[0], sum[1] + normal[1], sum[2] + normal[2]], [0, 0, 0]);
+const stickerKey = (s: Sticker) => [...s.position, ...s.normal].join(',');
+
+const stickerIndicesByKey = new Map(stickers.map((s, i) => [stickerKey(s), i]));
+
+export function faceletIndicesForPiece(piece: CubePiece): number[] {
+    const normals = ([...piece] as CubeFace[])
+        .map(face => sticker(face, 1, 1).normal);
+
+    const position = normals.reduce<Vector>(
+        (sum, normal) => [sum[0] + normal[0], sum[1] + normal[1], sum[2] + normal[2]],
+        [0, 0, 0]);
+
     return normals.map(normal => {
-        const index = indices.get(key({position, normal}));
-        if (index === undefined) throw new Error('Niepoprawne położenie elementu kostki.');
+        const index = stickerIndicesByKey.get(stickerKey({position, normal}));
+        if (index === undefined) {
+            throw new Error('Niepoprawne położenie elementu kostki.');
+        }
         return index;
     });
 }
 
-function rotate(vector: Vector, axis: number, direction: number): Vector {
+function rotateVector(
+    vector: Vector,
+    axis: Axis,
+    direction: RotationDirection): Vector {
     const [x, y, z] = vector;
-    if (axis === 0) return [x, -direction * z, direction * y];
-    if (axis === 1) return [direction * z, y, -direction * x];
+    if (axis === Axis.X) {
+        return [x, -direction * z, direction * y];
+    }
+    if (axis === Axis.Y) {
+        return [direction * z, y, -direction * x];
+    }
     return [-direction * y, direction * x, z];
 }
 
-export function applyCubeMove(facelets: string, move: string): string {
-    const match = /^([URFDLB])([2'])?$/.exec(move);
-    if (!match || facelets.length !== 54) throw new Error('Nieobsługiwany ruch kostki 3×3.');
-    const index = faces.indexOf(match[1]);
-    const axis = [1, 0, 2, 1, 0, 2][index];
-    const sign = index < 3 ? 1 : -1;
-    const turns = match[2] === '2' ? 2 : 1;
-    const direction = (match[2] === "'" ? 1 : -1) * sign;
-    let current = facelets;
-    for (let turn = 0; turn < turns; turn++) {
-        const next = [...current];
-        for (let i = 0; i < stickers.length; i++) {
-            const s = stickers[i];
-            if (s.position[axis] !== sign) continue;
-            const destination = indices.get(key({position: rotate(s.position, axis, direction), normal: rotate(s.normal, axis, direction)}));
-            if (destination === undefined) throw new Error('Niepoprawny stan kostki.');
-            next[destination] = current[i];
-        }
-        current = next.join('');
+export function applyCubeMove(
+    facelets: CubeFacelets,
+    move: CubeMove): CubeFacelets {
+    const face = move[0] as CubeFace;
+    const suffix = move.slice(1);
+    const movingFaceIndex = CUBE_FACES.findIndex(f => f === face);
+    const movingFaceAxis: Axis = ([Axis.Y, Axis.X, Axis.Z, Axis.Y, Axis.X, Axis.Z] as const)[movingFaceIndex];
+    const anticlockwiseDirection: RotationDirection = movingFaceIndex < 3
+        ? RotationDirection.Positive
+        : RotationDirection.Negative;
+    const clockwiseDirection: RotationDirection = -anticlockwiseDirection;
+    const direction: RotationDirection = suffix === '\''
+        ? anticlockwiseDirection
+        : clockwiseDirection;
+    const turns = suffix === '2'
+        ? 2
+        : 1;
+    let currentFacelets = facelets;
+
+    function isOnMovingFace(sticker: Sticker) {
+        return sticker.position[movingFaceAxis] === (movingFaceIndex < 3 ? 1 : -1);
     }
-    return current;
+
+    for (let turn = 0; turn < turns; turn++) {
+        const nextFacelets = ([...currentFacelets] as CubeFace[]);
+        for (let i = 0; i < stickers.length; i++) {
+            const sticker = stickers[i];
+            if (!isOnMovingFace(sticker)) {
+                continue;
+            }
+            const destinationIndex = stickerIndicesByKey.get(
+                stickerKey({
+                    position: rotateVector(sticker.position, movingFaceAxis, direction),
+                    normal: rotateVector(sticker.normal, movingFaceAxis, direction)
+                }));
+            if (destinationIndex === undefined) {
+                throw new Error('Niepoprawny stan kostki.');
+            }
+            nextFacelets[destinationIndex] = currentFacelets[i] as CubeFace;
+        }
+        currentFacelets = parseCubeFacelets(nextFacelets.join(''));
+    }
+    return currentFacelets;
 }
 
-export function findCubeMove(before: string, after: string): string | null {
-    if (before.length !== 54 || after.length !== 54 || before === after) return null;
-    for (const face of faces) {
-        for (const suffix of ['', "'", '2']) {
-            const move = face + suffix;
-            if (applyCubeMove(before, move) === after) return move;
+export function findCubeMove(
+    before: CubeFacelets,
+    after: CubeFacelets): CubeMove | null {
+    if (before.length !== 54 || after.length !== 54 || before === after) {
+        return null;
+    }
+    for (const face of CUBE_FACES) {
+        for (const suffix of ['', '\'', '2'] as const) {
+            const move: CubeMove = `${face}${suffix}`;
+            if (applyCubeMove(before, move) === after) {
+                return move;
+            }
         }
     }
     return null;
 }
 
-export function scrambleStates(scramble: string): string[] {
-    return scramble.trim().split(/\s+/).filter(Boolean).reduce<string[]>((states, move) => {
-        states.push(applyCubeMove(states[states.length - 1], move));
-        return states;
-    }, [SOLVED_CUBE]);
+export function scrambleStates(scramble: string): CubeFacelets[] {
+    return scramble.trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map(parseCubeMove)
+        .reduce<CubeFacelets[]>((states, move) => {
+                states.push(applyCubeMove(states[states.length - 1], move));
+                return states;
+            },
+            [SOLVED_CUBE]);
 }

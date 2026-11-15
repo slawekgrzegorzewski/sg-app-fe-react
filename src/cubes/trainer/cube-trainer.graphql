@@ -1,0 +1,45 @@
+query GetCubeTrainer($stage: CfopStage!) {
+    cubeTrainerCases(stage: $stage) {
+        publicId
+        code
+        name
+        stage
+        setupAlgorithm
+        description
+        groupName
+        preferredAlgorithmPublicId
+        algorithms {
+            publicId
+            name
+            sequence
+            sourceUrl
+        }
+    }
+    cubeTrainerAttempts(stage: $stage) {
+        publicId
+        stage
+        mode
+        device
+        casePublicId
+        caseName
+        algorithmPublicId
+        algorithmSnapshot
+        scramble
+        crossFace
+        durationMs
+        moveCount
+        quarterTurnCount
+        actualAlgorithm
+        performedAt
+    }
+}
+
+mutation PreferCubeTrainerAlgorithm($algorithmPublicId: UUID!) {
+    preferCubeTrainerAlgorithm(algorithmPublicId: $algorithmPublicId)
+}
+
+mutation SaveCubeTrainerAttempt($input: SaveCubeTrainerAttemptInput!) {
+    saveCubeTrainerAttempt(input: $input) {
+        publicId
+    }
+}

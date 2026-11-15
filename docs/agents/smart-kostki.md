@@ -1,6 +1,63 @@
 # Inteligentne kostki 3×3
 
+Listy ścianek, krawędzi i narożników oraz wyprowadzone z nich typy `CubeFace`,
+`Edge`, `Corner` i `CubePiece` mają wspólne źródło w `src/cubes/cube-pieces.ts`.
+Korzystają z niego model ruchów, konwersja danych `cubing.js`, sprawdzanie celu
+treningu i miniatury. Kolejność list odpowiada dotychczasowemu zapisowi orbit;
+`faceletIndicesForPiece` przyjmuje tylko kanoniczne oznaczenia z tych list.
+
+Pełny zapis 54 naklejek ma typ oznaczony `CubeFacelets` z `src/cubes/cube-facelets.ts`.
+Pozostaje stringiem w kolejności URFDLB. `parseCubeFacelets` sprawdza długość
+oraz dozwolone litery, a `isCubeFacelets` pozwala zweryfikować odczyt urządzenia
+bez rzucania wyjątku. Typ obejmuje model ruchów, konwersje, nagrania i stan UI;
+nie gwarantuje fizycznej osiągalności stanu kostki.
+
+Podstawowy ruch ścianki 3×3 ma typ `CubeMove` z `src/cubes/cube-move.ts`:
+`CubeFace` z opcjonalnym sufiksem `'` lub `2`. `parseCubeMove` weryfikuje ruchy
+odczytane ze smart kostki i parsowane ze scramble’a przed użyciem w modelu.
+Surowe zdarzenia biblioteki zachowują typ zewnętrzny. Typ nie obejmuje ruchów
+szerokich, warstw środkowych ani rotacji z algorytmów trenowania.
+
+Typy wspólne stosujemy w całym przepływie danych, w tym w argumentach,
+wynikach, stanie React i nagraniach. Walidacja odbywa się przy przejściu
+od zewnętrznego tekstu do modelu. Zawężenie `as CubeFace[]` po rozbiciu
+`CubePiece` albo `CubeFacelets` jest uzasadnione ich definicją; nie zastępuje
+walidacji danych z urządzenia. Sama tablica `CubeFace[]` nie gwarantuje
+54 elementów, a fragment ścianki nie jest pełnym `CubeFacelets`.
+
+Nazwy kwaternionów mają rozróżniać orientację przesłaną przez GAN, orientację
+względem próbki początkowej i obrót między próbkami. Dla danych sensora stosujemy
+nazwy w rodzaju `ganSensorOrientation`, unikając mylącego `sensorRelative`.
+
 Ekran układania korzysta z `smartcube-web-bluetooth` i wymaga przeglądarki obsługującej Web Bluetooth oraz bezpiecznego kontekstu. Integracja porównuje odczytane ścianki w kolejności URFDLB z kolejnymi stanami scramble'a obliczanymi od ułożonej kostki. Przed rozpoczęciem mieszania stan fizycznej kostki i stan zgłaszany przez urządzenie muszą być zgodne.
+
+## Układ strony układania
+
+Na desktopie strona wykorzystuje pełną szerokość: duży podgląd kostki i scramble
+zajmują lewy panel, stoper i połączenie smart kostki panel środkowy,
+a wyniki dnia prawy. Wysokość paneli dopasowuje się do miejsca pod paskiem
+aplikacji; dodatkowe dane przewijamy wewnątrz paneli.
+Podsumowanie dnia obejmuje liczbę ułożeń, średnią, najlepszy czas i stronicowaną
+listę wyników. Na mniejszych ekranach panele tworzą jedną kolumnę ze stoperem
+na początku. Pomiary można obsługiwać spacją oraz widocznymi przyciskami;
+po pomiarze zapis i odrzucenie są dostępne również na desktopie.
+Mobilny gest przytrzymania i pełnoekranowy pomiar pozostają dostępne.
+
+`CubingVisualizer` ma opcjonalny wariant `hero`, używany na stronie układania
+i w trenażerze CFOP; domyślny rozmiar innych wizualizacji pozostaje bez zmian.
+Oba widoki korzystają ze wspólnego `useViewportWorkspace` do dopasowania wysokości.
+Dane GYRO są w rozwijanym panelu. Ustawienia kalibracji położenia na głównej
+stronie i w trenażerze są początkowo zwinięte.
+
+## Bateria smart kostki
+
+Po połączeniu pokazujemy procent baterii z eventu `BATTERY`. Jeżeli urządzenie
+zgłasza `capabilities.battery`, wysyłamy `REQUEST_BATTERY` po połączeniu i co
+60 sekund. Rozłączenie lub odmontowanie komponentu zatrzymuje odświeżanie,
+a ponowne połączenie usuwa poprzedni odczyt. Wartości spoza 0–100 oraz
+niefinitywne są pomijane; do 20% wskaźnik wyróżnia niski poziom.
+Brak obsługi lub błąd żądania pokazuje „Bateria: brak odczytu” i nie przerywa
+połączenia ani pomiaru. Stan baterii nie jest zapisywany w nagraniu ułożenia.
 
 Gdy biblioteka nie ustali wymaganego adresu MAC z danych urządzenia ani z pamięci przeglądarki, ekran prosi o jego ręczne wpisanie. Biblioteka zapisuje adres w `localStorage` dopiero po zweryfikowaniu połączenia; zapis jest osobny dla przeglądarki i adresu aplikacji, a jego utrata może wymagać ponownego wpisania.
 

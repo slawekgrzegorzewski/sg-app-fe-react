@@ -4,7 +4,7 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 
 ## Układ strony
 
-- Główna zawartość powinna być wyśrodkowana i mieć ograniczoną szerokość. Dla standardowych widoków używamy `maxWidth: 960px`.
+- Główna zawartość standardowych widoków powinna być wyśrodkowana i mieć `maxWidth: 960px`. Wyjątkami są strona układania kostek i trenażer CFOP: na desktopie wykorzystują pełną dostępną szerokość, aby wyeksponować kostkę obok stopera i danych sesji.
 - Odstępy powinny być responsywne: mniejsze na telefonie i większe od breakpointu `sm`.
 - Tytuł strony powinien używać spójnej hierarchii nagłówków, zwykle `Typography` z wariantem `h3`.
 - Sekcje grupujemy w obramowanych komponentach `Paper`. Nagłówek sekcji powinien zawierać nazwę oraz, jeśli ma to sens, lekki `Chip` z liczbą elementów.

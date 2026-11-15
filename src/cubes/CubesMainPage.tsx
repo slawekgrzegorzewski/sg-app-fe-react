@@ -1,3 +1,5 @@
+import {useViewportWorkspace} from './use-viewport-workspace';
+import {CubeFacelets} from './cube-facelets';
 import type {SmartCubeRecording} from './smart-cube-recording';
 import {INSPECTION_ALLOWANCE_MILLIS, isInspection, Phase} from './phase';
 import * as React from 'react';
@@ -7,6 +9,10 @@ import {
     Box,
     Chip,
     Dialog,
+    Divider,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
     FormControl,
     InputLabel,
     MenuItem,
@@ -37,8 +43,12 @@ import {CUBE_TYPE_OPTIONS, getCubeTypeOption} from './cube-types';
 import {generateCubingScramble} from './cubing-scramble';
 import {CubingVisualizer} from './CubingVisualizer';
 import {validateCubingScramble} from './cubing-api';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import StopIcon from '@mui/icons-material/Stop';
+import {alpha} from '@mui/material/styles';
+import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {CubeStatCard} from './CubeStatCard';
-import TouchAppIcon from '@mui/icons-material/TouchApp';
 import Paper from '@mui/material/Paper';
 import {formatCubeTime} from './CubeStatsPage';
 import {SmartCube} from './SmartCube';
@@ -145,7 +155,7 @@ export function CubesMainPage() {
     const smartScramblePromise = useRef<Promise<string | null> | null>(null);
     const savingResult = useRef<symbol | null>(null);
     const [visualizedScramble, setVisualizedScramble] = useState('');
-    const [smartFacelets, setSmartFacelets] = useState<string | null>(null);
+    const [smartFacelets, setSmartFacelets] = useState<CubeFacelets | null>(null);
     const [scrambleError, setScrambleError] = useState<string | null>(null);
     const [scrambleValidationError, setScrambleValidationError] = useState<string | null>(null);
     const [isValidatingScramble, setIsValidatingScramble] = useState(false);
@@ -160,6 +170,8 @@ export function CubesMainPage() {
     const [hasOrientation, setHasOrientation] = useState(false);
     const [orientationResetVersion, setOrientationResetVersion] = useState(0);
     const [cubeElapsed, setCubeElapsed] = useState<number | null>(null);
+    const stopSmartSolve = useRef<() => void>(() => {
+    });
     const confirmSmartScramble = useRef<() => boolean>(() => false);
     const smartSpaceHeld = useRef(false);
     const result = useRef(0);
@@ -215,6 +227,7 @@ export function CubesMainPage() {
 
     const completedRecording = useRef<SmartCubeRecording | null>(null);
     const reset = useRef(() => {
+        clearInspectionTimeout();
         completedRecording.current = null;
         smartScrambleId.current++;
         savingResult.current = null;
@@ -280,8 +293,9 @@ export function CubesMainPage() {
         }
     });
 
-    const {data, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType}});
+    const {data, loading, error, refetch} = useQuery<GetCubeResultsQuery>(GetCubeResults, {variables: {cubeType}});
     const [storeCubeResultMutation] = useMutation<StoreCubeResultMutation>(StoreCubeResult);
+    const workspaceRef = useViewportWorkspace(data != null);
     const todayAverageInMillis = data ? averageCubeTime(data.cubeResults.todayResults) : null;
 
     const startTrigger: React.RefObject<() => void> = useRef<() => void>(() => {
@@ -318,11 +332,16 @@ export function CubesMainPage() {
                 return;
             }
             if (e.code === 'Space' && !smartInspection) {
+                e.preventDefault();
                 if (phase === 'IDLE' && result.current === 0) {
                     beginInspection();
                 } else if (phase === 'SOLVING') {
-                    result.current = stop.current();
-                    setPhase('IDLE');
+                    if (smartConnected) {
+                        stopSmartSolve.current();
+                    } else {
+                        result.current = stop.current();
+                        setPhase('IDLE');
+                    }
                 }
             }
             if (e.code === 'KeyS' && phase === 'IDLE' && !derivingSmartScramble) {
@@ -396,429 +415,538 @@ export function CubesMainPage() {
             });
     }, [cubeType, scramble]);
 
-    if (data) {
-        return (
+    const timerAction = () => {
+        if (phase === 'SOLVING') {
+            if (smartConnected) {
+                stopSmartSolve.current();
+            } else {
+                result.current = stop.current();
+                setPhase('IDLE');
+            }
+        } else if (smartConnected) {
+            confirmSmartScramble.current();
+        } else if (isInspection(phase)) {
+            clearInspectionTimeout();
+            setPhase('SOLVING');
+            start.current();
+        } else {
+            beginInspection();
+        }
+    };
+    const phaseLabel = {
+        IDLE: 'Gotowe',
+        INSPECTION_EARLY: 'Inspekcja',
+        INSPECTION_LATE: 'Inspekcja przekroczona',
+        SOLVING: 'Układanie',
+    }[phase];
+    let timerActionLabel = 'Rozpocznij inspekcję';
+    if (phase === 'SOLVING') {
+        timerActionLabel = 'Zatrzymaj pomiar';
+    } else if (smartConnected) {
+        timerActionLabel = 'Scramble gotowy';
+    } else if (isInspection(phase)) {
+        timerActionLabel = 'Rozpocznij układanie';
+    }
+
+    if (!data) {
+        if (error) {
+            return <ErrorDisplay error={error} onRetry={() => void refetch()}/>;
+        }
+        return <LoadingIndicator label="Ładowanie sesji kostek…"/>;
+    }
+
+    return (
+        <Stack spacing={{xs: 3, lg: 2}} sx={{
+            width: '100%',
+            minWidth: 0,
+            p: {xs: 1.5, sm: 3, lg: 2},
+            '& .MuiButton-text:not(.Mui-disabled), & .MuiButton-outlined:not(.Mui-disabled)': {color: 'text.primary'},
+        }}>
             <Stack
-                sx={{
-                    height: '100%',
-                    width: '100%',
-                    px: {xs: 1, sm: 2},
-                    py: 2,
-                }}
-                direction={'column'}
-                alignItems={'center'}
+                direction={{xs: 'column', sm: 'row'}}
+                alignItems={{xs: 'stretch', sm: 'center'}}
+                justifyContent="space-between"
+                spacing={2}
             >
-                <Stack spacing={2} alignItems="center" sx={{width: '100%', maxWidth: 960, minHeight: '100%'}}>
-                    <Stack
-                        direction={{xs: 'column', sm: 'row'}}
-                        alignItems={{xs: 'stretch', sm: 'center'}}
-                        justifyContent="space-between"
-                        spacing={2}
-                        sx={{width: '100%'}}
-                    >
-                        <Typography variant="h3">
-                            <StandOutText standOutBy="both">Układanie kostek</StandOutText>
-                        </Typography>
-                        <FormControl variant="filled" size="small" sx={{minWidth: 180}}>
-                            <InputLabel id="main-cube-type-label">Rodzaj kostki</InputLabel>
-                            <Select
-                                labelId="main-cube-type-label"
-                                id="main-cube-type"
-                                value={cubeType}
-                                disabled={phase !== 'IDLE' || result.current > 0}
-                                onChange={event => {
-                                    reset.current();
-                                    setSmartFacelets(null);
-                                    setSmartConnected(false);
-                                    orientation.current = null;
-                                    gyroReading.current = null;
-                                    setHasOrientation(false);
-                                    setOrientationResetVersion(0);
-                                    setCubeType(event.target.value as CubeType);
-                                }}
-                            >
-                                {CUBE_TYPE_OPTIONS.map(option => (
-                                    <MenuItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Stack>
-                    <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'minmax(0, 1fr) 145px',
-                            gap: 2,
-                            width: '100%',
-                            alignItems: 'start',
-                        }}
-                    >
-                        <RecentResults results={data.cubeResults.todayResults}/>
-                        <Stack spacing={1} sx={{width: 145, maxWidth: '100%', height: '100%'}}>
-                            <Stack direction="row" alignItems="center" sx={{minHeight: 23}}>
-                                <Typography variant="h4">Dziś</Typography>
-                            </Stack>
-                            <Stack
-                                spacing={1.5}
-                                sx={{
-                                    pt: '1px',
-                                    flexGrow: 1,
-                                    justifyContent: {xs: 'space-between', md: 'flex-start'},
-                                }}
-                            >
-                                <CubeStatCard
-                                    label="Średnia"
-                                    value={`${formatCubeTime(todayAverageInMillis)} z ${data.cubeResults.todayStats.numberOfTries} ułożeń`}
-                                />
-                                <CubeStatCard
-                                    label="Najlepszy wynik"
-                                    value={formatCubeTime(data.cubeResults.todayStats.min)}
-                                />
-                            </Stack>
-                        </Stack>
-                    </Box>
-                    <Typography variant="caption" color="text.secondary">
-                        Blokada wygaszania ekranu: {wakeLock ? 'włączona' : 'wyłączona'}
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                        <Button
-                            variant="contained"
-                            disabled={isGeneratingScramble || derivingSmartScramble || phase !== 'IDLE'}
-                            onClick={generateScrambleForSelectedCube}
-                        >
-                            {isGeneratingScramble ? 'Generowanie…' : 'Scramble'}
-                        </Button>
-                        <Button variant="outlined" onClick={reset.current}>
-                            Reset
-                        </Button>
-                    </Stack>
-                    {scrambleError && (
-                        <Alert severity="error" sx={{width: '100%'}}>
-                            Nie udało się wygenerować scrambla: {scrambleError}
-                        </Alert>
-                    )}
-                    {saveError && <Alert severity="error" sx={{width: '100%'}}>{saveError}</Alert>}
-                    <TextField
-                        label="Scramble"
-                        disabled={phase !== 'IDLE' || derivingSmartScramble}
-                        value={scramble}
+                <Stack spacing={0.5}>
+                    <Typography variant="h3">Układanie kostek</Typography>
+                    <Typography color="text.secondary">Stoper, smart kostka i wyniki dzisiejszej sesji.</Typography>
+                </Stack>
+                <FormControl variant="filled" size="small" sx={{minWidth: 180}}>
+                    <InputLabel id="main-cube-type-label">Rodzaj kostki</InputLabel>
+                    <Select
+                        labelId="main-cube-type-label"
+                        id="main-cube-type"
+                        value={cubeType}
+                        disabled={phase !== 'IDLE' || result.current > 0}
                         onChange={event => {
-                            scrambleGenerationId.current++;
-                            scrambleValidationId.current++;
-                            setIsGeneratingScramble(false);
-                            setScrambleError(null);
-                            smartScramblePromise.current = null;
-                            setSaveError(null);
-                            scrambleRef.current = event.target.value;
-                            setScramble(event.target.value);
+                            reset.current();
+                            setSmartFacelets(null);
+                            setSmartConnected(false);
+                            orientation.current = null;
+                            gyroReading.current = null;
+                            setHasOrientation(false);
+                            setOrientationResetVersion(0);
+                            setCubeType(event.target.value as CubeType);
                         }}
-                        multiline
-                        minRows={2}
-                        maxRows={4}
-                        error={scrambleValidationError !== null}
-                        helperText={
-                            derivingSmartScramble
-                                ? 'Wyznaczanie scramble’a ze stanu kostki…'
-                                : isValidatingScramble
-                                    ? 'Sprawdzanie…'
-                                    : scrambleValidationError
-                                        ? `Niepoprawny scramble: ${scrambleValidationError}`
-                                        : scramble.trim()
-                                            ? 'Scramble jest poprawny.'
-                                            : 'Wpisz lub wygeneruj scramble.'
-                        }
-                        sx={{width: '100%'}}
-                    />
+                    >
+                        {CUBE_TYPE_OPTIONS.map(option => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+
+            </Stack>
+            {error && <ErrorDisplay error={error} onRetry={() => void refetch()}/>}
+            {loading && <LoadingIndicator label="Odświeżanie wyników…"/>}
+            <Box
+                ref={workspaceRef}
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                        xs: 'minmax(0, 1fr)',
+                        lg: 'minmax(0, 1fr) minmax(300px, 340px) minmax(260px, 320px)',
+                    },
+                    gridTemplateAreas: {xs: '"timer" "cube" "day"', lg: '"cube timer day"'},
+                    gridTemplateRows: {lg: 'minmax(0, 1fr)'},
+                    height: {lg: 'var(--workspace-height)'},
+                    gap: {xs: 3, lg: 2},
+                    alignItems: {xs: 'start', lg: 'stretch'},
+                    minWidth: 0,
+                }}
+            >
+                <Paper variant="outlined" sx={{
+                    gridArea: 'cube',
+                    minWidth: 0,
+                    minHeight: 0,
+                    overflow: 'auto',
+                    borderRadius: 3,
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center"
+                           sx={{p: {xs: 2, sm: 3, lg: 2}}}>
+                        <Stack spacing={0.5}>
+                            <Typography variant="h4">Kostka {getCubeTypeOption(cubeType).label}</Typography>
+                            <Typography variant="body2" color="text.secondary">Przeciągnij, aby obrócić
+                                widok.</Typography>
+                        </Stack>
+                        <Chip size="small" label={smartConnected ? 'Na żywo' : 'Podgląd scramble’a'}/>
+                    </Stack>
                     <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                            xs: 'minmax(0, 1fr)',
-                            md: smartConnected ? 'minmax(0, 1fr) 220px' : 'minmax(0, 1fr)'
-                        },
-                        gap: 2,
-                        width: '100%',
-                        alignItems: 'start'
+                        background: theme => `radial-gradient(ellipse at center, ${alpha(theme.palette.primary.main, 0.12)}, transparent 70%)`,
+                        px: {xs: 1, sm: 3},
+                        flexGrow: 1,
+                        minHeight: {lg: 160},
                     }}>
-                        <Box sx={{minWidth: 0, display: 'flex', justifyContent: 'center'}}>
-                            <CubingVisualizer cubeType={cubeType} scramble={visualizedScramble} facelets={smartFacelets}
-                                              orientation={hasOrientation ? orientation : undefined}
-                                              orientationResetVersion={orientationResetVersion}/>
-                        </Box>
-                        {smartConnected && <GyroReadout reading={gyroReading}/>}
+                        <CubingVisualizer
+                            variant="hero"
+                            cubeType={cubeType}
+                            scramble={visualizedScramble}
+                            facelets={smartFacelets}
+                            orientation={hasOrientation ? orientation : undefined}
+                            orientationResetVersion={orientationResetVersion}
+                        />
                     </Box>
-                    {cubeType === CubeType.Three && (
-                        <SmartCube
-                            scramble={scramble}
-                            enabled={phase === 'IDLE' && result.current === 0}
-                            solving={phase === 'SOLVING'}
-                            inspection={smartInspection}
-                            onInspection={promise => {
-                                const id = ++smartScrambleId.current;
+                    <Divider/>
+                    <Stack spacing={1.5} sx={{p: {xs: 2, sm: 3, lg: 2}}}>
+                        <Typography variant="h4">Następne ułożenie</Typography>
+                        <Stack direction="row" spacing={1}>
+                            <Button
+                                variant="contained"
+                                disabled={isGeneratingScramble || derivingSmartScramble || phase !== 'IDLE'}
+                                onClick={generateScrambleForSelectedCube}
+                            >
+                                {isGeneratingScramble ? 'Generowanie…' : 'Scramble'}
+                            </Button>
+                            <Button variant="outlined" onClick={reset.current}>
+                                Reset
+                            </Button>
+                        </Stack>
+                        {scrambleError && (
+                            <Alert severity="error" sx={{width: '100%'}}>
+                                Nie udało się wygenerować scrambla: {scrambleError}
+                            </Alert>
+                        )}
+                        {saveError && <Alert severity="error" sx={{width: '100%'}}>{saveError}</Alert>}
+                        <TextField
+                            label="Scramble"
+                            disabled={phase !== 'IDLE' || derivingSmartScramble}
+                            value={scramble}
+                            onChange={event => {
                                 scrambleGenerationId.current++;
                                 scrambleValidationId.current++;
                                 setIsGeneratingScramble(false);
                                 setScrambleError(null);
+                                smartScramblePromise.current = null;
                                 setSaveError(null);
-                                setDerivingSmartScramble(true);
-                                setScramble('');
-                                scrambleRef.current = '';
-                                smartScramblePromise.current = promise.then(derived => {
-                                    if (id === smartScrambleId.current) {
-                                        scrambleRef.current = derived;
-                                        setScramble(derived);
-                                        setDerivingSmartScramble(false);
-                                    }
-                                    return derived;
-                                }).catch(error => {
-                                    if (id === smartScrambleId.current) {
-                                        setDerivingSmartScramble(false);
-                                        setSaveError(`Nie udało się wyznaczyć scramble’a: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
-                                    }
-                                    return null;
-                                });
-                                setSmartInspection(true);
-                                setPhase('INSPECTION_EARLY');
+                                scrambleRef.current = event.target.value;
+                                setScramble(event.target.value);
                             }}
-                            onStart={() => {
-                                clearInspectionTimeout();
-                                setSmartInspection(false);
-                                setPhase('SOLVING');
-                                start.current();
-                            }}
-                            onStop={(elapsed, recording) => {
-                                completedRecording.current = recording ?? null;
-                                stop.current();
-                                result.current = elapsed;
-                                setPhase('IDLE');
-                            }}
-                            onCancel={() => reset.current()}
-                            onFacelets={setSmartFacelets}
-                            onConnectionChange={connected => {
-                                setSmartConnected(connected);
-                                if (!connected) setOrientationResetVersion(0);
-                            }}
-                            onOrientationReset={() => setOrientationResetVersion(version => version + 1)}
-                            onGyro={value => {
-                                gyroReading.current = value;
-                            }}
-                            onOrientation={value => {
-                                const wasAvailable = orientation.current !== null;
-                                orientation.current = value;
-                                if (wasAvailable !== (value !== null)) setHasOrientation(value !== null);
-                            }}
-                            onCubeElapsed={setCubeElapsed}
-                            savedElapsed={result.current}
-                            confirmRef={confirmSmartScramble}
-                            isTouchDevice={isTouchDevice}
+                            multiline
+                            minRows={1}
+                            maxRows={4}
+                            error={scrambleValidationError !== null}
+                            helperText={
+                                derivingSmartScramble
+                                    ? 'Wyznaczanie scramble’a ze stanu kostki…'
+                                    : isValidatingScramble
+                                        ? 'Sprawdzanie…'
+                                        : scrambleValidationError
+                                            ? `Niepoprawny scramble: ${scrambleValidationError}`
+                                            : scramble.trim()
+                                                ? 'Scramble jest poprawny.'
+                                                : 'Wpisz lub wygeneruj scramble.'
+                            }
+                            sx={{width: '100%'}}
                         />
+
+                    </Stack>
+                    {smartConnected && (
+                        <Accordion elevation={0} disableGutters sx={{borderTop: 1, borderColor: 'divider'}}>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
+                                <Typography>Dane żyroskopu</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails><GyroReadout reading={gyroReading}/></AccordionDetails>
+                        </Accordion>
                     )}
-                    <Typography variant="caption" color="text.secondary">
-                        Przeciągnij, aby obrócić widok.
-                    </Typography>
-                    {fullScreen && (
-                        <Dialog
-                            open={fullScreen && phase === 'SOLVING'}
-                            fullScreen={true}
-                            keepMounted={true}
-                            onTransitionExited={() => {
-                                if (result.current > 0) {
-                                    resultActionsRef.current?.scrollIntoView?.({behavior: 'smooth', block: 'end'});
-                                }
-                            }}
-                            onTouchStart={() => {
-                                result.current = stop.current();
-                                setPhase('IDLE');
-                            }}
-                        >
-                            <Stack
-                                style={{width: '100%', height: '100%'}}
-                                justifyContent={'center'}
-                                alignItems={'center'}
+                </Paper>
+                <Paper variant="outlined" sx={{
+                    gridArea: 'timer',
+                    minWidth: 0,
+                    minHeight: 0,
+                    overflowY: {lg: 'auto'},
+                    p: {xs: 2, sm: 3, lg: 2},
+                    borderRadius: 3
+                }}>
+                    <Stack spacing={{xs: 2.5, lg: 1.5}} alignItems="stretch">
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="h4">Stoper</Typography>
+                            <Chip size="small" label={phaseLabel}/>
+                        </Stack>
+                        {fullScreen && (
+                            <Dialog
+                                open={fullScreen && phase === 'SOLVING'}
+                                fullScreen={true}
+                                keepMounted={true}
+                                onTransitionExited={() => {
+                                    if (result.current > 0) {
+                                        resultActionsRef.current?.scrollIntoView?.({behavior: 'smooth', block: 'end'});
+                                    }
+                                }}
+                                onTouchStart={() => {
+                                    if (smartConnected) {
+                                        stopSmartSolve.current();
+                                    } else {
+                                        result.current = stop.current();
+                                        setPhase('IDLE');
+                                    }
+                                }}
                             >
-                                <Typography>Blokada ekranu: {wakeLock ? 'włączona' : 'wyłączona'}</Typography>
-                                {smartFacelets && <Box onTouchStart={event => event.stopPropagation()}>
-                                    <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets}
-                                                      orientation={hasOrientation ? orientation : undefined}
-                                                      orientationResetVersion={orientationResetVersion}/>
-                                </Box>}
-                                {cubeElapsed !== null && <Typography>Czas kostki (od pierwszego do ostatniego
-                                    ruchu): {formatCubeTime(cubeElapsed)}</Typography>}
-                                <StopWatch
-                                    variant={'h2'}
-                                    showControls={false}
-                                    sx={{color: 'text.primary'}}
-                                    startTrigger={startTrigger}
-                                    stopTrigger={stopTrigger}
-                                    resetTrigger={resetTrigger}
-                                />
-                            </Stack>
-                        </Dialog>
-                    )}
-                    {!fullScreen && (
-                        <StopWatch
-                            inspectionMode={
-                                phase === 'INSPECTION_EARLY'
-                                    ? 'countdown'
-                                    : phase === 'INSPECTION_LATE'
-                                        ? 'overtime'
-                                        : undefined
-                            }
-                            inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
-                            sx={{
-                                color:
+                                <Stack
+                                    style={{width: '100%', height: '100%'}}
+                                    justifyContent={'center'}
+                                    alignItems={'center'}
+                                >
+                                    <Typography>Blokada ekranu: {wakeLock ? 'włączona' : 'wyłączona'}</Typography>
+                                    {smartFacelets && <Box onTouchStart={event => event.stopPropagation()}>
+                                        <CubingVisualizer cubeType={cubeType} scramble="" facelets={smartFacelets}
+                                                          orientation={hasOrientation ? orientation : undefined}
+                                                          orientationResetVersion={orientationResetVersion}/>
+                                    </Box>}
+                                    {cubeElapsed !== null && <Typography>Czas kostki (od pierwszego do ostatniego
+                                        ruchu): {formatCubeTime(cubeElapsed)}</Typography>}
+                                    <StopWatch
+                                        variant={'h2'}
+                                        showControls={false}
+                                        sx={{color: 'text.primary'}}
+                                        startTrigger={startTrigger}
+                                        stopTrigger={stopTrigger}
+                                        resetTrigger={resetTrigger}
+                                    />
+                                </Stack>
+                            </Dialog>
+                        )}
+                        {!fullScreen && (
+                            <StopWatch
+                                showControls={false}
+                                variant="h2"
+                                inspectionMode={
                                     phase === 'INSPECTION_EARLY'
-                                        ? 'success.main'
+                                        ? 'countdown'
                                         : phase === 'INSPECTION_LATE'
-                                            ? 'error.main'
-                                            : 'text.primary',
-                            }}
-                            startTrigger={startTrigger}
-                            stopTrigger={stopTrigger}
-                            resetTrigger={resetTrigger}
-                        />
-                    )}
-                    <Typography>{phase}</Typography>
-                    {fullScreen && smartInspection && (
-                        <StopWatch showControls={false} variant="h2" inspectionMode="countdown"
-                                   inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}/>
-                    )}
-                    {fullScreen && !smartInspection && !smartConnected && (result.current === 0 || phase !== 'IDLE') && (
-                        <Stack
-                            role="button"
-                            tabIndex={0}
-                            aria-label={
-                                isInspection(phase)
-                                    ? 'Puść, aby uruchomić stoper'
-                                    : 'Dotknij i przytrzymaj, aby rozpocząć'
-                            }
-                            direction={'column'}
-                            sx={{
-                                flexGrow: 1,
-                                alignSelf: 'stretch',
-                                minHeight: 180,
-                                userSelect: 'none',
-                                WebkitUserSelect: 'none',
-                                WebkitTouchCallout: 'none',
-                                WebkitTapHighlightColor: 'transparent',
-                                touchAction: 'none',
-                                cursor: 'pointer',
-                                border: 2,
-                                borderStyle: 'dashed',
-                                borderColor:
-                                    phase === 'INSPECTION_LATE'
-                                        ? 'error.main'
-                                        : phase === 'INSPECTION_EARLY'
-                                            ? 'success.main'
-                                            : 'primary.main',
-                                borderRadius: 2,
-                                bgcolor: 'action.hover',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                gap: 1,
-                                px: 2,
-                                textAlign: 'center',
-                                '& *': {
-                                    userSelect: 'none',
-                                    WebkitUserSelect: 'none',
-                                    pointerEvents: 'none',
-                                },
-                            }}
-                            onTouchStart={event => {
-                                event.preventDefault();
-                                if (phase === 'IDLE' && result.current === 0) {
-                                    beginInspection();
+                                            ? 'overtime'
+                                            : undefined
                                 }
-                            }}
-                            onTouchEnd={event => {
-                                event.preventDefault();
-                                clearInspectionTimeout();
-                                if (isInspection(phase)) {
+                                inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
+                                sx={{
+                                    color:
+                                        phase === 'INSPECTION_EARLY'
+                                            ? 'success.main'
+                                            : phase === 'INSPECTION_LATE'
+                                                ? 'error.main'
+                                                : 'text.primary',
+                                }}
+                                startTrigger={startTrigger}
+                                stopTrigger={stopTrigger}
+                                resetTrigger={resetTrigger}
+                            />
+                        )}
+                        {fullScreen && smartInspection && (
+                            <StopWatch showControls={false} variant="h2" inspectionMode="countdown"
+                                       inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}/>
+                        )}
+                        {fullScreen && !smartInspection && !smartConnected && (result.current === 0 || phase !== 'IDLE') && (
+                            <Stack
+                                component="button"
+                                type="button"
+                                aria-label={
+                                    isInspection(phase)
+                                        ? 'Puść, aby uruchomić stoper'
+                                        : 'Dotknij i przytrzymaj, aby rozpocząć'
+                                }
+                                direction={'column'}
+                                sx={{
+                                    flexGrow: 1,
+                                    alignSelf: 'stretch',
+                                    minHeight: 180,
+                                    userSelect: 'none',
+                                    color: 'text.primary',
+                                    font: 'inherit',
+                                    WebkitUserSelect: 'none',
+                                    WebkitTouchCallout: 'none',
+                                    WebkitTapHighlightColor: 'transparent',
+                                    touchAction: 'none',
+                                    cursor: 'pointer',
+                                    border: 2,
+                                    borderStyle: 'dashed',
+                                    borderColor:
+                                        phase === 'INSPECTION_LATE'
+                                            ? 'error.main'
+                                            : phase === 'INSPECTION_EARLY'
+                                                ? 'success.main'
+                                                : 'primary.main',
+                                    borderRadius: 2,
+                                    bgcolor: 'action.hover',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    px: 2,
+                                    textAlign: 'center',
+                                    '& *': {
+                                        userSelect: 'none',
+                                        WebkitUserSelect: 'none',
+                                        pointerEvents: 'none',
+                                    },
+                                }}
+                                onTouchStart={() => {
+                                    if (phase === 'IDLE' && result.current === 0) {
+                                        beginInspection();
+                                    }
+                                }}
+                                onTouchEnd={() => {
+                                    clearInspectionTimeout();
+                                    if (isInspection(phase)) {
+                                        setPhase('SOLVING');
+                                        start.current();
+                                    }
+                                }}
+                                onTouchCancel={() => {
+                                    clearInspectionTimeout();
+                                    if (isInspection(phase)) {
+                                        setPhase('IDLE');
+                                    }
+                                }}
+                                onContextMenu={event => event.preventDefault()}
+                            >
+                                {isInspection(phase) ? (
+                                    <StopWatch
+                                        showControls={false}
+                                        variant="h2"
+                                        sx={{color: phase === 'INSPECTION_EARLY' ? 'success.main' : 'error.main'}}
+                                        inspectionMode={phase === 'INSPECTION_EARLY' ? 'countdown' : 'overtime'}
+                                        inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
+                                    />
+                                ) : (
+                                    <StopWatchDisplay currentTimeInMillis={0} variant="h4"/>
+                                )}
+                                <Typography variant="h6">
+                                    {isInspection(phase) ? 'Puść, aby uruchomić stoper' : 'Dotknij i przytrzymaj'}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    {isInspection(phase)
+                                        ? 'Stoper rozpocznie pomiar po oderwaniu palca.'
+                                        : 'Rozpoczniesz inspekcję. Oderwij palec, aby zacząć układanie.'}
+                                </Typography>
+                            </Stack>
+                        )}
+                        {fullScreen && result.current > 0 && phase === 'IDLE' && (
+                            <Stack sx={{color: 'text.primary'}}>
+                                <StopWatchDisplay currentTimeInMillis={result.current}/>
+                            </Stack>
+                        )}
+                        {result.current > 0 && phase === 'IDLE' && (
+                            <Stack
+                                ref={resultActionsRef}
+                                direction={'row'}
+                                justifyContent={'stretch'}
+                                gap={1}
+                                sx={{
+                                    flexGrow: 1,
+                                    alignSelf: 'stretch',
+                                    minHeight: fullScreen ? 144 : 52,
+                                    userSelect: 'none',
+                                }}
+                            >
+                                <Button
+                                    color="success"
+                                    variant="contained"
+                                    size="large"
+                                    aria-label="Zapisz wynik"
+                                    onClick={() => void save.current()}
+                                    sx={{
+                                        flex: 1,
+                                        minHeight: fullScreen ? 144 : 52,
+                                        borderRadius: 2,
+                                    }}
+                                >
+                                    <StandOutText standOutBy="bold">ZAPISZ</StandOutText>
+                                </Button>
+                                <Button
+                                    color="error"
+                                    variant="contained"
+                                    size="large"
+                                    aria-label="Odrzuć wynik"
+                                    onClick={() => reset.current()}
+                                    sx={{
+                                        flex: 1,
+                                        minHeight: fullScreen ? 144 : 52,
+                                        borderRadius: 2,
+                                    }}
+                                >
+                                    <StandOutText standOutBy="bold">ODRZUĆ</StandOutText>
+                                </Button>
+                            </Stack>
+                        )}
+
+                        {(!fullScreen || (smartConnected && !isTouchDevice)) && result.current === 0 && (
+                            <Button
+                                variant="contained"
+                                size="large"
+                                startIcon={phase === 'SOLVING' ? <StopIcon/> : <PlayArrowIcon/>}
+                                onClick={timerAction}
+                                disabled={smartInspection}
+                                sx={{minHeight: 52}}
+                            >
+                                {timerActionLabel}
+                            </Button>
+                        )}
+                        {!fullScreen && <Typography variant="body2" color="text.secondary" align="center">
+                            Spacja — inspekcja / start / stop · Enter — zapisz · R — reset
+                        </Typography>}
+                        <Divider/>
+                        <Typography variant="subtitle2">Smart kostka</Typography>
+                        {cubeType === CubeType.Three && (
+                            <SmartCube
+                                compact
+                                stopRef={stopSmartSolve}
+                                scramble={scramble}
+                                enabled={phase === 'IDLE' && result.current === 0}
+                                solving={phase === 'SOLVING'}
+                                inspection={smartInspection}
+                                onInspection={promise => {
+                                    const id = ++smartScrambleId.current;
+                                    scrambleGenerationId.current++;
+                                    scrambleValidationId.current++;
+                                    setIsGeneratingScramble(false);
+                                    setScrambleError(null);
+                                    setSaveError(null);
+                                    setDerivingSmartScramble(true);
+                                    setScramble('');
+                                    scrambleRef.current = '';
+                                    smartScramblePromise.current = promise.then(derived => {
+                                        if (id === smartScrambleId.current) {
+                                            scrambleRef.current = derived;
+                                            setScramble(derived);
+                                            setDerivingSmartScramble(false);
+                                        }
+                                        return derived;
+                                    }).catch(error => {
+                                        if (id === smartScrambleId.current) {
+                                            setDerivingSmartScramble(false);
+                                            setSaveError(`Nie udało się wyznaczyć scramble’a: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+                                        }
+                                        return null;
+                                    });
+                                    setSmartInspection(true);
+                                    setPhase('INSPECTION_EARLY');
+                                }}
+                                onStart={() => {
+                                    clearInspectionTimeout();
+                                    setSmartInspection(false);
                                     setPhase('SOLVING');
                                     start.current();
-                                }
-                            }}
-                            onTouchCancel={() => {
-                                clearInspectionTimeout();
-                                if (isInspection(phase)) {
+                                }}
+                                onStop={(elapsed, recording) => {
+                                    completedRecording.current = recording ?? null;
+                                    stop.current();
+                                    result.current = elapsed;
                                     setPhase('IDLE');
-                                }
-                            }}
-                            onContextMenu={event => event.preventDefault()}
-                        >
-                            {isInspection(phase) ? (
-                                <StopWatch
-                                    showControls={false}
-                                    variant="h2"
-                                    sx={{color: phase === 'INSPECTION_EARLY' ? 'success.main' : 'error.main'}}
-                                    inspectionMode={phase === 'INSPECTION_EARLY' ? 'countdown' : 'overtime'}
-                                    inspectionAllowanceMillis={INSPECTION_ALLOWANCE_MILLIS}
-                                />
-                            ) : (
-                                <TouchAppIcon sx={{fontSize: 56}} color="primary"/>
-                            )}
-                            <Typography variant="h6">
-                                {isInspection(phase) ? 'Puść, aby uruchomić stoper' : 'Dotknij i przytrzymaj'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {isInspection(phase)
-                                    ? 'Stoper rozpocznie pomiar po oderwaniu palca.'
-                                    : 'Rozpoczniesz inspekcję. Oderwij palec, aby zacząć układanie.'}
-                            </Typography>
-                        </Stack>
-                    )}
-                    {fullScreen && result.current > 0 && phase === 'IDLE' && (
-                        <Stack sx={{color: 'text.primary'}}>
-                            <StopWatchDisplay currentTimeInMillis={result.current}/>
-                        </Stack>
-                    )}
-                    {fullScreen && result.current > 0 && phase === 'IDLE' && (
-                        <Stack
-                            ref={resultActionsRef}
-                            direction={'row'}
-                            justifyContent={'stretch'}
-                            gap={1}
-                            sx={{
-                                flexGrow: 1,
-                                alignSelf: 'stretch',
-                                minHeight: 144,
-                                userSelect: 'none',
-                            }}
-                        >
-                            <Button
-                                color="success"
-                                variant="contained"
-                                size="large"
-                                aria-label="Zapisz wynik"
-                                onClick={() => void save.current()}
-                                sx={{
-                                    flex: 1,
-                                    minHeight: 144,
-                                    borderRadius: 2,
                                 }}
-                            >
-                                <StandOutText standOutBy="bold">ZAPISZ</StandOutText>
-                            </Button>
-                            <Button
-                                color="error"
-                                variant="contained"
-                                size="large"
-                                aria-label="Odrzuć wynik"
-                                onClick={() => reset.current()}
-                                sx={{
-                                    flex: 1,
-                                    minHeight: 144,
-                                    borderRadius: 2,
+                                onCancel={() => reset.current()}
+                                onFacelets={setSmartFacelets}
+                                onConnectionChange={connected => {
+                                    setSmartConnected(connected);
+                                    if (!connected) setOrientationResetVersion(0);
                                 }}
-                            >
-                                <StandOutText standOutBy="bold">ODRZUĆ</StandOutText>
-                            </Button>
+                                onOrientationReset={() => setOrientationResetVersion(version => version + 1)}
+                                onGyro={value => {
+                                    gyroReading.current = value;
+                                }}
+                                onOrientation={value => {
+                                    const wasAvailable = orientation.current !== null;
+                                    orientation.current = value;
+                                    if (wasAvailable !== (value !== null)) setHasOrientation(value !== null);
+                                }}
+                                onCubeElapsed={setCubeElapsed}
+                                savedElapsed={result.current}
+                                confirmRef={confirmSmartScramble}
+                                isTouchDevice={isTouchDevice}
+                            />
+                        )}
+
+                        {cubeType !== CubeType.Three && <Typography variant="body2" color="text.secondary">
+                            Połączenie smart kostki jest dostępne dla 3×3.
+                        </Typography>}
+                        <Typography variant="caption" color="text.secondary" align="center">
+                            Blokada wygaszania ekranu: {wakeLock ? 'włączona' : 'wyłączona'}
+                        </Typography>
+                    </Stack>
+                </Paper>
+                <Paper variant="outlined" sx={{
+                    gridArea: 'day',
+                    minWidth: 0,
+                    minHeight: 0,
+                    overflowY: {lg: 'auto'},
+                    p: {xs: 2, sm: 3, lg: 2},
+                    borderRadius: 3
+                }}>
+                    <Stack spacing={2}>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="h4">Dziś</Typography>
+                            <Chip size="small" label={`${data.cubeResults.todayStats.numberOfTries} ułożeń`}/>
                         </Stack>
-                    )}
-                </Stack>
-            </Stack>
-        );
-    } else {
-        return <></>;
-    }
+                        <Box sx={{display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.5}}>
+                            <CubeStatCard compact label="Średnia" value={formatCubeTime(todayAverageInMillis)}/>
+                            <CubeStatCard compact label="Najlepszy wynik"
+                                          value={formatCubeTime(data.cubeResults.todayStats.min)}/>
+                        </Box>
+                        <RecentResults results={data.cubeResults.todayResults}/>
+                    </Stack>
+                </Paper>
+            </Box>
+        </Stack>
+    );
 }

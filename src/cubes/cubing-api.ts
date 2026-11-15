@@ -1,7 +1,8 @@
+import {CubeFacelets} from './cube-facelets';
 import type {Alg} from 'cubing/alg';
 import type {PuzzleID, TwistyPlayer, TwistyPlayerConfig} from 'cubing/twisty';
 import type {CubingEventId} from './cube-types';
-import {faceletsToTransformationData, validateDerivedScramble} from './cubing-facelets';
+import {faceletsToTransformationData, patternDataToFacelets, validateDerivedScramble} from './cubing-facelets';
 
 const PUBLIC_URL = (process.env.PUBLIC_URL ?? '').replace(/\/$/, '');
 const CUBING_MODULE_BASE_URL = `${PUBLIC_URL}/vendor/cubing`;
@@ -32,21 +33,19 @@ function loadAlgModule(): Promise<CubingAlgModule> {
 function loadPuzzlesModule(): Promise<CubingPuzzlesModule> {
     puzzlesModulePromise ??= import(
         /* webpackIgnore: true */ CUBING_PUZZLES_MODULE_URL
-    ) as Promise<CubingPuzzlesModule>;
+        ) as Promise<CubingPuzzlesModule>;
     return puzzlesModulePromise;
 }
 
 function loadScrambleModule(): Promise<CubingScrambleModule> {
     scrambleModulePromise ??= import(
         /* webpackIgnore: true */ CUBING_SCRAMBLE_MODULE_URL
-    ) as Promise<CubingScrambleModule>;
+        ) as Promise<CubingScrambleModule>;
     return scrambleModulePromise;
 }
 
 function loadTwistyModule(): Promise<CubingTwistyModule> {
-    twistyModulePromise ??= import(
-        /* webpackIgnore: true */ CUBING_TWISTY_MODULE_URL
-    ) as Promise<CubingTwistyModule>;
+    twistyModulePromise ??= import(/* webpackIgnore: true */ CUBING_TWISTY_MODULE_URL) as Promise<CubingTwistyModule>;
     return twistyModulePromise;
 }
 
@@ -60,16 +59,26 @@ export async function createCubingTwistyPlayer(config: TwistyPlayerConfig): Prom
     return new cubingTwistyModule.TwistyPlayer(config);
 }
 
-export async function createCubingFaceletTransformation(facelets: string) {
+export async function createCubingFaceletTransformation(facelets: CubeFacelets, initialCubeOrientation = '') {
     const data = faceletsToTransformationData(facelets);
-    kpuzzleModulePromise ??= import(/* webpackIgnore: true */ CUBING_KPUZZLE_MODULE_URL) as Promise<typeof import('cubing/kpuzzle')>;
+    kpuzzleModulePromise ??= import(/* webpackIgnore: true */ CUBING_KPUZZLE_MODULE_URL) as Promise<
+        typeof import('cubing/kpuzzle')
+    >;
     const [{KTransformation}, {puzzles}] = await Promise.all([kpuzzleModulePromise, loadPuzzlesModule()]);
-    return new KTransformation(await puzzles['3x3x3'].kpuzzle(), data);
+    const transformation = new KTransformation(await puzzles['3x3x3'].kpuzzle(), data);
+    return initialCubeOrientation
+        ? transformation.kpuzzle.algToTransformation(initialCubeOrientation).applyTransformation(transformation)
+        : transformation;
 }
 
-export async function deriveCubingScramble(facelets: string): Promise<string> {
-    searchModulePromise ??= import(/* webpackIgnore: true */ CUBING_SEARCH_MODULE_URL) as Promise<typeof import('cubing/search')>;
-    const [transformation, search] = await Promise.all([createCubingFaceletTransformation(facelets), searchModulePromise]);
+export async function deriveCubingScramble(facelets: CubeFacelets): Promise<string> {
+    searchModulePromise ??= import(/* webpackIgnore: true */ CUBING_SEARCH_MODULE_URL) as Promise<
+        typeof import('cubing/search')
+    >;
+    const [transformation, search] = await Promise.all([
+        createCubingFaceletTransformation(facelets),
+        searchModulePromise,
+    ]);
     const pattern = transformation.kpuzzle.defaultPattern().applyTransformation(transformation);
     const solution = await search.experimentalSolve3x3x3IgnoringCenters(pattern);
     return validateDerivedScramble(facelets, solution.invert().toString());
@@ -84,4 +93,10 @@ export async function validateCubingScramble(puzzleId: PuzzleID, scramble: strin
 
     const kpuzzle = await puzzle.kpuzzle();
     kpuzzle.defaultPattern().applyAlg(new Alg(scramble));
+}
+
+export async function faceletsFromCubingAlgorithm(algorithm: string): Promise<CubeFacelets> {
+    const [{Alg}, {puzzles}] = await Promise.all([loadAlgModule(), loadPuzzlesModule()]);
+    const kpuzzle = await puzzles['3x3x3'].kpuzzle();
+    return patternDataToFacelets(kpuzzle.defaultPattern().applyAlg(new Alg(algorithm)).patternData);
 }

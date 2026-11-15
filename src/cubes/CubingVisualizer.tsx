@@ -1,3 +1,4 @@
+import {CubeFacelets} from './cube-facelets';
 import {Alert, Box, Stack} from '@mui/material';
 import {useEffect, useRef, useState} from 'react';
 import type {RefObject} from 'react';
@@ -7,12 +8,28 @@ import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cub
 import {findCubeMove} from './smart-cube-state';
 import type {CubeQuaternion} from './quaternion';
 
-export function CubingVisualizer({cubeType, scramble, facelets = null, orientation, orientationResetVersion = 0}: {cubeType: CubeType; scramble: string; facelets?: string | null; orientation?: RefObject<CubeQuaternion | null>; orientationResetVersion?: number}) {
+export function CubingVisualizer({
+                                     variant = 'standard',
+                                     cubeType,
+                                     scramble,
+                                     facelets = null,
+                                     orientation,
+                                     orientationResetVersion = 0,
+                                     initialCubeOrientation = '',
+                                 }: {
+    variant?: 'standard' | 'hero';
+    cubeType: CubeType;
+    scramble: string;
+    facelets?: CubeFacelets | null;
+    orientation?: RefObject<CubeQuaternion | null>;
+    orientationResetVersion?: number;
+    initialCubeOrientation?: string;
+}) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const playerRef = useRef<Awaited<ReturnType<typeof createCubingTwistyPlayer>> | null>(null);
-    const previousFacelets = useRef<string | null>(null);
+    const previousFacelets = useRef<CubeFacelets | null>(null);
     const initialScramble = useRef(scramble);
-    initialScramble.current = scramble;
+    initialScramble.current = [initialCubeOrientation, scramble].filter(Boolean).join(' ');
     const [playerVersion, setPlayerVersion] = useState(0);
     const [loadError, setLoadError] = useState(false);
 
@@ -62,7 +79,7 @@ export function CubingVisualizer({cubeType, scramble, facelets = null, orientati
             if (playerRef.current === player) playerRef.current = null;
             player?.remove();
         };
-    }, [cubeType]);
+    }, [cubeType, initialCubeOrientation]);
 
     useEffect(() => {
         const player = playerRef.current;
@@ -72,32 +89,42 @@ export function CubingVisualizer({cubeType, scramble, facelets = null, orientati
             const previous = previousFacelets.current;
             const move = previous ? findCubeMove(previous, facelets) : null;
             previousFacelets.current = facelets;
-            createCubingFaceletTransformation(move && previous ? previous : facelets).then(transformation => {
-                if (disposed) return;
-                player.pause();
-                player.alg = move ?? '';
-                player.experimentalSetupAlg = '';
-                player.experimentalModel.setupTransformation.set(transformation);
-                if (move) {
-                    player.tempoScale = 4;
-                    player.jumpToStart();
-                    player.play();
-                } else {
-                    player.jumpToEnd();
-                }
-                setLoadError(false);
-            }).catch(() => { if (!disposed) setLoadError(true); });
+            const state = move && previous ? previous : facelets;
+            const transformationPromise = initialCubeOrientation
+                ? createCubingFaceletTransformation(state, initialCubeOrientation)
+                : createCubingFaceletTransformation(state);
+            transformationPromise
+                .then(transformation => {
+                    if (disposed) return;
+                    player.pause();
+                    player.alg = move ?? '';
+                    player.experimentalSetupAlg = '';
+                    player.experimentalModel.setupTransformation.set(transformation);
+                    if (move) {
+                        player.tempoScale = 4;
+                        player.jumpToStart();
+                        player.play();
+                    } else {
+                        player.jumpToEnd();
+                    }
+                    setLoadError(false);
+                })
+                .catch(() => {
+                    if (!disposed) setLoadError(true);
+                });
         } else {
             previousFacelets.current = null;
             player.pause();
             player.alg = '';
             player.experimentalModel.setupTransformation.set(null);
-            player.experimentalSetupAlg = scramble;
+            player.experimentalSetupAlg = [initialCubeOrientation, scramble].filter(Boolean).join(' ');
             player.jumpToEnd();
             setLoadError(false);
         }
-        return () => { disposed = true; };
-    }, [cubeType, scramble, facelets, playerVersion]);
+        return () => {
+            disposed = true;
+        };
+    }, [cubeType, scramble, facelets, playerVersion, initialCubeOrientation]);
 
     useEffect(() => {
         const player = playerRef.current;
@@ -112,8 +139,8 @@ export function CubingVisualizer({cubeType, scramble, facelets = null, orientati
         let disposed = false;
         let frame = 0;
         let lastOrientation: CubeQuaternion | null = null;
-        let scene: {quaternion: {set: (x: number, y: number, z: number, w: number) => unknown}} | null = null;
-        let vantage: {scheduleRender: () => void} | null = null;
+        let scene: { quaternion: { set: (x: number, y: number, z: number, w: number) => unknown } } | null = null;
+        let vantage: { scheduleRender: () => void } | null = null;
 
         const update = async () => {
             try {
@@ -133,7 +160,10 @@ export function CubingVisualizer({cubeType, scramble, facelets = null, orientati
                     vantage.scheduleRender();
                     lastOrientation = current;
                 }
-                if (!disposed) frame = requestAnimationFrame(() => { void update(); });
+                if (!disposed)
+                    frame = requestAnimationFrame(() => {
+                        void update();
+                    });
             } catch {
                 // The experimental scene API may be unavailable; keep the normal viewer usable.
             }
@@ -150,12 +180,17 @@ export function CubingVisualizer({cubeType, scramble, facelets = null, orientati
     }, [cubeType, orientation, playerVersion]);
 
     return (
-        <Stack alignItems="center">
+        <Stack alignItems="center" sx={{
+            width: variant === 'hero' ? '100%' : undefined,
+            height: variant === 'hero' ? {lg: '100%'} : undefined
+        }}>
             <Box
                 ref={containerRef}
                 role="region"
                 aria-label="Wizualizacja układanki"
-                sx={{width: {xs: 300, sm: 420}, height: {xs: 300, sm: 360}, maxWidth: '100%'}}
+                sx={variant === 'hero'
+                    ? {width: '100%', height: {xs: 260, sm: 420, lg: '100%'}, minHeight: {xs: 260, lg: 0}}
+                    : {width: {xs: 300, sm: 420}, height: {xs: 300, sm: 360}, maxWidth: '100%'}}
             />
             {loadError && <Alert severity="error">Nie udało się załadować wizualizacji.</Alert>}
         </Stack>

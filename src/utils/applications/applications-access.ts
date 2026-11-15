@@ -55,6 +55,11 @@ export const applications = new Map<ApplicationId, Application>([
                 links: ['', '/'],
                 label: 'Kostki'
             } as ApplicationPage],
+            ['CUBE_TRAINER', {
+                id: 'CUBE_TRAINER',
+                links: ['trainer'],
+                label: 'Trenażer'
+            } as ApplicationPage],
             ['CUBE_STATS', {
                 id: 'CUBE_STATS',
                 links: ['stats'],

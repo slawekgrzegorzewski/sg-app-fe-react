@@ -1,3 +1,4 @@
+import {CubeFacelets} from './cube-facelets';
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {CubeType} from '../types';
 import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
@@ -15,7 +16,10 @@ const createTransformationMock = createCubingFaceletTransformation as jest.Mock;
 function createPlayer() {
     return Object.assign(document.createElement('div'), {
         experimentalModel: {setupTransformation: {set: jest.fn()}},
-        pause: jest.fn(), play: jest.fn(), jumpToStart: jest.fn(), jumpToEnd: jest.fn(),
+        pause: jest.fn(),
+        play: jest.fn(),
+        jumpToStart: jest.fn(),
+        jumpToEnd: jest.fn(),
     });
 }
 
@@ -26,8 +30,37 @@ describe('CubingVisualizer', () => {
         createCubingTwistyPlayerMock.mockResolvedValue(createPlayer());
     });
 
+    it('keeps the initial cube orientation for scramble and live states', async () => {
+        const player = createPlayer();
+        const transformation = {state: 'oriented'};
+        createCubingTwistyPlayerMock.mockResolvedValue(player);
+        createTransformationMock.mockResolvedValue(transformation);
+        const {rerender} = render(
+            <CubingVisualizer cubeType={CubeType.Three} scramble="R U" initialCubeOrientation="z2"/>
+        );
+        await waitFor(() => expect(player).toHaveProperty('experimentalSetupAlg', 'z2 R U'));
+        expect(createCubingTwistyPlayerMock).toHaveBeenCalledWith(
+            expect.objectContaining({experimentalSetupAlg: 'z2 R U'})
+        );
+        rerender(
+            <CubingVisualizer
+                cubeType={CubeType.Three}
+                scramble="R U"
+                initialCubeOrientation="z2"
+                facelets={SOLVED_CUBE}
+            />
+        );
+        await waitFor(() =>
+            expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith(transformation)
+        );
+        expect(createTransformationMock).toHaveBeenCalledWith(SOLVED_CUBE, 'z2');
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="R U" initialCubeOrientation="z2"/>);
+        expect(player).toHaveProperty('experimentalSetupAlg', 'z2 R U');
+        expect(createCubingTwistyPlayerMock).toHaveBeenCalledTimes(1);
+    });
+
     it('shows the scramble, keeps view rotation and disables move input', async () => {
-        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Megaminx} scramble="R++ D--" />);
+        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Megaminx} scramble="R++ D--"/>);
 
         expect(createCubingTwistyPlayerMock).toHaveBeenLastCalledWith({
             puzzle: 'megaminx',
@@ -42,7 +75,7 @@ describe('CubingVisualizer', () => {
 
         createCubingTwistyPlayerMock.mockResolvedValue(createPlayer());
 
-        rerender(<CubingVisualizer cubeType={CubeType.Skewb} scramble="R B'" />);
+        rerender(<CubingVisualizer cubeType={CubeType.Skewb} scramble="R B'"/>);
 
         expect(createCubingTwistyPlayerMock).toHaveBeenLastCalledWith(
             expect.objectContaining({puzzle: 'skewb', experimentalSetupAlg: "R B'"})
@@ -53,7 +86,7 @@ describe('CubingVisualizer', () => {
     it('shows an error when the visualizer cannot be loaded', async () => {
         createCubingTwistyPlayerMock.mockRejectedValue(new Error('Network error'));
 
-        render(<CubingVisualizer cubeType={CubeType.Three} scramble="R U" />);
+        render(<CubingVisualizer cubeType={CubeType.Three} scramble="R U"/>);
 
         expect(await screen.findByText('Nie udało się załadować wizualizacji.')).toBeInTheDocument();
     });
@@ -63,12 +96,14 @@ describe('CubingVisualizer', () => {
         createCubingTwistyPlayerMock.mockResolvedValue(player);
         const transformation = {state: 'R'};
         createTransformationMock.mockResolvedValue(transformation);
-        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="U" />);
+        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="U"/>);
         await waitFor(() => expect(player.experimentalModel.setupTransformation.set).toHaveBeenCalledWith(null));
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="U" facelets="stan" />);
-        await waitFor(() => expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith(transformation));
-        expect(createTransformationMock).toHaveBeenCalledWith('stan');
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="U" />);
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="U" facelets={SOLVED_CUBE}/>);
+        await waitFor(() =>
+            expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith(transformation)
+        );
+        expect(createTransformationMock).toHaveBeenCalledWith(SOLVED_CUBE);
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="U"/>);
         expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith(null);
         expect(createCubingTwistyPlayerMock).toHaveBeenCalledTimes(1);
     });
@@ -76,17 +111,26 @@ describe('CubingVisualizer', () => {
     it('ignores an older asynchronous state after a newer state has arrived', async () => {
         const player = createPlayer();
         createCubingTwistyPlayerMock.mockResolvedValue(player);
-        let resolveOld: (value: object) => void = () => {};
-        createTransformationMock.mockImplementation((value: string) => value === 'old'
-            ? new Promise(resolve => { resolveOld = resolve; })
-            : Promise.resolve({state: value}));
-        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets="old" />);
-        await waitFor(() => expect(createTransformationMock).toHaveBeenCalledWith('old'));
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets="new" />);
-        await waitFor(() => expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: 'new'}));
-        resolveOld({state: 'old'});
+        const oldState = SOLVED_CUBE;
+        const newState = applyCubeMove(applyCubeMove(SOLVED_CUBE, 'R'), 'F');
+        let resolveOld: (value: object) => void = () => {
+        };
+        createTransformationMock.mockImplementation((value: CubeFacelets) =>
+            value === oldState
+                ? new Promise(resolve => {
+                    resolveOld = resolve;
+                })
+                : Promise.resolve({state: value})
+        );
+        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={oldState}/>);
+        await waitFor(() => expect(createTransformationMock).toHaveBeenCalledWith(oldState));
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={newState}/>);
+        await waitFor(() =>
+            expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: newState})
+        );
+        resolveOld({state: oldState});
         await Promise.resolve();
-        expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: 'new'});
+        expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: newState});
     });
 
     it('animates a single turn from the previous state and resynchronizes after a discontinuity', async () => {
@@ -95,19 +139,23 @@ describe('CubingVisualizer', () => {
         createTransformationMock.mockImplementation((state: string) => Promise.resolve({state}));
         const first = applyCubeMove(SOLVED_CUBE, 'R');
         const later = applyCubeMove(applyCubeMove(first, 'F'), 'U');
-        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={SOLVED_CUBE} />);
-        await waitFor(() => expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: SOLVED_CUBE}));
+        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={SOLVED_CUBE}/>);
+        await waitFor(() =>
+            expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: SOLVED_CUBE})
+        );
         expect(player.play).not.toHaveBeenCalled();
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={first} />);
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={first}/>);
         await waitFor(() => expect(player.play).toHaveBeenCalledTimes(1));
         expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: SOLVED_CUBE});
         expect(player).toHaveProperty('alg', 'R');
         expect(player.jumpToStart).toHaveBeenCalled();
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={later} />);
-        await waitFor(() => expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: later}));
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" facelets={later}/>);
+        await waitFor(() =>
+            expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: later})
+        );
         expect(player.play).toHaveBeenCalledTimes(1);
         expect(player.jumpToEnd).toHaveBeenCalled();
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="U" />);
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="U"/>);
         expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith(null);
         expect(player.pause).toHaveBeenCalled();
     });
@@ -115,16 +163,20 @@ describe('CubingVisualizer', () => {
         const set = jest.fn();
         const scheduleRender = jest.fn();
         const player = Object.assign(createPlayer(), {
-            experimentalCurrentVantages: jest.fn().mockResolvedValue([{scene: {scene: async () => ({quaternion: {set}})}, scheduleRender}]),
+            experimentalCurrentVantages: jest
+                .fn()
+                .mockResolvedValue([{scene: {scene: async () => ({quaternion: {set}})}, scheduleRender}]),
         });
         createCubingTwistyPlayerMock.mockResolvedValue(player);
         const orientation = {current: {x: 0, y: 0.5, z: 0, w: 0.866}};
-        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} />);
+        const {rerender} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation}/>);
         await waitFor(() => expect(set).toHaveBeenCalledWith(0, 0.5, 0, 0.866));
         orientation.current = {x: 0.5, y: 0, z: 0, w: 0.866};
-        await act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 30));
+        });
         expect(set).toHaveBeenCalledWith(0.5, 0, 0, 0.866);
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" />);
+        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble=""/>);
         expect(set).toHaveBeenLastCalledWith(0, 0, 0, 1);
         expect(scheduleRender).toHaveBeenCalled();
     });
@@ -133,21 +185,43 @@ describe('CubingVisualizer', () => {
         const player = createPlayer();
         createCubingTwistyPlayerMock.mockResolvedValue(player);
         const orientation = {current: {x: 0, y: 0, z: 0, w: 1}};
-        const {rerender, unmount} = render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} />);
+        const {rerender, unmount} = render(
+            <CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation}/>
+        );
         await waitFor(() => expect(player.isConnected).toBe(true));
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} orientationResetVersion={1} />);
+        rerender(
+            <CubingVisualizer
+                cubeType={CubeType.Three}
+                scramble=""
+                orientation={orientation}
+                orientationResetVersion={1}
+            />
+        );
         await waitFor(() => expect(player).toHaveProperty('cameraLatitude', 0));
         expect(player).toHaveProperty('cameraLongitude', 10);
         Object.assign(player, {cameraLatitude: 25, cameraLongitude: 30});
-        rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} orientationResetVersion={2} />);
+        rerender(
+            <CubingVisualizer
+                cubeType={CubeType.Three}
+                scramble=""
+                orientation={orientation}
+                orientationResetVersion={2}
+            />
+        );
         expect(player).toHaveProperty('cameraLatitude', 0);
         expect(player).toHaveProperty('cameraLongitude', 10);
         unmount();
         const nextPlayer = createPlayer();
         createCubingTwistyPlayerMock.mockResolvedValue(nextPlayer);
-        render(<CubingVisualizer cubeType={CubeType.Three} scramble="" orientation={orientation} orientationResetVersion={2} />);
+        render(
+            <CubingVisualizer
+                cubeType={CubeType.Three}
+                scramble=""
+                orientation={orientation}
+                orientationResetVersion={2}
+            />
+        );
         await waitFor(() => expect(nextPlayer).toHaveProperty('cameraLatitude', 0));
         expect(nextPlayer).toHaveProperty('cameraLongitude', 10);
     });
-
 });

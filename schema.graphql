@@ -35,6 +35,8 @@ type Query {
     monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
 
     cubeResults(cubeResultsQuery: CubeResultsQuery!): CubeResults!
+    cubeTrainerCases(stage: CfopStage!): [CubeTrainerCase!]!
+    cubeTrainerAttempts(stage: CfopStage!): [CubeTrainerAttempt!]!
 
     strengthTraining: StrengthTrainingQuery!
 }
@@ -120,6 +122,8 @@ type Mutation{
     deleteBankAccountAssignment(deleteBankAccountAssignmentInput: DeleteBankAccountAssignmentInput!): String!
 
     saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
+    preferCubeTrainerAlgorithm(algorithmPublicId: UUID!): UUID!
+    saveCubeTrainerAttempt(input: SaveCubeTrainerAttemptInput!): CubeTrainerAttempt!
 
     strengthTraining: StrengthTrainingMutation!
 }
@@ -1033,6 +1037,74 @@ input SaveCubeResultInput {
     scramble: String
     recording: String
 }
+
+enum CfopStage {
+    CROSS
+    F2L
+    OLL
+    PLL
+}
+
+enum CubeTrainerMode {
+    EXPLORE
+    TRAIN
+}
+
+enum CubeTrainerDevice {
+    MANUAL
+    SMART
+}
+
+type CubeTrainerCase {
+    publicId: UUID!
+    code: String!
+    name: String!
+    stage: CfopStage!
+    setupAlgorithm: String!
+    description: String
+    groupName: String
+    algorithms: [CubeTrainerAlgorithm!]!
+    preferredAlgorithmPublicId: UUID
+}
+
+type CubeTrainerAlgorithm {
+    publicId: UUID!
+    name: String!
+    sequence: String!
+    sourceUrl: String
+}
+
+type CubeTrainerAttempt {
+    publicId: UUID!
+    stage: CfopStage!
+    mode: CubeTrainerMode!
+    device: CubeTrainerDevice!
+    casePublicId: UUID
+    caseName: String
+    algorithmPublicId: UUID
+    algorithmSnapshot: String
+    scramble: String!
+    crossFace: String!
+    durationMs: Int!
+    moveCount: Int
+    quarterTurnCount: Int
+    actualAlgorithm: String
+    performedAt: LocalDateTime!
+}
+
+input SaveCubeTrainerAttemptInput {
+    publicId: UUID!
+    stage: CfopStage!
+    mode: CubeTrainerMode!
+    device: CubeTrainerDevice!
+    algorithmPublicId: UUID
+    scramble: String!
+    crossFace: String!
+    durationMs: Int!
+    actualAlgorithm: String
+    performedAt: LocalDateTime!
+}
+
 
 type StrengthTrainingQuery {
     exerciseFamilies(exerciseFamilyPublicId: UUID): [StrengthTrainingExerciseFamily!]!

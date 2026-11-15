@@ -61,6 +61,7 @@
         "@types/file-saver": "^2.0.7",
         "chrome-devtools-mcp": "^1.7.0",
         "prettier": "3.9.6",
+        "eslint-plugin-sg-format": "file:tools/eslint-plugin-sg-format",
         "webpack-cli": "^6.0.1"
     },
     "scripts": {
