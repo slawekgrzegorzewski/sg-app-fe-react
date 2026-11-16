@@ -29,6 +29,8 @@ beforeEach(() => {
         data: {cubeTrainerCases: cases, cubeTrainerAttempts: []},
         loading: false,
         refetch: jest.fn(),
+        startPolling: jest.fn(),
+        stopPolling: jest.fn(),
     });
     (useMutation as unknown as jest.Mock).mockReturnValue([jest.fn(), {loading: false}]);
 });

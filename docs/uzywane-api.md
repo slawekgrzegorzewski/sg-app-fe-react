@@ -195,3 +195,11 @@ Przy dodawaniu lub usuwaniu połączenia sieciowego należy zaktualizować ten d
 - pliki `*.graphql` oraz operacje, które nie mają użycia w kodzie;
 - bezpośrednie wywołania `fetch`, `XMLHttpRequest`, klientów HTTP, WebSocket i `EventSource`;
 - zewnętrzne skrypty oraz usługi ładowane w czasie działania aplikacji.
+
+### Ocena trenażera CROSS
+
+`saveCubeTrainerAttempt` przesyła opcjonalne pełne nagranie smart próby CROSS.
+`cubeTrainerAttempt(publicId)` pobiera status i utrwalony feedback AI, a
+`retryCubeTrainerFeedback(publicId)` ponawia nieudaną ocenę. Historia
+`cubeTrainerAttempts` zawiera feedback i jego status. Klient rozmawia wyłącznie
+z GraphQL Accountant; wywołania OpenAI i klucz API obsługuje backend.

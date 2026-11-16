@@ -31,6 +31,12 @@ query GetCubeTrainer($stage: CfopStage!) {
         quarterTurnCount
         actualAlgorithm
         performedAt
+        feedbackStatus
+        feedback
+        feedbackError
+        feedbackModel
+        feedbackPromptVersion
+        feedbackUpdatedAt
     }
 }
 
@@ -41,5 +47,25 @@ mutation PreferCubeTrainerAlgorithm($algorithmPublicId: UUID!) {
 mutation SaveCubeTrainerAttempt($input: SaveCubeTrainerAttemptInput!) {
     saveCubeTrainerAttempt(input: $input) {
         publicId
+    }
+}
+
+query GetCubeTrainerAttemptFeedback($publicId: UUID!) {
+    cubeTrainerAttempt(publicId: $publicId) {
+        publicId
+        feedbackStatus
+        feedback
+        feedbackError
+        feedbackModel
+        feedbackPromptVersion
+        feedbackUpdatedAt
+    }
+}
+
+mutation RetryCubeTrainerFeedback($publicId: UUID!) {
+    retryCubeTrainerFeedback(publicId: $publicId) {
+        publicId
+        feedbackStatus
+        feedbackError
     }
 }

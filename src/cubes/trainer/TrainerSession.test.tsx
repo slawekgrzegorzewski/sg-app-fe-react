@@ -11,20 +11,24 @@ jest.mock('dayjs', () => {
     return (...args: unknown[]) => args.length ? actual(...args) : actual('2026-11-16T10:45:50.503');
 });
 jest.mock('../cubing-api', () => ({faceletsFromCubingAlgorithm: jest.fn()}));
-jest.mock('../CubingVisualizer', () => ({CubingVisualizer: () => <div />}));
+jest.mock('../CubingVisualizer', () => ({CubingVisualizer: () => <div/>}));
+jest.mock('../cubing-scramble', () => ({generateCubingScramble: () => Promise.resolve('R')}));
+jest.mock('./TrainerFeedback', () => ({TrainerFeedback: ({publicId}: any) => <div>Ocena {publicId}</div>}));
 let mockSmartProps: any;
 let mockPreparedState = SOLVED_CUBE;
-jest.mock('../SmartCube', () => ({SmartCube: (props: any) => {
-    mockSmartProps = props;
-    props.confirmRef.current = () => {
-        props.onInspection();
-        return true;
-    };
-    return <button onClick={() => {
-        props.onConnectionChange(true);
-        props.onFacelets(mockPreparedState);
-    }}>Przygotuj smart kostkę</button>;
-}}));
+jest.mock('../SmartCube', () => ({
+    SmartCube: (props: any) => {
+        mockSmartProps = props;
+        props.confirmRef.current = () => {
+            props.onInspection();
+            return true;
+        };
+        return <button onClick={() => {
+            props.onConnectionChange(true);
+            props.onFacelets(mockPreparedState);
+        }}>Przygotuj smart kostkę</button>;
+    }
+}));
 
 test('zapisuje ręczną próbę po dwóch spacjach bez ruchów i ponawia zapis z tym samym identyfikatorem', async () => {
     Object.defineProperty(globalThis, 'crypto', {
@@ -43,7 +47,8 @@ test('zapisuje ręczną próbę po dwóch spacjach bez ruchów i ponawia zapis z
             algorithmPublicId="algorithm-1"
             setupAlgorithm="R"
             onSaved={onSaved}
-            onBusyChange={() => {}}
+            onBusyChange={() => {
+            }}
         />
     );
     await waitFor(() => expect(screen.getByRole('button', {name: 'Start'})).toBeEnabled());
@@ -79,8 +84,8 @@ test.each([
     const save = jest.fn().mockResolvedValue({});
     (useMutation as unknown as jest.Mock).mockReturnValue([save, {loading: false}]);
     render(<TrainerSession stage={stage as CfopStage} mode={CubeTrainerMode.Train}
-        setupAlgorithm={scramble} algorithmPublicId="algorithm-1" onSaved={jest.fn()}
-        onBusyChange={jest.fn()} />);
+                           setupAlgorithm={scramble} algorithmPublicId="algorithm-1" onSaved={jest.fn()}
+                           onBusyChange={jest.fn()}/>);
     await waitFor(() => expect(faceletsFromCubingAlgorithm).toHaveBeenCalledWith(`z2 ${scramble} z2`));
     fireEvent.click(screen.getByRole('button', {name: 'Przygotuj smart kostkę'}));
     const start = await screen.findByRole('button', {name: 'Przypadek gotowy — rozpocznij inspekcję'});
@@ -117,4 +122,40 @@ test.each([
         durationMs: 15886,
         performedAt: '2026-11-16 10:45:50.503',
     });
+});
+
+const mockRecording = {
+    version: 1,
+    initialFacelets: applyCubeMove(SOLVED_CUBE, 'R'),
+    initialGyro: null,
+    timeOrigin: 100,
+    inspectionStartedAt: 1000,
+    solveStartedAt: 2000,
+    events: [{receivedAt: 2000, event: {type: 'MOVE', move: "R'", timestamp: 2000, serial: 1}}],
+};
+
+test('automatycznie zapisuje CROSS z pełnym nagraniem i pokazuje ocenę bez ponownego zapisu', async () => {
+    Object.defineProperty(globalThis, 'crypto', {
+        configurable: true,
+        value: {randomUUID: () => '00000000-0000-4000-8000-000000000002'},
+    });
+    const save = jest.fn().mockResolvedValue({});
+    (useMutation as unknown as jest.Mock).mockReturnValue([save, {loading: false}]);
+    (faceletsFromCubingAlgorithm as jest.Mock).mockResolvedValue(applyCubeMove(SOLVED_CUBE, 'R'));
+    const onSaved = jest.fn().mockResolvedValue(undefined);
+    render(<TrainerSession stage={CfopStage.Cross} mode={CubeTrainerMode.Train}
+                           onSaved={onSaved} onBusyChange={() => {
+    }}/>);
+    await screen.findByText('R');
+    await act(async () => {
+        mockSmartProps.onStop(1500, mockRecording);
+    });
+    expect(await screen.findByText('Ocena 00000000-0000-4000-8000-000000000002')).toBeInTheDocument();
+    expect(save).toHaveBeenCalledTimes(1);
+    const input = save.mock.calls[0][0].variables.input;
+    expect(JSON.parse(input.recording)).toEqual(mockRecording);
+    expect(input.actualAlgorithm).toBe("R'");
+    expect(input.stage).toBe(CfopStage.Cross);
+    expect(screen.getByRole('button', {name: 'Kolejna próba'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Zapisz próbę'})).not.toBeInTheDocument();
 });

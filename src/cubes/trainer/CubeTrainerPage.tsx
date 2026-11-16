@@ -1,4 +1,4 @@
-import {Fragment, useState} from 'react';
+import {Fragment, useEffect, useState} from 'react';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {
     Alert,
@@ -28,6 +28,7 @@ import {ErrorDisplay, LoadingIndicator} from '../../application/components/Query
 import {
     CfopStage,
     CubeTrainerDevice,
+    CubeTrainerFeedbackStatus,
     CubeTrainerMode,
     GetCubeTrainer,
     GetCubeTrainerQuery,
@@ -37,6 +38,7 @@ import {
     PreferCubeTrainerAlgorithmMutationVariables,
 } from '../../types';
 import {formatStopWatchTime} from '../StopWatchDisplay';
+import {feedbackPending, TrainerFeedback, TrainerFeedbackText} from './TrainerFeedback';
 import {TrainerSession} from './TrainerSession';
 import {TrainerCaseThumbnail} from './TrainerCaseThumbnail';
 
@@ -49,7 +51,14 @@ export function CubeTrainerPage() {
     const [panel, setPanel] = useState<'catalog' | 'history'>('catalog');
     const [busy, setBusy] = useState(false);
     const [preferenceError, setPreferenceError] = useState<string | null>(null);
-    const {data, loading, error, refetch} = useQuery<GetCubeTrainerQuery, GetCubeTrainerQueryVariables>(
+    const {
+        data,
+        loading,
+        error,
+        refetch,
+        startPolling,
+        stopPolling
+    } = useQuery<GetCubeTrainerQuery, GetCubeTrainerQueryVariables>(
         GetCubeTrainer,
         {variables: {stage}}
     );
@@ -72,6 +81,16 @@ export function CubeTrainerPage() {
     const attempts = (data?.cubeTrainerAttempts ?? []).filter(
         attempt => stage === CfopStage.Cross || attempt.casePublicId === trainerCase?.publicId
     );
+
+    const waitingForFeedback = attempts.some(attempt => feedbackPending(attempt.feedbackStatus));
+    useEffect(() => {
+        if (waitingForFeedback) {
+            startPolling(3000);
+        } else {
+            stopPolling();
+        }
+        return stopPolling;
+    }, [waitingForFeedback, startPolling, stopPolling]);
 
     const prefer = async () => {
         if (!algorithm) return;
@@ -360,6 +379,9 @@ export function CubeTrainerPage() {
                                                                 ? `Wykonano: ${attempt.actualAlgorithm}`
                                                                 : 'Zwykła kostka — bez zapisu ruchów'}
                                                         </Typography>
+                                                        {attempt.feedbackStatus === CubeTrainerFeedbackStatus.Failed
+                                                            ? <TrainerFeedback publicId={attempt.publicId}/>
+                                                            : <TrainerFeedbackText attempt={attempt}/>}
                                                     </TableCell>
                                                 </TableRow>
                                             </Fragment>
@@ -406,9 +428,9 @@ export function CubeTrainerPage() {
                         <Tab key={value} value={value} label={value} disabled={busy}/>
                     ))}
                 </Tabs>
-                {loading ? (
+                {loading && !data ? (
                     <LoadingIndicator label="Ładowanie trenażera…"/>
-                ) : error ? (
+                ) : error && !data ? (
                     <ErrorDisplay error={error} onRetry={() => void refetch()}/>
                 ) : (
                     <>

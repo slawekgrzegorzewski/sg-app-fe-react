@@ -37,6 +37,7 @@ type Query {
     cubeResults(cubeResultsQuery: CubeResultsQuery!): CubeResults!
     cubeTrainerCases(stage: CfopStage!): [CubeTrainerCase!]!
     cubeTrainerAttempts(stage: CfopStage!): [CubeTrainerAttempt!]!
+    cubeTrainerAttempt(publicId: UUID!): CubeTrainerAttempt!
 
     strengthTraining: StrengthTrainingQuery!
 }
@@ -124,6 +125,7 @@ type Mutation{
     saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
     preferCubeTrainerAlgorithm(algorithmPublicId: UUID!): UUID!
     saveCubeTrainerAttempt(input: SaveCubeTrainerAttemptInput!): CubeTrainerAttempt!
+    retryCubeTrainerFeedback(publicId: UUID!): CubeTrainerAttempt!
 
     strengthTraining: StrengthTrainingMutation!
 }
@@ -1074,6 +1076,14 @@ type CubeTrainerAlgorithm {
     sourceUrl: String
 }
 
+enum CubeTrainerFeedbackStatus {
+    NOT_REQUESTED
+    PENDING
+    RUNNING
+    COMPLETED
+    FAILED
+}
+
 type CubeTrainerAttempt {
     publicId: UUID!
     stage: CfopStage!
@@ -1090,6 +1100,12 @@ type CubeTrainerAttempt {
     quarterTurnCount: Int
     actualAlgorithm: String
     performedAt: LocalDateTime!
+    feedbackStatus: CubeTrainerFeedbackStatus!
+    feedback: String
+    feedbackError: String
+    feedbackModel: String
+    feedbackPromptVersion: String
+    feedbackUpdatedAt: LocalDateTime
 }
 
 input SaveCubeTrainerAttemptInput {
@@ -1103,6 +1119,7 @@ input SaveCubeTrainerAttemptInput {
     durationMs: Int!
     actualAlgorithm: String
     performedAt: LocalDateTime!
+    recording: String
 }
 
 

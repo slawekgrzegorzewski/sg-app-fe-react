@@ -1,6 +1,7 @@
 import type {ReactNode} from 'react';
 import {alpha} from '@mui/material/styles';
 import {useViewportWorkspace} from '../use-viewport-workspace';
+import {TrainerFeedback} from './TrainerFeedback';
 import {parseCubeMove} from '../cube-move';
 import {CubeFacelets} from '../cube-facelets';
 import {useCallback, useEffect, useRef, useState} from 'react';
@@ -30,7 +31,11 @@ import {
     SaveCubeTrainerAttemptMutationVariables,
 } from '../../types';
 import {CubingVisualizer} from '../CubingVisualizer';
-import {TRAINER_CUBE_ORIENTATION, TRAINER_DEVICE_CROSS_FACE, trainerScrambleInDeviceFrame} from './trainer-cube-orientation';
+import {
+    TRAINER_CUBE_ORIENTATION,
+    TRAINER_DEVICE_CROSS_FACE,
+    trainerScrambleInDeviceFrame
+} from './trainer-cube-orientation';
 import {SmartCube} from '../SmartCube';
 import {StopWatch} from '../StopWatch';
 import {StopWatchDisplay} from '../StopWatchDisplay';
@@ -96,6 +101,8 @@ export function TrainerSession({
     const [connected, setConnected] = useState(false);
     const [phase, setPhase] = useState<'idle' | 'inspection' | 'running' | 'review'>('idle');
     const phaseRef = useRef(phase);
+    const [savedAttemptId, setSavedAttemptId] = useState<string | null>(null);
+    const autoSaveStarted = useRef<string | null>(null);
     const [completed, setCompleted] = useState<CompletedAttempt | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [preparing, setPreparing] = useState(false);
@@ -177,9 +184,9 @@ export function TrainerSession({
             let disposed = false;
             setError(null);
             faceletsFromCubingAlgorithm(
-                    stage === CfopStage.Cross
-                            ? scramble
-                            : trainerScrambleInDeviceFrame(scramble))
+                stage === CfopStage.Cross
+                    ? scramble
+                    : trainerScrambleInDeviceFrame(scramble))
                 .then(
                     state => {
                         if (disposed) {
@@ -245,6 +252,7 @@ export function TrainerSession({
                         1,
                         Math.round(durationMs)),
                     actualAlgorithm: moves?.join(' ') ?? null,
+                    recording: recording && stage === CfopStage.Cross ? JSON.stringify(recording) : null,
                     performedAt: dayjs()
                         .format('YYYY-MM-DD HH:mm:ss.SSS'),
                 },
@@ -259,6 +267,8 @@ export function TrainerSession({
         resetTimer.current();
         startTime.current = null;
         setCompleted(null);
+        setSavedAttemptId(null);
+        autoSaveStarted.current = null;
         setError(null);
         changePhase('idle');
     };
@@ -322,13 +332,37 @@ export function TrainerSession({
             setError('Nie udało się zapisać próby. Możesz ponowić zapis.');
             return;
         }
-        reset();
+        if (completed.input.stage === CfopStage.Cross && completed.input.recording) {
+            setSavedAttemptId(completed.input.publicId);
+        } else {
+            reset();
+        }
         try {
             await onSaved();
         } catch {
             setError('Próba została zapisana, ale nie udało się odświeżyć historii.');
         }
     };
+
+    useEffect(() => {
+        if (!completed?.input.recording || completed.input.stage !== CfopStage.Cross
+            || autoSaveStarted.current === completed.input.publicId) {
+            return;
+        }
+        autoSaveStarted.current = completed.input.publicId;
+        setError(null);
+        void saveAttempt({variables: {input: completed.input}})
+            .then(async () => {
+                setSavedAttemptId(completed.input.publicId);
+                try {
+                    await onSaved();
+                } catch {
+                    setError('Próba została zapisana, ale nie udało się odświeżyć historii.');
+                }
+            })
+            .catch(() => setError('Nie udało się zapisać próby. Możesz ponowić zapis.'));
+    }, [completed, saveAttempt, onSaved]);
+
 
     const goalReached = useCallback(
         (state: CubeFacelets) => trainingGoalReached(state, stage, deviceCrossFace),
@@ -461,20 +495,21 @@ export function TrainerSession({
                                             Wykonane ruchy: {completed.input.actualAlgorithm}
                                         </Typography>
                                     )}
+                                {savedAttemptId && <TrainerFeedback publicId={savedAttemptId}/>}
                                 <Stack direction="column" spacing={1}>
-                                    <Button
-                                        color="primary"
-                                        variant="contained"
-                                        size="large"
-                                        sx={{minHeight: 48}}
-                                        onClick={() => void save()}
-                                        disabled={saving}
-                                    >
-                                        Zapisz próbę
-                                    </Button>
-                                    <Button color="primary" onClick={reset} disabled={saving}>
-                                        Odrzuć próbę
-                                    </Button>
+                                    {savedAttemptId ? (
+                                        <Button variant="contained" onClick={reset}>Kolejna próba</Button>
+                                    ) : (
+                                        <>
+                                            <Button color="primary" variant="contained" size="large"
+                                                    sx={{minHeight: 48}} onClick={() => void save()} disabled={saving}>
+                                                {saving ? 'Zapisywanie próby…' : 'Zapisz próbę'}
+                                            </Button>
+                                            <Button color="primary" onClick={reset} disabled={saving}>
+                                                Odrzuć próbę
+                                            </Button>
+                                        </>
+                                    )}
                                 </Stack>
                             </Stack>
                         )

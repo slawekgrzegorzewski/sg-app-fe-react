@@ -63,7 +63,7 @@ ze stanem docelowym: po połączeniu z już wymieszaną kostką nie wymagamy
 ponownego zaobserwowania wszystkich ruchów mieszania.
 
 Dla CROSS aplikacja generuje mieszanie 3×3, a użytkownik wybiera ściankę krzyża.
-Nie ma jeszcze katalogu CROSS ani oceny przez agenta.
+Nie ma katalogu CROSS. Smart próby otrzymują ocenę AI po automatycznym zapisie.
 
 ## Sterowanie i cele
 
@@ -81,8 +81,9 @@ pierwszy ruch albo koniec inspekcji uruchamia pomiar. Każdy ruch sprawdza cel:
 - PLL: cała kostka ułożona, włącznie z końcowym AUF.
 
 Osiągnięcie celu zatrzymuje pomiar na ostatnim ruchu. Przycisk „Zatrzymaj i oceń
-próbę” pozwala zakończyć nieudaną próbę. Feedback pozostaje w UI; zapis wymaga
-jawnej decyzji również przy nieosiągniętym celu. Rozłączenie podczas inspekcji lub
+próbę” pozwala zakończyć nieudaną próbę. Dla F2L–PLL feedback pozostaje w UI, a zapis wymaga
+jawnej decyzji również przy nieosiągniętym celu. Smart CROSS zapisuje próbę
+automatycznie po zatrzymaniu, także bez osiągnięcia celu, razem z pełnym nagraniem. Rozłączenie podczas inspekcji lub
 układania odrzuca bieżącą próbę.
 
 Historia pokazuje ostatnie 100 prób etapu, z filtrem wybranego przypadku.
@@ -119,3 +120,23 @@ Trenażer korzysta ze [wspólnej sesji Bluetooth modułu Kostki](smart-kostki.md
 Przełączenie CROSS/F2L/OLL/PLL oraz przejście między stronami Kostki i Trenażer
 zachowuje połączenie. Nowa sesja ćwiczenia przejmuje aktualny stan fizycznej
 kostki, ale wymaga przygotowania własnego przypadku i osobnego rozpoczęcia próby.
+
+## Feedback AI po próbie CROSS
+
+Po zakończeniu smart próby CROSS klient automatycznie wywołuje
+`saveCubeTrainerAttempt`, przekazując pełne `recording` v1. Zachowuje UUID
+przy ponowieniu nieudanego zapisu. Po zapisaniu próby panel wyniku pokazuje
+oczekiwanie na ocenę, pobiera `cubeTrainerAttempt` co 2 sekundy i zatrzymuje
+odpytywanie po zakończeniu lub błędzie. Można od razu wybrać „Kolejna próba”;
+ocena nadal powstaje na serwerze i pozostaje dostępna w historii.
+
+Historia odświeża się co 3 sekundy tylko wtedy, gdy zawiera zadania oczekujące
+lub wykonywane. Refetch nie demontuje bieżącej sesji ani nie resetuje stopera.
+Nieudana ocena udostępnia „Ponów ocenę”, także po ponownym wejściu w historię.
+Feedback wyświetlamy jako tekst z zachowaniem nowych linii, bez interpretowania
+HTML. Zwykła kostka i starsze próby bez nagrania nie otrzymują wymyślonych
+wskazówek dotyczących ruchów. Klucz API pozostaje w backendzie.
+
+Kontrakt danych, prompt, model i konfigurację opisuje dokument backendu
+podlinkowany na początku strony. Weryfikacja lokalna korzysta z atrap API;
+rzeczywista ocena wymaga aktywacji integracji i klucza.
