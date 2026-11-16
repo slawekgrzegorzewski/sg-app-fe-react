@@ -1,4 +1,4 @@
-import {Box, Paper, Typography} from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
 import type {RefObject} from 'react';
 import type {SmartCubeEvent} from 'smartcube-web-bluetooth';
@@ -12,88 +12,61 @@ export function GyroReadout({reading}: {reading: RefObject<GyroReading | null>})
     const [sample, setSample] = useState(reading.current);
 
     useEffect(() => {
-        // Odświeżamy tylko panel; surowe zdarzenia nadal trafiają do nagrania bez ograniczeń.
         const timer = setInterval(() => setSample(reading.current), 100);
         return () => clearInterval(timer);
     }, [reading]);
 
     return (
-        <Paper component="aside" aria-label="Bieżący odczyt GYRO" variant="outlined" sx={{p: 2, minWidth: 0}}>
-            <Typography component="h2" variant="h6">
-                GYRO
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-                Surowy odczyt z kostki
-            </Typography>
+        <Box
+            component="aside"
+            aria-label="Bieżący odczyt GYRO"
+            sx={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                p: 1,
+                zIndex: 1,
+                color: 'text.secondary',
+                pointerEvents: 'none',
+                fontSize: '0.6875rem',
+                lineHeight: 1.4,
+                fontVariantNumeric: 'tabular-nums',
+            }}
+        >
             {sample ? (
-                <>
-                    <Box
-                        component="dl"
-                        sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'auto minmax(0, 1fr)',
-                            gap: 1,
-                            my: 1.5,
-                            '& dt': {color: 'text.secondary'},
-                            '& dd': {
-                                m: 0,
-                                textAlign: 'right',
-                                fontVariantNumeric: 'tabular-nums',
-                                overflowWrap: 'anywhere',
-                            },
-                        }}
-                    >
-                        {(['w', 'x', 'y', 'z'] as const).map(axis => (
-                            <Box key={axis} sx={{display: 'contents'}}>
-                                <Typography component="dt" variant="body2">
-                                    q.{axis}
-                                </Typography>
-                                <Typography component="dd" variant="body2">
-                                    {formatValue(sample.quaternion[axis])}
-                                </Typography>
-                            </Box>
-                        ))}
-                    </Box>
+                <Box
+                    component="dl"
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'auto auto',
+                        columnGap: 1,
+                        m: 0,
+                        '& dd': {m: 0, textAlign: 'right'},
+                    }}
+                >
+                    {(['w', 'x', 'y', 'z'] as const).map(axis => (
+                        <Box key={axis} sx={{display: 'contents'}}>
+                            <Box component="dt">q.{axis}</Box>
+                            <Box component="dd">{formatValue(sample.quaternion[axis])}</Box>
+                        </Box>
+                    ))}
                     {sample.velocity && (
                         <>
-                            <Typography variant="caption" color="text.secondary">
-                                Prędkość obrotowa
-                            </Typography>
-                            <Box
-                                component="dl"
-                                sx={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'auto minmax(0, 1fr)',
-                                    gap: 1,
-                                    my: 1,
-                                    '& dt': {color: 'text.secondary'},
-                                    '& dd': {
-                                        m: 0,
-                                        textAlign: 'right',
-                                        fontVariantNumeric: 'tabular-nums',
-                                        overflowWrap: 'anywhere',
-                                    },
-                                }}
-                            >
-                                {(['x', 'y', 'z'] as const).map(axis => (
-                                    <Box key={axis} sx={{display: 'contents'}}>
-                                        <Typography component="dt" variant="body2">
-                                            {axis}
-                                        </Typography>
-                                        <Typography component="dd" variant="body2">
-                                            {formatValue(sample.velocity![axis])}
-                                        </Typography>
-                                    </Box>
-                                ))}
-                            </Box>
+                            <Box component="dt" sx={{gridColumn: '1 / -1', mt: 0.5}}>Prędkość obrotowa</Box>
+                            {(['x', 'y', 'z'] as const).map(axis => (
+                                <Box key={axis} sx={{display: 'contents'}}>
+                                    <Box component="dt">{axis}</Box>
+                                    <Box component="dd">{formatValue(sample.velocity![axis])}</Box>
+                                </Box>
+                            ))}
                         </>
                     )}
-                </>
+                </Box>
             ) : (
-                <Typography variant="body2" color="text.secondary" sx={{mt: 1.5}}>
+                <Typography sx={{fontSize: 'inherit', maxWidth: 140, textAlign: 'right'}}>
                     Oczekiwanie na dane żyroskopu…
                 </Typography>
             )}
-        </Paper>
+        </Box>
     );
 }

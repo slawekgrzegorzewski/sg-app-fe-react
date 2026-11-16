@@ -1,13 +1,19 @@
 # Trenażer CFOP
 
-Strona `trainer` w aplikacji Kostki zawiera sekcje CROSS, F2L, OLL i PLL.
+Strona wyświetlana jako „Trenażer 3×3” w aplikacji Kostki zawiera sekcje CROSS,
+F2L, OLL i PLL. Jej identyfikator `CUBE_TRAINER` i adres `trainer` pozostają bez zmian.
 Katalog i wyniki mają źródło w backendzie; model oraz ręczne dodawanie przypadków
 opisuje [dokument backendu](../../../sg-app/docs/agents/trenazer-cfop.md).
 
 ## Układ strony
 
+Fazę CROSS/F2L/OLL/PLL wybieramy przez kliknięcie nagłówka ćwiczenia w podglądzie
+kostki. Otwiera on dialog z wyróżnioną bieżącą fazą; nie ma osobnego nagłówka
+strony ani zakładek faz nad panelami. Wybór pozostaje dostępny przy pustym katalogu,
+a podczas aktywnej próby jest zablokowany. Dialog nie uruchamia skrótów stopera.
+
 Na desktopie trenażer wykorzystuje pełną dostępną szerokość i trzy panele:
-kostka z mieszaniem oraz wybranym algorytmem, stoper z połączeniem smart kostki,
+kostka z mieszaniem, wybranym algorytmem i kontrolkami smart kostki, stoper,
 a także katalog lub historia prób. Prawy panel ma zakładki „Przypadki i algorytmy”
 i „Historia”; dla CROSS pokazuje samą historię. Przełączenie zakładki nie zmienia
 przypadku, wariantu ani filtra grupy. Długie listy przewijają się w panelu.
@@ -17,7 +23,7 @@ Wysokość obszaru pod paskiem aplikacji jest obliczana przez wspólny
 `useViewportWorkspace`, używany również na stronie układania. Kostka korzysta
 z wariantu `hero` wizualizatora. Na telefonie panele układają się w jedną kolumnę,
 z pomiarem na początku. Połączenie, bateria i ustawienia kalibracji korzystają
-ze wspólnego komponentu `SmartCube` w wariancie zwartym.
+ze wspólnego komponentu `SmartCube` z kontrolkami na podglądzie.
 
 ## Przebieg
 

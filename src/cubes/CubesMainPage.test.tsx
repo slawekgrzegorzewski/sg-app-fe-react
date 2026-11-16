@@ -160,7 +160,6 @@ describe('CubesMainPage', () => {
         const user = userEvent.setup();
         render(<CubesMainPage/>);
 
-        expect(screen.getByRole('heading', {name: 'Układanie kostek'})).toBeInTheDocument();
         expect(
             within(screen.getByRole('group', {name: 'Najlepszy wynik'})).getByRole('heading', {
                 name: '00:08.765',
@@ -181,18 +180,45 @@ describe('CubesMainPage', () => {
         expect(within(recentResultsTable).getAllByRole('row')[1]).toHaveTextContent('12:30');
         expect(within(recentResultsTable).getAllByRole('row')[1]).not.toHaveTextContent('2026-08-13');
 
-        await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
-        await user.click(screen.getByRole('option', {name: '4×4'}));
+        await user.click(screen.getByRole('button', {name: /^Kostka /}));
+        await user.click(screen.getByRole('button', {name: '4×4'}));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
         await waitFor(() => expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'FOUR'}));
         expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'FOUR');
 
-        await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
-        await user.click(screen.getByRole('option', {name: 'Megaminx'}));
+        await user.click(screen.getByRole('button', {name: /^Kostka /}));
+        await user.click(screen.getByRole('button', {name: 'Megaminx'}));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
         await waitFor(() => expect(useQueryMock.mock.calls.at(-1)[1].variables).toEqual({cubeType: 'MEGAMINX'}));
         expect(screen.getByTestId('cubing-visualizer')).toHaveAttribute('data-cube-type', 'MEGAMINX');
         expect(screen.getByRole('button', {name: 'Scramble'})).toBeEnabled();
+    });
+
+    it('otwiera wybór klawiaturą i zamyka dialog bez zmiany kostki oraz uruchomienia stopera', async () => {
+        const user = userEvent.setup();
+        render(<CubesMainPage/>);
+        const heading = screen.getByRole('button', {name: 'Kostka 3×3'});
+        act(() => heading.focus());
+        await user.keyboard(' ');
+        const dialog = screen.getByRole('dialog', {name: 'Wybierz rodzaj kostki'});
+        expect(within(dialog).getByRole('button', {name: '3×3'})).toHaveAttribute('aria-pressed', 'true');
+        expect(within(dialog).getByRole('button', {name: '4×4'})).toHaveAttribute('aria-pressed', 'false');
+        fireEvent.keyDown(document, {code: 'Space'});
+        fireEvent.keyUp(document, {code: 'Space'});
+        expect(screen.queryByText('Inspekcja')).not.toBeInTheDocument();
+        await user.keyboard('{Escape}');
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+        expect(heading).toHaveFocus();
+        for (const name of ['Zamknij', 'Anuluj']) {
+            await user.click(heading);
+            await user.click(screen.getByRole('button', {name}));
+            await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+            expect(heading).toHaveTextContent('Kostka 3×3');
+        }
+        expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+        expect(screen.queryByText('Inspekcja')).not.toBeInTheDocument();
     });
 
     it('shows a friendly empty state when there are no recent results', () => {
@@ -209,7 +235,7 @@ describe('CubesMainPage', () => {
         expect(screen.queryByRole('table', {name: 'Ostatnie wyniki kostki'})).not.toBeInTheDocument();
     });
 
-    it('shows all results and paginates five rows at a time', async () => {
+    it('pokazuje po 10 wyników na stronie', async () => {
         const user = userEvent.setup();
         useQueryMock.mockReturnValue({
             data: {
@@ -227,14 +253,14 @@ describe('CubesMainPage', () => {
         render(<CubesMainPage/>);
 
         const recentResultsTable = screen.getByRole('table', {name: 'Ostatnie wyniki kostki'});
-        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(6);
-        expect(screen.getByText('1–5 z 21')).toBeInTheDocument();
+        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(11);
+        expect(screen.getByText('1–10 z 21')).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', {name: 'Następna strona'}));
 
-        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(6);
-        expect(screen.getByText('6–10 z 21')).toBeInTheDocument();
-        expect(within(recentResultsTable).getByText('00:00.016')).toBeInTheDocument();
+        expect(within(recentResultsTable).getAllByRole('row')).toHaveLength(11);
+        expect(screen.getByText('11–20 z 21')).toBeInTheDocument();
+        expect(within(recentResultsTable).getByText('00:00.011')).toBeInTheDocument();
     });
 
     it('calculates the average solve time from today’s results', () => {
@@ -247,8 +273,9 @@ describe('CubesMainPage', () => {
         generateCubingScrambleMock.mockResolvedValue('(1, 0) / (-3, 2)');
         render(<CubesMainPage/>);
 
-        await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
-        await user.click(screen.getByRole('option', {name: 'Square-1'}));
+        await user.click(screen.getByRole('button', {name: /^Kostka /}));
+        await user.click(screen.getByRole('button', {name: 'Square-1'}));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
         await user.click(screen.getByRole('button', {name: 'Scramble'}));
 
         await waitFor(() => expect(generateCubingScrambleMock).toHaveBeenCalledWith('SQUARE_1'));
@@ -295,8 +322,9 @@ describe('CubesMainPage', () => {
         const user = userEvent.setup();
         render(<CubesMainPage/>);
 
-        await user.click(screen.getByRole('combobox', {name: 'Rodzaj kostki'}));
-        await user.click(screen.getByRole('option', {name: '4×4'}));
+        await user.click(screen.getByRole('button', {name: /^Kostka /}));
+        await user.click(screen.getByRole('button', {name: '4×4'}));
+        await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('Inspekcja');
@@ -309,7 +337,7 @@ describe('CubesMainPage', () => {
         fireEvent.keyDown(document, {code: 'Space'});
         await screen.findByText('Gotowe');
 
-        expect(screen.getByRole('combobox', {name: 'Rodzaj kostki'})).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByRole('button', {name: /^Kostka /})).toBeDisabled();
 
         fireEvent.keyDown(document, {code: 'Enter'});
 

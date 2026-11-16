@@ -10,13 +10,6 @@ import {
     Chip,
     Dialog,
     Divider,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    FormControl,
-    InputLabel,
-    MenuItem,
-    Select,
     Stack,
     Table,
     TableBody,
@@ -43,9 +36,9 @@ import {CUBE_TYPE_OPTIONS, getCubeTypeOption} from './cube-types';
 import {generateCubingScramble} from './cubing-scramble';
 import {CubingVisualizer} from './CubingVisualizer';
 import {validateCubingScramble} from './cubing-api';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {alpha} from '@mui/material/styles';
 import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 import {CubeStatCard} from './CubeStatCard';
@@ -54,18 +47,17 @@ import {formatCubeTime} from './CubeStatsPage';
 import {SmartCube} from './SmartCube';
 import {CubeQuaternion} from './quaternion';
 import {GyroReading, GyroReadout} from './GyroReadout';
+import {CubeSelectionDialog} from './CubeSelectionDialog';
 
 function RecentResults({results}: { results: GetCubeResultsQuery['cubeResults']['todayResults'] }) {
-    const theme = useTheme();
-    const compactViewport = useMediaQuery(theme.breakpoints.down('sm'));
     const orderedResults = [...results].sort((left, right) => dayjs(right.date).valueOf() - dayjs(left.date).valueOf());
     const [page, setPage] = useState(0);
-    const rowsPerPage = compactViewport ? 3 : 5;
+    const rowsPerPage = 10;
     const paginatedResults = orderedResults.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
     useEffect(() => {
         setPage(0);
-    }, [results, compactViewport]);
+    }, [results]);
 
     return (
         <Stack spacing={1} sx={{width: '100%'}}>
@@ -144,6 +136,7 @@ export function CubesMainPage() {
     const fullScreen = useMediaQuery(theme.breakpoints.down('md')) || isTouchDevice;
     const [wakeLock, requestWakeLock, releaseWakeLock] = useWakeLock();
     const [cubeType, setCubeType] = useState<CubeType>(CubeType.Three);
+    const [cubeTypeDialogOpen, setCubeTypeDialogOpen] = useState(false);
     const cubeTypeRef = useRef(cubeType);
     cubeTypeRef.current = cubeType;
     const [scramble, setScramble] = useState('');
@@ -165,6 +158,7 @@ export function CubesMainPage() {
     const [phase, setPhase] = useState<Phase>('IDLE');
     const [smartInspection, setSmartInspection] = useState(false);
     const [smartConnected, setSmartConnected] = useState(false);
+    const [smartControlsContainer, setSmartControlsContainer] = useState<HTMLDivElement | null>(null);
     const orientation = useRef<CubeQuaternion | null>(null);
     const gyroReading = useRef<GyroReading | null>(null);
     const [hasOrientation, setHasOrientation] = useState(false);
@@ -320,7 +314,7 @@ export function CubesMainPage() {
 
     useEffect(() => {
         const keyDownListener = (e: KeyboardEvent) => {
-            if (isTextEditingTarget(e.target)) {
+            if (cubeTypeDialogOpen || isTextEditingTarget(e.target)) {
                 return;
             }
             if (e.code === 'Space' && (smartSpaceHeld.current || (smartConnected && phase === 'IDLE' && result.current === 0))) {
@@ -362,7 +356,7 @@ export function CubesMainPage() {
                 e.preventDefault();
                 return;
             }
-            if (isTextEditingTarget(e.target)) {
+            if (cubeTypeDialogOpen || isTextEditingTarget(e.target)) {
                 return;
             }
             if (e.code !== 'Space' || smartInspection) {
@@ -381,7 +375,7 @@ export function CubesMainPage() {
             document.removeEventListener('keydown', keyDownListener);
             document.removeEventListener('keyup', keyUpListener);
         };
-    }, [phase, smartInspection, smartConnected, derivingSmartScramble, clearInspectionTimeout, beginInspection, generateScrambleForSelectedCube]);
+    }, [phase, smartInspection, smartConnected, derivingSmartScramble, clearInspectionTimeout, beginInspection, generateScrambleForSelectedCube, cubeTypeDialogOpen]);
 
     useEffect(() => clearInspectionTimeout, [clearInspectionTimeout]);
 
@@ -462,43 +456,26 @@ export function CubesMainPage() {
             p: {xs: 1.5, sm: 3, lg: 2},
             '& .MuiButton-text:not(.Mui-disabled), & .MuiButton-outlined:not(.Mui-disabled)': {color: 'text.primary'},
         }}>
-            <Stack
-                direction={{xs: 'column', sm: 'row'}}
-                alignItems={{xs: 'stretch', sm: 'center'}}
-                justifyContent="space-between"
-                spacing={2}
-            >
-                <Stack spacing={0.5}>
-                    <Typography variant="h3">Układanie kostek</Typography>
-                    <Typography color="text.secondary">Stoper, smart kostka i wyniki dzisiejszej sesji.</Typography>
-                </Stack>
-                <FormControl variant="filled" size="small" sx={{minWidth: 180}}>
-                    <InputLabel id="main-cube-type-label">Rodzaj kostki</InputLabel>
-                    <Select
-                        labelId="main-cube-type-label"
-                        id="main-cube-type"
-                        value={cubeType}
-                        disabled={phase !== 'IDLE' || result.current > 0}
-                        onChange={event => {
-                            reset.current();
-                            setSmartFacelets(null);
-                            setSmartConnected(false);
-                            orientation.current = null;
-                            gyroReading.current = null;
-                            setHasOrientation(false);
-                            setOrientationResetVersion(0);
-                            setCubeType(event.target.value as CubeType);
-                        }}
-                    >
-                        {CUBE_TYPE_OPTIONS.map(option => (
-                            <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
-
-            </Stack>
+            <CubeSelectionDialog
+                title="Wybierz rodzaj kostki"
+                open={cubeTypeDialogOpen}
+                value={cubeType}
+                options={CUBE_TYPE_OPTIONS}
+                onClose={() => setCubeTypeDialogOpen(false)}
+                onSelect={value => {
+                    if (value !== cubeType) {
+                        reset.current();
+                        setSmartFacelets(null);
+                        setSmartConnected(false);
+                        orientation.current = null;
+                        gyroReading.current = null;
+                        setHasOrientation(false);
+                        setOrientationResetVersion(0);
+                        setCubeType(value);
+                    }
+                    setCubeTypeDialogOpen(false);
+                }}
+            />
             {error && <ErrorDisplay error={error} onRetry={() => void refetch()}/>}
             {loading && <LoadingIndicator label="Odświeżanie wyników…"/>}
             <Box
@@ -519,6 +496,7 @@ export function CubesMainPage() {
             >
                 <Paper variant="outlined" sx={{
                     gridArea: 'cube',
+                    position: 'relative',
                     minWidth: 0,
                     minHeight: 0,
                     overflow: 'auto',
@@ -526,21 +504,42 @@ export function CubesMainPage() {
                     display: 'flex',
                     flexDirection: 'column'
                 }}>
+                    {smartConnected && <GyroReadout reading={gyroReading}/>}
                     <Stack direction="row" justifyContent="space-between" alignItems="center"
-                           sx={{p: {xs: 2, sm: 3, lg: 2}}}>
+                           sx={{p: {xs: 2, sm: 3, lg: 2}, pr: smartConnected ? 16 : undefined}}>
                         <Stack spacing={0.5}>
-                            <Typography variant="h4">Kostka {getCubeTypeOption(cubeType).label}</Typography>
+                            <Typography component="h2" variant="h4">
+                                <Button
+                                    color="inherit"
+                                    disabled={phase !== 'IDLE' || result.current > 0}
+                                    aria-haspopup="dialog"
+                                    aria-expanded={cubeTypeDialogOpen}
+                                    onClick={() => setCubeTypeDialogOpen(true)}
+                                    onKeyDown={event => event.stopPropagation()}
+                                    onKeyUp={event => event.stopPropagation()}
+                                    endIcon={<ExpandMoreIcon sx={{color: 'text.secondary'}}/>}
+                                    sx={{font: 'inherit', textTransform: 'none', p: 0.5, ml: -0.5, minWidth: 0}}
+                                >
+                                    Kostka {getCubeTypeOption(cubeType).label}
+                                </Button>
+                            </Typography>
                             <Typography variant="body2" color="text.secondary">Przeciągnij, aby obrócić
                                 widok.</Typography>
                         </Stack>
-                        <Chip size="small" label={smartConnected ? 'Na żywo' : 'Podgląd scramble’a'}/>
                     </Stack>
                     <Box sx={{
                         background: theme => `radial-gradient(ellipse at center, ${alpha(theme.palette.primary.main, 0.12)}, transparent 70%)`,
                         px: {xs: 1, sm: 3},
                         flexGrow: 1,
                         minHeight: {lg: 160},
+                        position: 'relative',
+                        pt: smartConnected ? {xs: 19, sm: 6} : 0,
+                        pb: 7,
                     }}>
+                        <Box
+                            ref={setSmartControlsContainer}
+                            sx={{position: 'absolute', left: {xs: 1, sm: 2}, bottom: 1, zIndex: 1}}
+                        />
                         <CubingVisualizer
                             variant="hero"
                             cubeType={cubeType}
@@ -550,6 +549,80 @@ export function CubesMainPage() {
                             orientationResetVersion={orientationResetVersion}
                         />
                     </Box>
+                    <Stack spacing={1.5} sx={{p: {xs: 2, sm: 3, lg: 2}}}>
+                        {cubeType === CubeType.Three && (
+                            <SmartCube
+                                controlsContainer={smartControlsContainer}
+                                stopRef={stopSmartSolve}
+                                scramble={scramble}
+                                enabled={phase === 'IDLE' && result.current === 0}
+                                solving={phase === 'SOLVING'}
+                                inspection={smartInspection}
+                                onInspection={promise => {
+                                    const id = ++smartScrambleId.current;
+                                    scrambleGenerationId.current++;
+                                    scrambleValidationId.current++;
+                                    setIsGeneratingScramble(false);
+                                    setScrambleError(null);
+                                    setSaveError(null);
+                                    setDerivingSmartScramble(true);
+                                    setScramble('');
+                                    scrambleRef.current = '';
+                                    smartScramblePromise.current = promise.then(derived => {
+                                        if (id === smartScrambleId.current) {
+                                            scrambleRef.current = derived;
+                                            setScramble(derived);
+                                            setDerivingSmartScramble(false);
+                                        }
+                                        return derived;
+                                    }).catch(error => {
+                                        if (id === smartScrambleId.current) {
+                                            setDerivingSmartScramble(false);
+                                            setSaveError(`Nie udało się wyznaczyć scramble’a: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+                                        }
+                                        return null;
+                                    });
+                                    setSmartInspection(true);
+                                    setPhase('INSPECTION_EARLY');
+                                }}
+                                onStart={() => {
+                                    clearInspectionTimeout();
+                                    setSmartInspection(false);
+                                    setPhase('SOLVING');
+                                    start.current();
+                                }}
+                                onStop={(elapsed, recording) => {
+                                    completedRecording.current = recording ?? null;
+                                    stop.current();
+                                    result.current = elapsed;
+                                    setPhase('IDLE');
+                                }}
+                                onCancel={() => reset.current()}
+                                onFacelets={setSmartFacelets}
+                                onConnectionChange={connected => {
+                                    setSmartConnected(connected);
+                                    if (!connected) setOrientationResetVersion(0);
+                                }}
+                                onOrientationReset={() => setOrientationResetVersion(version => version + 1)}
+                                onGyro={value => {
+                                    gyroReading.current = value;
+                                }}
+                                onOrientation={value => {
+                                    const wasAvailable = orientation.current !== null;
+                                    orientation.current = value;
+                                    if (wasAvailable !== (value !== null)) setHasOrientation(value !== null);
+                                }}
+                                onCubeElapsed={setCubeElapsed}
+                                savedElapsed={result.current}
+                                confirmRef={confirmSmartScramble}
+                                isTouchDevice={isTouchDevice}
+                            />
+                        )}
+
+                        {cubeType !== CubeType.Three && <Typography variant="body2" color="text.secondary">
+                            Połączenie smart kostki jest dostępne dla 3×3.
+                        </Typography>}
+                    </Stack>
                     <Divider/>
                     <Stack spacing={1.5} sx={{p: {xs: 2, sm: 3, lg: 2}}}>
                         <Typography variant="h4">Następne ułożenie</Typography>
@@ -604,14 +677,7 @@ export function CubesMainPage() {
                         />
 
                     </Stack>
-                    {smartConnected && (
-                        <Accordion elevation={0} disableGutters sx={{borderTop: 1, borderColor: 'divider'}}>
-                            <AccordionSummary expandIcon={<ExpandMoreIcon/>}>
-                                <Typography>Dane żyroskopu</Typography>
-                            </AccordionSummary>
-                            <AccordionDetails><GyroReadout reading={gyroReading}/></AccordionDetails>
-                        </Accordion>
-                    )}
+
                 </Paper>
                 <Paper variant="outlined" sx={{
                     gridArea: 'timer',
@@ -845,80 +911,6 @@ export function CubesMainPage() {
                         )}
                         {!fullScreen && <Typography variant="body2" color="text.secondary" align="center">
                             Spacja — inspekcja / start / stop · Enter — zapisz · R — reset
-                        </Typography>}
-                        <Divider/>
-                        <Typography variant="subtitle2">Smart kostka</Typography>
-                        {cubeType === CubeType.Three && (
-                            <SmartCube
-                                compact
-                                stopRef={stopSmartSolve}
-                                scramble={scramble}
-                                enabled={phase === 'IDLE' && result.current === 0}
-                                solving={phase === 'SOLVING'}
-                                inspection={smartInspection}
-                                onInspection={promise => {
-                                    const id = ++smartScrambleId.current;
-                                    scrambleGenerationId.current++;
-                                    scrambleValidationId.current++;
-                                    setIsGeneratingScramble(false);
-                                    setScrambleError(null);
-                                    setSaveError(null);
-                                    setDerivingSmartScramble(true);
-                                    setScramble('');
-                                    scrambleRef.current = '';
-                                    smartScramblePromise.current = promise.then(derived => {
-                                        if (id === smartScrambleId.current) {
-                                            scrambleRef.current = derived;
-                                            setScramble(derived);
-                                            setDerivingSmartScramble(false);
-                                        }
-                                        return derived;
-                                    }).catch(error => {
-                                        if (id === smartScrambleId.current) {
-                                            setDerivingSmartScramble(false);
-                                            setSaveError(`Nie udało się wyznaczyć scramble’a: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
-                                        }
-                                        return null;
-                                    });
-                                    setSmartInspection(true);
-                                    setPhase('INSPECTION_EARLY');
-                                }}
-                                onStart={() => {
-                                    clearInspectionTimeout();
-                                    setSmartInspection(false);
-                                    setPhase('SOLVING');
-                                    start.current();
-                                }}
-                                onStop={(elapsed, recording) => {
-                                    completedRecording.current = recording ?? null;
-                                    stop.current();
-                                    result.current = elapsed;
-                                    setPhase('IDLE');
-                                }}
-                                onCancel={() => reset.current()}
-                                onFacelets={setSmartFacelets}
-                                onConnectionChange={connected => {
-                                    setSmartConnected(connected);
-                                    if (!connected) setOrientationResetVersion(0);
-                                }}
-                                onOrientationReset={() => setOrientationResetVersion(version => version + 1)}
-                                onGyro={value => {
-                                    gyroReading.current = value;
-                                }}
-                                onOrientation={value => {
-                                    const wasAvailable = orientation.current !== null;
-                                    orientation.current = value;
-                                    if (wasAvailable !== (value !== null)) setHasOrientation(value !== null);
-                                }}
-                                onCubeElapsed={setCubeElapsed}
-                                savedElapsed={result.current}
-                                confirmRef={confirmSmartScramble}
-                                isTouchDevice={isTouchDevice}
-                            />
-                        )}
-
-                        {cubeType !== CubeType.Three && <Typography variant="body2" color="text.secondary">
-                            Połączenie smart kostki jest dostępne dla 3×3.
                         </Typography>}
                         <Typography variant="caption" color="text.secondary" align="center">
                             Blokada wygaszania ekranu: {wakeLock ? 'włączona' : 'wyłączona'}

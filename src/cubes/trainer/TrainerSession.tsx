@@ -37,6 +37,7 @@ import {
     trainerScrambleInDeviceFrame
 } from './trainer-cube-orientation';
 import {SmartCube} from '../SmartCube';
+import {GyroReading, GyroReadout} from '../GyroReadout';
 import {StopWatch} from '../StopWatch';
 import {StopWatchDisplay} from '../StopWatchDisplay';
 import {faceletsFromCubingAlgorithm} from '../cubing-api';
@@ -52,6 +53,7 @@ type Props = {
     algorithmSequence?: string;
     setupAlgorithm?: string;
     sidebar?: ReactNode;
+    stagePicker?: ReactNode;
     onSaved: () => Promise<unknown>;
     onBusyChange: (busy: boolean) => void;
 };
@@ -89,6 +91,7 @@ export function TrainerSession({
                                    algorithmSequence,
                                    setupAlgorithm,
                                    sidebar,
+                                   stagePicker,
                                    onSaved,
                                    onBusyChange,
                                }: Props) {
@@ -99,6 +102,8 @@ export function TrainerSession({
     const [expectedFacelets, setExpectedFacelets] = useState<CubeFacelets | null>(null);
     const [facelets, setFacelets] = useState<CubeFacelets | null>(null);
     const [connected, setConnected] = useState(false);
+    const [smartControlsContainer, setSmartControlsContainer] = useState<HTMLDivElement | null>(null);
+    const gyroReading = useRef<GyroReading | null>(null);
     const [phase, setPhase] = useState<'idle' | 'inspection' | 'running' | 'review'>('idle');
     const phaseRef = useRef(phase);
     const [savedAttemptId, setSavedAttemptId] = useState<string | null>(null);
@@ -390,15 +395,16 @@ export function TrainerSession({
             }}
         >
             <Paper variant="outlined" sx={{
-                gridArea: 'cube', minWidth: 0, minHeight: 0, overflow: 'auto',
+                gridArea: 'cube', position: 'relative', minWidth: 0, minHeight: 0, overflow: 'auto',
                 borderRadius: 3, display: 'flex', flexDirection: 'column',
             }}>
-                <Stack spacing={1.5} sx={{p: 2}}>
-                    <Typography variant="h4">Ćwiczenie {stage}</Typography>
+                {connected && <GyroReadout reading={gyroReading}/>}
+                <Stack spacing={1.5} sx={{p: 2, pr: connected ? 16 : undefined}}>
+                    {stagePicker ?? <Typography variant="h4">Ćwiczenie {stage}</Typography>}
                     {stage === CfopStage.Cross
                         && (
                             <Stack direction={{xs: 'column', sm: 'row'}} spacing={2}>
-                                <FormControl sx={{minWidth: 180}}>
+                                <FormControl sx={{minWidth: {xs: 0, sm: 180}}}>
                                     <InputLabel id="trainer-cross-face-label">Ścianka krzyża</InputLabel>
                                     <Select
                                         labelId="trainer-cross-face-label"
@@ -430,8 +436,15 @@ export function TrainerSession({
                     px: 1,
                     flexGrow: 1,
                     minHeight: {lg: 160},
+                    position: 'relative',
+                    pt: connected ? {xs: 19, sm: 6} : 0,
+                    pb: 7,
                     background: theme => `radial-gradient(ellipse at center, ${alpha(theme.palette.primary.main, 0.12)}, transparent 70%)`,
                 }}>
+                    <Box
+                        ref={setSmartControlsContainer}
+                        sx={{position: 'absolute', left: {xs: 1, sm: 2}, bottom: 1, zIndex: 1}}
+                    />
                     <CubingVisualizer
                         variant="hero"
                         cubeType={CubeType.Three}
@@ -440,6 +453,42 @@ export function TrainerSession({
                         initialCubeOrientation={stage === CfopStage.Cross ? '' : TRAINER_CUBE_ORIENTATION}
                     />
                 </Box>
+                <Stack spacing={1.5} sx={{p: 2}}>
+                    <SmartCube
+                        controlsContainer={smartControlsContainer}
+                        scramble={scramble}
+                        enabled={phase === 'idle' && !!expectedFacelets && !preparing}
+                        inspection={phase === 'inspection'}
+                        solving={phase === 'running'}
+                        expectedFacelets={expectedFacelets}
+                        isComplete={goalReached}
+                        stopRef={stopSmart}
+                        buttonColor="primary"
+                        onInspection={() => changePhase('inspection')}
+                        onStart={start}
+                        onStop={finish}
+                        onCancel={reset}
+                        onFacelets={setFacelets}
+                        onGyro={value => {
+                            gyroReading.current = value;
+                        }}
+                        onConnectionChange={setConnected}
+                        confirmRef={confirmSmart}
+                        isTouchDevice={false}
+                    />
+                    {connected && phase === 'idle' && expectedFacelets
+                        && (
+                            <Alert severity={facelets === expectedFacelets
+                                ? 'success'
+                                : 'info'}
+                            >
+                                {facelets === expectedFacelets
+                                    ? 'Przypadek przygotowany. Potwierdź gotowość przyciskiem lub spacją.'
+                                    : 'Wykonaj podane mieszanie od ułożonej kostki. Potwierdzenie będzie dostępne po osiągnięciu tego stanu.'}
+                            </Alert>
+                        )}
+
+                </Stack>
                 <Divider/>
                 <Stack spacing={1.5} sx={{p: 2}}>
                     <Typography variant="subtitle2">Mieszanie od ułożonej kostki</Typography>
@@ -576,38 +625,6 @@ export function TrainerSession({
                             </>
                         )}
 
-                    <Divider/>
-                    <Typography variant="subtitle2">Smart kostka</Typography>
-                    <SmartCube
-                        compact
-                        scramble={scramble}
-                        enabled={phase === 'idle' && !!expectedFacelets && !preparing}
-                        inspection={phase === 'inspection'}
-                        solving={phase === 'running'}
-                        expectedFacelets={expectedFacelets}
-                        isComplete={goalReached}
-                        stopRef={stopSmart}
-                        buttonColor="primary"
-                        onInspection={() => changePhase('inspection')}
-                        onStart={start}
-                        onStop={finish}
-                        onCancel={reset}
-                        onFacelets={setFacelets}
-                        onConnectionChange={setConnected}
-                        confirmRef={confirmSmart}
-                        isTouchDevice={false}
-                    />
-                    {connected && phase === 'idle' && expectedFacelets
-                        && (
-                            <Alert severity={facelets === expectedFacelets
-                                ? 'success'
-                                : 'info'}
-                            >
-                                {facelets === expectedFacelets
-                                    ? 'Przypadek przygotowany. Potwierdź gotowość przyciskiem lub spacją.'
-                                    : 'Wykonaj podane mieszanie od ułożonej kostki. Potwierdzenie będzie dostępne po osiągnięciu tego stanu.'}
-                            </Alert>
-                        )}
 
                 </Stack>
             </Paper>

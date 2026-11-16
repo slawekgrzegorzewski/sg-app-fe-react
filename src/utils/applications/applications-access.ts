@@ -53,12 +53,12 @@ export const applications = new Map<ApplicationId, Application>([
             ['CUBE_MAIN', {
                 id: 'CUBE_MAIN',
                 links: ['', '/'],
-                label: 'Kostki'
+                label: 'Układanie'
             } as ApplicationPage],
             ['CUBE_TRAINER', {
                 id: 'CUBE_TRAINER',
                 links: ['trainer'],
-                label: 'Trenażer'
+                label: 'Trenażer 3×3'
             } as ApplicationPage],
             ['CUBE_STATS', {
                 id: 'CUBE_STATS',

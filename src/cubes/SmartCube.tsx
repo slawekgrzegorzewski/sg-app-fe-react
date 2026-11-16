@@ -1,9 +1,24 @@
 import BatteryStdIcon from '@mui/icons-material/BatteryStd';
 import BatteryAlertIcon from '@mui/icons-material/BatteryAlert';
 import BluetoothIcon from '@mui/icons-material/Bluetooth';
+import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import {createPortal} from 'react-dom';
 import {parseCubeMove} from './cube-move';
 import {CubeFacelets, isCubeFacelets} from './cube-facelets';
-import {Alert, Button, Chip, Collapse, Stack, TextField, Typography} from '@mui/material';
+import {
+    Alert,
+    Button,
+    Chip,
+    CircularProgress,
+    Collapse,
+    Divider,
+    IconButton,
+    Stack,
+    TextField,
+    Tooltip,
+    Typography
+} from '@mui/material';
 import type {RefObject} from 'react';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import type {SmartCubeEvent} from 'smartcube-web-bluetooth';
@@ -39,6 +54,7 @@ type Props = {
     isComplete?: (facelets: CubeFacelets) => boolean;
     stopRef?: RefObject<() => void>;
     compact?: boolean;
+    controlsContainer?: HTMLElement | null;
     buttonColor?: 'primary' | 'secondary';
 };
 
@@ -65,6 +81,7 @@ export function SmartCube({
                               stopRef,
                               buttonColor,
                               compact = false,
+                              controlsContainer,
                           }: Props) {
     const sharedSession = useSmartCubeSession();
     const sharedConnection = sharedSession?.connection ?? null;
@@ -132,7 +149,7 @@ export function SmartCube({
     }, [scramble, expectedFacelets]);
     const progress = facelets ? states.lastIndexOf(facelets) : -1;
     const scrambleReady = !!facelets && facelets !== SOLVED_CUBE
-            && (expectedFacelets ? facelets === expectedFacelets : scrambled);
+        && (expectedFacelets ? facelets === expectedFacelets : scrambled);
 
     useEffect(() => {
         if (!connection) {
@@ -444,26 +461,106 @@ export function SmartCube({
         batteryLabel = `Bateria: ${batteryLevel}%`;
     }
 
+    const resetOrientation = () => {
+        if (!latestSceneOrientation.current) {
+            return;
+        }
+        initialSceneOrientation.current = latestSceneOrientation.current;
+        session?.setGyroReference(latestGyroEvent.current);
+        callbacks.current.onOrientation?.(
+            orientationFromInitialReference(
+                latestSceneOrientation.current,
+                latestSceneOrientation.current));
+        onOrientationReset?.();
+    };
+    let connectionLabel = 'Połącz smart kostkę';
+    let connectionIcon = <BluetoothIcon fontSize="small"/>;
+    if (connecting) {
+        connectionLabel = 'Łączenie…';
+        connectionIcon = <CircularProgress size={20} color="inherit"/>;
+    } else if (connection) {
+        connectionLabel = `Rozłącz ${connection.deviceName}`;
+        connectionIcon = <BluetoothDisabledIcon fontSize="small"/>;
+    }
+    const overlay = controlsContainer !== undefined;
+    const toggleConnection = () => (connection ? void connection.disconnect() : void connect());
+    const overlayControls = (
+        <Stack direction="row" alignItems="center" spacing={0.5} sx={{color: 'text.secondary'}}>
+            <Tooltip title={connectionLabel}>
+                <span>
+                    <IconButton
+                        aria-label={connectionLabel}
+                        disabled={connecting}
+                        onClick={toggleConnection}
+                        color="inherit"
+                        sx={{width: 44, height: 44}}
+                    >
+                        {connectionIcon}
+                    </IconButton>
+                </span>
+            </Tooltip>
+            {connection && (
+                <>
+                    <Tooltip title={batteryLabel}>
+                        <Chip
+                            size="small"
+                            icon={batteryLevel !== null && batteryLevel <= 20 ? <BatteryAlertIcon/> : <BatteryStdIcon/>}
+                            color={batteryLevel !== null && batteryLevel <= 20 ? 'warning' : 'default'}
+                            label={batteryLevel === null ? '—' : `${batteryLevel}%`}
+                            aria-label={batteryLabel}
+                            role="status"
+                            aria-live="polite"
+                            variant="outlined"
+                            sx={{
+                                border: 0,
+                                color: batteryLevel !== null && batteryLevel <= 20 ? 'warning.main' : 'inherit',
+                                '& .MuiChip-icon': {color: 'inherit'},
+                            }}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Resetuj położenie kostki — zielona ścianka do przodu, biała do góry">
+                        <span>
+                            <IconButton
+                                aria-label="Resetuj położenie kostki"
+                                disabled={!gyroAvailable}
+                                onClick={resetOrientation}
+                                color="inherit"
+                                sx={{width: 44, height: 44}}
+                            >
+                                <RestartAltIcon fontSize="small"/>
+                            </IconButton>
+                        </span>
+                    </Tooltip>
+                </>
+            )}
+        </Stack>
+    );
+
     return (
         <Stack spacing={1} alignItems="center" sx={{width: '100%'}}>
-            <Button
-                color={buttonColor}
-                variant="outlined"
-                startIcon={<BluetoothIcon/>}
-                disabled={connecting}
-                onClick={() => (connection ? void connection.disconnect() : void connect())}
-            >
-                {connecting ? 'Łączenie…' : connection ? `Rozłącz ${connection.deviceName}` : 'Połącz smart kostkę'}
-            </Button>
-            {connection && (
-                <Chip
-                    size="small"
-                    icon={batteryLevel !== null && batteryLevel <= 20 ? <BatteryAlertIcon/> : <BatteryStdIcon/>}
-                    color={batteryLevel !== null && batteryLevel <= 20 ? 'warning' : 'default'}
-                    label={batteryLabel}
-                    role="status"
-                    aria-live="polite"
-                />
+            {overlay && (connection || macRequest || error || completedRecording) && <Divider flexItem/>}
+            {overlay ? controlsContainer && createPortal(overlayControls, controlsContainer) : (
+                <>
+                    <Button
+                        color={buttonColor}
+                        variant="outlined"
+                        startIcon={<BluetoothIcon/>}
+                        disabled={connecting}
+                        onClick={toggleConnection}
+                    >
+                        {connectionLabel}
+                    </Button>
+                    {connection && (
+                        <Chip
+                            size="small"
+                            icon={batteryLevel !== null && batteryLevel <= 20 ? <BatteryAlertIcon/> : <BatteryStdIcon/>}
+                            color={batteryLevel !== null && batteryLevel <= 20 ? 'warning' : 'default'}
+                            label={batteryLabel}
+                            role="status"
+                            aria-live="polite"
+                        />
+                    )}
+                </>
             )}
             {macRequest && (
                 <Stack
@@ -502,32 +599,21 @@ export function SmartCube({
                 </Stack>
             )}
             {error && <Alert severity="error">{error}</Alert>}
-            {connection && compact && (
+            {connection && compact && !overlay && (
                 <Button color={buttonColor} size="small" onClick={() => setShowSettings(value => !value)}
                         aria-expanded={showSettings}>
                     {showSettings ? 'Ukryj ustawienia położenia' : 'Ustawienia położenia'}
                 </Button>
             )}
 
-            {connection && (
+            {connection && !overlay && (
                 <Collapse in={!compact || showSettings} unmountOnExit>
                     <Stack spacing={0.5} alignItems="center">
                         <Button
                             color={buttonColor}
                             variant="outlined"
                             disabled={!gyroAvailable}
-                            onClick={() => {
-                                if (!latestSceneOrientation.current) return;
-                                initialSceneOrientation.current = latestSceneOrientation.current;
-                                session?.setGyroReference(latestGyroEvent.current);
-                                callbacks.current.onOrientation?.(
-                                    orientationFromInitialReference(
-                                        latestSceneOrientation.current,
-                                        latestSceneOrientation.current
-                                    )
-                                );
-                                onOrientationReset?.();
-                            }}
+                            onClick={resetOrientation}
                         >
                             Resetuj położenie kostki
                         </Button>

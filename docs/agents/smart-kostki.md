@@ -33,12 +33,20 @@ Ekran układania korzysta z `smartcube-web-bluetooth` i wymaga przeglądarki obs
 
 ## Układ strony układania
 
+Strona jest wyświetlana w nawigacji jako „Układanie”; identyfikator `CUBE_MAIN`
+i jej dotychczasowe adresy pozostają bez zmian.
+
+Rodzaj kostki wybieramy przez kliknięcie nagłówka podglądu. Dialog pokazuje
+wszystkie obsługiwane rodzaje i wyróżnia bieżący wybór. Zmiana rodzaju jest
+zablokowana podczas pomiaru i przed zapisaniem lub odrzuceniem wyniku. Skróty
+stopera są nieaktywne podczas wyboru w dialogu.
+
 Na desktopie strona wykorzystuje pełną szerokość: duży podgląd kostki i scramble
-zajmują lewy panel, stoper i połączenie smart kostki panel środkowy,
+zajmują lewy panel wraz z informacjami i kontrolkami smart kostki, stoper panel środkowy,
 a wyniki dnia prawy. Wysokość paneli dopasowuje się do miejsca pod paskiem
 aplikacji; dodatkowe dane przewijamy wewnątrz paneli.
 Podsumowanie dnia obejmuje liczbę ułożeń, średnią, najlepszy czas i stronicowaną
-listę wyników. Na mniejszych ekranach panele tworzą jedną kolumnę ze stoperem
+listę wyników po 10 pozycji na stronie, niezależnie od szerokości ekranu. Na mniejszych ekranach panele tworzą jedną kolumnę ze stoperem
 na początku. Pomiary można obsługiwać spacją oraz widocznymi przyciskami;
 po pomiarze zapis i odrzucenie są dostępne również na desktopie.
 Mobilny gest przytrzymania i pełnoekranowy pomiar pozostają dostępne.
@@ -46,8 +54,18 @@ Mobilny gest przytrzymania i pełnoekranowy pomiar pozostają dostępne.
 `CubingVisualizer` ma opcjonalny wariant `hero`, używany na stronie układania
 i w trenażerze CFOP; domyślny rozmiar innych wizualizacji pozostaje bez zmian.
 Oba widoki korzystają ze wspólnego `useViewportWorkspace` do dopasowania wysokości.
-Dane GYRO są w rozwijanym panelu. Ustawienia kalibracji położenia na głównej
-stronie i w trenażerze są początkowo zwinięte.
+Powiadomienia `ResizeObserver` i zmiany rozmiaru okna łączymy w jedną aktualizację
+przez `requestAnimationFrame`; zapisujemy wysokość tylko wtedy, gdy się zmieniła.
+Zapobiega to zmianie obserwowanego układu wewnątrz cyklu powiadomień obserwatora.
+Odmontowanie widoku anuluje oczekującą klatkę.
+Kontrolki smart kostki są nałożone na lewy dolny róg podglądu, zarówno na stronie
+układania, jak i w trenażerze CFOP. Połączenie i rozłączenie oraz reset położenia
+są przyciskami ikonowymi z podpowiedziami i etykietami dostępności; obok znajduje
+się ikona baterii z procentem (lub „—” przy braku odczytu). Reset jest dostępny
+po otrzymaniu poprawnej próbki GYRO. Wskazówki kalibracji są w podpowiedzi resetu,
+a komunikaty próby, błędy i formularz MAC pozostają pod wizualizacją, aby nie
+zasłaniały kostki. Separator nad wskazówkami pojawia się tylko przy widocznych
+komunikatach, formularzu lub danych próby. Kontrolki mają obszar dotykowy 44 × 44 px.
 
 ## Bateria smart kostki
 
@@ -75,7 +93,7 @@ Gdy kostka wysyła zdarzenia `GYRO`, wizualizacja obraca scenę na podstawie kwa
 
 Po potwierdzeniu scramble'a frontend zbiera surowe zdarzenia `MOVE` i `GYRO` do zakończenia układania, zachowując ich oryginalne pola, czas odbioru `performance.now()`, `performance.timeOrigin`, początkowy stan ścianek, ostatnią dostępną próbkę żyroskopu sprzed inspekcji oraz momenty inspekcji i startu. Dane żyroskopu umożliwiają późniejszą analizę obrotów, ale same obroty nie są klasyfikowane. Zakończony zapis można pobrać jako JSON przed resetem lub zapisem wyniku. Przy zapisie wyniku `StoreCubeResult` przesyła go w opcjonalnym polu `recording` jako tekst JSON. Backend zapisuje go razem z wynikiem w kolumnie `cube_record.recording` typu `jsonb`; starsze i ręczne wyniki nie wymagają raportu. Nieudany zapis zachowuje raport do ponowienia próby. Backend akceptuje obiekt wersji 1 z tablicą `events`, do 5 milionów znaków. Raport nie jest pobierany przez zapytania list i statystyk. Anulowanie i przerwanie połączenia w trakcie próby odrzuca jej nagranie.
 
-Po podłączeniu smart kostki główny widok pokazuje panel GYRO obok wizualizacji (na telefonie pod nią). Panel prezentuje surowy kwaternion `w/x/y/z` oraz opcjonalną prędkość obrotową `x/y/z`, przed normalizacją i kalibracją widoku. Odczyt panelu odświeża się co 100 ms niezależnie od głównego ekranu; nagranie nadal zachowuje wszystkie zdarzenia. Przed pierwszą próbką widoczny jest komunikat oczekiwania, a po rozłączeniu panel znika i odczyt jest czyszczony.
+Po podłączeniu smart kostki strona układania i trenażer pokazują zwarty odczyt GYRO w prawym górnym rogu całego panelu wizualizacji, z odstępem 8 px od krawędzi. Dane używają koloru `text.secondary` aktywnego motywu, aby nie dominowały nad kostką. Odczyt nie przechwytuje gestów obracania widoku, a na telefonie pozostawiamy nad kostką miejsce na jego treść. Panel prezentuje surowy kwaternion `w/x/y/z` oraz opcjonalną prędkość obrotową `x/y/z`, przed normalizacją i kalibracją widoku. Odczyt panelu odświeża się co 100 ms niezależnie od głównego ekranu; nagranie nadal zachowuje wszystkie zdarzenia. Przed pierwszą próbką widoczny jest komunikat oczekiwania, a po rozłączeniu panel znika i odczyt jest czyszczony.
 
 ## Wspólna sesja Bluetooth
 

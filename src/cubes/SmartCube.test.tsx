@@ -16,7 +16,8 @@ async function setup(
     scramble = 'R U',
     isComplete?: (facelets: CubeFacelets) => boolean,
     batteryOptions: { supported?: boolean; fails?: boolean } = {},
-    expectedFacelets?: CubeFacelets) {
+    expectedFacelets?: CubeFacelets,
+    controlsContainer?: HTMLElement) {
     const events = new Subject<SmartCubeEvent>();
     const disconnect = jest.fn().mockResolvedValue(undefined);
     const sendCommand = jest.fn().mockImplementation(command =>
@@ -46,6 +47,7 @@ async function setup(
         return (
             <>
                 <SmartCube
+                    controlsContainer={controlsContainer}
                     scramble={currentScramble}
                     enabled={phase === 'idle'}
                     inspection={phase === 'inspection'}
@@ -444,4 +446,41 @@ test('po połączeniu przyjmuje już przygotowany poprawny stan trenażera i odr
     cube.move("L'");
     expect(cube.onStart).toHaveBeenCalledTimes(1);
     expect(cube.onStop).toHaveBeenCalledTimes(1);
+});
+
+test('obsługuje połączenie, baterię i kalibrację ikonami w kontenerze podglądu', async () => {
+    render(<div data-testid="smart-controls"/>);
+    const container = screen.getByTestId('smart-controls');
+    const cube = await setup('R U', undefined, {supported: true}, undefined, container);
+    const disconnect = screen.getByRole('button', {name: 'Rozłącz GAN'});
+    const reset = screen.getByRole('button', {name: 'Resetuj położenie kostki'});
+    expect(screen.getByRole('separator')).toBeInTheDocument();
+    expect(container).toContainElement(disconnect);
+    expect(container).toContainElement(reset);
+    expect(disconnect.textContent).toBe('');
+    expect(reset.textContent).toBe('');
+    expect(reset).toBeDisabled();
+    act(() => cube.events.next({type: 'BATTERY', batteryLevel: 78, timestamp: 0}));
+    const battery = screen.getByRole('status', {name: 'Bateria: 78%'});
+    expect(container).toContainElement(battery);
+    expect(battery).toHaveTextContent(/^78%$/);
+    act(() => cube.events.next({type: 'GYRO', quaternion: {x: 0, y: 0, z: 0, w: 1}, timestamp: 0}));
+    act(() => cube.events.next({type: 'GYRO', quaternion: {x: 0, y: 0, z: 1, w: 1}, timestamp: 1}));
+    expect(reset).toBeEnabled();
+    expect(cube.onOrientation.mock.lastCall[0].y).toBeCloseTo(Math.SQRT1_2);
+    fireEvent.click(reset);
+    const orientation = cube.onOrientation.mock.lastCall[0];
+    expect(orientation.x).toBeCloseTo(0);
+    expect(orientation.y).toBeCloseTo(0);
+    expect(orientation.z).toBeCloseTo(0);
+    expect(orientation.w).toBeCloseTo(1);
+    fireEvent.click(disconnect);
+    expect(cube.disconnect).toHaveBeenCalledTimes(1);
+    act(() => cube.events.next({type: 'DISCONNECT', timestamp: 2}));
+    const connect = screen.getByRole('button', {name: 'Połącz smart kostkę'});
+    expect(container).toContainElement(connect);
+    expect(connect.textContent).toBe('');
+    expect(container).not.toContainElement(reset);
+    expect(container).not.toContainElement(battery);
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
 });

@@ -40,6 +40,7 @@ import {
 import {formatStopWatchTime} from '../StopWatchDisplay';
 import {feedbackPending, TrainerFeedback, TrainerFeedbackText} from './TrainerFeedback';
 import {TrainerSession} from './TrainerSession';
+import {TrainerStagePicker} from './TrainerStagePicker';
 import {TrainerCaseThumbnail} from './TrainerCaseThumbnail';
 
 export function CubeTrainerPage() {
@@ -102,6 +103,21 @@ export function CubeTrainerPage() {
             setPreferenceError('Nie udało się potwierdzić wyboru algorytmu. Spróbuj ponownie.');
         }
     };
+
+    const stagePicker = (
+        <TrainerStagePicker
+            stage={stage}
+            disabled={busy}
+            onSelect={value => {
+                setStage(value);
+                setCaseId('');
+                setGroupName('__all__');
+                setAlgorithmId('');
+                setPreferenceError(null);
+                setPanel('catalog');
+            }}
+        />
+    );
 
     const sidebar = (
         <Stack spacing={2} sx={{minWidth: 0}}>
@@ -409,25 +425,6 @@ export function CubeTrainerPage() {
             }}
         >
             <Stack spacing={2} sx={{width: '100%', minWidth: 0}}>
-                <Typography variant="h3">Trenażer CFOP</Typography>
-                <Tabs
-                    value={stage}
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    aria-label="Etap treningu CFOP"
-                    onChange={(_, value: CfopStage) => {
-                        setStage(value);
-                        setCaseId('');
-                        setGroupName('__all__');
-                        setAlgorithmId('');
-                        setPreferenceError(null);
-                        setPanel('catalog');
-                    }}
-                >
-                    {Object.values(CfopStage).map(value => (
-                        <Tab key={value} value={value} label={value} disabled={busy}/>
-                    ))}
-                </Tabs>
                 {loading && !data ? (
                     <LoadingIndicator label="Ładowanie trenażera…"/>
                 ) : error && !data ? (
@@ -439,6 +436,7 @@ export function CubeTrainerPage() {
                                 <TrainerSession
                                     key={stage}
                                     stage={stage}
+                                    stagePicker={stagePicker}
                                     mode={stage === CfopStage.Cross ? CubeTrainerMode.Train : mode}
                                     algorithmPublicId={algorithm?.publicId}
                                     algorithmSequence={algorithm?.sequence}
@@ -448,7 +446,14 @@ export function CubeTrainerPage() {
                                     onBusyChange={setBusy}
                                 />
                             )
-                            : <Paper variant="outlined" sx={{p: 2}}>{sidebar}</Paper>}
+                            : (
+                                <Paper variant="outlined" sx={{p: 2}}>
+                                    <Stack spacing={2}>
+                                        {stagePicker}
+                                        {sidebar}
+                                    </Stack>
+                                </Paper>
+                            )}
                     </>
                 )}
             </Stack>
