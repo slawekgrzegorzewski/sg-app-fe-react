@@ -112,3 +112,10 @@ backend: `YYYY-MM-DD HH:mm:ss.SSS`, bez strefy czasowej, ze spacją między dat�
 a godziną. ISO z separatorem `T` jest przez ten scalar odrzucane przed wejściem
 do serwisu. Ponowienie zachowuje oryginalny czas i UUID próby; na granicy zapisu
 normalizujemy także separator starszej próby pozostającej w stanie komponentu.
+
+## Przełączanie stron i etapów a smart kostka
+
+Trenażer korzysta ze [wspólnej sesji Bluetooth modułu Kostki](smart-kostki.md#wspólna-sesja-bluetooth).
+Przełączenie CROSS/F2L/OLL/PLL oraz przejście między stronami Kostki i Trenażer
+zachowuje połączenie. Nowa sesja ćwiczenia przejmuje aktualny stan fizycznej
+kostki, ale wymaga przygotowania własnego przypadku i osobnego rozpoczęcia próby.

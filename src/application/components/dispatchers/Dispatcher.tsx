@@ -12,6 +12,7 @@ import {AccountantDispatcher} from './AccountantDispatcher';
 import {CubesMainPage} from '../../../cubes/CubesMainPage';
 import {CubeStatsPage} from '../../../cubes/CubeStatsPage';
 import {CubeTrainerPage} from '../../../cubes/trainer/CubeTrainerPage';
+import {SmartCubeSessionProvider} from '../../../cubes/SmartCubeSessionProvider';
 import {StrengthTrainingCatalogPage} from '../../../strength-training/StrengthTrainingCatalogPage';
 
 export function Dispatcher() {
@@ -42,16 +43,19 @@ export function Dispatcher() {
     } else if (application.id === 'HOME') {
         return <></>;
     } else if (application.id === 'CUBES') {
+        let content: React.ReactNode = null;
         if (!page || isRequestForPage('CUBE_MAIN')) {
-            return <CubesMainPage></CubesMainPage>;
+            content = <CubesMainPage />;
+        } else if (isRequestForPage('CUBE_STATS')) {
+            content = <CubeStatsPage />;
+        } else if (isRequestForPage('CUBE_TRAINER')) {
+            content = <CubeTrainerPage />;
         }
-        if (isRequestForPage('CUBE_STATS')) {
-            return <CubeStatsPage />;
-        }
-        if (isRequestForPage('CUBE_TRAINER')) {
-            return <CubeTrainerPage />;
-        }
-        return <></>;
+        return (
+            <SmartCubeSessionProvider key={`${user?.user.login}:${currentDomainPublicId}`}>
+                {content}
+            </SmartCubeSessionProvider>
+        );
     } else if (application.id === 'STRENGTH_TRAINING') {
         if (!page || isRequestForPage('EXERCISE_CATALOG')) {
             return <StrengthTrainingCatalogPage />;

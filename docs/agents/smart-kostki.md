@@ -76,3 +76,31 @@ Gdy kostka wysyła zdarzenia `GYRO`, wizualizacja obraca scenę na podstawie kwa
 Po potwierdzeniu scramble'a frontend zbiera surowe zdarzenia `MOVE` i `GYRO` do zakończenia układania, zachowując ich oryginalne pola, czas odbioru `performance.now()`, `performance.timeOrigin`, początkowy stan ścianek, ostatnią dostępną próbkę żyroskopu sprzed inspekcji oraz momenty inspekcji i startu. Dane żyroskopu umożliwiają późniejszą analizę obrotów, ale same obroty nie są klasyfikowane. Zakończony zapis można pobrać jako JSON przed resetem lub zapisem wyniku. Przy zapisie wyniku `StoreCubeResult` przesyła go w opcjonalnym polu `recording` jako tekst JSON. Backend zapisuje go razem z wynikiem w kolumnie `cube_record.recording` typu `jsonb`; starsze i ręczne wyniki nie wymagają raportu. Nieudany zapis zachowuje raport do ponowienia próby. Backend akceptuje obiekt wersji 1 z tablicą `events`, do 5 milionów znaków. Raport nie jest pobierany przez zapytania list i statystyk. Anulowanie i przerwanie połączenia w trakcie próby odrzuca jej nagranie.
 
 Po podłączeniu smart kostki główny widok pokazuje panel GYRO obok wizualizacji (na telefonie pod nią). Panel prezentuje surowy kwaternion `w/x/y/z` oraz opcjonalną prędkość obrotową `x/y/z`, przed normalizacją i kalibracją widoku. Odczyt panelu odświeża się co 100 ms niezależnie od głównego ekranu; nagranie nadal zachowuje wszystkie zdarzenia. Przed pierwszą próbką widoczny jest komunikat oczekiwania, a po rozłączeniu panel znika i odczyt jest czyszczony.
+
+## Wspólna sesja Bluetooth
+
+`SmartCubeSessionProvider` jest właścicielem połączenia w module Kostki,
+powyżej stron Kostki, Trenażer i Statystyki. Jego klucz zawiera konto i domenę.
+Zmiana strony lub etapu CROSS/F2L/OLL/PLL odmontowuje jedynie lokalny panel:
+Bluetooth pozostaje aktywny, bez ponownego wyboru urządzenia i pytania o MAC.
+Wyjście z modułu, zmiana konta lub domeny oraz ręczne „Rozłącz” zamykają sesję.
+Odświeżenie karty nadal wymaga ponownego połączenia. Aplikacja nie zapobiega
+rozłączeniu przez urządzenie, przeglądarkę lub system operacyjny.
+
+`SmartCubeSession` odbiera strumień urządzenia przez jedną subskrypcję i zachowuje
+aktualny stan ścianek, baterię, ostatnią poprawną próbkę GYRO i punkt kalibracji.
+Aktualizuje stan ruchami również wtedy, gdy żaden ekran pomiaru nie jest
+zamontowany. Nowy panel otrzymuje bieżący stan, a nie historię zdarzeń MOVE.
+Kalibracja pozostaje wspólna. Odczyty baterii są odświeżane przez aktywny panel;
+podczas oglądania samych statystyk zachowujemy ostatni znany wynik.
+
+Inspekcja, stoper, ukończone nagranie i niesfinalizowana próba należą do ekranu,
+nie do połączenia. Przy odmontowaniu anulujemy lokalny timer i subskrypcję;
+nowy ekran nie przejmuje próby ani nie zapisuje jej ruchów ponownie. Zmiana
+etapu w trenażerze pozostaje zablokowana podczas aktywnej próby. Utrata Bluetooth
+anuluje aktywny pomiar tak jak wcześniej; ponowne połączenie jest jawne.
+
+Testy sesji i providera sprawdzają jedno połączenie przy nawigacji, odczyt
+zmienionej kostki po powrocie ze statystyk, zachowanie baterii, anulowanie
+starej inspekcji, ręczne i fizyczne rozłączenie oraz spóźnione zakończenie
+łączenia po opuszczeniu modułu.

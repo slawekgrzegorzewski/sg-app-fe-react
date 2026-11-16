@@ -15,6 +15,7 @@ import {formatStopWatchTime} from './StopWatchDisplay';
 import {normalizeGyroQuaternion, orientationFromInitialReference} from './gyro-orientation';
 import {downloadSmartCubeRecording, SmartCubeRecording} from './smart-cube-recording';
 import {CubeQuaternion} from './quaternion';
+import {useSmartCubeSession} from './SmartCubeSessionProvider';
 
 type Props = {
     scramble: string;
@@ -65,6 +66,9 @@ export function SmartCube({
                               buttonColor,
                               compact = false,
                           }: Props) {
+    const sharedSession = useSmartCubeSession();
+    const sharedConnection = sharedSession?.connection ?? null;
+    const session = sharedSession?.session ?? null;
     const [connection, setConnection] = useState<SmartCubeConnection | null>(null);
     const connectionRef = useRef<SmartCubeConnection | null>(null);
     const mounted = useRef(false);
@@ -131,8 +135,10 @@ export function SmartCube({
             && (expectedFacelets ? facelets === expectedFacelets : scrambled);
 
     useEffect(() => {
-        setBatteryLevel(null);
-        setBatteryUnavailable(false);
+        if (!connection) {
+            setBatteryLevel(null);
+            setBatteryUnavailable(false);
+        }
         setShowSettings(false);
         if (!connection?.capabilities.battery) {
             return;
@@ -168,184 +174,194 @@ export function SmartCube({
         }
     }, [inspection, solving, enabled]);
 
+    const attachConnection = useCallback((conn: SmartCubeConnection) => {
+        unsubscribe.current?.();
+        connectionRef.current = conn;
+        setConnection(conn);
+        callbacks.current.onConnectionChange(true);
+        const subscription = conn.events$.subscribe(event => {
+            if ((event.type === 'MOVE' || event.type === 'GYRO') && recording.current) {
+                const snapshot =
+                    event.type === 'GYRO'
+                        ? {
+                            ...event,
+                            quaternion: {...event.quaternion},
+                            ...(event.velocity
+                                ? {
+                                    velocity: {...event.velocity},
+                                }
+                                : {}),
+                        }
+                        : {...event};
+                recording.current.events.push({receivedAt: performance.now(), event: snapshot});
+            }
+            if (event.type === 'DISCONNECT') {
+                unsubscribe.current?.();
+                unsubscribe.current = null;
+                if (startedAt.current !== null || inspecting.current) {
+                    callbacks.current.onCancel();
+                    setError('Połączenie z kostką zostało przerwane. Pomiar odrzucono.');
+                }
+                recording.current = null;
+                connectionRef.current = null;
+                setConnection(null);
+                callbacks.current.onConnectionChange(false);
+                initialSceneOrientation.current = null;
+                latestSceneOrientation.current = null;
+                latestGyroEvent.current = null;
+                callbacks.current.onGyro?.(null);
+                setGyroAvailable(false);
+                callbacks.current.onOrientation?.(null);
+                stateRef.current = null;
+                setFacelets(null);
+                callbacks.current.onFacelets(null);
+                if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
+                inspectionTimer.current = null;
+                inspecting.current = false;
+                scrambledRef.current = false;
+                setScrambled(false);
+                startedAt.current = null;
+            } else if (event.type === 'BATTERY') {
+                if (Number.isFinite(event.batteryLevel) && event.batteryLevel >= 0 && event.batteryLevel <= 100) {
+                    setBatteryLevel(Math.round(event.batteryLevel));
+                    setBatteryUnavailable(false);
+                }
+            } else if (event.type === 'GYRO') {
+                latestGyroEvent.current = {
+                    ...event,
+                    quaternion: {...event.quaternion},
+                    ...(event.velocity ? {velocity: {...event.velocity}} : {}),
+                };
+                callbacks.current.onGyro?.(latestGyroEvent.current);
+                const sceneOrientation = normalizeGyroQuaternion(event.quaternion);
+                if (sceneOrientation) {
+                    if (!latestSceneOrientation.current) setGyroAvailable(true);
+                    latestSceneOrientation.current = sceneOrientation;
+                    initialSceneOrientation.current ??= sceneOrientation;
+                    callbacks.current.onOrientation?.(
+                        orientationFromInitialReference(initialSceneOrientation.current, sceneOrientation)
+                    );
+                }
+            } else if (event.type === 'FACELETS' && isCubeFacelets(event.facelets)) {
+                stateRef.current = event.facelets;
+                setFacelets(event.facelets);
+                callbacks.current.onFacelets(event.facelets);
+                scrambledRef.current = event.facelets !== SOLVED_CUBE;
+                setScrambled(scrambledRef.current);
+            } else if (event.type === 'MOVE' && stateRef.current) {
+                const before = stateRef.current;
+                let next: CubeFacelets;
+                try {
+                    next = applyCubeMove(
+                        before,
+                        parseCubeMove(event.move));
+                } catch {
+                    setError('Nie rozpoznano ruchu kostki. Połącz ją ponownie, aby zsynchronizować stan.');
+                    stateRef.current = null;
+                    setFacelets(null);
+                    callbacks.current.onFacelets(null);
+                    if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
+                    inspectionTimer.current = null;
+                    if (startedAt.current !== null || inspecting.current) callbacks.current.onCancel();
+                    recording.current = null;
+                    inspecting.current = false;
+                    startedAt.current = null;
+                    scrambledRef.current = false;
+                    setScrambled(false);
+                    return;
+                }
+                stateRef.current = next;
+                setFacelets(next);
+                callbacks.current.onFacelets(next);
+                if (before === SOLVED_CUBE && next !== SOLVED_CUBE) scrambledRef.current = true;
+                if (next === SOLVED_CUBE) scrambledRef.current = false;
+                setScrambled(scrambledRef.current);
+                const now = performance.now();
+                const cubeTime = event.cubeTimestamp;
+                if (
+                    (startedAt.current !== null || inspecting.current) &&
+                    typeof cubeTime === 'number' &&
+                    Number.isFinite(cubeTime)
+                ) {
+                    if (cubeStartedAt.current === null) cubeStartedAt.current = cubeTime;
+                    const elapsed =
+                        cubeTime >= cubeStartedAt.current ? Math.round(cubeTime - cubeStartedAt.current) : null;
+                    setCubeElapsed(elapsed);
+                    callbacks.current.onCubeElapsed?.(elapsed);
+                }
+                if (startedAt.current !== null) {
+                    if (callbacks.current.isComplete(next)) {
+                        const elapsed = Math.max(1, Math.round(now - startedAt.current));
+                        startedAt.current = null;
+                        setCompletedRecording(recording.current);
+                        const completed = recording.current;
+                        recording.current = null;
+                        callbacks.current.onStop(elapsed, completed);
+                    }
+                } else if (inspecting.current) {
+                    if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
+                    inspectionTimer.current = null;
+                    inspecting.current = false;
+                    startedAt.current = Math.min(now, inspectionDeadline.current);
+                    if (recording.current) recording.current.solveStartedAt = startedAt.current;
+                    callbacks.current.onStart();
+                    if (callbacks.current.isComplete(next)) {
+                        const elapsed = Math.max(1, Math.round(now - startedAt.current));
+                        startedAt.current = null;
+                        setCompletedRecording(recording.current);
+                        const completed = recording.current;
+                        recording.current = null;
+                        callbacks.current.onStop(elapsed, completed);
+                    }
+                }
+            }
+        });
+        unsubscribe.current = () => subscription.unsubscribe();
+    }, []);
+
     useEffect(() => {
         mounted.current = true;
+        if (sharedConnection) {
+            attachConnection(sharedConnection);
+        }
         return () => {
             mounted.current = false;
             macResolver.current?.(null);
             macResolver.current = null;
             if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
             unsubscribe.current?.();
-            void connectionRef.current?.disconnect();
+            unsubscribe.current = null;
+            if (!session) void connectionRef.current?.disconnect();
         };
-    }, []);
+    }, [session, sharedConnection, attachConnection]);
 
     const connect = async () => {
         setConnecting(true);
         setError(null);
         macCancelled.current = false;
         try {
-            const conn = await connectSmartCube(async (device, isFallbackCall) => {
+            const requestAddress = async (device: BluetoothDevice, isFallbackCall?: boolean) => {
                 if (!isFallbackCall || !mounted.current) return null;
                 setMacInput('');
                 setMacRequest(device.name || 'kostki');
                 return new Promise<string | null>(resolve => {
                     macResolver.current = resolve;
                 });
-            });
+            };
+            const conn = await (session ? session.connect(requestAddress) : connectSmartCube(requestAddress));
             if (!mounted.current) {
-                await conn.disconnect();
+                if (!session) await conn.disconnect();
                 return;
             }
-            connectionRef.current = conn;
-            setConnection(conn);
-            callbacks.current.onConnectionChange(true);
-            const subscription = conn.events$.subscribe(event => {
-                if ((event.type === 'MOVE' || event.type === 'GYRO') && recording.current) {
-                    const snapshot =
-                        event.type === 'GYRO'
-                            ? {
-                                ...event,
-                                quaternion: {...event.quaternion},
-                                ...(event.velocity
-                                    ? {
-                                        velocity: {...event.velocity},
-                                    }
-                                    : {}),
-                            }
-                            : {...event};
-                    recording.current.events.push({receivedAt: performance.now(), event: snapshot});
-                }
-                if (event.type === 'DISCONNECT') {
-                    unsubscribe.current?.();
-                    unsubscribe.current = null;
-                    if (startedAt.current !== null || inspecting.current) {
-                        callbacks.current.onCancel();
-                        setError('Połączenie z kostką zostało przerwane. Pomiar odrzucono.');
-                    }
-                    recording.current = null;
-                    connectionRef.current = null;
-                    setConnection(null);
-                    callbacks.current.onConnectionChange(false);
-                    initialSceneOrientation.current = null;
-                    latestSceneOrientation.current = null;
-                    latestGyroEvent.current = null;
-                    callbacks.current.onGyro?.(null);
-                    setGyroAvailable(false);
-                    callbacks.current.onOrientation?.(null);
-                    stateRef.current = null;
-                    setFacelets(null);
-                    callbacks.current.onFacelets(null);
-                    if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
-                    inspectionTimer.current = null;
-                    inspecting.current = false;
-                    scrambledRef.current = false;
-                    setScrambled(false);
-                    startedAt.current = null;
-                } else if (event.type === 'BATTERY') {
-                    if (Number.isFinite(event.batteryLevel) && event.batteryLevel >= 0 && event.batteryLevel <= 100) {
-                        setBatteryLevel(Math.round(event.batteryLevel));
-                        setBatteryUnavailable(false);
-                    }
-                } else if (event.type === 'GYRO') {
-                    latestGyroEvent.current = {
-                        ...event,
-                        quaternion: {...event.quaternion},
-                        ...(event.velocity ? {velocity: {...event.velocity}} : {}),
-                    };
-                    callbacks.current.onGyro?.(latestGyroEvent.current);
-                    const sceneOrientation = normalizeGyroQuaternion(event.quaternion);
-                    if (sceneOrientation) {
-                        if (!latestSceneOrientation.current) setGyroAvailable(true);
-                        latestSceneOrientation.current = sceneOrientation;
-                        initialSceneOrientation.current ??= sceneOrientation;
-                        callbacks.current.onOrientation?.(
-                            orientationFromInitialReference(initialSceneOrientation.current, sceneOrientation)
-                        );
-                    }
-                } else if (event.type === 'FACELETS' && isCubeFacelets(event.facelets)) {
-                    stateRef.current = event.facelets;
-                    setFacelets(event.facelets);
-                    callbacks.current.onFacelets(event.facelets);
-                    if (event.facelets === SOLVED_CUBE) {
-                        scrambledRef.current = false;
-                        setScrambled(false);
-                    }
-                } else if (event.type === 'MOVE' && stateRef.current) {
-                    const before = stateRef.current;
-                    let next: CubeFacelets;
-                    try {
-                        next = applyCubeMove(
-                            before,
-                            parseCubeMove(event.move));
-                    } catch {
-                        setError('Nie rozpoznano ruchu kostki. Połącz ją ponownie, aby zsynchronizować stan.');
-                        stateRef.current = null;
-                        setFacelets(null);
-                        callbacks.current.onFacelets(null);
-                        if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
-                        inspectionTimer.current = null;
-                        if (startedAt.current !== null || inspecting.current) callbacks.current.onCancel();
-                        recording.current = null;
-                        inspecting.current = false;
-                        startedAt.current = null;
-                        scrambledRef.current = false;
-                        setScrambled(false);
-                        return;
-                    }
-                    stateRef.current = next;
-                    setFacelets(next);
-                    callbacks.current.onFacelets(next);
-                    if (before === SOLVED_CUBE && next !== SOLVED_CUBE) scrambledRef.current = true;
-                    if (next === SOLVED_CUBE) scrambledRef.current = false;
-                    setScrambled(scrambledRef.current);
-                    const now = performance.now();
-                    const cubeTime = event.cubeTimestamp;
-                    if (
-                        (startedAt.current !== null || inspecting.current) &&
-                        typeof cubeTime === 'number' &&
-                        Number.isFinite(cubeTime)
-                    ) {
-                        if (cubeStartedAt.current === null) cubeStartedAt.current = cubeTime;
-                        const elapsed =
-                            cubeTime >= cubeStartedAt.current ? Math.round(cubeTime - cubeStartedAt.current) : null;
-                        setCubeElapsed(elapsed);
-                        callbacks.current.onCubeElapsed?.(elapsed);
-                    }
-                    if (startedAt.current !== null) {
-                        if (callbacks.current.isComplete(next)) {
-                            const elapsed = Math.max(1, Math.round(now - startedAt.current));
-                            startedAt.current = null;
-                            setCompletedRecording(recording.current);
-                            const completed = recording.current;
-                            recording.current = null;
-                            callbacks.current.onStop(elapsed, completed);
-                        }
-                    } else if (inspecting.current) {
-                        if (inspectionTimer.current) clearTimeout(inspectionTimer.current);
-                        inspectionTimer.current = null;
-                        inspecting.current = false;
-                        startedAt.current = Math.min(now, inspectionDeadline.current);
-                        if (recording.current) recording.current.solveStartedAt = startedAt.current;
-                        callbacks.current.onStart();
-                        if (callbacks.current.isComplete(next)) {
-                            const elapsed = Math.max(1, Math.round(now - startedAt.current));
-                            startedAt.current = null;
-                            setCompletedRecording(recording.current);
-                            const completed = recording.current;
-                            recording.current = null;
-                            callbacks.current.onStop(elapsed, completed);
-                        }
-                    }
-                }
-            });
-            unsubscribe.current = () => subscription.unsubscribe();
-            if (conn.capabilities.facelets) await conn.sendCommand({type: 'REQUEST_FACELETS'});
-            else setError('Kostka nie udostępnia odczytu stanu ścianek.');
+            if (!session) {
+                attachConnection(conn);
+            }
+            if (conn.capabilities.facelets && !session) await conn.sendCommand({type: 'REQUEST_FACELETS'});
+            else if (!conn.capabilities.facelets) setError('Kostka nie udostępnia odczytu stanu ścianek.');
         } catch (e) {
             if (mounted.current && !macCancelled.current)
                 setError(e instanceof Error ? e.message : 'Nie udało się połączyć z kostką.');
-            if (connectionRef.current) await connectionRef.current.disconnect();
+            if (!session && connectionRef.current) await connectionRef.current.disconnect();
         } finally {
             if (mounted.current) setConnecting(false);
         }
@@ -503,6 +519,7 @@ export function SmartCube({
                             onClick={() => {
                                 if (!latestSceneOrientation.current) return;
                                 initialSceneOrientation.current = latestSceneOrientation.current;
+                                session?.setGyroReference(latestGyroEvent.current);
                                 callbacks.current.onOrientation?.(
                                     orientationFromInitialReference(
                                         latestSceneOrientation.current,
