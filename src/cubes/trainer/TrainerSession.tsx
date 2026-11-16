@@ -246,7 +246,7 @@ export function TrainerSession({
                         Math.round(durationMs)),
                     actualAlgorithm: moves?.join(' ') ?? null,
                     performedAt: dayjs()
-                        .format('YYYY-MM-DDTHH:mm:ss.SSS'),
+                        .format('YYYY-MM-DD HH:mm:ss.SSS'),
                 },
                 goalReached: finalState
                     ? trainingGoalReached(finalState, stage, deviceCrossFace)
@@ -310,7 +310,14 @@ export function TrainerSession({
         setError(null);
         try {
             await saveAttempt(
-                {variables: {input: completed.input}});
+                {
+                    variables: {
+                        input: {
+                            ...completed.input,
+                            performedAt: completed.input.performedAt.replace('T', ' '),
+                        },
+                    },
+                });
         } catch {
             setError('Nie udało się zapisać próby. Możesz ponowić zapis.');
             return;

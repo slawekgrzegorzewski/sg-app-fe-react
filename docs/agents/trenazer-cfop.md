@@ -104,3 +104,11 @@ do „Bez grupy”; gdy cały etap nie ma grup, filtr i nagłówki są ukryte.
 Nazwy oraz przypisania pochodzą z katalogu backendu przez `CubeTrainerCase.groupName`.
 OLL zachowuje 15 grup z katalogu JPerma, F2L sześć podgrup Basic F2L.
 Nie oznaczają one obowiązkowej kolejności nauki.
+
+## Data zapisu próby
+
+`performedAt` wysyłamy w formacie scalara GraphQL `LocalDateTime` używanym przez
+backend: `YYYY-MM-DD HH:mm:ss.SSS`, bez strefy czasowej, ze spacją między datą
+a godziną. ISO z separatorem `T` jest przez ten scalar odrzucane przed wejściem
+do serwisu. Ponowienie zachowuje oryginalny czas i UUID próby; na granicy zapisu
+normalizujemy także separator starszej próby pozostającej w stanie komponentu.
