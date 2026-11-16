@@ -1,4 +1,6 @@
 import {CubeFacelets} from './cube-facelets';
+import {CubeMove, parseCubeMove} from './cube-move';
+import {CUBE_FACES} from './cube-pieces';
 import type {Alg} from 'cubing/alg';
 import type {PuzzleID, TwistyPlayer, TwistyPlayerConfig} from 'cubing/twisty';
 import type {CubingEventId} from './cube-types';
@@ -67,8 +69,33 @@ export async function createCubingFaceletTransformation(facelets: CubeFacelets, 
     const [{KTransformation}, {puzzles}] = await Promise.all([kpuzzleModulePromise, loadPuzzlesModule()]);
     const transformation = new KTransformation(await puzzles['3x3x3'].kpuzzle(), data);
     return initialCubeOrientation
-        ? transformation.kpuzzle.algToTransformation(initialCubeOrientation).applyTransformation(transformation)
+        ? transformation.applyTransformation(
+                transformation.kpuzzle.algToTransformation(initialCubeOrientation))
         : transformation;
+}
+
+export async function createCubingDisplayMove(
+        move: CubeMove,
+        initialCubeOrientation: string): Promise<CubeMove> {
+    if (!initialCubeOrientation) {
+        return move;
+    }
+    const {puzzles} = await loadPuzzlesModule();
+    const kpuzzle = await puzzles['3x3x3'].kpuzzle();
+    const orientation = kpuzzle.algToTransformation(initialCubeOrientation);
+    const transformedMove = orientation.invert()
+            .applyTransformation(
+                    kpuzzle.moveToTransformation(move))
+            .applyTransformation(orientation);
+    const displayMove = CUBE_FACES
+            .map(
+                    face => parseCubeMove(`${face}${move.slice(1)}`))
+            .find(
+                    candidate => kpuzzle.moveToTransformation(candidate).isIdentical(transformedMove));
+    if (!displayMove) {
+        throw new Error('Nie można odwzorować ruchu w orientacji wizualizacji.');
+    }
+    return displayMove;
 }
 
 export async function deriveCubingScramble(facelets: CubeFacelets): Promise<string> {

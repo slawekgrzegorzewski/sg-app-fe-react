@@ -1,11 +1,12 @@
 import {CubeFacelets} from './cube-facelets';
 import {act, render, screen, waitFor} from '@testing-library/react';
 import {CubeType} from '../types';
-import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
+import {createCubingDisplayMove, createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
 import {CubingVisualizer} from './CubingVisualizer';
 import {applyCubeMove, SOLVED_CUBE} from './smart-cube-state';
 
 jest.mock('./cubing-api', () => ({
+    createCubingDisplayMove: jest.fn(),
     createCubingTwistyPlayer: jest.fn(),
     createCubingFaceletTransformation: jest.fn(),
 }));
@@ -27,6 +28,7 @@ describe('CubingVisualizer', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         createTransformationMock.mockReset();
+        (createCubingDisplayMove as jest.Mock).mockImplementation(move => Promise.resolve(move));
         createCubingTwistyPlayerMock.mockResolvedValue(createPlayer());
     });
 
@@ -57,6 +59,30 @@ describe('CubingVisualizer', () => {
         rerender(<CubingVisualizer cubeType={CubeType.Three} scramble="R U" initialCubeOrientation="z2"/>);
         expect(player).toHaveProperty('experimentalSetupAlg', 'z2 R U');
         expect(createCubingTwistyPlayerMock).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+        ['D', 'U'],
+        ["D'", "U'"],
+        ['D2', 'U2'],
+        ['U', 'D'],
+        ['R', 'L'],
+    ] as const)('animates device %s as display %s with yellow on top', async (deviceMove, displayMove) => {
+        const player = createPlayer();
+        createCubingTwistyPlayerMock.mockResolvedValue(player);
+        createTransformationMock.mockImplementation(state => Promise.resolve({state}));
+        (createCubingDisplayMove as jest.Mock).mockResolvedValue(displayMove);
+        const {rerender} = render(
+            <CubingVisualizer cubeType={CubeType.Three} scramble="" initialCubeOrientation="z2"
+                facelets={SOLVED_CUBE} />);
+        await waitFor(() => expect(createTransformationMock).toHaveBeenCalledWith(SOLVED_CUBE, 'z2'));
+        rerender(
+            <CubingVisualizer cubeType={CubeType.Three} scramble="" initialCubeOrientation="z2"
+                facelets={applyCubeMove(SOLVED_CUBE, deviceMove)} />);
+        await waitFor(() => expect(player.play).toHaveBeenCalledTimes(1));
+        expect(createCubingDisplayMove).toHaveBeenCalledWith(deviceMove, 'z2');
+        expect(player).toHaveProperty('alg', displayMove);
+        expect(player.experimentalModel.setupTransformation.set).toHaveBeenLastCalledWith({state: SOLVED_CUBE});
     });
 
     it('shows the scramble, keeps view rotation and disables move input', async () => {

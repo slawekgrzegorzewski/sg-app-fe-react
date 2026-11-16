@@ -4,7 +4,7 @@ import {useEffect, useRef, useState} from 'react';
 import type {RefObject} from 'react';
 import {CubeType} from '../types';
 import {getCubeTypeOption} from './cube-types';
-import {createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
+import {createCubingDisplayMove, createCubingFaceletTransformation, createCubingTwistyPlayer} from './cubing-api';
 import {findCubeMove} from './smart-cube-state';
 import type {CubeQuaternion} from './quaternion';
 
@@ -93,11 +93,14 @@ export function CubingVisualizer({
             const transformationPromise = initialCubeOrientation
                 ? createCubingFaceletTransformation(state, initialCubeOrientation)
                 : createCubingFaceletTransformation(state);
-            transformationPromise
-                .then(transformation => {
+            const movePromise = move && initialCubeOrientation
+                ? createCubingDisplayMove(move, initialCubeOrientation)
+                : Promise.resolve(move);
+            Promise.all([transformationPromise, movePromise])
+                .then(([transformation, displayMove]) => {
                     if (disposed) return;
                     player.pause();
-                    player.alg = move ?? '';
+                    player.alg = displayMove ?? '';
                     player.experimentalSetupAlg = '';
                     player.experimentalModel.setupTransformation.set(transformation);
                     if (move) {

@@ -42,8 +42,14 @@ Stan odtwarza lokalne `cubing.js`; konwersja do URFDLB normalizuje kolory wzglę
 od odwróconej ułożonej kostki (`z2` przed scramble'em): żółta ściana jest u góry,
 biały krzyż na dole, a zielona ściana z przodu. Z prawej jest pomarańczowa,
 z lewej czerwona, z tyłu niebieska. Miniatury używają tej samej palety.
-To samo ustawienie stosujemy do stanu ze smart kostki;
-nie zmienia ono algorytmu mieszania ani zapisywanej sekwencji ruchów.
+Dla smart kostki obrót widoku nakładamy po przekształceniu surowego stanu,
+a ruch animacji przeliczamy do obróconego układu przez `R⁻¹ · M · R`.
+Przy `z2` ruch urządzenia D (żółta ścianka) staje się U wizualizacji,
+U staje się D, R i L zamieniają się miejscami, a F i B pozostają bez zmian.
+Końcówki apostrofu i półobrotu zachowujemy. Ten sam przelicznik obowiązuje
+przy synchronizacji pełnego stanu i animacji pojedynczego ruchu; inaczej
+animacja i jej stan końcowy mogą wskazywać inną warstwę.
+Nie zmienia to surowych ruchów urządzenia ani zapisywanej sekwencji.
 Wizualizacja pokazuje stan początkowy, a po połączeniu smart kostki jej aktualne ścianki.
 
 Dla CROSS aplikacja generuje mieszanie 3×3, a użytkownik wybiera ściankę krzyża.
