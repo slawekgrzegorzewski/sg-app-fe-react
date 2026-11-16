@@ -52,6 +52,16 @@ animacja i jej stan końcowy mogą wskazywać inną warstwę.
 Nie zmienia to surowych ruchów urządzenia ani zapisywanej sekwencji.
 Wizualizacja pokazuje stan początkowy, a po połączeniu smart kostki jej aktualne ścianki.
 
+Scramble katalogowy `A` jest zapisany w układzie żółta U / biała D. Przed
+porównaniem ze stanem urządzenia przeliczamy go jako `z2 A z2`; oba obroty
+anulują zmianę położenia środków. W tym surowym układzie urządzenia biały krzyż
+jest na U, więc F2L, OLL i PLL sprawdzają cel względem U i taką ściankę zapisują
+w próbie. Wizualizacja i tekst algorytmu nadal używają układu katalogowego.
+CROSS zachowuje wybór ścianki i dotychczasowy układ urządzenia.
+Dla zadanej konfiguracji trenażera wystarcza zgodność aktualnych ścianek
+ze stanem docelowym: po połączeniu z już wymieszaną kostką nie wymagamy
+ponownego zaobserwowania wszystkich ruchów mieszania.
+
 Dla CROSS aplikacja generuje mieszanie 3×3, a użytkownik wybiera ściankę krzyża.
 Nie ma jeszcze katalogu CROSS ani oceny przez agenta.
 

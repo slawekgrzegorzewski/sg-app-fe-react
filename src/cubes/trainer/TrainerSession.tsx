@@ -30,7 +30,7 @@ import {
     SaveCubeTrainerAttemptMutationVariables,
 } from '../../types';
 import {CubingVisualizer} from '../CubingVisualizer';
-import {TRAINER_CUBE_ORIENTATION} from './trainer-cube-orientation';
+import {TRAINER_CUBE_ORIENTATION, TRAINER_DEVICE_CROSS_FACE, trainerScrambleInDeviceFrame} from './trainer-cube-orientation';
 import {SmartCube} from '../SmartCube';
 import {StopWatch} from '../StopWatch';
 import {StopWatchDisplay} from '../StopWatchDisplay';
@@ -90,6 +90,7 @@ export function TrainerSession({
     const workspaceRef = useViewportWorkspace();
     const [scramble, setScramble] = useState(setupAlgorithm ?? '');
     const [crossFace, setCrossFace] = useState<CrossFace>('D');
+    const deviceCrossFace = stage === CfopStage.Cross ? crossFace : TRAINER_DEVICE_CROSS_FACE;
     const [expectedFacelets, setExpectedFacelets] = useState<CubeFacelets | null>(null);
     const [facelets, setFacelets] = useState<CubeFacelets | null>(null);
     const [connected, setConnected] = useState(false);
@@ -175,13 +176,16 @@ export function TrainerSession({
             }
             let disposed = false;
             setError(null);
-            faceletsFromCubingAlgorithm(scramble)
+            faceletsFromCubingAlgorithm(
+                    stage === CfopStage.Cross
+                            ? scramble
+                            : trainerScrambleInDeviceFrame(scramble))
                 .then(
                     state => {
                         if (disposed) {
                             return;
                         }
-                        if (trainingGoalReached(state, stage, crossFace)) {
+                        if (trainingGoalReached(state, stage, deviceCrossFace)) {
                             setError(
                                 'Cel ćwiczenia jest już osiągnięty po mieszaniu. Wybierz inny scramble lub kolor krzyża.');
                         } else {
@@ -201,7 +205,7 @@ export function TrainerSession({
         [
             scramble,
             stage,
-            crossFace,
+            deviceCrossFace,
         ]);
 
     const start = () => {
@@ -236,7 +240,7 @@ export function TrainerSession({
                         : CubeTrainerDevice.Manual,
                     algorithmPublicId: algorithmPublicId ?? null,
                     scramble,
-                    crossFace,
+                    crossFace: deviceCrossFace,
                     durationMs: Math.max(
                         1,
                         Math.round(durationMs)),
@@ -245,7 +249,7 @@ export function TrainerSession({
                         .format('YYYY-MM-DDTHH:mm:ss.SSS'),
                 },
                 goalReached: finalState
-                    ? trainingGoalReached(finalState, stage, crossFace)
+                    ? trainingGoalReached(finalState, stage, deviceCrossFace)
                     : null,
             });
         changePhase('review');
@@ -320,10 +324,10 @@ export function TrainerSession({
     };
 
     const goalReached = useCallback(
-        (state: CubeFacelets) => trainingGoalReached(state, stage, crossFace),
+        (state: CubeFacelets) => trainingGoalReached(state, stage, deviceCrossFace),
         [
             stage,
-            crossFace,
+            deviceCrossFace,
         ]);
     const busy = phase !== 'idle';
 

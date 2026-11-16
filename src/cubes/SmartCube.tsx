@@ -127,6 +127,8 @@ export function SmartCube({
         }
     }, [scramble, expectedFacelets]);
     const progress = facelets ? states.lastIndexOf(facelets) : -1;
+    const scrambleReady = !!facelets && facelets !== SOLVED_CUBE
+            && (expectedFacelets ? facelets === expectedFacelets : scrambled);
 
     useEffect(() => {
         setBatteryLevel(null);
@@ -361,7 +363,7 @@ export function SmartCube({
             !enabled ||
             inspecting.current ||
             !connectionRef.current ||
-            !scrambledRef.current ||
+            (!expectedFacelets && !scrambledRef.current) ||
             !stateRef.current ||
             stateRef.current === SOLVED_CUBE
         )
@@ -545,13 +547,7 @@ export function SmartCube({
                     color={buttonColor}
                     variant="contained"
                     onClick={confirmScramble}
-                    disabled={
-                        !enabled ||
-                        !scrambled ||
-                        !facelets ||
-                        facelets === SOLVED_CUBE ||
-                        (!!expectedFacelets && facelets !== expectedFacelets)
-                    }
+                    disabled={!enabled || !scrambleReady}
                 >
                     Scramble gotowy — rozpocznij inspekcję
                 </Button>
@@ -563,19 +559,25 @@ export function SmartCube({
                         : inspection
                             ? 'Inspekcja: pierwszy ruch lub upływ 15 sekund uruchomi stoper.'
                             : solving
-                                ? 'Układaj kostkę — stoper zatrzyma się po jej ułożeniu.'
-                                : !scrambled
-                                    ? 'Ułóż kostkę, a następnie wykonaj scramble.'
-                                    : states.length < 2
-                                        ? 'Potwierdź gotowość scramble’a.'
-                                        : progress === states.length - 1
-                                            ? 'Wykonano podany scramble. Potwierdź jego gotowość.'
-                                            : progress >= 0
-                                                ? `Scramble: ${progress} / ${states.length - 1} ruchów. Możesz też potwierdzić własny scramble.`
-                                                : 'Własny scramble — potwierdź gotowość lub kontynuuj mieszanie.'}
+                                ? expectedFacelets
+                                    ? 'Układaj kostkę — stoper zatrzyma się po osiągnięciu celu ćwiczenia.'
+                                    : 'Układaj kostkę — stoper zatrzyma się po jej ułożeniu.'
+                                : expectedFacelets
+                                    ? scrambleReady
+                                        ? 'Wykonano podany scramble. Potwierdź jego gotowość.'
+                                        : 'Wykonaj podane mieszanie, aby przygotować przypadek.'
+                                    : !scrambled
+                                        ? 'Ułóż kostkę, a następnie wykonaj scramble.'
+                                        : states.length < 2
+                                            ? 'Potwierdź gotowość scramble’a.'
+                                            : progress === states.length - 1
+                                                ? 'Wykonano podany scramble. Potwierdź jego gotowość.'
+                                                : progress >= 0
+                                                    ? `Scramble: ${progress} / ${states.length - 1} ruchów. Możesz też potwierdzić własny scramble.`
+                                                    : 'Własny scramble — potwierdź gotowość lub kontynuuj mieszanie.'}
                 </Typography>
             )}
-            {connection && !isTouchDevice && enabled && scrambled && facelets && facelets !== SOLVED_CUBE && (
+            {connection && !isTouchDevice && enabled && scrambleReady && (
                 <Typography color="text.secondary" variant="body2">
                     Naciśnij spację, aby potwierdzić scramble i rozpocząć inspekcję.
                 </Typography>

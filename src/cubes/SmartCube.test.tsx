@@ -15,7 +15,8 @@ jest.mock('./smart-cube-recording', () => ({downloadSmartCubeRecording: jest.fn(
 async function setup(
     scramble = 'R U',
     isComplete?: (facelets: CubeFacelets) => boolean,
-    batteryOptions: { supported?: boolean; fails?: boolean } = {}) {
+    batteryOptions: { supported?: boolean; fails?: boolean } = {},
+    expectedFacelets?: CubeFacelets) {
     const events = new Subject<SmartCubeEvent>();
     const disconnect = jest.fn().mockResolvedValue(undefined);
     const sendCommand = jest.fn().mockImplementation(command =>
@@ -50,6 +51,7 @@ async function setup(
                     inspection={phase === 'inspection'}
                     solving={phase === 'solving'}
                     isComplete={isComplete}
+                    expectedFacelets={expectedFacelets}
                     onInspection={promise => {
                         void promise.then(onScrambleCaptured);
                         setPhase('inspection');
@@ -426,4 +428,20 @@ test('błąd odczytu baterii nie zrywa połączenia ze smart kostką', async () 
     cube.move('R');
     expect(cube.onFacelets).toHaveBeenLastCalledWith(
         applyCubeMove(SOLVED_CUBE, 'R'));
+});
+
+
+test('po połączeniu przyjmuje już przygotowany poprawny stan trenażera i odrzuca inny stan', async () => {
+    const expected = applyCubeMove(SOLVED_CUBE, 'L');
+    const cube = await setup('L', undefined, {}, expected);
+    cube.facelets(applyCubeMove(SOLVED_CUBE, 'R'));
+    expect(screen.getByRole('button', {name: 'Scramble gotowy — rozpocznij inspekcję'})).toBeDisabled();
+    cube.facelets(expected);
+    expect(screen.getByText('Wykonano podany scramble. Potwierdź jego gotowość.')).toBeInTheDocument();
+    expect(screen.queryByText('Ułóż kostkę, a następnie wykonaj scramble.')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Scramble gotowy — rozpocznij inspekcję'})).toBeEnabled();
+    cube.confirm();
+    cube.move("L'");
+    expect(cube.onStart).toHaveBeenCalledTimes(1);
+    expect(cube.onStop).toHaveBeenCalledTimes(1);
 });
