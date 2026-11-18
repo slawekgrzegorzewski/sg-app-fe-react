@@ -127,22 +127,13 @@ Przełączenie CROSS/F2L/OLL/PLL oraz przejście między stronami Kostki i Trena
 zachowuje połączenie. Nowa sesja ćwiczenia przejmuje aktualny stan fizycznej
 kostki, ale wymaga przygotowania własnego przypadku i osobnego rozpoczęcia próby.
 
-## Feedback AI po próbie CROSS
+## Nagrania CROSS do oceny przez MCP
 
-Po zakończeniu smart próby CROSS klient automatycznie wywołuje
-`saveCubeTrainerAttempt`, przekazując pełne `recording` v1. Zachowuje UUID
-przy ponowieniu nieudanego zapisu. Po zapisaniu próby panel wyniku pokazuje
-oczekiwanie na ocenę, pobiera `cubeTrainerAttempt` co 2 sekundy i zatrzymuje
-odpytywanie po zakończeniu lub błędzie. Można od razu wybrać „Kolejna próba”;
-ocena nadal powstaje na serwerze i pozostaje dostępna w historii.
+Smart CROSS zapisuje się automatycznie po zakończeniu, razem z pełnym
+`recording` v1. Ponowienie nieudanego zapisu zachowuje UUID. Po zapisie
+można rozpocząć kolejną próbę; historia pokazuje wynik i wykonaną sekwencję.
+Frontend nie odpytuje o ocenę i nie uruchamia jej ponownie.
 
-Historia odświeża się co 3 sekundy tylko wtedy, gdy zawiera zadania oczekujące
-lub wykonywane. Refetch nie demontuje bieżącej sesji ani nie resetuje stopera.
-Nieudana ocena udostępnia „Ponów ocenę”, także po ponownym wejściu w historię.
-Feedback wyświetlamy jako tekst z zachowaniem nowych linii, bez interpretowania
-HTML. Zwykła kostka i starsze próby bez nagrania nie otrzymują wymyślonych
-wskazówek dotyczących ruchów. Klucz API pozostaje w backendzie.
-
-Kontrakt danych, prompt, model i konfigurację opisuje dokument backendu
-podlinkowany na początku strony. Weryfikacja lokalna korzysta z atrap API;
-rzeczywista ocena wymaga aktywacji integracji i klucza.
+Ocenę można wykonać w kliencie MCP, pobierając listę własnych prób i szczegóły
+wybranej próby z nagraniem oraz analizą. Kontrakt utrzymuje
+[backend](../../../sg-app/docs/agents/serwer-mcp.md#narzędzia-cross).

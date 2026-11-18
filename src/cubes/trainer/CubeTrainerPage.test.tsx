@@ -30,8 +30,6 @@ beforeEach(() => {
         data: {cubeTrainerCases: cases, cubeTrainerAttempts: []},
         loading: false,
         refetch: jest.fn(),
-        startPolling: jest.fn(),
-        stopPolling: jest.fn(),
     });
     (useMutation as unknown as jest.Mock).mockReturnValue([jest.fn(), {loading: false}]);
 });
@@ -95,8 +93,6 @@ test('wybiera fazę z nagłówka także przy pustym katalogu', async () => {
         data: {cubeTrainerCases: [], cubeTrainerAttempts: []},
         loading: false,
         refetch: jest.fn(),
-        startPolling: jest.fn(),
-        stopPolling: jest.fn(),
     });
     render(<CubeTrainerPage/>);
     expect(screen.queryByRole('heading', {name: 'Trenażer CFOP'})).not.toBeInTheDocument();

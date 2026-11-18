@@ -1,7 +1,6 @@
 import type {ReactNode} from 'react';
 import {alpha} from '@mui/material/styles';
 import {useViewportWorkspace} from '../use-viewport-workspace';
-import {TrainerFeedback} from './TrainerFeedback';
 import {parseCubeMove} from '../cube-move';
 import {CubeFacelets} from '../cube-facelets';
 import {useCallback, useEffect, useRef, useState} from 'react';
@@ -544,7 +543,6 @@ export function TrainerSession({
                                             Wykonane ruchy: {completed.input.actualAlgorithm}
                                         </Typography>
                                     )}
-                                {savedAttemptId && <TrainerFeedback publicId={savedAttemptId}/>}
                                 <Stack direction="column" spacing={1}>
                                     {savedAttemptId ? (
                                         <Button variant="contained" onClick={reset}>Kolejna próba</Button>

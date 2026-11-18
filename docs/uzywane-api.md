@@ -196,10 +196,11 @@ Przy dodawaniu lub usuwaniu połączenia sieciowego należy zaktualizować ten d
 - bezpośrednie wywołania `fetch`, `XMLHttpRequest`, klientów HTTP, WebSocket i `EventSource`;
 - zewnętrzne skrypty oraz usługi ładowane w czasie działania aplikacji.
 
-### Ocena trenażera CROSS
+### Dane trenażera CROSS
 
 `saveCubeTrainerAttempt` przesyła opcjonalne pełne nagranie smart próby CROSS.
-`cubeTrainerAttempt(publicId)` pobiera status i utrwalony feedback AI, a
-`retryCubeTrainerFeedback(publicId)` ponawia nieudaną ocenę. Historia
-`cubeTrainerAttempts` zawiera feedback i jego status. Klient rozmawia wyłącznie
-z GraphQL Accountant; wywołania OpenAI i klucz API obsługuje backend.
+Historia korzysta z `cubeTrainerAttempts`. Frontend nie odpytuje o ocenę
+ani nie wysyła żądań jej ponowienia. Backend zapisuje nagranie i analizę CFOP;
+lista i szczegóły do oceny są udostępnione klientom MCP. Nowe zapytania
+`cubeTrainerCrossAttempts` i `cubeTrainerCrossAttempt` należą do schematu,
+ale frontend ich nie wywołuje.

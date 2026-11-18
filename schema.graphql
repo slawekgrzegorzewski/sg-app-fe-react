@@ -38,6 +38,8 @@ type Query {
     cubeTrainerCases(stage: CfopStage!): [CubeTrainerCase!]!
     cubeTrainerAttempts(stage: CfopStage!): [CubeTrainerAttempt!]!
     cubeTrainerAttempt(publicId: UUID!): CubeTrainerAttempt!
+    cubeTrainerCrossAttempts(page: Int = 0, pageSize: Int = 20): CubeTrainerCrossAttemptPage!
+    cubeTrainerCrossAttempt(publicId: UUID!): CubeTrainerCrossAttemptData!
 
     strengthTraining: StrengthTrainingQuery!
 }
@@ -125,7 +127,6 @@ type Mutation{
     saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
     preferCubeTrainerAlgorithm(algorithmPublicId: UUID!): UUID!
     saveCubeTrainerAttempt(input: SaveCubeTrainerAttemptInput!): CubeTrainerAttempt!
-    retryCubeTrainerFeedback(publicId: UUID!): CubeTrainerAttempt!
 
     strengthTraining: StrengthTrainingMutation!
 }
@@ -1076,14 +1077,6 @@ type CubeTrainerAlgorithm {
     sourceUrl: String
 }
 
-enum CubeTrainerFeedbackStatus {
-    NOT_REQUESTED
-    PENDING
-    RUNNING
-    COMPLETED
-    FAILED
-}
-
 type CubeTrainerAttempt {
     publicId: UUID!
     stage: CfopStage!
@@ -1100,12 +1093,6 @@ type CubeTrainerAttempt {
     quarterTurnCount: Int
     actualAlgorithm: String
     performedAt: LocalDateTime!
-    feedbackStatus: CubeTrainerFeedbackStatus!
-    feedback: String
-    feedbackError: String
-    feedbackModel: String
-    feedbackPromptVersion: String
-    feedbackUpdatedAt: LocalDateTime
 }
 
 input SaveCubeTrainerAttemptInput {
@@ -1213,4 +1200,19 @@ input SetAllowedStrengthTrainingVariantValuesInput {
     familyDimensionPublicId: UUID!
     variantValuePublicIds: [UUID!]!
     defaultValuePublicId: UUID
+}
+
+type CubeTrainerCrossAttemptPage {
+    attempts: [CubeTrainerAttempt!]!
+    page: Int!
+    pageSize: Int!
+    hasMore: Boolean!
+}
+
+type CubeTrainerCrossAttemptData {
+    attempt: CubeTrainerAttempt!
+    recording: String
+    cfopAnalysis: String
+    crossOptimality: String
+    dataWarnings: [String!]!
 }

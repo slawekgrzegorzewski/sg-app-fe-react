@@ -13,7 +13,6 @@ jest.mock('dayjs', () => {
 jest.mock('../cubing-api', () => ({faceletsFromCubingAlgorithm: jest.fn()}));
 jest.mock('../CubingVisualizer', () => ({CubingVisualizer: () => <div/>}));
 jest.mock('../cubing-scramble', () => ({generateCubingScramble: () => Promise.resolve('R')}));
-jest.mock('./TrainerFeedback', () => ({TrainerFeedback: ({publicId}: any) => <div>Ocena {publicId}</div>}));
 let mockSmartProps: any;
 let mockPreparedState = SOLVED_CUBE;
 jest.mock('../SmartCube', () => ({
@@ -134,7 +133,7 @@ const mockRecording = {
     events: [{receivedAt: 2000, event: {type: 'MOVE', move: "R'", timestamp: 2000, serial: 1}}],
 };
 
-test('automatycznie zapisuje CROSS z pełnym nagraniem i pokazuje ocenę bez ponownego zapisu', async () => {
+test('automatycznie zapisuje CROSS z pełnym nagraniem bez ponownego zapisu', async () => {
     Object.defineProperty(globalThis, 'crypto', {
         configurable: true,
         value: {randomUUID: () => '00000000-0000-4000-8000-000000000002'},
@@ -150,7 +149,7 @@ test('automatycznie zapisuje CROSS z pełnym nagraniem i pokazuje ocenę bez pon
     await act(async () => {
         mockSmartProps.onStop(1500, mockRecording);
     });
-    expect(await screen.findByText('Ocena 00000000-0000-4000-8000-000000000002')).toBeInTheDocument();
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     expect(save).toHaveBeenCalledTimes(1);
     const input = save.mock.calls[0][0].variables.input;
     expect(JSON.parse(input.recording)).toEqual(mockRecording);
