@@ -24,6 +24,7 @@ import {
     Typography,
 } from '@mui/material';
 import dayjs from 'dayjs';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
 import {
     CfopStage,
@@ -50,6 +51,8 @@ export function CubeTrainerPage() {
     const [algorithmId, setAlgorithmId] = useState('');
     const [panel, setPanel] = useState<'catalog' | 'history'>('catalog');
     const [busy, setBusy] = useState(false);
+    const [refreshingHistory, setRefreshingHistory] = useState(false);
+    const [historyRefreshError, setHistoryRefreshError] = useState<string | null>(null);
     const [preferenceError, setPreferenceError] = useState<string | null>(null);
     const {
         data,
@@ -80,6 +83,18 @@ export function CubeTrainerPage() {
         attempt => stage === CfopStage.Cross || attempt.casePublicId === trainerCase?.publicId
     );
 
+    const refreshHistory = async () => {
+        setRefreshingHistory(true);
+        setHistoryRefreshError(null);
+        try {
+            await refetch();
+        } catch {
+            setHistoryRefreshError('Nie udało się odświeżyć historii. Spróbuj ponownie.');
+        } finally {
+            setRefreshingHistory(false);
+        }
+    };
+
     const prefer = async () => {
         if (!algorithm) return;
         setPreferenceError(null);
@@ -101,6 +116,7 @@ export function CubeTrainerPage() {
                 setGroupName('__all__');
                 setAlgorithmId('');
                 setPreferenceError(null);
+                setHistoryRefreshError(null);
                 setPanel('catalog');
             }}
         />
@@ -335,7 +351,19 @@ export function CubeTrainerPage() {
                 )
                 : (
                     <Stack spacing={2}>
-                        <Typography variant="h4">Historia prób</Typography>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                            <Typography variant="h4">Historia prób</Typography>
+                            <Button
+                                    size="small"
+                                    color="inherit"
+                                    startIcon={<RefreshIcon/>}
+                                    disabled={loading || refreshingHistory}
+                                    onClick={() => void refreshHistory()}
+                            >
+                                {refreshingHistory ? 'Odświeżanie…' : 'Odśwież'}
+                            </Button>
+                        </Stack>
+                        {historyRefreshError && <Alert severity="error">{historyRefreshError}</Alert>}
                         <Typography variant="body2" color="text.secondary">
                             Ostatnie 100 zapisanych prób etapu; lista pokazuje wybrany przypadek. Średnie
                             obejmują widoczną historię.
@@ -384,6 +412,11 @@ export function CubeTrainerPage() {
                                                 </TableRow>
                                                 <TableRow>
                                                     <TableCell colSpan={2} sx={{overflowWrap: 'anywhere'}}>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Mieszanie: <Typography component="span" variant="body2" sx={{fontFamily: 'monospace'}}>
+                                                                {attempt.scramble}
+                                                            </Typography>
+                                                        </Typography>
                                                         {attempt.algorithmSnapshot && (
                                                             <Typography
                                                                 variant="body2">Wariant: {attempt.algorithmSnapshot}</Typography>

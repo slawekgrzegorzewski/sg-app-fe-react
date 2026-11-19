@@ -303,6 +303,7 @@ export function TrainerSession({
                 if (
                     event.code !== 'Space'
                     || event.repeat
+                    || document.querySelector('[role="dialog"][aria-modal="true"]')
                     || (target instanceof HTMLElement
                         && (target.isContentEditable
                             || !!target.closest('input, textarea, select, button, [role="combobox"], [role="dialog"]')))

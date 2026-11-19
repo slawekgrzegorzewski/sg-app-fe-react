@@ -18,6 +18,11 @@ a także katalog lub historia prób. Prawy panel ma zakładki „Przypadki i alg
 i „Historia”; dla CROSS pokazuje samą historię. Przełączenie zakładki nie zmienia
 przypadku, wariantu ani filtra grupy. Długie listy przewijają się w panelu.
 Historia zachowuje czas, datę, tryb, liczniki i sekwencje w zwartym układzie.
+Każdy wpis pokazuje zapisane początkowe mieszanie (`scramble`), przed wariantem
+i wykonaną sekwencją; dotyczy to wszystkich etapów oraz obu rodzajów kostki.
+Przycisk „Odśwież” pobiera historię bez przeładowania strony i restartu sesji
+kostki. Podczas pobierania jest zablokowany i pokazuje „Odświeżanie…”; błąd
+pozwala ponowić żądanie.
 
 Wysokość obszaru pod paskiem aplikacji jest obliczana przez wspólny
 `useViewportWorkspace`, używany również na stronie układania. Kostka korzysta

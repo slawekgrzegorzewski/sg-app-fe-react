@@ -166,10 +166,11 @@ test('spacja podczas czytania dialogu nie uruchamia stopera', async () => {
     const onBusyChange = jest.fn();
     render(<>
         <TrainerSession stage={CfopStage.Cross} mode={CubeTrainerMode.Train} onSaved={jest.fn()} onBusyChange={onBusyChange}/>
-        <div role="dialog" tabIndex={-1}>Ocena próby</div>
+        <div role="dialog" aria-modal="true" tabIndex={-1}>Ocena próby</div>
     </>);
     await waitFor(() => expect(screen.getByRole('button', {name: 'Start'})).toBeEnabled());
     onBusyChange.mockClear();
+    fireEvent.keyDown(window, {code: 'Space'});
     fireEvent.keyDown(screen.getByRole('dialog'), {code: 'Space'});
     expect(screen.getByRole('button', {name: 'Start'})).toBeEnabled();
     expect(onBusyChange).not.toHaveBeenCalled();

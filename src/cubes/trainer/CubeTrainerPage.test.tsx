@@ -1,4 +1,4 @@
-import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import {useMutation, useQuery} from '@apollo/client/react';
 import {CfopStage} from '../../types';
 import {CubeTrainerPage} from './CubeTrainerPage';
@@ -124,4 +124,35 @@ test('pokazuje ikonę tylko przy niepustej ocenie CROSS i otwiera właściwą oc
     expect(dialog.getByRole('heading', {name: 'Mniej ruchów'})).toBeInTheDocument();
     expect(dialog.getByText('zbędny ruch').tagName).toBe('STRONG');
     expect(dialog.getByText(/19.11.2026 · 16:15/)).toBeInTheDocument();
+});
+
+
+test('odświeża historię lokalnie i blokuje ponowne żądanie podczas pobierania', async () => {
+    let finish: () => void = () => {};
+    const refetch = jest.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    (useQuery as unknown as jest.Mock).mockReturnValue({
+        data: {cubeTrainerCases: [], cubeTrainerAttempts: []}, loading: false, refetch,
+    });
+    render(<CubeTrainerPage/>);
+    const session = screen.getByRole('button', {name: 'Ćwiczenie CROSS'});
+    fireEvent.click(screen.getByRole('button', {name: 'Odśwież'}));
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', {name: 'Odświeżanie…'})).toBeDisabled();
+    expect(screen.getByRole('button', {name: 'Ćwiczenie CROSS'})).toBe(session);
+    await act(async () => finish());
+    expect(screen.getByRole('button', {name: 'Odśwież'})).toBeEnabled();
+    expect(screen.getByRole('button', {name: 'Ćwiczenie CROSS'})).toBe(session);
+});
+
+test('po błędzie odświeżania pokazuje komunikat i pozwala ponowić pobranie', async () => {
+    const refetch = jest.fn().mockRejectedValueOnce(new Error('Offline')).mockResolvedValueOnce({});
+    (useQuery as unknown as jest.Mock).mockReturnValue({
+        data: {cubeTrainerCases: [], cubeTrainerAttempts: []}, loading: false, refetch,
+    });
+    render(<CubeTrainerPage/>);
+    fireEvent.click(screen.getByRole('button', {name: 'Odśwież'}));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się odświeżyć historii.');
+    fireEvent.click(screen.getByRole('button', {name: 'Odśwież'}));
+    await waitFor(() => expect(refetch).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
