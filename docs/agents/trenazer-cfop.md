@@ -69,7 +69,8 @@ ze stanem docelowym: po połączeniu z już wymieszaną kostką nie wymagamy
 ponownego zaobserwowania wszystkich ruchów mieszania.
 
 Dla CROSS aplikacja generuje mieszanie 3×3, a użytkownik wybiera ściankę krzyża.
-Nie ma katalogu CROSS. Smart próby otrzymują ocenę AI po automatycznym zapisie.
+Nie ma katalogu CROSS. Smart próby zapisują nagranie automatycznie; ocenę AI
+można przygotować i zapisać przez klienta MCP.
 
 ## Sterowanie i cele
 
@@ -132,8 +133,19 @@ kostki, ale wymaga przygotowania własnego przypadku i osobnego rozpoczęcia pr�
 Smart CROSS zapisuje się automatycznie po zakończeniu, razem z pełnym
 `recording` v1. Ponowienie nieudanego zapisu zachowuje UUID. Po zapisie
 można rozpocząć kolejną próbę; historia pokazuje wynik i wykonaną sekwencję.
-Frontend nie odpytuje o ocenę i nie uruchamia jej ponownie.
+Historia pobiera opcjonalne `aiReview` razem z próbami. Przy niepustej ocenie
+CROSS obok daty pojawia się ikona z etykietą „Pokaż ocenę AI”. Otwiera dialog
+z datą, czasem próby i oceną sformatowaną z Markdown: nagłówkami, listami,
+tabelami i blokami kodu. Zwykły tekst także jest obsługiwany. Surowy HTML
+pozostaje tekstem, a obrazy nie są pobierane. Dialog ma przewijaną treść
+i dostosowuje się do telefonu oraz aktywnego motywu. Zamyka się przyciskiem,
+krzyżykiem, Escape albo kliknięciem w tło; fokus wraca do ikony. Spacja
+w dialogu nie uruchamia stopera.
+
+Historia korzysta z `cache-and-network`, aby przy ponownym wejściu pobrać ocenę
+zapisaną poza aplikacją. Nie ma cyklicznego odpytywania ani uruchamiania oceny
+przez frontend.
 
 Ocenę można wykonać w kliencie MCP, pobierając listę własnych prób i szczegóły
 wybranej próby z nagraniem oraz analizą. Kontrakt utrzymuje
-[backend](../../../sg-app/docs/agents/serwer-mcp.md#narzędzia-cross).
+[backend](../../../sg-app/docs/agents/serwer-mcp.md#zapisywanie-oceny-cross).

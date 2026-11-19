@@ -102,3 +102,26 @@ test('wybiera fazę z nagłówka także przy pustym katalogu', async () => {
     await selectStage('CROSS');
     expect(screen.getByRole('button', {name: 'Ćwiczenie CROSS'})).toBeInTheDocument();
 });
+
+
+test('pokazuje ikonę tylko przy niepustej ocenie CROSS i otwiera właściwą ocenę', () => {
+    const attempt = {
+        publicId: 'cross-1', stage: CfopStage.Cross, mode: 'TRAIN', device: 'SMART',
+        performedAt: '2026-11-19 16:15:00.000', durationMs: 4321, moveCount: 7, quarterTurnCount: 8,
+        actualAlgorithm: 'R U F', aiReview: '## Mniej ruchów\nUsuń **zbędny ruch**.',
+    };
+    (useQuery as unknown as jest.Mock).mockReturnValue({
+        data: {cubeTrainerCases: [], cubeTrainerAttempts: [
+            attempt,
+            {...attempt, publicId: 'cross-2', aiReview: null},
+            {...attempt, publicId: 'cross-3', aiReview: '  '},
+        ]}, loading: false, refetch: jest.fn(),
+    });
+    render(<CubeTrainerPage/>);
+    expect(screen.getAllByRole('button', {name: 'Pokaż ocenę AI'})).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Pokaż ocenę AI'}));
+    const dialog = within(screen.getByRole('dialog', {name: /Ocena AI · CROSS/}));
+    expect(dialog.getByRole('heading', {name: 'Mniej ruchów'})).toBeInTheDocument();
+    expect(dialog.getByText('zbędny ruch').tagName).toBe('STRONG');
+    expect(dialog.getByText(/19.11.2026 · 16:15/)).toBeInTheDocument();
+});

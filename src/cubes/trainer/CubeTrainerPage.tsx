@@ -40,6 +40,7 @@ import {formatStopWatchTime} from '../StopWatchDisplay';
 import {TrainerSession} from './TrainerSession';
 import {TrainerStagePicker} from './TrainerStagePicker';
 import {TrainerCaseThumbnail} from './TrainerCaseThumbnail';
+import {CrossAttemptReviewButton} from './CrossAttemptReviewButton';
 
 export function CubeTrainerPage() {
     const [stage, setStage] = useState(CfopStage.Cross);
@@ -57,7 +58,7 @@ export function CubeTrainerPage() {
         refetch
     } = useQuery<GetCubeTrainerQuery, GetCubeTrainerQueryVariables>(
         GetCubeTrainer,
-        {variables: {stage}}
+        {variables: {stage}, fetchPolicy: 'cache-and-network'}
     );
     const [preferAlgorithm, {loading: preferring}] = useMutation<
         PreferCubeTrainerAlgorithmMutation,
@@ -355,7 +356,18 @@ export function CubeTrainerPage() {
                                             <Fragment key={attempt.publicId}>
                                                 <TableRow>
                                                     <TableCell>
-                                                        {dayjs(attempt.performedAt).format('DD.MM.YYYY HH:mm')}
+                                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                                            <Typography variant="body2">
+                                                                {dayjs(attempt.performedAt).format('DD.MM.YYYY HH:mm')}
+                                                            </Typography>
+                                                            {stage === CfopStage.Cross && attempt.aiReview?.trim() && (
+                                                                <CrossAttemptReviewButton
+                                                                    review={attempt.aiReview}
+                                                                    performedAt={attempt.performedAt}
+                                                                    durationMs={attempt.durationMs}
+                                                                />
+                                                            )}
+                                                        </Stack>
                                                         <Typography variant="caption" display="block">
                                                             {attempt.mode === CubeTrainerMode.Explore ? 'Wypróbowanie' : 'Trening'}
                                                         </Typography>

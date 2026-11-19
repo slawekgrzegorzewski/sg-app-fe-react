@@ -30,6 +30,7 @@ query GetCubeTrainer($stage: CfopStage!) {
         moveCount
         quarterTurnCount
         actualAlgorithm
+        aiReview
         performedAt
     }
 }

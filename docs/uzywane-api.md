@@ -199,8 +199,9 @@ Przy dodawaniu lub usuwaniu połączenia sieciowego należy zaktualizować ten d
 ### Dane trenażera CROSS
 
 `saveCubeTrainerAttempt` przesyła opcjonalne pełne nagranie smart próby CROSS.
-Historia korzysta z `cubeTrainerAttempts`. Frontend nie odpytuje o ocenę
-ani nie wysyła żądań jej ponowienia. Backend zapisuje nagranie i analizę CFOP;
-lista i szczegóły do oceny są udostępnione klientom MCP. Nowe zapytania
-`cubeTrainerCrossAttempts` i `cubeTrainerCrossAttempt` należą do schematu,
-ale frontend ich nie wywołuje.
+Historia korzysta z `cubeTrainerAttempts`, pobierając także `aiReview` dla ikony
+i dialogu oceny. Ponowne wejście pobiera aktualne dane przez `cache-and-network`;
+frontend nie uruchamia ocen i nie odpytuje cyklicznie o ich wynik.
+Backend zapisuje nagranie i analizę CFOP, a zapis oceny udostępnia klientom MCP.
+Zapytania `cubeTrainerCrossAttempts`, `cubeTrainerCrossAttempt` oraz mutacja
+`saveCubeTrainerCrossAttemptAiReview` należą do schematu, ale frontend ich nie wywołuje.

@@ -305,7 +305,7 @@ export function TrainerSession({
                     || event.repeat
                     || (target instanceof HTMLElement
                         && (target.isContentEditable
-                            || !!target.closest('input, textarea, select, button, [role="combobox"]')))
+                            || !!target.closest('input, textarea, select, button, [role="combobox"], [role="dialog"]')))
                 ) {
                     return;
                 }

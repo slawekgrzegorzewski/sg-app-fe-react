@@ -127,6 +127,7 @@ type Mutation{
     saveCubeResult(saveCubeResultInput: SaveCubeResultInput!): String!
     preferCubeTrainerAlgorithm(algorithmPublicId: UUID!): UUID!
     saveCubeTrainerAttempt(input: SaveCubeTrainerAttemptInput!): CubeTrainerAttempt!
+    saveCubeTrainerCrossAttemptAiReview(publicId: UUID!, aiReview: String!): CubeTrainerAttempt!
 
     strengthTraining: StrengthTrainingMutation!
 }
@@ -1092,6 +1093,7 @@ type CubeTrainerAttempt {
     moveCount: Int
     quarterTurnCount: Int
     actualAlgorithm: String
+    aiReview: String
     performedAt: LocalDateTime!
 }
 

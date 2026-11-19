@@ -158,3 +158,19 @@ test('automatycznie zapisuje CROSS z pełnym nagraniem bez ponownego zapisu', as
     expect(screen.getByRole('button', {name: 'Kolejna próba'})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Zapisz próbę'})).not.toBeInTheDocument();
 });
+
+
+test('spacja podczas czytania dialogu nie uruchamia stopera', async () => {
+    (faceletsFromCubingAlgorithm as jest.Mock).mockResolvedValue(applyCubeMove(SOLVED_CUBE, 'R'));
+    (useMutation as unknown as jest.Mock).mockReturnValue([jest.fn(), {loading: false}]);
+    const onBusyChange = jest.fn();
+    render(<>
+        <TrainerSession stage={CfopStage.Cross} mode={CubeTrainerMode.Train} onSaved={jest.fn()} onBusyChange={onBusyChange}/>
+        <div role="dialog" tabIndex={-1}>Ocena próby</div>
+    </>);
+    await waitFor(() => expect(screen.getByRole('button', {name: 'Start'})).toBeEnabled());
+    onBusyChange.mockClear();
+    fireEvent.keyDown(screen.getByRole('dialog'), {code: 'Space'});
+    expect(screen.getByRole('button', {name: 'Start'})).toBeEnabled();
+    expect(onBusyChange).not.toHaveBeenCalled();
+});
