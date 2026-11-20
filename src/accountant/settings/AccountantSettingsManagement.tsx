@@ -26,7 +26,7 @@ export function AccountantSettingsManagement({accountantSettings, refetch}: Acco
                 <Stack>
                     <Typography variant="h4">Tryb firmowy</Typography>
                     <Typography variant="body2" color="text.secondary">
-                        Włącza ustawienia klientów i dostawców.
+                        Przełącza księgowość na strony firmy zamiast miesięcy, kont i pożyczek.
                     </Typography>
                 </Stack>
                 <Switch

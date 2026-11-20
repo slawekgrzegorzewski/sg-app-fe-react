@@ -1,0 +1,55 @@
+fragment AccountingDocumentFields on AccountingDocument {
+    publicId
+    documentNumber
+    documentDate
+    counterparty
+    counterpartyAddress
+    counterpartyTaxId
+    ksefNumber
+    description
+}
+
+fragment CompanyLedgerFields on CompanyLedger {
+    yearMonth
+    entries {
+        publicId
+        entryOrder
+        entryDate
+        providedGoodsAndServicesValue
+        otherIncome
+        totalIncome
+        purchasedGoodsAndMaterialsValue
+        additionalCostOfPurchase
+        remunerationInCashOrInKind
+        otherExpense
+        totalExpense
+        additionalColumnValue
+        researchAndDevelopmentExpense
+        researchAndDevelopmentDescription
+        comments
+        accountingDocument {
+            ...AccountingDocumentFields
+        }
+    }
+}
+
+query CompanyAccounting($yearMonth: YearMonth!) {
+    companyLedger(yearMonth: $yearMonth) {
+        ...CompanyLedgerFields
+    }
+    companyAccountingDocuments(yearMonth: $yearMonth) {
+        ...AccountingDocumentFields
+    }
+}
+
+mutation CreateCompanyLedgerEntry($input: CompanyLedgerEntryInput!) {
+    createCompanyLedgerEntry(input: $input) {
+        publicId
+    }
+}
+
+mutation CreateAccountingDocument($input: AccountingDocumentInput!) {
+    createAccountingDocument(input: $input) {
+        ...AccountingDocumentFields
+    }
+}

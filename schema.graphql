@@ -9,6 +9,8 @@ scalar YearMonth
 scalar Year
 
 type Query {
+    companyLedger(yearMonth: YearMonth!): CompanyLedger!
+    companyAccountingDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
     currentUser: CurrentUserProfile!
     financeManagement: FinanceManagement!
     billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!
@@ -29,7 +31,6 @@ type Query {
     simulateExistingLoan(loanSimulationParams: LoanSimulationParams): [LoanCalculationInstallment!]!
     singleLoan(input: LoanQuery): Loan!
 
-    monthLedger(ledgerQuery: LedgerQuery): [RevenueAndExpenseEntry!]!
     allClients: [Client!]!
     allSuppliers: [Supplier!]!
     monthFinancialDocuments(yearMonth: YearMonth!): [FinancialDocument!]!
@@ -45,6 +46,8 @@ type Query {
 }
 
 type Mutation{
+    createCompanyLedgerEntry(input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
+    createAccountingDocument(input: AccountingDocumentInput!): AccountingDocument!
     login(loginParameters:LoginParameters!): AuthenticationInfo!
     loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
     switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!
@@ -105,7 +108,6 @@ type Mutation{
     createNthDayOfMonthRepaymentDayStrategyConfig(input: NthDayOfMonthRepaymentDayStrategyConfigInput!): RepaymentDayStrategyConfig!
     deleteRepaymentDayStrategyConfig(input: RepaymentDayStrategyConfigDeleteInput!): String!
 
-    addRevenueAndExpenseEntry(input: RevenueAndExpenseEntryInput):RevenueAndExpenseEntry
     createClient(clientCreationInput: ClientCreationInput!): Client!
     updateClient(clientUpdateInput: ClientUpdateInput!): Client!
     deleteClient(clientPublicId:UUID!): String!
@@ -393,44 +395,7 @@ type TimeRecordCategory {
     domain: DomainSimple!
 }
 
-type RevenueAndExpenseEntry {
-    publicId: UUID!,
-    domain: DomainSimple!,
-    entryOrder: Int!,
-    entryDate: LocalDate!,
-    accountingDocumentNumber: String!,
-    counterparty: String!,
-    counterpartyAddress: String!,
-    description: String!,
-    providedGoodsAndServicesValue: BigDecimal!,
-    otherIncome: BigDecimal!,
-    totalIncome: BigDecimal!,
-    purchasedGoodsAndMaterialsValue: BigDecimal!,
-    additionalCostOfPurchase: BigDecimal!,
-    remunerationInCashOrInKind: BigDecimal!,
-    otherExpense: BigDecimal!,
-    totalExpense: BigDecimal!,
-    comments: String!
-}
 
-input RevenueAndExpenseEntryInput {
-    publicId: UUID,
-    entryOrder: Int!,
-    entryDate: LocalDate!,
-    accountingDocumentNumber: String!,
-    counterparty: String!,
-    counterpartyAddress: String!,
-    description: String!,
-    providedGoodsAndServicesValue: BigDecimal!,
-    otherIncome: BigDecimal!,
-    totalIncome: BigDecimal!,
-    purchasedGoodsAndMaterialsValue: BigDecimal!,
-    additionalCostOfPurchase: BigDecimal!,
-    remunerationInCashOrInKind: BigDecimal!,
-    otherExpense: BigDecimal!,
-    totalExpense: BigDecimal!,
-    comments: String!
-}
 
 type CurrencyInfo {
     code: Currency!
@@ -754,9 +719,6 @@ input InstallmentCreationInput {
     overpayment: MonetaryAmountInput!
 }
 
-input LedgerQuery {
-    yearMonth: YearMonth!
-}
 
 interface OtherParty {
     publicId: UUID!
@@ -1217,4 +1179,65 @@ type CubeTrainerCrossAttemptData {
     cfopAnalysis: String
     crossOptimality: String
     dataWarnings: [String!]!
+}
+
+
+type AccountingDocument {
+    publicId: UUID!
+    documentNumber: String!
+    documentDate: LocalDate!
+    counterparty: String!
+    counterpartyAddress: String!
+    counterpartyTaxId: String!
+    ksefNumber: String!
+    description: String!
+}
+
+input AccountingDocumentInput {
+    documentNumber: String!
+    documentDate: LocalDate!
+    counterparty: String!
+    counterpartyAddress: String!
+    counterpartyTaxId: String!
+    ksefNumber: String!
+    description: String!
+}
+
+type CompanyLedger {
+    yearMonth: YearMonth!
+    entries: [CompanyLedgerEntry!]!
+}
+
+type CompanyLedgerEntry {
+    publicId: UUID!
+    entryOrder: Int!
+    entryDate: LocalDate!
+    accountingDocument: AccountingDocument!
+    providedGoodsAndServicesValue: BigDecimal!
+    otherIncome: BigDecimal!
+    totalIncome: BigDecimal!
+    purchasedGoodsAndMaterialsValue: BigDecimal!
+    additionalCostOfPurchase: BigDecimal!
+    remunerationInCashOrInKind: BigDecimal!
+    otherExpense: BigDecimal!
+    totalExpense: BigDecimal!
+    additionalColumnValue: BigDecimal
+    researchAndDevelopmentExpense: BigDecimal
+    researchAndDevelopmentDescription: String
+    comments: String!
+}
+input CompanyLedgerEntryInput {
+    accountingDocumentPublicId: UUID!
+    entryDate: LocalDate!
+    entryOrder: Int!
+    providedGoodsAndServicesValue: BigDecimal!
+    otherIncome: BigDecimal!
+    purchasedGoodsAndMaterialsValue: BigDecimal!
+    additionalCostOfPurchase: BigDecimal!
+    remunerationInCashOrInKind: BigDecimal!
+    otherExpense: BigDecimal!
+    additionalColumnValue: BigDecimal!
+    researchAndDevelopmentExpense: BigDecimal!
+    researchAndDevelopmentDescription: String!
+    comments: String!
 }

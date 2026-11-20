@@ -19,7 +19,8 @@ export type Application = {
 export type ApplicationPage = {
     id: ApplicationPageId,
     links: string[],
-    label: string
+    label: string,
+    accountantMode?: 'company' | 'personal'
 }
 
 const defaultApplication = {
@@ -39,10 +40,27 @@ export const applications = new Map<ApplicationId, Application>([
             ['BILLING_PERIODS', {
                 id: 'BILLING_PERIODS',
                 links: ['', '/', 'home'],
-                label: 'Miesiące'
+                label: 'Miesiące',
+                accountantMode: 'personal'
             } as ApplicationPage],
-            ['ACCOUNTS', {id: 'ACCOUNTS', links: ['accounts'], label: 'Konta'} as ApplicationPage],
-            ['LOANS', {id: 'LOANS', links: ['loans'], label: 'Pożyczki'} as ApplicationPage],
+            ['COMPANY_ACCOUNTING', {
+                id: 'COMPANY_ACCOUNTING',
+                links: ['company-accounting', '', '/', 'home'],
+                label: 'Księgowość firmy',
+                accountantMode: 'company'
+            } as ApplicationPage],
+            ['ACCOUNTS', {
+                id: 'ACCOUNTS',
+                links: ['accounts'],
+                label: 'Konta',
+                accountantMode: 'personal'
+            } as ApplicationPage],
+            ['LOANS', {
+                id: 'LOANS',
+                links: ['loans'],
+                label: 'Pożyczki',
+                accountantMode: 'personal'
+            } as ApplicationPage],
             ['SETTINGS', {id: 'SETTINGS', links: ['settings'], label: 'Ustawienia'} as ApplicationPage]
         ])
     } as Application],
@@ -94,6 +112,20 @@ export const applications = new Map<ApplicationId, Application>([
         ])
     } as Application],
 ]);
+
+export function getApplicationPages(
+        applicationId: ApplicationId,
+        isCompany?: boolean): ApplicationPage[] {
+    const pages = Array.from(
+            applications.get(applicationId)?.pages?.values() ?? []);
+    if (applicationId !== 'ACCOUNTANT') {
+        return pages;
+    }
+    return pages.filter(
+            page => !page.accountantMode
+                    || (isCompany === true && page.accountantMode === 'company')
+                    || (isCompany === false && page.accountantMode === 'personal'));
+}
 
 export default function getUserApplications(user: User): Application[] {
     const userApplicationIds = [...(

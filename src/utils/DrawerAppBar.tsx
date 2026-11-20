@@ -14,7 +14,7 @@ import {CurrentUserDisplay} from '../application/components/CurrentUserDisplay';
 import {useCurrentUser} from './users/use-current-user';
 import {alpha, Collapse, List, ListItemButton, ListItemText, Menu, MenuItem, Stack, Tooltip} from '@mui/material';
 import {useApplication} from './applications/use-application';
-import {ApplicationId, ApplicationPage, applications} from './applications/applications-access';
+import {ApplicationId, ApplicationPage, applications, getApplicationPages} from './applications/applications-access';
 import {useApplicationNavigation} from './use-application-navigation';
 import {useApplicationAndDomain} from './use-application-and-domain';
 import {ThemeMode, useThemeMode} from './ThemeContext';
@@ -34,6 +34,8 @@ import {
     Domain,
     DomainsData,
     DomainsDataQuery,
+    GetAccountantSettings,
+    GetAccountantSettingsQuery,
     RejectInvitationToDomain,
     RejectInvitationToDomainMutation,
 } from '../types';
@@ -111,6 +113,11 @@ export default function DrawerAppBar(props: Props) {
         refetch: domainsDataRefetch,
     } = useQuery<DomainsDataQuery>(DomainsData);
 
+    const accountantApplication = currentApplicationId === 'ACCOUNTANT';
+    const accountantSettings = useQuery<GetAccountantSettingsQuery>(
+            GetAccountantSettings,
+            {skip: !accountantApplication, fetchPolicy: 'network-only'});
+
     const [acceptInvitationToDomainMutation] = useMutation<AcceptInvitationToDomainMutation>(AcceptInvitationToDomain);
     const [rejectInvitationToDomainMutation] = useMutation<RejectInvitationToDomainMutation>(RejectInvitationToDomain);
 
@@ -148,7 +155,7 @@ export default function DrawerAppBar(props: Props) {
 
     const container = windowProp !== undefined ? () => windowProp().document.body : undefined;
 
-    if (domainsDataLoading) {
+    if (domainsDataLoading || (accountantApplication && accountantSettings.loading)) {
         return (
             <Stack direction="column" sx={{width: '100%', minHeight: '100dvh'}}>
                 <NavigationAppBar position="sticky">
@@ -164,13 +171,19 @@ export default function DrawerAppBar(props: Props) {
         return <ErrorDisplay error={domainsDataError} onRetry={() => void domainsDataRefetch()} />;
     }
 
+    if (accountantApplication && accountantSettings.error) {
+        return <ErrorDisplay error={accountantSettings.error} onRetry={() => void accountantSettings.refetch()} />;
+    }
+
     if (!domainsData) {
         return <></>;
     }
 
     const domains = [...(domainsData.settings.domains as Domain[])].filter(d => d.name !== '');
     const currentDomain = domains.find(d => d.publicId === currentDomainPublicId);
-    const pages = Array.from(applications.get(currentApplicationId)?.pages?.values() || []);
+    const pages = getApplicationPages(
+            currentApplicationId,
+            accountantSettings.data?.settings.accountantSettings.isCompany);
 
     const drawerDivider = <Divider sx={theme => ({borderColor: alpha(theme.palette.primary.contrastText, 0.2)})} />;
 

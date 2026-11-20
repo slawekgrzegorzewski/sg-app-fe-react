@@ -205,3 +205,29 @@ frontend nie uruchamia ocen i nie odpytuje cyklicznie o ich wynik.
 Backend zapisuje nagranie i analizę CFOP, a zapis oceny udostępnia klientom MCP.
 Zapytania `cubeTrainerCrossAttempts`, `cubeTrainerCrossAttempt` oraz mutacja
 `saveCubeTrainerCrossAttemptAiReview` należą do schematu, ale frontend ich nie wywołuje.
+
+## Księgowość firmowa
+
+Strony firmy należą do istniejącej aplikacji `ACCOUNTANT` (Księgowość);
+`ACCOUNTS` jest identyfikatorem jej dotychczasowej strony Konta, a nie osobną aplikacją.
+`isCompany = true` udostępnia stronę księgowości firmy i ustawia ją jako startową.
+`isCompany = false` udostępnia dotychczasowe strony Miesiące, Konta i Pożyczki.
+Ustawienia pozostają dostępne w obu trybach. Menu na komputerze i telefonie oraz
+dispatcher korzystają z tej samej reguły widoczności. Wejście pod adres strony
+niedostępnej w bieżącym trybie przekierowuje na stronę startową.
+Nawigacja i dispatcher obserwują `GetAccountantSettings`; ponowne pobranie po zmianie
+trybu aktualizuje strony bez tworzenia nowej aplikacji lub roli.
+
+Aktywny widok `Company accounting` korzysta z zapytania `CompanyAccounting`
+(`companyLedger` i `companyAccountingDocuments`) oraz mutacji
+`createCompanyLedgerEntry` i `createAccountingDocument`.
+Operacje znajdują się w `src/accountant/model/company-accounting.graphql`.
+Klient pobiera dane firmy wyłącznie po włączeniu `isCompany`; backend niezależnie
+weryfikuje uprawnienia i domenę. Użytkownik tworzy dokument, a następnie wpisuje
+powiązaną pozycję księgi w formularzu. Wpis otwiera szczegóły dokumentu.
+PDF służy wyłącznie do poznania struktury KPiR; aplikacja nie importuje plików PDF.
+
+Źródłem zasad modelu i ręcznego wprowadzania danych jest [dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md).
+Najpierw należy wdrożyć backend z migracją V59, następnie frontend.
+Wpisy korzystają z danych powiązanego `AccountingDocument`; stare operacje
+`monthLedger` i `addRevenueAndExpenseEntry` zostały usunięte z kontraktu.
