@@ -28,7 +28,6 @@ import {
     AccountingDocumentFieldsFragment,
     AccountingDocumentInput,
     AccountingDocumentType,
-    LedgerColumn,
     CompanyAccounting as CompanyAccountingQuery,
     CompanyAccountingQuery as CompanyAccountingData,
     CompanyLedgerEntryInput,
@@ -36,6 +35,7 @@ import {
     CreateAccountingDocumentMutation,
     CreateCompanyLedgerEntry,
     CreateCompanyLedgerEntryMutation,
+    LedgerColumn,
 } from '../types';
 import {AccountantSettingsContext} from '../application/components/dispatchers/AccountantDispatcher';
 import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
@@ -46,7 +46,8 @@ const amount = (value: number) => value.toLocaleString(
 
 const documentFields = [
     ['documentNumber', 'Numer dokumentu'],
-    ['amount', 'Kwota dokumentu'],
+    ['netAmount', 'Kwota netto'],
+    ['vatAmount', 'Kwota VAT'],
     ['currency', 'Waluta dokumentu'],
     ['documentDate', 'Data dokumentu'],
     ['counterparty', 'Kontrahent'],
@@ -87,7 +88,6 @@ export function CompanyAccounting() {
     const [month, setMonth] = useState(
         dayjs().format('YYYY-MM'));
     const [message, setMessage] = useState('');
-    const [percentageInput, setPercentageInput] = useState<string | null>(null);
     const [entryDraft, setEntryDraft] = useState<CompanyLedgerEntryInput | null>(null);
     const [selectedDocument, setSelectedDocument] = useState<AccountingDocumentFieldsFragment | null>(null);
     const [creating, setCreating] = useState(false);
@@ -104,26 +104,49 @@ export function CompanyAccounting() {
     const [createDocument, createState] = useMutation<CreateAccountingDocumentMutation>(CreateAccountingDocument);
     const busy = entryState.loading || createState.loading;
     const ledger = data?.companyLedger;
+    const availableDocuments = data?.companyAccountingDocuments.filter(document => !document.postedToLedger) ?? [];
     const ledgerCurrency = ledger?.currency ?? 'PLN';
     const entryDocument = data?.companyAccountingDocuments.find(
         document => document.publicId === entryDraft?.accountingDocumentPublicId);
+    const documentAvailable = Boolean(entryDocument && !entryDocument.postedToLedger);
     const sameCurrency = entryDocument?.currency === ledgerCurrency;
     const isIncomeEntry = isIncomeColumn(entryDraft?.ledgerColumn);
     const canChooseEntryDirection = entryDocument?.documentType !== AccountingDocumentType.SalesVatInvoice
         && entryDocument?.documentType !== AccountingDocumentType.PurchaseVatInvoice;
     const availableLedgerColumns = ledgerColumns.filter(
         ([column]) => isIncomeColumn(column) === isIncomeEntry);
-    let includedPercentage = '';
+    const strategies = data?.ledgerCalculationStrategies ?? [];
+    const entryStrategy = strategies.find(strategy => strategy.publicId === entryDraft?.calculationStrategyPublicId);
+    const percentageParameters = entryStrategy?.parameters.__typename === 'NetAndVatPercentageParameters'
+        ? entryStrategy.parameters
+        : null;
+    const documentAmountsKnown = entryDocument?.netAmount != null && entryDocument?.vatAmount != null;
+    let includedAmount = '';
     let convertedAmount = '';
-    if (entryDraft) {
+    let deductibleVatAmount = '';
+    let nonDeductibleVatAmount = '';
+    let costBasis = '';
+    if (entryDraft && percentageParameters && documentAmountsKnown && documentAvailable) {
         try {
-            if (entryDocument?.amount) {
-                includedPercentage = new Decimal(entryDraft.includedAmount).div(entryDocument.amount).mul(100).toFixed(4);
+            const net = new Decimal(entryDocument.netAmount!);
+            const vat = new Decimal(entryDocument.vatAmount!);
+            const deductibleVat = vat.mul(percentageParameters.deductibleVatPercentage)
+                .div(100)
+                .toDecimalPlaces(2, Decimal.ROUND_DOWN);
+            const nonDeductibleVat = vat.minus(deductibleVat);
+            const base = net.plus(nonDeductibleVat);
+            deductibleVatAmount = deductibleVat.toFixed(2).replace('.', ',');
+            nonDeductibleVatAmount = nonDeductibleVat.toFixed(2).replace('.', ',');
+            costBasis = base.toFixed(2).replace('.', ',');
+            includedAmount = base.mul(percentageParameters.costPercentage)
+                .div(100)
+                .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+                .toFixed(2);
+            const rate = new Decimal(sameCurrency ? '1' : entryDraft.exchangeRate);
+            if (rate.lte(0) || rate.decimalPlaces() > 8) {
+                throw new Error('Nieprawidłowy kurs');
             }
-            convertedAmount = new Decimal(entryDraft.includedAmount)
-                .mul(sameCurrency ? '1' : entryDraft.exchangeRate)
-                .toFixed(2)
-                .replace('.', ',');
+            convertedAmount = new Decimal(includedAmount).mul(rate).toFixed(2, Decimal.ROUND_HALF_UP).replace('.', ',');
         } catch {
             convertedAmount = '';
         }
@@ -131,7 +154,7 @@ export function CompanyAccounting() {
 
     async function handleCreateEntry(event: React.FormEvent) {
         event.preventDefault();
-        if (!entryDraft) {
+        if (!entryDraft || !entryStrategy || !convertedAmount || !documentAmountsKnown || !documentAvailable) {
             return;
         }
         const input = {
@@ -206,15 +229,14 @@ export function CompanyAccounting() {
                         </Typography>
                         <Button
                             variant="contained"
-                            disabled={!validMonth || loading || Boolean(error) || busy || !data?.companyAccountingDocuments.length}
+                            disabled={!validMonth || loading || Boolean(error) || busy || !availableDocuments.length || !strategies.length}
                             onClick={() => {
                                 entryState.reset();
-                                setPercentageInput(null);
                                 setEntryDraft({
-                                    accountingDocumentPublicId: data?.companyAccountingDocuments[0]?.publicId ?? '',
-                                    includedAmount: String(data?.companyAccountingDocuments[0]?.amount ?? ''),
-                                    exchangeRate: data?.companyAccountingDocuments[0]?.currency === ledgerCurrency ? '1' : '',
-                                    ledgerColumn: defaultLedgerColumn(data?.companyAccountingDocuments[0]?.documentType),
+                                    accountingDocumentPublicId: availableDocuments[0]?.publicId ?? '',
+                                    calculationStrategyPublicId: strategies[0]?.publicId ?? '',
+                                    exchangeRate: availableDocuments[0]?.currency === ledgerCurrency ? '1' : '',
+                                    ledgerColumn: defaultLedgerColumn(availableDocuments[0]?.documentType),
                                     entryDate: `${month}-01`,
                                     entryOrder: Math.max(0, ...(ledger?.entries.map(entry => entry.entryOrder) ?? [])) + 1,
                                     additionalColumnValue: '0',
@@ -226,6 +248,10 @@ export function CompanyAccounting() {
                         >
                             Dodaj wpis do księgi
                         </Button>
+                        {!strategies.length && !loading && !error && <Alert severity="info">
+                            Brak dostępnych strategii przeliczenia do KPiR. Dodanie wpisu wymaga konfiguracji strategii
+                            przez administratora.
+                        </Alert>}
                         {!data?.companyAccountingDocuments.length && !loading && !error && (
                             <Typography color="text.secondary">Aby dodać pierwszy wpis, utwórz poniżej dokument
                                 księgowy.</Typography>
@@ -333,7 +359,8 @@ export function CompanyAccounting() {
                                 setDraft(
                                     {
                                         documentType: AccountingDocumentType.PurchaseVatInvoice,
-                                        amount: '',
+                                        netAmount: '',
+                                        vatAmount: '',
                                         currency: 'PLN',
                                         documentNumber: '',
                                         documentDate: `${month}-01`,
@@ -348,6 +375,9 @@ export function CompanyAccounting() {
                         >
                             Dodaj dokument księgowy
                         </Button>
+                        {Boolean(data?.companyAccountingDocuments.length) && !availableDocuments.length && (
+                            <Alert severity="info">Wszystkie dokumenty z tego miesiąca są już ujęte w KPiR.</Alert>
+                        )}
                         {!data?.companyAccountingDocuments.length && (
                             <Typography color="text.secondary">Brak dokumentów księgowych w tym miesiącu.</Typography>
                         )}
@@ -359,8 +389,9 @@ export function CompanyAccounting() {
                                     </Button>
                                     <Typography variant="body2">
                                         {documentTypes.find(([type]) => type === document.documentType)?.[1]}
-                                        {' · '}{document.amount == null ? 'Kwota nieuzupełniona' : amount(document.amount)}
+                                        {' · Brutto: '}{document.amount == null ? 'Kwota nieuzupełniona' : amount(document.amount)}
                                         {' '}{document.currency} · {document.description}
+                                        {document.postedToLedger && ' · Ujęty w KPiR'}
                                     </Typography>
                                 </Box>
                             ))}
@@ -425,27 +456,30 @@ export function CompanyAccounting() {
                         {entryDraft && (
                             <Stack spacing={2}>
                                 <TextField select id="ledger-document" label="Dokument księgowy" fullWidth required
-                                           value={entryDraft.accountingDocumentPublicId} disabled={busy}
+                                           value={documentAvailable ? entryDraft.accountingDocumentPublicId : ''}
+                                           disabled={busy}
                                            onChange={event => {
                                                const document = data?.companyAccountingDocuments.find(
                                                    candidate => candidate.publicId === event.target.value);
-                                               setPercentageInput(null);
                                                setEntryDraft({
                                                    ...entryDraft,
                                                    accountingDocumentPublicId: event.target.value,
                                                    ledgerColumn: defaultLedgerColumn(document?.documentType),
                                                    researchAndDevelopmentExpense: '0',
                                                    researchAndDevelopmentDescription: '',
-                                                   includedAmount: String(document?.amount ?? ''),
                                                    exchangeRate: document?.currency === ledgerCurrency ? '1' : '',
                                                });
                                            }}>
-                                    {data?.companyAccountingDocuments.map(document => (
+                                    {availableDocuments.map(document => (
                                         <MenuItem key={document.publicId} value={document.publicId}>
                                             {document.documentNumber}
                                         </MenuItem>
                                     ))}
                                 </TextField>
+                                {entryDocument?.postedToLedger && (
+                                    <Alert severity="warning">Ten dokument jest już ujęty w KPiR. Wybierz inny
+                                        dokument.</Alert>
+                                )}
                                 {canChooseEntryDirection && (
                                     <TextField
                                         select
@@ -482,42 +516,60 @@ export function CompanyAccounting() {
                                                                                             value={key}>{label}</MenuItem>)}
                                 </TextField>
                                 <Typography>
-                                    Dokument: {entryDocument?.amount == null ? 'kwota nieuzupełniona' : amount(entryDocument.amount)} {entryDocument?.currency}
+                                    Netto: {entryDocument?.netAmount == null ? 'do uzupełnienia' : amount(entryDocument.netAmount)}
+                                    {' · VAT: '}{entryDocument?.vatAmount == null ? 'do uzupełnienia' : amount(entryDocument.vatAmount)}
+                                    {' · Brutto: '}{entryDocument?.amount == null ? 'do uzupełnienia' : amount(entryDocument.amount)} {entryDocument?.currency}
                                 </Typography>
+                                {!documentAmountsKnown && <Alert severity="warning">
+                                    Dokument historyczny nie ma podziału na netto i VAT. Uzupełnij dane dokumentu przed
+                                    utworzeniem wpisu.
+                                </Alert>}
                                 <TextField
-                                    id="ledger-included-amount"
-                                    label="Kwota z dokumentu do ujęcia"
-                                    type="number"
-                                    value={entryDraft.includedAmount}
+                                    select
+                                    id="ledger-strategy"
+                                    label="Strategia przeliczenia"
+                                    sx={{'& .MuiSelect-select': {whiteSpace: 'normal', overflowWrap: 'anywhere'}}}
+                                    value={entryDraft.calculationStrategyPublicId}
                                     required
                                     disabled={busy}
-                                    slotProps={{htmlInput: {step: '0.01'}}}
-                                    helperText={`W walucie dokumentu: ${entryDocument?.currency ?? ''}`}
-                                    onChange={event => {
-                                        setPercentageInput(null);
-                                        setEntryDraft({...entryDraft, includedAmount: event.target.value});
-                                    }}
-                                />
-                                <TextField
-                                    id="ledger-percentage"
-                                    label="Część kwoty dokumentu (%)"
-                                    type="number"
-                                    value={percentageInput ?? includedPercentage}
-                                    disabled={busy || !entryDocument?.amount}
-                                    slotProps={{htmlInput: {step: '0.0001', min: 0, max: 100}}}
-                                    onChange={event => {
-                                        const percentage = event.target.value;
-                                        setPercentageInput(percentage);
-                                        if (!percentage) {
-                                            setEntryDraft({...entryDraft, includedAmount: ''});
-                                        } else if (entryDocument?.amount != null) {
-                                            setEntryDraft({
-                                                ...entryDraft,
-                                                includedAmount: new Decimal(entryDocument.amount).mul(percentage).div(100).toFixed(2)
-                                            });
-                                        }
-                                    }}
-                                />
+                                    onChange={event => setEntryDraft({
+                                        ...entryDraft,
+                                        calculationStrategyPublicId: event.target.value,
+                                    })}
+                                >
+                                    {strategies.map(strategy => <MenuItem key={strategy.publicId}
+                                                                          value={strategy.publicId}
+                                                                          sx={{
+                                                                              whiteSpace: 'normal',
+                                                                              overflowWrap: 'anywhere'
+                                                                          }}>
+                                        {strategy.name}
+                                    </MenuItem>)}
+                                </TextField>
+                                {percentageParameters ? <>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Koszt: {String(percentageParameters.costPercentage).replace('.', ',')}% ·
+                                        Odliczenie
+                                        VAT: {String(percentageParameters.deductibleVatPercentage).replace('.', ',')}%
+                                    </Typography>
+                                    {documentAmountsKnown && <>
+                                        <Typography variant="body2" color="text.secondary">
+                                            VAT do odliczenia: {deductibleVatAmount} {entryDocument?.currency}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            VAT nieodliczony: {nonDeductibleVatAmount} {entryDocument?.currency}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Podstawa kosztu (netto + VAT
+                                            nieodliczony): {costBasis} {entryDocument?.currency}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Podstawa kosztu × procent kosztu / 100
+                                            {includedAmount && ` = ${includedAmount.replace('.', ',')} ${entryDocument?.currency}`}
+                                        </Typography>
+                                    </>}
+                                </> : <Alert severity="warning">Ten typ strategii nie jest obsługiwany przez
+                                    formularz.</Alert>}
                                 {!sameCurrency && <TextField
                                     id="ledger-exchange-rate"
                                     label={`Kurs do ${ledgerCurrency}`}
@@ -585,7 +637,9 @@ export function CompanyAccounting() {
                     </DialogContent>
                     <DialogActions>
                         <Button color="inherit" disabled={busy} onClick={() => setEntryDraft(null)}>Anuluj</Button>
-                        <Button type="submit" variant="contained" disabled={busy}>Zapisz wpis</Button>
+                        <Button type="submit" variant="contained"
+                                disabled={busy || !convertedAmount || !documentAmountsKnown || !documentAvailable}>Zapisz
+                            wpis</Button>
                     </DialogActions>
                 </Box>
             </Dialog>
@@ -634,10 +688,10 @@ export function CompanyAccounting() {
                                             key={key}
                                             id={`accounting-document-${key}`}
                                             label={label}
-                                            type={key === 'documentDate' ? 'date' : key === 'amount' ? 'number' : 'text'}
+                                            type={key === 'documentDate' ? 'date' : ['netAmount', 'vatAmount'].includes(key) ? 'number' : 'text'}
                                             sx={theme => ({colorScheme: theme.palette.mode})}
                                             value={draft[key]}
-                                            required={['documentNumber', 'documentDate', 'amount', 'currency'].includes(key)}
+                                            required={['documentNumber', 'documentDate', 'netAmount', 'vatAmount', 'currency'].includes(key)}
                                             fullWidth
                                             disabled={busy}
                                             slotProps={{

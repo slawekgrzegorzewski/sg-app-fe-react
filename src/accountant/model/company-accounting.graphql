@@ -1,7 +1,17 @@
+fragment LedgerCalculationParameterFields on NetAndVatPercentageParameters {
+    __typename
+    strategyType
+    costPercentage
+    deductibleVatPercentage
+}
+
 fragment AccountingDocumentFields on AccountingDocument {
+    postedToLedger
     publicId
     documentType
     amount
+    netAmount
+    vatAmount
     currency
     documentNumber
     documentDate
@@ -41,6 +51,15 @@ fragment CompanyLedgerFields on CompanyLedger {
 }
 
 query CompanyAccounting($yearMonth: YearMonth!) {
+    ledgerCalculationStrategies {
+        publicId
+        name
+        strategyType
+        parameters {
+            __typename
+            ...LedgerCalculationParameterFields
+        }
+    }
     companyLedger(yearMonth: $yearMonth) {
         ...CompanyLedgerFields
     }

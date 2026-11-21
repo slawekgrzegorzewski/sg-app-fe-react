@@ -219,14 +219,35 @@ Nawigacja i dispatcher obserwują `GetAccountantSettings`; ponowne pobranie po z
 trybu aktualizuje strony bez tworzenia nowej aplikacji lub roli.
 
 Aktywny widok „Księgowość firmy” korzysta z zapytania `CompanyAccounting`
-(`companyLedger` i `companyAccountingDocuments`) oraz mutacji
+(`companyLedger`, `companyAccountingDocuments` i `ledgerCalculationStrategies`) oraz mutacji
 `createCompanyLedgerEntry` i `createAccountingDocument`.
 Operacje znajdują się w `src/accountant/model/company-accounting.graphql`.
-Dokument ma rodzaj, kwotę i walutę. Utworzenie dokumentu nie księguje go automatycznie.
-Wpis przyjmuje `includedAmount` w walucie dokumentu, `exchangeRate` (PLN za jednostkę)
-oraz `ledgerColumn`. Backend wylicza kwotę kolumny KPiR; UI pokazuje podgląd
-i pozwala wybrać kwotę bezpośrednio lub procentowo. Odpowiedzi zawierają podstawę,
-kurs i walutę księgi. Historyczne brakujące kwoty i kursy pozostają opcjonalne.
+Dokument wymaga kwot netto i VAT (także jawnego zera), rodzaju i waluty;
+brutto wylicza backend. Utworzenie dokumentu nie księguje go automatycznie.
+Formularz wpisu pozwala wybrać gotową strategię typu `NET_AND_VAT_PERCENTAGE`.
+Katalog jest systemowy i zarządzany przez SQL, bez ekranu administracyjnego.
+Początkowe pozycje to „Kwota netto” i strategia eksploatacji auta w środkach trwałych
+przy użytku mieszanym oraz odliczeniu 50% VAT. Zachowujemy ten sam typ i obie pozycje.
+`parameters` jest wariantem interfejsu GraphQL `LedgerCalculationParameters`.
+Fragment dla `NetAndVatPercentageParameters` odczytuje `costPercentage` oraz
+`deductibleVatPercentage`. Formularz pokazuje procent kosztu i procent VAT do odliczenia,
+a także VAT do odliczenia, VAT nieodliczony i podstawę kosztu w walucie dokumentu.
+Podgląd używa Decimal i tej samej kolejności co backend: VAT do odliczenia obcina
+do groszy w kierunku zera, VAT nieodliczony wylicza jako różnicę względem całego VAT,
+następnie stosuje procent kosztu do netto z nieodliczonym VAT i zaokrągla HALF_UP.
+Dopiero ten koszt przelicza kursem i ponownie zaokrągla HALF_UP.
+Dla netto 100 i VAT 23,01 podział VAT to 11,50/11,51, a koszt wynosi 83,63;
+dla VAT 23,05 koszt wynosi 83,65. Nie stosujemy uproszczenia do 37,5% VAT.
+„Kwota netto” ma parametry 100/100, a eksploatacja auta 75/50.
+Klient przesyła `calculationStrategyPublicId`, kurs i kolumnę, bez procentów
+i bez wyliczonego kosztu. Backend sam oblicza wynik. Pełne zasady modelu
+opisuje dokumentacja backendu wskazana poniżej.
+Odpowiedzi wpisu zawierają wyliczony koszt w walucie dokumentu (`includedAmount`) i kurs. Migawki dokumentu i strategii backend
+zapisuje w zdarzeniu `ENTRY_CREATED`; nie są polami odpowiedzi wpisu ani osobnym
+ekranem historii.
+Nieobsługiwany wariant parametrów blokuje podgląd i zapis zamiast stosowania wzoru procentowego.
+Brak katalogu blokuje nowe wpisy, a nie tworzenie dokumentów. Brak historycznego
+podziału netto/VAT blokuje przeliczenie dokumentu; UI nie odgaduje tych kwot.
 Pole kursu jest ukryte, gdy waluta dokumentu jest taka sama jak waluta księgi;
 podgląd i zapis używają wtedy kursu 1. Zmiana dokumentu na walutę księgi usuwa
 wcześniej wpisany kurs obcej waluty.
@@ -235,7 +256,7 @@ Formularz ogranicza kolumny według rodzaju dokumentu: faktury sprzedaży do prz
 faktury zakupu do wydatków. Dla paragonów i innych dokumentów użytkownik wybiera
 rodzaj wpisu (przychód albo wydatek). Zmiana dokumentu resetuje kolumnę i pola B+R;
 zmiana kierunku wpisu czyści B+R. Ukryte pola B+R nie są przenoszone do wpisu przychodowego.
-Ta wersja wymaga backendu po migracji V60; zmieniony kontrakt tworzenia wpisu
+Ta wersja wymaga backendu po migracji V61; zmieniony kontrakt tworzenia wpisu
 należy wdrożyć wraz z frontendem.
 Klient pobiera dane firmy wyłącznie po włączeniu `isCompany`; backend niezależnie
 weryfikuje uprawnienia i domenę. Użytkownik tworzy dokument, a następnie wpisuje
@@ -243,6 +264,12 @@ powiązaną pozycję księgi w formularzu. Wpis otwiera szczegóły dokumentu.
 PDF służy wyłącznie do poznania struktury KPiR; aplikacja nie importuje plików PDF.
 
 Źródłem zasad modelu i ręcznego wprowadzania danych jest [dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md).
-Najpierw należy wdrożyć backend z migracją V59, następnie frontend.
+Najpierw należy wdrożyć backend z migracją V61, następnie frontend.
 Wpisy korzystają z danych powiązanego `AccountingDocument`; stare operacje
 `monthLedger` i `addRevenueAndExpenseEntry` zostały usunięte z kontraktu.
+
+Pole `AccountingDocument.postedToLedger` określa, czy dokument ma już wpis w KPiR,
+także w innym miesiącu. Formularz proponuje wyłącznie dokumenty z wartością `false`;
+zaksięgowane dokumenty pozostają widoczne na liście ze statusem „Ujęty w KPiR”.
+Gdy wszystkie dokumenty są zaksięgowane, przycisk dodawania wpisu jest wyłączony.
+Backend niezależnie od UI uniemożliwia drugi wpis dla tego samego dokumentu.

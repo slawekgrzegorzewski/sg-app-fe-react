@@ -10,6 +10,7 @@ scalar Year
 
 type Query {
     companyLedger(yearMonth: YearMonth!): CompanyLedger!
+    ledgerCalculationStrategies: [LedgerCalculationStrategy!]!
     companyAccountingDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
     currentUser: CurrentUserProfile!
     financeManagement: FinanceManagement!
@@ -1196,9 +1197,33 @@ enum LedgerColumn {
     REMUNERATION
     OTHER_EXPENSE
 }
+enum LedgerCalculationStrategyType {
+    NET_AND_VAT_PERCENTAGE
+}
+
+interface LedgerCalculationParameters {
+    strategyType: LedgerCalculationStrategyType!
+}
+
+type NetAndVatPercentageParameters implements LedgerCalculationParameters {
+    strategyType: LedgerCalculationStrategyType!
+    costPercentage: BigDecimal!
+    deductibleVatPercentage: BigDecimal!
+}
+
+type LedgerCalculationStrategy {
+    publicId: UUID!
+    name: String!
+    strategyType: LedgerCalculationStrategyType!
+    parameters: LedgerCalculationParameters!
+}
+
 type AccountingDocument {
+    postedToLedger: Boolean!
     documentType: AccountingDocumentType!
     amount: BigDecimal
+    netAmount: BigDecimal
+    vatAmount: BigDecimal
     currency: String!
     publicId: UUID!
     documentNumber: String!
@@ -1212,7 +1237,8 @@ type AccountingDocument {
 
 input AccountingDocumentInput {
     documentType: AccountingDocumentType!
-    amount: BigDecimal!
+    netAmount: BigDecimal!
+    vatAmount: BigDecimal!
     currency: String!
     documentNumber: String!
     documentDate: LocalDate!
@@ -1251,7 +1277,7 @@ type CompanyLedgerEntry {
     comments: String!
 }
 input CompanyLedgerEntryInput {
-    includedAmount: BigDecimal!
+    calculationStrategyPublicId: UUID!
     exchangeRate: BigDecimal!
     ledgerColumn: LedgerColumn!
     accountingDocumentPublicId: UUID!
