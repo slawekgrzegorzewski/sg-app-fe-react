@@ -23,9 +23,12 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
+import Decimal from 'decimal.js';
 import {
     AccountingDocumentFieldsFragment,
     AccountingDocumentInput,
+    AccountingDocumentType,
+    LedgerColumn,
     CompanyAccounting as CompanyAccountingQuery,
     CompanyAccountingQuery as CompanyAccountingData,
     CompanyLedgerEntryInput,
@@ -42,20 +45,49 @@ const amount = (value: number) => value.toLocaleString(
     {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
 const documentFields = [
-    ['documentNumber', 'Document number'],
-    ['documentDate', 'Document date'],
-    ['counterparty', 'Counterparty'],
-    ['counterpartyAddress', 'Counterparty address'],
-    ['counterpartyTaxId', 'Counterparty tax ID'],
-    ['ksefNumber', 'KSeF number'],
-    ['description', 'Description'],
+    ['documentNumber', 'Numer dokumentu'],
+    ['amount', 'Kwota dokumentu'],
+    ['currency', 'Waluta dokumentu'],
+    ['documentDate', 'Data dokumentu'],
+    ['counterparty', 'Kontrahent'],
+    ['counterpartyAddress', 'Adres kontrahenta'],
+    ['counterpartyTaxId', 'NIP kontrahenta'],
+    ['ksefNumber', 'Numer KSeF'],
+    ['description', 'Opis'],
 ] as const;
+
+const documentTypes = [
+    [AccountingDocumentType.SalesVatInvoice, 'Faktura VAT sprzedaży'],
+    [AccountingDocumentType.PurchaseVatInvoice, 'Faktura VAT zakupu'],
+    [AccountingDocumentType.Receipt, 'Paragon'],
+    [AccountingDocumentType.Other, 'Inny dokument'],
+] as const;
+
+const ledgerColumns = [
+    [LedgerColumn.Sales, 'Sprzedaż towarów i usług'],
+    [LedgerColumn.OtherIncome, 'Pozostałe przychody'],
+    [LedgerColumn.GoodsAndMaterials, 'Zakup towarów i materiałów'],
+    [LedgerColumn.PurchaseCosts, 'Koszty uboczne zakupu'],
+    [LedgerColumn.Remuneration, 'Wynagrodzenia w gotówce i w naturze'],
+    [LedgerColumn.OtherExpense, 'Pozostałe wydatki'],
+] as const;
+
+function isIncomeColumn(column?: LedgerColumn) {
+    return column === LedgerColumn.Sales || column === LedgerColumn.OtherIncome;
+}
+
+function defaultLedgerColumn(documentType?: AccountingDocumentType) {
+    return documentType === AccountingDocumentType.SalesVatInvoice
+        ? LedgerColumn.Sales
+        : LedgerColumn.OtherExpense;
+}
 
 export function CompanyAccounting() {
     const {accountantSettings} = useContext(AccountantSettingsContext);
     const [month, setMonth] = useState(
         dayjs().format('YYYY-MM'));
     const [message, setMessage] = useState('');
+    const [percentageInput, setPercentageInput] = useState<string | null>(null);
     const [entryDraft, setEntryDraft] = useState<CompanyLedgerEntryInput | null>(null);
     const [selectedDocument, setSelectedDocument] = useState<AccountingDocumentFieldsFragment | null>(null);
     const [creating, setCreating] = useState(false);
@@ -72,13 +104,46 @@ export function CompanyAccounting() {
     const [createDocument, createState] = useMutation<CreateAccountingDocumentMutation>(CreateAccountingDocument);
     const busy = entryState.loading || createState.loading;
     const ledger = data?.companyLedger;
+    const ledgerCurrency = ledger?.currency ?? 'PLN';
+    const entryDocument = data?.companyAccountingDocuments.find(
+        document => document.publicId === entryDraft?.accountingDocumentPublicId);
+    const sameCurrency = entryDocument?.currency === ledgerCurrency;
+    const isIncomeEntry = isIncomeColumn(entryDraft?.ledgerColumn);
+    const canChooseEntryDirection = entryDocument?.documentType !== AccountingDocumentType.SalesVatInvoice
+        && entryDocument?.documentType !== AccountingDocumentType.PurchaseVatInvoice;
+    const availableLedgerColumns = ledgerColumns.filter(
+        ([column]) => isIncomeColumn(column) === isIncomeEntry);
+    let includedPercentage = '';
+    let convertedAmount = '';
+    if (entryDraft) {
+        try {
+            if (entryDocument?.amount) {
+                includedPercentage = new Decimal(entryDraft.includedAmount).div(entryDocument.amount).mul(100).toFixed(4);
+            }
+            convertedAmount = new Decimal(entryDraft.includedAmount)
+                .mul(sameCurrency ? '1' : entryDraft.exchangeRate)
+                .toFixed(2)
+                .replace('.', ',');
+        } catch {
+            convertedAmount = '';
+        }
+    }
 
     async function handleCreateEntry(event: React.FormEvent) {
         event.preventDefault();
+        if (!entryDraft) {
+            return;
+        }
+        const input = {
+            ...entryDraft,
+            exchangeRate: sameCurrency ? '1' : entryDraft.exchangeRate,
+            ...(isIncomeEntry ? {researchAndDevelopmentExpense: '0', researchAndDevelopmentDescription: ''} : {}),
+        };
         try {
-            await createEntry({variables: {input: entryDraft}});
+            await createEntry(
+                {variables: {input}});
             setEntryDraft(null);
-            setMessage('Ledger entry created.');
+            setMessage('Dodano wpis do księgi.');
             await refetch();
         } catch {
             setMessage('');
@@ -98,32 +163,33 @@ export function CompanyAccounting() {
     }
 
     if (!accountantSettings.isCompany) {
-        return <Alert severity="info">Enable company accounting in Accountant settings to use this page.</Alert>;
+        return <Alert severity="info">Aby korzystać z tej strony, włącz tryb firmowy w ustawieniach
+            księgowości.</Alert>;
     }
 
     const columns = [
-        ['providedGoodsAndServicesValue', 'Sales of goods and services'],
-        ['otherIncome', 'Other income'],
-        ['totalIncome', 'Total income'],
-        ['purchasedGoodsAndMaterialsValue', 'Goods and materials'],
-        ['additionalCostOfPurchase', 'Purchase costs'],
-        ['remunerationInCashOrInKind', 'Remuneration'],
-        ['otherExpense', 'Other expenses'],
-        ['totalExpense', 'Total expenses'],
-        ['additionalColumnValue', 'Additional column'],
-        ['researchAndDevelopmentExpense', 'Research and development'],
+        ['providedGoodsAndServicesValue', 'Sprzedaż towarów i usług'],
+        ['otherIncome', 'Pozostałe przychody'],
+        ['totalIncome', 'Razem przychody'],
+        ['purchasedGoodsAndMaterialsValue', 'Zakup towarów i materiałów'],
+        ['additionalCostOfPurchase', 'Koszty uboczne zakupu'],
+        ['remunerationInCashOrInKind', 'Wynagrodzenia w gotówce i w naturze'],
+        ['otherExpense', 'Pozostałe wydatki'],
+        ['totalExpense', 'Razem wydatki'],
+        ['additionalColumnValue', 'Kolumna dodatkowa'],
+        ['researchAndDevelopmentExpense', 'Koszty działalności B+R'],
     ] as const;
 
     return (
         <Stack alignItems="center" sx={{width: '100%', px: {xs: 1, sm: 2}, py: 2}}>
             <Stack spacing={3} sx={{width: '100%', maxWidth: 960, minWidth: 0}}>
-                <Typography variant="h3">Company accounting</Typography>
+                <Typography variant="h3">Księgowość firmy</Typography>
                 <Paper variant="outlined" sx={{p: {xs: 2, sm: 3}}}>
                     <Stack spacing={2}>
-                        <Typography variant="h5" component="h2">Accounting month</Typography>
+                        <Typography variant="h5" component="h2">Miesiąc księgowy</Typography>
                         <TextField
                             id="company-accounting-month"
-                            label="Accounting month"
+                            label="Miesiąc księgowy"
                             type="month"
                             value={month}
                             disabled={busy}
@@ -135,23 +201,22 @@ export function CompanyAccounting() {
                             slotProps={{inputLabel: {shrink: true}}}
                         />
                         <Typography variant="body2" color="text.secondary">
-                            Create an accounting document, then add its amounts to the ledger. Amounts are in PLN.
+                            Dokument może pozostać poza KPiR. Wpis księgi obejmuje wybraną część kwoty dokumentu,
+                            przeliczoną na PLN.
                         </Typography>
                         <Button
                             variant="contained"
                             disabled={!validMonth || loading || Boolean(error) || busy || !data?.companyAccountingDocuments.length}
                             onClick={() => {
                                 entryState.reset();
+                                setPercentageInput(null);
                                 setEntryDraft({
                                     accountingDocumentPublicId: data?.companyAccountingDocuments[0]?.publicId ?? '',
+                                    includedAmount: String(data?.companyAccountingDocuments[0]?.amount ?? ''),
+                                    exchangeRate: data?.companyAccountingDocuments[0]?.currency === ledgerCurrency ? '1' : '',
+                                    ledgerColumn: defaultLedgerColumn(data?.companyAccountingDocuments[0]?.documentType),
                                     entryDate: `${month}-01`,
                                     entryOrder: Math.max(0, ...(ledger?.entries.map(entry => entry.entryOrder) ?? [])) + 1,
-                                    providedGoodsAndServicesValue: '0',
-                                    otherIncome: '0',
-                                    purchasedGoodsAndMaterialsValue: '0',
-                                    additionalCostOfPurchase: '0',
-                                    remunerationInCashOrInKind: '0',
-                                    otherExpense: '0',
                                     additionalColumnValue: '0',
                                     researchAndDevelopmentExpense: '0',
                                     researchAndDevelopmentDescription: '',
@@ -159,50 +224,51 @@ export function CompanyAccounting() {
                                 });
                             }}
                         >
-                            Add ledger entry
+                            Dodaj wpis do księgi
                         </Button>
                         {!data?.companyAccountingDocuments.length && !loading && !error && (
-                            <Typography color="text.secondary">Create an accounting document below to add the first
-                                entry.</Typography>
+                            <Typography color="text.secondary">Aby dodać pierwszy wpis, utwórz poniżej dokument
+                                księgowy.</Typography>
                         )}
                         {message && <Alert severity="success">{message}</Alert>}
                     </Stack>
                 </Paper>
-                {loading && <LoadingIndicator label="Loading company accounting…"/>}
+                {loading && <LoadingIndicator label="Ładowanie księgowości firmy…"/>}
                 {error && (
                     <Stack spacing={1}>
-                        <ErrorDisplay title="Company accounting error" error={error}/>
+                        <ErrorDisplay title="Nie udało się pobrać danych księgowości firmy" error={error}/>
                         <Button color="inherit" onClick={() => void refetch()}>
-                            Retry
+                            Ponów
                         </Button>
                     </Stack>
                 )}
                 <Paper variant="outlined" sx={{p: 2, minWidth: 0}}>
                     <Typography variant="h5" component="h2" sx={{mb: 2}}>
-                        Revenue and expense ledger ({ledger?.entries.length ?? 0})
+                        Księga przychodów i rozchodów ({ledger?.entries.length ?? 0})
                     </Typography>
                     {!ledger?.entries.length ? (
                         <Typography color="text.secondary">
-                            No ledger entries for this month. Add an entry using an accounting document.
+                            Brak wpisów w tym miesiącu. Dodaj wpis na podstawie dokumentu księgowego.
                         </Typography>
                     ) : (
                         <TableContainer>
-                            <Table size="small" aria-label="Revenue and expense ledger">
+                            <Table size="small" aria-label="Księga przychodów i rozchodów">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Entry</TableCell>
-                                        <TableCell>Date</TableCell>
-                                        <TableCell>Document</TableCell>
-                                        <TableCell>Counterparty</TableCell>
-                                        <TableCell>Description</TableCell>
+                                        <TableCell>Lp.</TableCell>
+                                        <TableCell>Data</TableCell>
+                                        <TableCell>Dokument</TableCell>
+                                        <TableCell>Przeliczenie do PLN</TableCell>
+                                        <TableCell>Kontrahent</TableCell>
+                                        <TableCell>Opis</TableCell>
                                         {columns.map(
                                             ([key, label]) => (
                                                 <TableCell key={key} align="right">
                                                     {label}
                                                 </TableCell>
                                             ))}
-                                        <TableCell>R&amp;D description</TableCell>
-                                        <TableCell>Comments</TableCell>
+                                        <TableCell>Opis kosztów B+R</TableCell>
+                                        <TableCell>Uwagi</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -220,6 +286,9 @@ export function CompanyAccounting() {
                                                     >
                                                         {entry.accountingDocument.documentNumber}
                                                     </Button>
+                                                </TableCell>
+                                                <TableCell sx={{whiteSpace: 'nowrap'}}>
+                                                    {entry.includedAmount == null ? 'Wpis historyczny' : `${amount(entry.includedAmount)} ${entry.accountingDocument.currency} × ${entry.exchangeRate} PLN`}
                                                 </TableCell>
                                                 <TableCell>
                                                     {entry.accountingDocument.counterparty ||
@@ -253,7 +322,7 @@ export function CompanyAccounting() {
                 <Paper variant="outlined" sx={{p: 2}}>
                     <Stack spacing={2}>
                         <Typography variant="h5" component="h2">
-                            Accounting documents ({data?.companyAccountingDocuments.length ?? 0})
+                            Dokumenty księgowe ({data?.companyAccountingDocuments.length ?? 0})
                         </Typography>
                         <Button
                             color="inherit"
@@ -263,6 +332,9 @@ export function CompanyAccounting() {
                                 createState.reset();
                                 setDraft(
                                     {
+                                        documentType: AccountingDocumentType.PurchaseVatInvoice,
+                                        amount: '',
+                                        currency: 'PLN',
                                         documentNumber: '',
                                         documentDate: `${month}-01`,
                                         counterparty: '',
@@ -274,10 +346,10 @@ export function CompanyAccounting() {
                                 setCreating(true);
                             }}
                         >
-                            Create accounting document
+                            Dodaj dokument księgowy
                         </Button>
                         {!data?.companyAccountingDocuments.length && (
-                            <Typography color="text.secondary">No accounting documents for this month.</Typography>
+                            <Typography color="text.secondary">Brak dokumentów księgowych w tym miesiącu.</Typography>
                         )}
                         {data?.companyAccountingDocuments.map(
                             document => (
@@ -285,7 +357,11 @@ export function CompanyAccounting() {
                                     <Button color="inherit" onClick={() => setSelectedDocument(document)}>
                                         {document.documentNumber}
                                     </Button>
-                                    <Typography variant="body2">{document.description}</Typography>
+                                    <Typography variant="body2">
+                                        {documentTypes.find(([type]) => type === document.documentType)?.[1]}
+                                        {' · '}{document.amount == null ? 'Kwota nieuzupełniona' : amount(document.amount)}
+                                        {' '}{document.currency} · {document.description}
+                                    </Typography>
                                 </Box>
                             ))}
                     </Stack>
@@ -299,10 +375,10 @@ export function CompanyAccounting() {
                 aria-labelledby="accounting-document-title"
             >
                 <DialogTitle id="accounting-document-title" sx={{pr: 7}}>
-                    Accounting document
+                    Dokument księgowy
                 </DialogTitle>
                 <IconButton
-                    aria-label="Close document"
+                    aria-label="Zamknij dokument"
                     onClick={() => setSelectedDocument(null)}
                     sx={{position: 'absolute', right: 8, top: 8}}
                 >
@@ -310,6 +386,9 @@ export function CompanyAccounting() {
                 </IconButton>
                 <DialogContent dividers>
                     <Stack spacing={2} sx={{overflowWrap: 'anywhere'}}>
+                        {selectedDocument && (
+                            <Typography>{documentTypes.find(([type]) => type === selectedDocument.documentType)?.[1]}</Typography>
+                        )}
                         {selectedDocument &&
                             documentFields.map(
                                 ([key, label]) => (
@@ -317,14 +396,14 @@ export function CompanyAccounting() {
                                         <Typography variant="caption" color="text.secondary">
                                             {label}
                                         </Typography>
-                                        <Typography>{selectedDocument[key] || '—'}</Typography>
+                                        <Typography>{selectedDocument[key] === '' ? '—' : selectedDocument[key] ?? '—'}</Typography>
                                     </Box>
                                 ))}
                     </Stack>
                 </DialogContent>
                 <DialogActions>
                     <Button color="inherit" onClick={() => setSelectedDocument(null)}>
-                        Close
+                        Zamknij
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -335,28 +414,124 @@ export function CompanyAccounting() {
                 maxWidth="sm"
                 aria-labelledby="create-ledger-entry-title"
             >
-                <Box component="form" onSubmit={event => void handleCreateEntry(event)}>
-                    <DialogTitle id="create-ledger-entry-title" sx={{pr: 7}}>Add ledger entry</DialogTitle>
-                    <IconButton aria-label="Close entry form" disabled={busy} onClick={() => setEntryDraft(null)}
+                <Box component="form" onSubmit={event => void handleCreateEntry(event)}
+                     sx={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
+                    <DialogTitle id="create-ledger-entry-title" sx={{pr: 7}}>Dodaj wpis do księgi</DialogTitle>
+                    <IconButton aria-label="Zamknij formularz wpisu" disabled={busy} onClick={() => setEntryDraft(null)}
                                 sx={{position: 'absolute', right: 8, top: 8}}>
                         <CloseIcon/>
                     </IconButton>
                     <DialogContent dividers>
                         {entryDraft && (
                             <Stack spacing={2}>
-                                <TextField select id="ledger-document" label="Accounting document" fullWidth required
+                                <TextField select id="ledger-document" label="Dokument księgowy" fullWidth required
                                            value={entryDraft.accountingDocumentPublicId} disabled={busy}
-                                           onChange={event => setEntryDraft({
-                                               ...entryDraft,
-                                               accountingDocumentPublicId: event.target.value
-                                           })}>
+                                           onChange={event => {
+                                               const document = data?.companyAccountingDocuments.find(
+                                                   candidate => candidate.publicId === event.target.value);
+                                               setPercentageInput(null);
+                                               setEntryDraft({
+                                                   ...entryDraft,
+                                                   accountingDocumentPublicId: event.target.value,
+                                                   ledgerColumn: defaultLedgerColumn(document?.documentType),
+                                                   researchAndDevelopmentExpense: '0',
+                                                   researchAndDevelopmentDescription: '',
+                                                   includedAmount: String(document?.amount ?? ''),
+                                                   exchangeRate: document?.currency === ledgerCurrency ? '1' : '',
+                                               });
+                                           }}>
                                     {data?.companyAccountingDocuments.map(document => (
                                         <MenuItem key={document.publicId} value={document.publicId}>
                                             {document.documentNumber}
                                         </MenuItem>
                                     ))}
                                 </TextField>
-                                <TextField id="ledger-date" label="Entry date" type="date" fullWidth required
+                                {canChooseEntryDirection && (
+                                    <TextField
+                                        select
+                                        id="ledger-direction"
+                                        label="Rodzaj wpisu"
+                                        value={isIncomeEntry ? 'income' : 'expense'}
+                                        disabled={busy}
+                                        onChange={event => setEntryDraft(
+                                            {
+                                                ...entryDraft,
+                                                ledgerColumn: event.target.value === 'income'
+                                                    ? LedgerColumn.Sales
+                                                    : LedgerColumn.OtherExpense,
+                                                researchAndDevelopmentExpense: '0',
+                                                researchAndDevelopmentDescription: '',
+                                            })}
+                                    >
+                                        <MenuItem value="income">Przychód</MenuItem>
+                                        <MenuItem value="expense">Wydatek</MenuItem>
+                                    </TextField>
+                                )}
+                                <TextField
+                                    select
+                                    id="ledger-column"
+                                    label="Kolumna KPiR"
+                                    value={entryDraft.ledgerColumn}
+                                    disabled={busy}
+                                    onChange={event => setEntryDraft({
+                                        ...entryDraft,
+                                        ledgerColumn: event.target.value as LedgerColumn
+                                    })}
+                                >
+                                    {availableLedgerColumns.map(([key, label]) => <MenuItem key={key}
+                                                                                            value={key}>{label}</MenuItem>)}
+                                </TextField>
+                                <Typography>
+                                    Dokument: {entryDocument?.amount == null ? 'kwota nieuzupełniona' : amount(entryDocument.amount)} {entryDocument?.currency}
+                                </Typography>
+                                <TextField
+                                    id="ledger-included-amount"
+                                    label="Kwota z dokumentu do ujęcia"
+                                    type="number"
+                                    value={entryDraft.includedAmount}
+                                    required
+                                    disabled={busy}
+                                    slotProps={{htmlInput: {step: '0.01'}}}
+                                    helperText={`W walucie dokumentu: ${entryDocument?.currency ?? ''}`}
+                                    onChange={event => {
+                                        setPercentageInput(null);
+                                        setEntryDraft({...entryDraft, includedAmount: event.target.value});
+                                    }}
+                                />
+                                <TextField
+                                    id="ledger-percentage"
+                                    label="Część kwoty dokumentu (%)"
+                                    type="number"
+                                    value={percentageInput ?? includedPercentage}
+                                    disabled={busy || !entryDocument?.amount}
+                                    slotProps={{htmlInput: {step: '0.0001', min: 0, max: 100}}}
+                                    onChange={event => {
+                                        const percentage = event.target.value;
+                                        setPercentageInput(percentage);
+                                        if (!percentage) {
+                                            setEntryDraft({...entryDraft, includedAmount: ''});
+                                        } else if (entryDocument?.amount != null) {
+                                            setEntryDraft({
+                                                ...entryDraft,
+                                                includedAmount: new Decimal(entryDocument.amount).mul(percentage).div(100).toFixed(2)
+                                            });
+                                        }
+                                    }}
+                                />
+                                {!sameCurrency && <TextField
+                                    id="ledger-exchange-rate"
+                                    label={`Kurs do ${ledgerCurrency}`}
+                                    type="number"
+                                    value={entryDraft.exchangeRate}
+                                    required
+                                    disabled={busy}
+                                    slotProps={{htmlInput: {step: '0.00000001', min: '0.00000001'}}}
+                                    helperText={`Ile ${ledgerCurrency} za 1 ${entryDocument?.currency ?? 'jednostkę waluty dokumentu'}`}
+                                    onChange={event => setEntryDraft({...entryDraft, exchangeRate: event.target.value})}
+                                />}
+                                <Alert severity="info">Kwota w wybranej kolumnie
+                                    KPiR: {convertedAmount || '—'} {ledgerCurrency}</Alert>
+                                <TextField id="ledger-date" label="Data wpisu" type="date" fullWidth required
                                            value={entryDraft.entryDate} disabled={busy}
                                            sx={theme => ({colorScheme: theme.palette.mode})}
                                            slotProps={{
@@ -370,14 +545,15 @@ export function CompanyAccounting() {
                                                ...entryDraft,
                                                entryDate: event.target.value
                                            })}/>
-                                <TextField id="ledger-order" label="Entry number" type="number" fullWidth required
+                                <TextField id="ledger-order" label="Numer wpisu" type="number" fullWidth required
                                            value={entryDraft.entryOrder} disabled={busy}
                                            slotProps={{htmlInput: {min: 1, step: 1}}}
                                            onChange={event => setEntryDraft({
                                                ...entryDraft,
                                                entryOrder: Number(event.target.value)
                                            })}/>
-                                {columns.filter(([key]) => key !== 'totalIncome' && key !== 'totalExpense').map(([key, label]) => (
+                                {columns.filter(([key]) => key === 'additionalColumnValue'
+                                    || (!isIncomeEntry && key === 'researchAndDevelopmentExpense')).map(([key, label]) => (
                                     <TextField key={key} id={`ledger-${key}`} label={label} type="number" required
                                                fullWidth
                                                value={String(entryDraft[key as keyof CompanyLedgerEntryInput])}
@@ -388,26 +564,28 @@ export function CompanyAccounting() {
                                                    [key]: event.target.value
                                                })}/>
                                 ))}
-                                <TextField id="ledger-rd-description" label="R&D description" fullWidth
-                                           value={entryDraft.researchAndDevelopmentDescription} disabled={busy}
-                                           onChange={event => setEntryDraft({
-                                               ...entryDraft,
-                                               researchAndDevelopmentDescription: event.target.value
-                                           })}/>
-                                <TextField id="ledger-comments" label="Comments" fullWidth multiline
+                                {!isIncomeEntry &&
+                                    <TextField id="ledger-rd-description" label="Opis kosztów B+R" fullWidth
+                                               value={entryDraft.researchAndDevelopmentDescription} disabled={busy}
+                                               onChange={event => setEntryDraft({
+                                                   ...entryDraft,
+                                                   researchAndDevelopmentDescription: event.target.value
+                                               })}/>}
+                                <TextField id="ledger-comments" label="Uwagi" fullWidth multiline
                                            value={entryDraft.comments} disabled={busy}
                                            onChange={event => setEntryDraft({
                                                ...entryDraft,
                                                comments: event.target.value
                                            })}/>
                                 {entryState.error &&
-                                    <ErrorDisplay title="Ledger entry error" error={entryState.error}/>}
+                                    <ErrorDisplay title="Nie udało się zapisać wpisu do księgi"
+                                                  error={entryState.error}/>}
                             </Stack>
                         )}
                     </DialogContent>
                     <DialogActions>
-                        <Button color="inherit" disabled={busy} onClick={() => setEntryDraft(null)}>Cancel</Button>
-                        <Button type="submit" variant="contained" disabled={busy}>Create ledger entry</Button>
+                        <Button color="inherit" disabled={busy} onClick={() => setEntryDraft(null)}>Anuluj</Button>
+                        <Button type="submit" variant="contained" disabled={busy}>Zapisz wpis</Button>
                     </DialogActions>
                 </Box>
             </Dialog>
@@ -418,12 +596,13 @@ export function CompanyAccounting() {
                 maxWidth="sm"
                 aria-labelledby="create-accounting-document-title"
             >
-                <Box component="form" onSubmit={event => void handleCreate(event)}>
+                <Box component="form" onSubmit={event => void handleCreate(event)}
+                     sx={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
                     <DialogTitle id="create-accounting-document-title" sx={{pr: 7}}>
-                        Create accounting document
+                        Dodaj dokument księgowy
                     </DialogTitle>
                     <IconButton
-                        aria-label="Close form"
+                        aria-label="Zamknij formularz"
                         disabled={busy}
                         onClick={() => setCreating(false)}
                         sx={{position: 'absolute', right: 8, top: 8}}
@@ -432,6 +611,22 @@ export function CompanyAccounting() {
                     </IconButton>
                     <DialogContent dividers>
                         <Stack spacing={2}>
+                            {draft && (
+                                <TextField
+                                    select
+                                    id="document-type"
+                                    label="Rodzaj dokumentu"
+                                    value={draft.documentType}
+                                    disabled={busy}
+                                    onChange={event => setDraft({
+                                        ...draft,
+                                        documentType: event.target.value as AccountingDocumentType
+                                    })}
+                                >
+                                    {documentTypes.map(([key, label]) => <MenuItem key={key}
+                                                                                   value={key}>{label}</MenuItem>)}
+                                </TextField>
+                            )}
                             {draft &&
                                 documentFields.map(
                                     ([key, label]) => (
@@ -439,31 +634,43 @@ export function CompanyAccounting() {
                                             key={key}
                                             id={`accounting-document-${key}`}
                                             label={label}
-                                            type={key === 'documentDate' ? 'date' : 'text'}
+                                            type={key === 'documentDate' ? 'date' : key === 'amount' ? 'number' : 'text'}
                                             sx={theme => ({colorScheme: theme.palette.mode})}
                                             value={draft[key]}
-                                            required={key === 'documentNumber' || key === 'documentDate'}
+                                            required={['documentNumber', 'documentDate', 'amount', 'currency'].includes(key)}
                                             fullWidth
                                             disabled={busy}
-                                            slotProps={{inputLabel: {shrink: true}}}
+                                            slotProps={{
+                                                inputLabel: {shrink: true},
+                                                htmlInput: {
+                                                    step: '0.01', ...(key === 'currency' ? {
+                                                        pattern: '[A-Z]{3}',
+                                                        maxLength: 3
+                                                    } : {})
+                                                }
+                                            }}
                                             onChange={event =>
                                                 setDraft(
                                                     current =>
-                                                        current ? {...current, [key]: event.target.value} : null)
+                                                        current ? {
+                                                            ...current,
+                                                            [key]: key === 'currency' ? event.target.value.toUpperCase() : event.target.value
+                                                        } : null)
                                             }
                                         />
                                     ))}
                             {createState.error && (
-                                <ErrorDisplay title="Company accounting error" error={createState.error}/>
+                                <ErrorDisplay title="Nie udało się zapisać dokumentu księgowego"
+                                              error={createState.error}/>
                             )}
                         </Stack>
                     </DialogContent>
                     <DialogActions>
                         <Button color="inherit" disabled={busy} onClick={() => setCreating(false)}>
-                            Cancel
+                            Anuluj
                         </Button>
                         <Button color="primary" type="submit" variant="contained" disabled={busy}>
-                            Create document
+                            Zapisz dokument
                         </Button>
                     </DialogActions>
                 </Box>

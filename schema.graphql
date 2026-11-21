@@ -1182,7 +1182,24 @@ type CubeTrainerCrossAttemptData {
 }
 
 
+enum AccountingDocumentType {
+    SALES_VAT_INVOICE
+    PURCHASE_VAT_INVOICE
+    RECEIPT
+    OTHER
+}
+enum LedgerColumn {
+    SALES
+    OTHER_INCOME
+    GOODS_AND_MATERIALS
+    PURCHASE_COSTS
+    REMUNERATION
+    OTHER_EXPENSE
+}
 type AccountingDocument {
+    documentType: AccountingDocumentType!
+    amount: BigDecimal
+    currency: String!
     publicId: UUID!
     documentNumber: String!
     documentDate: LocalDate!
@@ -1194,6 +1211,9 @@ type AccountingDocument {
 }
 
 input AccountingDocumentInput {
+    documentType: AccountingDocumentType!
+    amount: BigDecimal!
+    currency: String!
     documentNumber: String!
     documentDate: LocalDate!
     counterparty: String!
@@ -1204,11 +1224,15 @@ input AccountingDocumentInput {
 }
 
 type CompanyLedger {
+    currency: String!
     yearMonth: YearMonth!
     entries: [CompanyLedgerEntry!]!
 }
 
 type CompanyLedgerEntry {
+    includedAmount: BigDecimal
+    exchangeRate: BigDecimal
+    ledgerColumn: LedgerColumn
     publicId: UUID!
     entryOrder: Int!
     entryDate: LocalDate!
@@ -1227,15 +1251,12 @@ type CompanyLedgerEntry {
     comments: String!
 }
 input CompanyLedgerEntryInput {
+    includedAmount: BigDecimal!
+    exchangeRate: BigDecimal!
+    ledgerColumn: LedgerColumn!
     accountingDocumentPublicId: UUID!
     entryDate: LocalDate!
     entryOrder: Int!
-    providedGoodsAndServicesValue: BigDecimal!
-    otherIncome: BigDecimal!
-    purchasedGoodsAndMaterialsValue: BigDecimal!
-    additionalCostOfPurchase: BigDecimal!
-    remunerationInCashOrInKind: BigDecimal!
-    otherExpense: BigDecimal!
     additionalColumnValue: BigDecimal!
     researchAndDevelopmentExpense: BigDecimal!
     researchAndDevelopmentDescription: String!

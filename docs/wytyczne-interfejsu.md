@@ -60,6 +60,7 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 
 ## Dostępność
 
+- Treści interfejsu piszemy po polsku: tytuły, etykiety pól, akcje, komunikaty, nagłówki tabel oraz nazwy dostępności. Identyfikatory w kodzie i API zachowują nazwy techniczne.
 - Zachowujemy poprawną hierarchię nagłówków i semantyczne regiony strony.
 - Dialog ma dostępny tytuł powiązany przez `aria-labelledby`.
 - `label` pola formularza wskazuje jego `id`, a nie `name`.

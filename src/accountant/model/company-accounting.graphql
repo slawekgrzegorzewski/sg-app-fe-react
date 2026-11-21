@@ -1,5 +1,8 @@
 fragment AccountingDocumentFields on AccountingDocument {
     publicId
+    documentType
+    amount
+    currency
     documentNumber
     documentDate
     counterparty
@@ -10,9 +13,13 @@ fragment AccountingDocumentFields on AccountingDocument {
 }
 
 fragment CompanyLedgerFields on CompanyLedger {
+    currency
     yearMonth
     entries {
         publicId
+        includedAmount
+        exchangeRate
+        ledgerColumn
         entryOrder
         entryDate
         providedGoodsAndServicesValue

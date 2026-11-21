@@ -218,10 +218,25 @@ niedostępnej w bieżącym trybie przekierowuje na stronę startową.
 Nawigacja i dispatcher obserwują `GetAccountantSettings`; ponowne pobranie po zmianie
 trybu aktualizuje strony bez tworzenia nowej aplikacji lub roli.
 
-Aktywny widok `Company accounting` korzysta z zapytania `CompanyAccounting`
+Aktywny widok „Księgowość firmy” korzysta z zapytania `CompanyAccounting`
 (`companyLedger` i `companyAccountingDocuments`) oraz mutacji
 `createCompanyLedgerEntry` i `createAccountingDocument`.
 Operacje znajdują się w `src/accountant/model/company-accounting.graphql`.
+Dokument ma rodzaj, kwotę i walutę. Utworzenie dokumentu nie księguje go automatycznie.
+Wpis przyjmuje `includedAmount` w walucie dokumentu, `exchangeRate` (PLN za jednostkę)
+oraz `ledgerColumn`. Backend wylicza kwotę kolumny KPiR; UI pokazuje podgląd
+i pozwala wybrać kwotę bezpośrednio lub procentowo. Odpowiedzi zawierają podstawę,
+kurs i walutę księgi. Historyczne brakujące kwoty i kursy pozostają opcjonalne.
+Pole kursu jest ukryte, gdy waluta dokumentu jest taka sama jak waluta księgi;
+podgląd i zapis używają wtedy kursu 1. Zmiana dokumentu na walutę księgi usuwa
+wcześniej wpisany kurs obcej waluty.
+
+Formularz ogranicza kolumny według rodzaju dokumentu: faktury sprzedaży do przychodów,
+faktury zakupu do wydatków. Dla paragonów i innych dokumentów użytkownik wybiera
+rodzaj wpisu (przychód albo wydatek). Zmiana dokumentu resetuje kolumnę i pola B+R;
+zmiana kierunku wpisu czyści B+R. Ukryte pola B+R nie są przenoszone do wpisu przychodowego.
+Ta wersja wymaga backendu po migracji V60; zmieniony kontrakt tworzenia wpisu
+należy wdrożyć wraz z frontendem.
 Klient pobiera dane firmy wyłącznie po włączeniu `isCompany`; backend niezależnie
 weryfikuje uprawnienia i domenę. Użytkownik tworzy dokument, a następnie wpisuje
 powiązaną pozycję księgi w formularzu. Wpis otwiera szczegóły dokumentu.
