@@ -23,7 +23,22 @@ fragment AccountingDocumentFields on AccountingDocument {
     description
 }
 
+fragment CompanyLedgerSummaryFields on CompanyLedgerSummary {
+    providedGoodsAndServicesValue
+    otherIncome
+    totalIncome
+    purchasedGoodsAndMaterialsValue
+    additionalCostOfPurchase
+    remunerationInCashOrInKind
+    otherExpense
+    totalExpense
+    additionalColumnValue
+    researchAndDevelopmentExpense
+}
+
 fragment CompanyLedgerFields on CompanyLedger {
+    monthSummary { ...CompanyLedgerSummaryFields }
+    yearToDateSummary { ...CompanyLedgerSummaryFields }
     currency
     yearMonth
     entries {

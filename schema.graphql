@@ -1282,7 +1282,22 @@ input AccountingDocumentInput {
     description: String!
 }
 
+type CompanyLedgerSummary {
+    providedGoodsAndServicesValue: BigDecimal!
+    otherIncome: BigDecimal!
+    totalIncome: BigDecimal!
+    purchasedGoodsAndMaterialsValue: BigDecimal!
+    additionalCostOfPurchase: BigDecimal!
+    remunerationInCashOrInKind: BigDecimal!
+    otherExpense: BigDecimal!
+    totalExpense: BigDecimal!
+    additionalColumnValue: BigDecimal!
+    researchAndDevelopmentExpense: BigDecimal!
+}
+
 type CompanyLedger {
+    monthSummary: CompanyLedgerSummary!
+    yearToDateSummary: CompanyLedgerSummary!
     currency: String!
     yearMonth: YearMonth!
     entries: [CompanyLedgerEntry!]!

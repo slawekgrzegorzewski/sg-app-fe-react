@@ -710,3 +710,20 @@ test('edits a posted entry without creating a duplicate and preserves its origin
     expect(mockEntry).not.toHaveBeenCalled();
     expect(mockRefetch).toHaveBeenCalled();
 });
+
+
+test('shows monthly and year-to-date totals even when the selected month has no entries', () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    const zero = {providedGoodsAndServicesValue: 0, otherIncome: 0, totalIncome: 0, purchasedGoodsAndMaterialsValue: 0, additionalCostOfPurchase: 0, remunerationInCashOrInKind: 0, otherExpense: 0, totalExpense: 0, additionalColumnValue: 0, researchAndDevelopmentExpense: 0};
+    (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+        companyLedger: {yearMonth: '2026-11', entries: [], monthSummary: zero,
+            yearToDateSummary: {...zero, providedGoodsAndServicesValue: 123.45, totalIncome: 123.45, otherExpense: -0.01, totalExpense: -0.01}},
+    }});
+    renderPage();
+    const monthly = screen.getByRole('row', {name: /Podsumowanie miesiąca/});
+    expect(within(monthly).getAllByRole('cell')).toHaveLength(11);
+    const yearly = screen.getByRole('row', {name: /Podsumowanie od początku roku/});
+    expect(yearly).toHaveTextContent('123,45');
+    expect(yearly).toHaveTextContent('-0,01');
+    expect(screen.getByText(/Brak wpisów w tym miesiącu/)).toBeInTheDocument();
+});

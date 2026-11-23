@@ -326,3 +326,8 @@ Wymagany jest backend z migracją V63 przed wdrożeniem frontendu.
 Edycja KPiR korzysta z `updateCompanyLedgerEntry(publicId, input)`.
 Zapytanie księgi pobiera też `calculationStrategyPublicId` z ostatniego zdarzenia wpisu.
 Dokument i miesiąc KPiR pozostają stałe. Wymagany backend z migracją V64 przed frontendem.
+
+`CompanyAccounting` pobiera `companyLedger.monthSummary` i `yearToDateSummary`.
+Stopka KPiR pokazuje sumy miesiąca i narastająco od stycznia do wybranego miesiąca
+w PLN, także dla miesięcy bez wpisów. Najpierw wdrażamy backend z polami podsumowań;
+migracja bazy nie jest potrzebna.

@@ -17,6 +17,7 @@ import {
     TableCell,
     TableContainer,
     TableHead,
+    TableFooter,
     TableRow,
     TextField,
     Typography,
@@ -310,11 +311,12 @@ export function CompanyAccounting() {
                     <Typography variant="h5" component="h2" sx={{mb: 2}}>
                         Księga przychodów i rozchodów ({ledger?.entries.length ?? 0})
                     </Typography>
-                    {!ledger?.entries.length ? (
+                    {!ledger?.entries.length && (
                         <Typography color="text.secondary">
                             Brak wpisów w tym miesiącu. Dodaj wpis na podstawie dokumentu księgowego.
                         </Typography>
-                    ) : (
+                    )}
+                    {ledger && (
                         <TableContainer>
                             <Table size="small" aria-label="Księga przychodów i rozchodów">
                                 <TableHead>
@@ -403,6 +405,32 @@ export function CompanyAccounting() {
                                             </TableRow>
                                         ))}
                                 </TableBody>
+                                <TableFooter>
+                                    {[
+                                        {label: 'Podsumowanie miesiąca', values: ledger.monthSummary},
+                                        {label: 'Podsumowanie od początku roku', values: ledger.yearToDateSummary},
+                                    ].map(({label, values}) => values && (
+                                        <TableRow
+                                            key={label}
+                                            sx={{bgcolor: 'action.hover', '& th, & td': {fontWeight: 700, color: 'text.primary'}}}
+                                        >
+                                            <TableCell component="th" scope="row" colSpan={6}>
+                                                {label} (PLN)
+                                            </TableCell>
+                                            {columns.map(
+                                                    ([key]) => (
+                                                        <TableCell
+                                                            key={key}
+                                                            align="right"
+                                                            sx={{whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums'}}
+                                                        >
+                                                            {amount(values[key])}
+                                                        </TableCell>
+                                                    ))}
+                                            <TableCell colSpan={3}/>
+                                        </TableRow>
+                                    ))}
+                                </TableFooter>
                             </Table>
                         </TableContainer>
                     )}
