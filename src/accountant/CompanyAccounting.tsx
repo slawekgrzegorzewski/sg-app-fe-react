@@ -266,7 +266,8 @@ export function CompanyAccounting() {
                                     calculationStrategyPublicId: strategies[0]?.publicId ?? '',
                                     exchangeRate: availableDocuments[0]?.currency === ledgerCurrency ? '1' : '',
                                     ledgerColumn: defaultLedgerColumn(availableDocuments[0]?.documentType),
-                                    entryDate: `${month}-01`,
+                                    ledgerMonth: month,
+                                    entryDate: availableDocuments[0]?.documentDate ?? `${month}-01`,
                                     entryOrder: Math.max(0, ...(ledger?.entries.map(entry => entry.entryOrder) ?? [])) + 1,
                                     additionalColumnValue: '0',
                                     researchAndDevelopmentExpense: '0',
@@ -310,7 +311,7 @@ export function CompanyAccounting() {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell>Lp.</TableCell>
-                                        <TableCell>Data</TableCell>
+                                        <TableCell>Data zdarzenia</TableCell>
                                         <TableCell>Dokument</TableCell>
                                         <TableCell>Przeliczenie do PLN</TableCell>
                                         <TableCell>Kontrahent</TableCell>
@@ -512,6 +513,7 @@ export function CompanyAccounting() {
                                                setEntryDraft({
                                                    ...entryDraft,
                                                    accountingDocumentPublicId: event.target.value,
+                                                   entryDate: document?.documentDate ?? entryDraft.entryDate,
                                                    amountOverride: null,
                                                    ledgerColumn: defaultLedgerColumn(document?.documentType),
                                                    researchAndDevelopmentExpense: '0',
@@ -648,20 +650,23 @@ export function CompanyAccounting() {
                                 />}
                                 <Alert severity="info">Kwota w wybranej kolumnie
                                     KPiR: {convertedAmount || '—'} {ledgerCurrency}</Alert>
-                                <TextField id="ledger-date" label="Data wpisu" type="date" fullWidth required
-                                           value={entryDraft.entryDate} disabled={busy}
-                                           sx={theme => ({colorScheme: theme.palette.mode})}
-                                           slotProps={{
-                                               inputLabel: {shrink: true},
-                                               htmlInput: {
-                                                   min: `${month}-01`,
-                                                   max: dayjs(`${month}-01`).endOf('month').format('YYYY-MM-DD')
-                                               }
-                                           }}
-                                           onChange={event => setEntryDraft({
-                                               ...entryDraft,
-                                               entryDate: event.target.value
-                                           })}/>
+                                <TextField
+                                    id="ledger-date"
+                                    label="Data zdarzenia"
+                                    type="date"
+                                    fullWidth
+                                    required
+                                    value={entryDraft.entryDate}
+                                    disabled={busy}
+                                    helperText="Data może pochodzić z wcześniejszego miesiąca. Wpis trafi do wybranej KPiR."
+                                    sx={theme => ({colorScheme: theme.palette.mode})}
+                                    slotProps={{
+                                        inputLabel: {shrink: true},
+                                        htmlInput: {max: dayjs(`${month}-01`).endOf('month').format('YYYY-MM-DD')},
+                                    }}
+                                    onChange={event => setEntryDraft(
+                                            {...entryDraft, entryDate: event.target.value})}
+                                />
                                 <TextField id="ledger-order" label="Numer wpisu" type="number" fullWidth required
                                            value={entryDraft.entryOrder} disabled={busy}
                                            slotProps={{htmlInput: {min: 1, step: 1}}}

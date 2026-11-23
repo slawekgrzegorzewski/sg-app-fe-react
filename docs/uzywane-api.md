@@ -318,3 +318,7 @@ niezaksięgowane dokumenty z bieżącego i wcześniejszych miesięcy. Formularz 
 korzysta z tej listy, pokazując numer i datę dokumentu. Lista dokumentów na stronie
 nadal pokazuje miesiąc wystawienia. Najpierw należy wdrożyć backend udostępniający
 nowe pole GraphQL, potem frontend. Zmiana nie wymaga migracji SQL.
+
+Miesiąc docelowej KPiR jest wysyłany jako `CompanyLedgerEntryInput.ledgerMonth`.
+`entryDate` jest datą zdarzenia i może pochodzić z wcześniejszego miesiąca lub roku.
+Wymagany jest backend z migracją V63 przed wdrożeniem frontendu.

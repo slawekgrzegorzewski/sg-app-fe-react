@@ -675,6 +675,10 @@ test('posts an unposted document from a previous year into the selected ledger m
     await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
     const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
     expect(within(dialog).getByRole('combobox', {name: 'Dokument księgowy'})).toHaveTextContent('OLD/1 · 15.12.2025');
+    const date = within(dialog).getByLabelText(/Data zdarzenia/);
+    expect(date).not.toHaveAttribute('min');
+    expect(date).toHaveValue('2025-12-15');
+    fireEvent.change(date, {target: {value: '2025-12-20'}});
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
-    await waitFor(() => expect(mockEntry).toHaveBeenCalledWith({variables: {input: expect.objectContaining({accountingDocumentPublicId: 'older-document', entryDate: expect.stringMatching(/^\d{4}-\d{2}-01$/)})}}));
+    await waitFor(() => expect(mockEntry).toHaveBeenCalledWith({variables: {input: expect.objectContaining({accountingDocumentPublicId: 'older-document', entryDate: '2025-12-20', ledgerMonth: expect.stringMatching(/^\d{4}-\d{2}$/)})}}));
 });

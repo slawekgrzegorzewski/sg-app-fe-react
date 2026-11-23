@@ -1309,6 +1309,7 @@ type CompanyLedgerEntry {
     comments: String!
 }
 input CompanyLedgerEntryInput {
+    ledgerMonth: YearMonth
     amountOverride: BigDecimal
     calculationStrategyPublicId: UUID!
     exchangeRate: BigDecimal!
