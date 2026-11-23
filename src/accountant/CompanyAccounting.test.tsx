@@ -1,7 +1,7 @@
 import React from 'react';
 import {fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {useMutation, useQuery} from '@apollo/client/react';
+import {useApolloClient, useMutation, useQuery} from '@apollo/client/react';
 import {CompanyAccounting} from './CompanyAccounting';
 import {AccountantSettingsContext} from '../application/components/dispatchers/AccountantDispatcher';
 import {
@@ -10,12 +10,14 @@ import {
     CreateCompanyLedgerEntry,
     UpdateCompanyLedgerEntry,
     UpdateAccountingDocument,
+    UploadAccountingDocumentAttachment,
+    DeleteAccountingDocumentAttachment,
     CreateCounterpartyFromDocument,
     LedgerCalculationStrategyType,
     LedgerColumn
 } from '../types';
 
-jest.mock('@apollo/client/react', () => ({useMutation: jest.fn(), useQuery: jest.fn()}));
+jest.mock('@apollo/client/react', () => ({useApolloClient: jest.fn(), useMutation: jest.fn(), useQuery: jest.fn()}));
 jest.mock('../application/components/dispatchers/AccountantDispatcher', () => ({
     AccountantSettingsContext: require('react').createContext({accountantSettings: {isCompany: false}}),
 }));
@@ -82,6 +84,7 @@ function renderPage(isCompany = true) {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    (useApolloClient as unknown as jest.Mock).mockReturnValue({query: jest.fn()});
     (useQuery as unknown as jest.Mock).mockReturnValue({
         loading: false, refetch: mockRefetch,
         data: {
@@ -779,4 +782,52 @@ test('cancelling document changes restores details without saving', async () => 
     await userEvent.click(within(dialog).getByRole('button', {name: 'Anuluj'}));
     await screen.findByRole('button', {name: 'Edytuj dokument'});
     expect(mockUpdateDocument).not.toHaveBeenCalled();
+});
+
+test('adds and removes a PDF in the saved document details', async () => {
+    const upload = jest.fn().mockResolvedValue({data: {uploadAccountingDocumentAttachment: 'invoice.pdf'}});
+    const remove = jest.fn().mockResolvedValue({data: {deleteAccountingDocumentAttachment: true}});
+    const mutation = useMutation as unknown as jest.Mock;
+    const fallback = mutation.getMockImplementation()!;
+    mutation.mockImplementation(
+            query => {
+                if (query === UploadAccountingDocumentAttachment) {
+                    return [upload];
+                }
+                if (query === DeleteAccountingDocumentAttachment) {
+                    return [remove];
+                }
+                return fallback(query);
+            });
+
+    renderPage();
+    await userEvent.click(
+            screen.getByRole('button', {name: 'INV/1'}));
+    const details = within(
+            screen.getByRole('dialog', {name: 'Dokument księgowy'}));
+    const input = details.getByLabelText('Wybierz plik PDF');
+    expect(details.getByText('Brak załącznika PDF.')).toBeInTheDocument();
+    fireEvent.change(
+            input,
+            {target: {files: [new File(['text'], 'invoice.txt')]}});
+    expect(details.getByRole('alert')).toHaveTextContent('Wybierz plik PDF');
+    expect(upload).not.toHaveBeenCalled();
+
+    const file = new File(
+            ['%PDF-1.7'],
+            'invoice.pdf',
+            {type: 'application/pdf'});
+    fireEvent.change(
+            input,
+            {target: {files: [file]}});
+    expect(upload).toHaveBeenCalledWith({variables: {publicId: 'document-1', file}});
+    expect(await details.findByText('invoice.pdf')).toBeInTheDocument();
+    await userEvent.click(
+            details.getByRole('button', {name: 'Usuń PDF'}));
+    const confirmation = within(
+            screen.getByRole('dialog', {name: 'Usunąć załącznik PDF?'}));
+    await userEvent.click(
+            confirmation.getByRole('button', {name: 'Usuń'}));
+    expect(remove).toHaveBeenCalledWith({variables: {publicId: 'document-1'}});
+    expect(await details.findByText('Brak załącznika PDF.')).toBeInTheDocument();
 });

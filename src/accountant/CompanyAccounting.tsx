@@ -23,6 +23,7 @@ import {
     Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import {AccountingDocumentAttachment} from './AccountingDocumentAttachment';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import {
@@ -576,6 +577,21 @@ export function CompanyAccounting() {
                                     </Box>
                                 ))}
                     </Stack>
+                        {selectedDocument && (
+                            <AccountingDocumentAttachment
+                                key={selectedDocument.publicId}
+                                publicId={selectedDocument.publicId}
+                                fileName={selectedDocument.attachmentFileName}
+                                onChange={async fileName => {
+                                    const publicId = selectedDocument.publicId;
+                                    setSelectedDocument(
+                                            current => current?.publicId === publicId
+                                                    ? {...current, attachmentFileName: fileName}
+                                                    : current);
+                                    await refetch();
+                                }}
+                            />
+                        )}
                 </DialogContent>
                 <DialogActions>
                     <Button

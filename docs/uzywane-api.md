@@ -260,7 +260,11 @@ należy wdrożyć wraz z frontendem.
 Klient pobiera dane firmy wyłącznie po włączeniu `isCompany`; backend niezależnie
 weryfikuje uprawnienia i domenę. Użytkownik tworzy dokument, a następnie wpisuje
 powiązaną pozycję księgi w formularzu. Wpis otwiera szczegóły dokumentu.
-PDF służy wyłącznie do poznania struktury KPiR; aplikacja nie importuje plików PDF.
+W szczegółach zapisanego dokumentu można dodać, pobrać, podmienić lub usunąć
+jeden załącznik PDF (do 10 MB). Aktywne operacje to `UploadAccountingDocumentAttachment`
+(GraphQL multipart), `DownloadAccountingDocumentAttachment` (pobranie na żądanie) oraz
+`DeleteAccountingDocumentAttachment`. Przed wdrożeniem frontendu należy zastosować
+migrację V66 backendu.
 
 Źródłem zasad modelu i ręcznego wprowadzania danych jest [dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md).
 Najpierw należy wdrożyć backend z migracją V61, następnie frontend.

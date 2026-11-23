@@ -13,6 +13,7 @@ type Query {
     ledgerCalculationStrategies: [LedgerCalculationStrategy!]!
     counterparties: [Counterparty!]!
     companyAccountingDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
+    accountingDocumentAttachment(publicId: UUID!): AccountingDocumentAttachment!
     companyLedgerAvailableDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
     currentUser: CurrentUserProfile!
     financeManagement: FinanceManagement!
@@ -55,6 +56,8 @@ type Mutation{
     createCounterpartyFromDocument(documentPublicId: UUID!, kind: CounterpartyKind): Counterparty!
     createAccountingDocument(input: AccountingDocumentInput!): AccountingDocument!
     updateAccountingDocument(publicId: UUID!, input: AccountingDocumentInput!): AccountingDocument!
+    uploadAccountingDocumentAttachment(input: AccountingDocumentAttachmentUploadInput!): String!
+    deleteAccountingDocumentAttachment(publicId: UUID!): Boolean!
     login(loginParameters:LoginParameters!): AuthenticationInfo!
     loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
     switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!
@@ -1251,6 +1254,7 @@ input CounterpartyInput {
     active: Boolean!
 }
 type AccountingDocument {
+    attachmentFileName: String
     counterpartyPublicId: UUID
     postedToLedger: Boolean!
     documentType: AccountingDocumentType!
@@ -1266,6 +1270,16 @@ type AccountingDocument {
     counterpartyTaxId: String!
     ksefNumber: String!
     description: String!
+}
+
+type AccountingDocumentAttachment {
+    fileName: String!
+    contentBase64: String!
+}
+
+input AccountingDocumentAttachmentUploadInput {
+    publicId: UUID!
+    file: Upload!
 }
 
 input AccountingDocumentInput {

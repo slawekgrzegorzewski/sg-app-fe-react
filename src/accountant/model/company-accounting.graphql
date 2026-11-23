@@ -6,6 +6,7 @@ fragment LedgerCalculationParameterFields on NetAndVatPercentageParameters {
 }
 
 fragment AccountingDocumentFields on AccountingDocument {
+    attachmentFileName
     counterpartyPublicId
     postedToLedger
     publicId
@@ -127,4 +128,19 @@ mutation UpdateCompanyLedgerEntry($publicId: UUID!, $input: CompanyLedgerEntryIn
 
 mutation UpdateAccountingDocument($publicId: UUID!, $input: AccountingDocumentInput!) {
     updateAccountingDocument(publicId: $publicId, input: $input) { ...AccountingDocumentFields }
+}
+
+mutation UploadAccountingDocumentAttachment($publicId: UUID!, $file: Upload!) {
+    uploadAccountingDocumentAttachment(input: {publicId: $publicId, file: $file})
+}
+
+query DownloadAccountingDocumentAttachment($publicId: UUID!) {
+    accountingDocumentAttachment(publicId: $publicId) {
+        fileName
+        contentBase64
+    }
+}
+
+mutation DeleteAccountingDocumentAttachment($publicId: UUID!) {
+    deleteAccountingDocumentAttachment(publicId: $publicId)
 }
