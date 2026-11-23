@@ -54,6 +54,7 @@ type Mutation{
     saveCounterparty(publicId: UUID, input: CounterpartyInput!): Counterparty!
     createCounterpartyFromDocument(documentPublicId: UUID!, kind: CounterpartyKind): Counterparty!
     createAccountingDocument(input: AccountingDocumentInput!): AccountingDocument!
+    updateAccountingDocument(publicId: UUID!, input: AccountingDocumentInput!): AccountingDocument!
     login(loginParameters:LoginParameters!): AuthenticationInfo!
     loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
     switchDomain(switchDomainParameters:SwitchDomainParameters!): AuthenticationInfo!

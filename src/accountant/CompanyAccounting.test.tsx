@@ -9,6 +9,7 @@ import {
     CreateAccountingDocument,
     CreateCompanyLedgerEntry,
     UpdateCompanyLedgerEntry,
+    UpdateAccountingDocument,
     CreateCounterpartyFromDocument,
     LedgerCalculationStrategyType,
     LedgerColumn
@@ -21,6 +22,7 @@ jest.mock('../application/components/dispatchers/AccountantDispatcher', () => ({
 
 const mockEntry = jest.fn();
 const mockUpdate = jest.fn();
+const mockUpdateDocument = jest.fn();
 const mockCreate = jest.fn();
 const mockRefetch = jest.fn();
 const strategies = [
@@ -89,7 +91,7 @@ beforeEach(() => {
         },
     });
     (useMutation as unknown as jest.Mock).mockImplementation(query => [
-        query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : query === CreateAccountingDocument ? mockCreate : jest.fn(),
+        query === UpdateAccountingDocument ? mockUpdateDocument : query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : query === CreateAccountingDocument ? mockCreate : jest.fn(),
         {loading: false, reset: jest.fn()},
     ]);
     mockUpdate.mockResolvedValue({data: {updateCompanyLedgerEntry: {publicId: 'entry-1'}}});
@@ -147,7 +149,7 @@ test('opens document details and creates a document independently', async () => 
 test('keeps the entry form open and displays a save failure', async () => {
     mockEntry.mockRejectedValue(new Error('Nie udało się zapisać danych'));
     (useMutation as unknown as jest.Mock).mockImplementation(query => [
-        query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : mockCreate,
+        query === UpdateAccountingDocument ? mockUpdateDocument : query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : mockCreate,
         {
             loading: false,
             reset: jest.fn(),
@@ -726,4 +728,55 @@ test('shows monthly and year-to-date totals even when the selected month has no 
     expect(yearly).toHaveTextContent('123,45');
     expect(yearly).toHaveTextContent('-0,01');
     expect(screen.getByText(/Brak wpisów w tym miesiącu/)).toBeInTheDocument();
+});
+
+test('edits an existing document and submits only its input fields', async () => {
+    mockUpdateDocument.mockResolvedValue({data: {updateAccountingDocument: document}});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Edytuj dokument'}));
+    const dialog = screen.getByRole('dialog', {name: 'Edytuj dokument księgowy'});
+    expect(within(dialog).getByLabelText(/Numer dokumentu/)).toHaveValue('INV/1');
+    fireEvent.change(within(dialog).getByLabelText(/Kwota netto/), {target: {value: '123.45'}});
+    fireEvent.change(within(dialog).getByLabelText('Opis'), {target: {value: 'Poprawiony opis'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz zmiany dokumentu'}));
+    await waitFor(() => expect(mockUpdateDocument).toHaveBeenCalledWith({variables: {
+        publicId: 'document-1',
+        input: {
+            counterpartyPublicId: null,
+            documentType: document.documentType,
+            documentNumber: document.documentNumber,
+            documentDate: document.documentDate,
+            netAmount: '123.45', vatAmount: 0, currency: 'PLN',
+            counterparty: document.counterparty, counterpartyAddress: '', counterpartyTaxId: document.counterpartyTaxId,
+            ksefNumber: '', description: 'Poprawiony opis',
+        },
+    }}));
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockRefetch).toHaveBeenCalled();
+});
+
+test('locks type and currency of a posted document but allows correcting its amounts', async () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+        companyAccountingDocuments: [{...document, postedToLedger: true}],
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Edytuj dokument'}));
+    const dialog = screen.getByRole('dialog', {name: 'Edytuj dokument księgowy'});
+    expect(within(dialog).getByLabelText(/Waluta dokumentu/)).toBeDisabled();
+    expect(within(dialog).getByLabelText(/Kwota netto/)).toBeEnabled();
+    expect(within(dialog).getByText(/Edycja nie przelicza zapisanego wpisu/)).toBeInTheDocument();
+});
+
+test('cancelling document changes restores details without saving', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Edytuj dokument'}));
+    const dialog = screen.getByRole('dialog', {name: 'Edytuj dokument księgowy'});
+    fireEvent.change(within(dialog).getByLabelText(/Numer dokumentu/), {target: {value: 'Nie zapisuj'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Anuluj'}));
+    await screen.findByRole('button', {name: 'Edytuj dokument'});
+    expect(mockUpdateDocument).not.toHaveBeenCalled();
 });

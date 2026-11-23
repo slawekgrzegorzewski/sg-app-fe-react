@@ -331,3 +331,8 @@ Dokument i miesiąc KPiR pozostają stałe. Wymagany backend z migracją V64 prz
 Stopka KPiR pokazuje sumy miesiąca i narastająco od stycznia do wybranego miesiąca
 w PLN, także dla miesięcy bez wpisów. Najpierw wdrażamy backend z polami podsumowań;
 migracja bazy nie jest potrzebna.
+
+Edycja dokumentu księgowego używa aktywnej mutacji `updateAccountingDocument(publicId, input)`.
+Formularz jest wspólny z tworzeniem i dostępny w szczegółach dokumentu przez „Edytuj dokument”.
+Po zapisie odświeża dokumenty i księgę; kwoty zapisanego wpisu zmienia się osobno.
+Rodzaj i waluta dokumentu ujętego w KPiR pozostają zablokowane.

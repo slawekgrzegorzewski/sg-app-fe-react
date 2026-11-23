@@ -34,6 +34,7 @@ import {
     CompanyAccountingQuery as CompanyAccountingData,
     CompanyLedgerEntryInput,
     UpdateCompanyLedgerEntry,
+    UpdateAccountingDocument,
     CompanyLedgerFieldsFragment,
     CreateAccountingDocument,
     CreateAccountingDocumentMutation,
@@ -50,6 +51,24 @@ import {ErrorDisplay, LoadingIndicator} from '../application/components/QuerySta
 const amount = (value: number) => value.toLocaleString(
     'pl-PL',
     {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+function formatConversion(
+    entry: CompanyLedgerFieldsFragment['entries'][number],
+    currency: string) {
+    if (entry.includedAmount == null) {
+        return 'Wpis historyczny';
+    }
+    const original = `${amount(entry.includedAmount)} ${entry.accountingDocument.currency}`;
+    if (entry.accountingDocument.currency === currency) {
+        return original;
+    }
+    if (entry.exchangeRate == null) {
+        return `${original} · kurs nieuzupełniony`;
+    }
+    const converted = new Decimal(entry.includedAmount).mul(entry.exchangeRate)
+        .toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
+    return `${original} × ${entry.exchangeRate} = ${amount(converted)} ${currency}`;
+}
 
 const documentFields = [
     ['documentNumber', 'Numer dokumentu'],
@@ -114,6 +133,7 @@ export function CompanyAccounting() {
     const [entryDraft, setEntryDraft] = useState<CompanyLedgerEntryInput | null>(null);
     const [selectedDocument, setSelectedDocument] = useState<AccountingDocumentFieldsFragment | null>(null);
     const [creating, setCreating] = useState(false);
+    const [editingDocument, setEditingDocument] = useState<AccountingDocumentFieldsFragment | null>(null);
     const [draft, setDraft] = useState<AccountingDocumentInput | null>(null);
     const validMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(month);
     const {data, loading, error, refetch} = useQuery<CompanyAccountingData>(
@@ -127,7 +147,8 @@ export function CompanyAccounting() {
     const [updateEntry, updateState] = useMutation(UpdateCompanyLedgerEntry);
     const [createDocument, createState] = useMutation<CreateAccountingDocumentMutation>(CreateAccountingDocument);
     const [createCounterpartyFromDocument, fromDocumentState] = useMutation<CreateCounterpartyFromDocumentMutation>(CreateCounterpartyFromDocument);
-    const busy = updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
+    const [updateDocument, documentUpdateState] = useMutation(UpdateAccountingDocument);
+    const busy = documentUpdateState.loading || updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
     const [fromDocumentKind, setFromDocumentKind] = useState(CounterpartyKind.Supplier);
     const counterparties = data?.counterparties ?? [];
     const ledger = data?.companyLedger;
@@ -215,11 +236,23 @@ export function CompanyAccounting() {
         }
     }
 
+    function closeDocumentForm() {
+        if (!busy) {
+            setCreating(false);
+            setSelectedDocument(editingDocument);
+        }
+    }
+
     async function handleCreate(event: React.FormEvent) {
         event.preventDefault();
         try {
-            await createDocument(
-                {variables: {input: draft}});
+            if (editingDocument) {
+                await updateDocument({variables: {publicId: editingDocument.publicId, input: draft}});
+            } else {
+                await createDocument(
+                        {variables: {input: draft}});
+            }
+            setMessage(editingDocument ? 'Zapisano zmiany dokumentu.' : 'Dodano dokument księgowy.');
             setCreating(false);
             await refetch();
         } catch {
@@ -355,7 +388,7 @@ export function CompanyAccounting() {
                                                     </Button>
                                                 </TableCell>
                                                 <TableCell sx={{whiteSpace: 'nowrap'}}>
-                                                    {entry.includedAmount == null ? 'Wpis historyczny' : `${amount(entry.includedAmount)} ${entry.accountingDocument.currency} × ${entry.exchangeRate} PLN`}
+                                                    {formatConversion(entry, ledgerCurrency)}
                                                 </TableCell>
                                                 <TableCell>
                                                     {entry.accountingDocument.counterparty ||
@@ -460,6 +493,9 @@ export function CompanyAccounting() {
                                         ksefNumber: '',
                                         description: '',
                                     });
+                                setEditingDocument(null);
+                                createState.reset();
+                                documentUpdateState.reset();
                                 setCreating(true);
                             }}
                         >
@@ -542,6 +578,27 @@ export function CompanyAccounting() {
                     </Stack>
                 </DialogContent>
                 <DialogActions>
+                    <Button
+                        onClick={() => {
+                            if (!selectedDocument) {
+                                return;
+                            }
+                            setEditingDocument(selectedDocument);
+                            setDraft(
+                                    {
+                                        documentType: selectedDocument.documentType,
+                                        counterpartyPublicId: selectedDocument.counterpartyPublicId ?? null,
+                                        ...Object.fromEntries(
+                                                documentFields.map(([key]) => [key, selectedDocument[key] ?? ''])),
+                                    } as AccountingDocumentInput);
+                            createState.reset();
+                            documentUpdateState.reset();
+                            setSelectedDocument(null);
+                            setCreating(true);
+                        }}
+                    >
+                        Edytuj dokument
+                    </Button>
                     <Button color="inherit" onClick={() => setSelectedDocument(null)}>
                         Zamknij
                     </Button>
@@ -781,7 +838,7 @@ export function CompanyAccounting() {
             </Dialog>
             <Dialog
                 open={creating}
-                onClose={() => !busy && setCreating(false)}
+                onClose={closeDocumentForm}
                 fullWidth
                 maxWidth="sm"
                 aria-labelledby="create-accounting-document-title"
@@ -789,12 +846,12 @@ export function CompanyAccounting() {
                 <Box component="form" onSubmit={event => void handleCreate(event)}
                      sx={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
                     <DialogTitle id="create-accounting-document-title" sx={{pr: 7}}>
-                        Dodaj dokument księgowy
+                        {editingDocument ? 'Edytuj dokument księgowy' : 'Dodaj dokument księgowy'}
                     </DialogTitle>
                     <IconButton
                         aria-label="Zamknij formularz"
                         disabled={busy}
-                        onClick={() => setCreating(false)}
+                        onClick={closeDocumentForm}
                         sx={{position: 'absolute', right: 8, top: 8}}
                     >
                         <CloseIcon/>
@@ -807,7 +864,7 @@ export function CompanyAccounting() {
                                     id="document-type"
                                     label="Rodzaj dokumentu"
                                     value={draft.documentType}
-                                    disabled={busy}
+                                    disabled={busy || Boolean(editingDocument?.postedToLedger)}
                                     onChange={event => {
                                         const documentType = event.target.value as AccountingDocumentType;
                                         const kind = requiredCounterpartyKind(documentType);
@@ -825,7 +882,7 @@ export function CompanyAccounting() {
                                     ...(selected ? {counterparty: selected.name, counterpartyAddress: selected.address, counterpartyTaxId: selected.taxId} : {})});
                             }}>
                                 <MenuItem value="">Dane ręczne — bez kontrahenta w katalogu</MenuItem>
-                                {counterparties.filter(item => item.active && (!requiredCounterpartyKind(draft.documentType) || item.kind === requiredCounterpartyKind(draft.documentType))).map(item => <MenuItem key={item.publicId} value={item.publicId}>{item.name} · {item.kind === CounterpartyKind.Client ? 'Klient' : 'Dostawca'}{item.taxId ? ` · ${item.taxId}` : ''}</MenuItem>)}
+                                {counterparties.filter(item => (item.active || item.publicId === draft.counterpartyPublicId) && (!requiredCounterpartyKind(draft.documentType) || item.kind === requiredCounterpartyKind(draft.documentType))).map(item => <MenuItem key={item.publicId} value={item.publicId}>{item.name} · {item.kind === CounterpartyKind.Client ? 'Klient' : 'Dostawca'}{item.taxId ? ` · ${item.taxId}` : ''}</MenuItem>)}
                             </TextField>}
                             {draft &&
                                 documentFields.map(
@@ -839,7 +896,7 @@ export function CompanyAccounting() {
                                             value={draft[key]}
                                             required={['documentNumber', 'documentDate', 'netAmount', 'vatAmount', 'currency'].includes(key)}
                                             fullWidth
-                                            disabled={busy}
+                                            disabled={busy || (key === 'currency' && Boolean(editingDocument?.postedToLedger))}
                                             slotProps={{
                                                 inputLabel: {shrink: true},
                                                 htmlInput: {
@@ -859,18 +916,24 @@ export function CompanyAccounting() {
                                             }
                                         />
                                     ))}
-                            {createState.error && (
+                            {editingDocument?.postedToLedger && (
+                                <Alert severity="info">
+                                    Dokument jest ujęty w KPiR. Edycja nie przelicza zapisanego wpisu.
+                                    Aby zmienić rozliczenie, użyj „Edytuj wpis”. Rodzaj i waluta pozostają stałe.
+                                </Alert>
+                            )}
+                            {(createState.error || documentUpdateState.error) && (
                                 <ErrorDisplay title="Nie udało się zapisać dokumentu księgowego"
-                                              error={createState.error}/>
+                                              error={documentUpdateState.error ?? createState.error!}/>
                             )}
                         </Stack>
                     </DialogContent>
                     <DialogActions>
-                        <Button color="inherit" disabled={busy} onClick={() => setCreating(false)}>
+                        <Button color="inherit" disabled={busy} onClick={closeDocumentForm}>
                             Anuluj
                         </Button>
                         <Button color="primary" type="submit" variant="contained" disabled={busy}>
-                            Zapisz dokument
+                            {editingDocument ? 'Zapisz zmiany dokumentu' : 'Zapisz dokument'}
                         </Button>
                     </DialogActions>
                 </Box>

@@ -124,3 +124,7 @@ query GetCounterparties {
 mutation UpdateCompanyLedgerEntry($publicId: UUID!, $input: CompanyLedgerEntryInput!) {
     updateCompanyLedgerEntry(publicId: $publicId, input: $input) { publicId }
 }
+
+mutation UpdateAccountingDocument($publicId: UUID!, $input: AccountingDocumentInput!) {
+    updateAccountingDocument(publicId: $publicId, input: $input) { ...AccountingDocumentFields }
+}
