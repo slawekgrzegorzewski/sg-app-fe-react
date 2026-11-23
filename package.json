@@ -90,7 +90,10 @@
     "jest": {
         "moduleNameMapper": {
             "^markdown-to-jsx/entities$": "<rootDir>/node_modules/markdown-to-jsx/dist/entities.generated.cjs"
-        }
+        },
+        "transformIgnorePatterns": [
+            "node_modules/(?!@apollo/client/)"
+        ]
     },
     "eslintConfig": {
         "ignorePatterns": [

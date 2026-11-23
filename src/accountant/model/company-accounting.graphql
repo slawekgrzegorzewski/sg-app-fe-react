@@ -6,6 +6,7 @@ fragment LedgerCalculationParameterFields on NetAndVatPercentageParameters {
 }
 
 fragment AccountingDocumentFields on AccountingDocument {
+    counterpartyPublicId
     postedToLedger
     publicId
     documentType
@@ -50,7 +51,17 @@ fragment CompanyLedgerFields on CompanyLedger {
     }
 }
 
+fragment CounterpartyFields on Counterparty {
+    kind
+    publicId
+    name
+    address
+    taxId
+    active
+}
+
 query CompanyAccounting($yearMonth: YearMonth!) {
+    counterparties { ...CounterpartyFields }
     ledgerCalculationStrategies {
         publicId
         name
@@ -78,4 +89,15 @@ mutation CreateAccountingDocument($input: AccountingDocumentInput!) {
     createAccountingDocument(input: $input) {
         ...AccountingDocumentFields
     }
+}
+
+mutation SaveCounterparty($publicId: UUID, $input: CounterpartyInput!) {
+    saveCounterparty(publicId: $publicId, input: $input) { ...CounterpartyFields }
+}
+mutation CreateCounterpartyFromDocument($documentPublicId: UUID!, $kind: CounterpartyKind) {
+    createCounterpartyFromDocument(documentPublicId: $documentPublicId, kind: $kind) { ...CounterpartyFields }
+}
+
+query GetCounterparties {
+    counterparties { ...CounterpartyFields }
 }

@@ -11,6 +11,7 @@ scalar Year
 type Query {
     companyLedger(yearMonth: YearMonth!): CompanyLedger!
     ledgerCalculationStrategies: [LedgerCalculationStrategy!]!
+    counterparties: [Counterparty!]!
     companyAccountingDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
     currentUser: CurrentUserProfile!
     financeManagement: FinanceManagement!
@@ -48,6 +49,8 @@ type Query {
 
 type Mutation{
     createCompanyLedgerEntry(input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
+    saveCounterparty(publicId: UUID, input: CounterpartyInput!): Counterparty!
+    createCounterpartyFromDocument(documentPublicId: UUID!, kind: CounterpartyKind): Counterparty!
     createAccountingDocument(input: AccountingDocumentInput!): AccountingDocument!
     login(loginParameters:LoginParameters!): AuthenticationInfo!
     loginWithGoogleToken(loginWithGoogleTokenParameters: LoginWithGoogleTokenParameters!): AuthenticationInfo!
@@ -721,22 +724,39 @@ input InstallmentCreationInput {
 }
 
 
-interface OtherParty {
-    publicId: UUID!
-    name: String!
-    domain: DomainSimple!
+enum CounterpartyKind {
+    CLIENT
+    SUPPLIER
 }
 
-type Client implements OtherParty{
+interface Counterparty {
     publicId: UUID!
     name: String!
     domain: DomainSimple!
+    kind: CounterpartyKind!
+    address: String!
+    taxId: String!
+    active: Boolean!
 }
 
-type Supplier implements OtherParty{
+type Client implements Counterparty {
     publicId: UUID!
     name: String!
     domain: DomainSimple!
+    kind: CounterpartyKind!
+    address: String!
+    taxId: String!
+    active: Boolean!
+}
+
+type Supplier implements Counterparty {
+    publicId: UUID!
+    name: String!
+    domain: DomainSimple!
+    kind: CounterpartyKind!
+    address: String!
+    taxId: String!
+    active: Boolean!
 }
 
 input ClientCreationInput {
@@ -820,7 +840,7 @@ input InvoiceUpdateInput {
 interface FinancialDocument {
     publicId:UUID!
     name:String!
-    otherParty:OtherParty!
+    otherParty:Counterparty!
     amount:MonetaryAmount!
     createdAt:LocalDate!
     description:String!
@@ -850,7 +870,7 @@ type BillOfSale implements FinancialDocument {
 interface Invoice implements FinancialDocument {
     publicId:UUID!
     name:String!
-    otherParty:OtherParty!
+    otherParty:Counterparty!
     amount:MonetaryAmount!
     vat:MonetaryAmount!
     createdAt:LocalDate!
@@ -1187,6 +1207,8 @@ enum AccountingDocumentType {
     SALES_VAT_INVOICE
     PURCHASE_VAT_INVOICE
     RECEIPT
+    ZUS
+    INSURANCE_POLICY
     OTHER
 }
 enum LedgerColumn {
@@ -1218,7 +1240,15 @@ type LedgerCalculationStrategy {
     parameters: LedgerCalculationParameters!
 }
 
+input CounterpartyInput {
+    kind: CounterpartyKind!
+    name: String!
+    address: String!
+    taxId: String!
+    active: Boolean!
+}
 type AccountingDocument {
+    counterpartyPublicId: UUID
     postedToLedger: Boolean!
     documentType: AccountingDocumentType!
     amount: BigDecimal
@@ -1236,6 +1266,7 @@ type AccountingDocument {
 }
 
 input AccountingDocumentInput {
+    counterpartyPublicId: UUID
     documentType: AccountingDocumentType!
     netAmount: BigDecimal!
     vatAmount: BigDecimal!
@@ -1277,6 +1308,7 @@ type CompanyLedgerEntry {
     comments: String!
 }
 input CompanyLedgerEntryInput {
+    amountOverride: BigDecimal
     calculationStrategyPublicId: UUID!
     exchangeRate: BigDecimal!
     ledgerColumn: LedgerColumn!

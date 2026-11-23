@@ -78,7 +78,7 @@ Zapytania:
 
 - konta i okresy: `GetFinanceManagement`, `GetFinanceManagementWithNotAssignedBankAccounts`, `GetAccountTransactions`, `BillingPeriodQuery`, `BankTransactionsToImport`;
 - banki: `GetAvailableInstitutions`, `GetBankPermissions`;
-- kontrahenci: `GetAllClients`, `GetAllSuppliers`;
+- kontrahenci w ustawieniach firmy: `GetCounterparties`;
 - ustawienia: `GetAccountantSettings`.
 
 Mutacje:
@@ -87,8 +87,7 @@ Mutacje:
 - okresy i rozliczenia: `CreateBillingPeriod`, `FinishBillingPeriod`, `CreateIncome`, `CreateExpense`, `CreateTransfer`, `MutuallyCancel`, `ImportBankTransactions`;
 - integracja bankowa: `StartPermissionRequest`, `ConfirmPermission`, `TriggerFetchBankAccountData`;
 - kategorie rozliczeń: `CreateBillingCategory`, `UpdateBillingCategory`, `DeleteBillingCategory`;
-- klienci: `CreateClient`, `UpdateClient`, `DeleteClient`;
-- dostawcy: `CreateSupplier`, `UpdateSupplier`, `DeleteSupplier`;
+- klienci i dostawcy: `SaveCounterparty`;
 - skarbonki: `CreatePiggyBank`, `UpdatePiggyBank`, `DeletePiggyBank`;
 - ustawienia: `UpdateAccountantSettings`.
 
@@ -273,3 +272,42 @@ także w innym miesiącu. Formularz proponuje wyłącznie dokumenty z wartości�
 zaksięgowane dokumenty pozostają widoczne na liście ze statusem „Ujęty w KPiR”.
 Gdy wszystkie dokumenty są zaksięgowane, przycisk dodawania wpisu jest wyłączony.
 Backend niezależnie od UI uniemożliwia drugi wpis dla tego samego dokumentu.
+
+Typy `AccountingDocumentType.ZUS` i `INSURANCE_POLICY` są dostępne w formularzu
+dokumentu jako „ZUS” i „Polisa”. Są wydatkowe: UI pokazuje tylko kolumny kosztowe,
+a backend odrzuca księgowanie ich jako przychodu. Pozostały kontrakt dokumentu
+i wpisu nie zmienia się; wpis KPiR nadal wymaga dokumentu i strategii.
+Przed frontendem należy wdrożyć backend z migracją V62.
+
+
+Księgowość firmy pobiera teraz `counterparties` w zapytaniu `CompanyAccounting`.
+Zarządzanie katalogiem znajduje się w Ustawienia → Firma, w sekcjach Klienci i Dostawcy.
+Sekcje pobierają `GetCounterparties`, filtrują po `kind` i wywołują `saveCounterparty(publicId, input)` do tworzenia,
+edytowania, archiwizowania i przywracania. Starsze operacje `GetAllClients`,
+`GetAllSuppliers` oraz `Create/Update/DeleteClient` i `Create/Update/DeleteSupplier`
+pozostają zadeklarowane, ale ustawienia ich nie wywołują. Strona księgowości nie
+wyświetla katalogu; formularz dokumentu pozwala wybrać
+aktywnego kontrahenta lub pozostać przy danych ręcznych. Zapis przekazuje
+opcjonalne `counterpartyPublicId` i trzy edytowalne pola kopii danych dokumentu.
+Szczegóły niepowiązanego dokumentu udostępniają
+`createCounterpartyFromDocument(documentPublicId)`, które tworzy kontrahenta
+i wiąże go z dokumentem. Pozostałe dane dokumentu pozostają zachowane.
+Model i ograniczenia opisuje [dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#kontrahenci-i-kopia-danych-dokumentu).
+Wymagany jest najpierw backend z uzupełnioną V62, następnie frontend.
+
+`Counterparty` jest wspólnym interfejsem GraphQL typów `Client` i `Supplier`.
+`CounterpartyInput` wymaga `kind` (`CLIENT` lub `SUPPLIER`), którego nie zmieniamy
+dla istniejącego kontrahenta. Formularz dokumentu filtruje katalog według jego typu:
+sprzedaż — klienci; zakup, ZUS i polisy — dostawcy; paragony i pozostałe — oba typy.
+`CreateCounterpartyFromDocument` przekazuje `kind`: rozpoznany z rodzaju dokumentu
+albo wybrany przez użytkownika dla paragonów i pozostałych dokumentów.
+
+
+`CreateCompanyLedgerEntry` obsługuje opcjonalne `input.amountOverride`.
+Formularz udostępnia ręczną kwotę w walucie dokumentu i pokazuje wynik przeliczenia
+na PLN; puste pole korzysta ze strategii. Zmiana dokumentu lub strategii usuwa
+nadpisanie, aby nie przenosić korekty do innego obliczenia. Rejestrację nadpisania
+w zdarzeniu opisuje [model księgowości backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#ręczne-nadpisanie-kwoty-strategii).
+
+Klient Apollo używany po zalogowaniu definiuje `possibleTypes` dla interfejsu
+`Counterparty` (`Client`, `Supplier`), aby odczyt fragmentów zachowywał dane obu typów.

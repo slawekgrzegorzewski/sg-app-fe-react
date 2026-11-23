@@ -8,6 +8,7 @@ import {
     AccountingDocumentType,
     CreateAccountingDocument,
     CreateCompanyLedgerEntry,
+    CreateCounterpartyFromDocument,
     LedgerCalculationStrategyType,
     LedgerColumn
 } from '../types';
@@ -192,6 +193,8 @@ test('posts a percentage of a foreign document using the explicit exchange rate'
 test.each([
     [AccountingDocumentType.SalesVatInvoice, 2, false],
     [AccountingDocumentType.PurchaseVatInvoice, 4, true],
+    [AccountingDocumentType.Zus, 4, true],
+    [AccountingDocumentType.InsurancePolicy, 4, true],
 ])('limits ledger columns and cost fields for document type %s', async (documentType, columnCount, costsVisible) => {
     (useQuery as unknown as jest.Mock).mockReturnValue({
         loading: false,
@@ -482,4 +485,174 @@ test('disables saving when a document becomes posted while the form is open', as
     expect(within(dialog).getByText('Ten dokument jest już ujęty w KPiR. Wybierz inny dokument.')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', {name: 'Zapisz wpis'})).toBeDisabled();
     expect(mockEntry).not.toHaveBeenCalled();
+});
+
+
+test.each([
+    [AccountingDocumentType.Zus, 'ZUS'],
+    [AccountingDocumentType.InsurancePolicy, 'Polisa'],
+])('creates expense document %s with net and VAT amounts', async (documentType, label) => {
+    renderPage();
+    expect(screen.queryByRole('button', {name: 'Dodaj wpis bez dokumentu'})).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj dokument księgowy'});
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Rodzaj dokumentu/}));
+    await userEvent.click(screen.getByRole('option', {name: label}));
+    await userEvent.type(within(dialog).getByLabelText(/Numer dokumentu/), 'DOC/11/2026');
+    fireEvent.change(within(dialog).getByLabelText(/Kwota netto/), {target: {value: '100.00'}});
+    fireEvent.change(within(dialog).getByLabelText(/Kwota VAT/), {target: {value: '0.00'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz dokument'}));
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledWith({
+        variables: {input: expect.objectContaining({documentType, netAmount: '100.00', vatAmount: '0.00'})},
+    }));
+});
+
+
+test('selects catalog counterparty and allows editing its document snapshot', async () => {
+    (useQuery as unknown as jest.Mock).mockReturnValue({loading: false, refetch: mockRefetch, data: {
+        companyLedger: {entries: []}, companyAccountingDocuments: [document], ledgerCalculationStrategies: strategies,
+        counterparties: [{kind: 'SUPPLIER', publicId: 'party-1', name: 'Firma katalogowa', address: 'Adres katalogowy', taxId: '123', active: true}],
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj dokument księgowy'});
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Kontrahent z katalogu/}));
+    await userEvent.click(screen.getByRole('option', {name: /Firma katalogowa/}));
+    expect(within(dialog).getByLabelText('Kontrahent')).toHaveValue('Firma katalogowa');
+    expect(within(dialog).getByLabelText('Adres kontrahenta')).toHaveValue('Adres katalogowy');
+    await userEvent.clear(within(dialog).getByLabelText('Kontrahent'));
+    await userEvent.type(within(dialog).getByLabelText('Kontrahent'), 'Nazwa na dokumencie');
+    await userEvent.type(within(dialog).getByLabelText(/Numer dokumentu/), 'FV/1');
+    fireEvent.change(within(dialog).getByLabelText(/Kwota netto/), {target: {value: '100'}});
+    fireEvent.change(within(dialog).getByLabelText(/Kwota VAT/), {target: {value: '0'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz dokument'}));
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledWith({variables: {input: expect.objectContaining({counterpartyPublicId: 'party-1', counterparty: 'Nazwa na dokumencie', counterpartyAddress: 'Adres katalogowy', counterpartyTaxId: '123'})}}));
+});
+
+test('keeps catalog management in settings and can create a counterparty from a document', async () => {
+    const from = jest.fn().mockResolvedValue({data: {createCounterpartyFromDocument: {publicId: 'party-2'}}});
+    (useMutation as unknown as jest.Mock).mockImplementation(query => [query === CreateCounterpartyFromDocument ? from : mockCreate, {loading: false, reset: jest.fn()}]);
+    renderPage();
+    expect(screen.queryByRole('button', {name: 'Dodaj kontrahenta'})).not.toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', {name: 'INV/1'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dokument księgowy'});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Utwórz kontrahenta z dokumentu'}));
+    await waitFor(() => expect(from).toHaveBeenCalledWith({variables: {documentPublicId: 'document-1', kind: 'SUPPLIER'}}));
+    expect(await within(dialog).findByText(/Dokument jest powiązany/)).toBeInTheDocument();
+});
+
+
+test('filters clients and suppliers and clears the catalog link when document type changes', async () => {
+    const queryResult = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
+        counterparties: [
+            {kind: 'CLIENT', publicId: 'client-1', name: 'Klient testowy', address: 'Adres klienta', taxId: '1', active: true},
+            {kind: 'SUPPLIER', publicId: 'supplier-1', name: 'Dostawca testowy', address: 'Adres dostawcy', taxId: '2', active: true},
+        ],
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    const dialog = screen.getByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Kontrahent z katalogu/}));
+    expect(screen.queryByRole('option', {name: /Klient testowy/})).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('option', {name: /Dostawca testowy/}));
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Rodzaj dokumentu/}));
+    await userEvent.click(screen.getByRole('option', {name: 'Faktura VAT sprzedaży'}));
+    expect(within(dialog).getByRole('combobox', {name: /Kontrahent z katalogu/})).toHaveTextContent('Dane ręczne');
+    expect(within(dialog).getByLabelText('Kontrahent')).toHaveValue('Dostawca testowy');
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Kontrahent z katalogu/}));
+    expect(screen.queryByRole('option', {name: /Dostawca testowy/})).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('option', {name: /Klient testowy/}));
+    expect(within(dialog).getByLabelText('Kontrahent')).toHaveValue('Klient testowy');
+    await userEvent.type(within(dialog).getByLabelText(/Numer dokumentu/), 'SPRZ/1');
+    fireEvent.change(within(dialog).getByLabelText(/Kwota netto/), {target: {value: '100'}});
+    fireEvent.change(within(dialog).getByLabelText(/Kwota VAT/), {target: {value: '23'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz dokument'}));
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledWith({variables: {input: expect.objectContaining({counterpartyPublicId: 'client-1', documentType: 'SALES_VAT_INVOICE'})}}));
+});
+
+test('creates a client from a sales document', async () => {
+    const queryResult = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
+        companyAccountingDocuments: [{...document, documentType: AccountingDocumentType.SalesVatInvoice}],
+    }});
+    const from = jest.fn().mockResolvedValue({data: {createCounterpartyFromDocument: {publicId: 'client-1'}}});
+    (useMutation as unknown as jest.Mock).mockImplementation(query => [query === CreateCounterpartyFromDocument ? from : mockCreate, {loading: false, reset: jest.fn()}]);
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dokument księgowy'});
+    expect(within(dialog).queryByLabelText('Typ kontrahenta z dokumentu')).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Utwórz kontrahenta z dokumentu'}));
+    await waitFor(() => expect(from).toHaveBeenCalledWith({variables: {documentPublicId: 'document-1', kind: 'CLIENT'}}));
+});
+
+
+test('overrides the strategy amount before currency conversion and submits it explicitly', async () => {
+    const queryResult = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
+        companyAccountingDocuments: [{...document, currency: 'EUR'}],
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
+    fireEvent.change(within(dialog).getByLabelText(/Kurs do PLN/), {target: {value: '4.30'}});
+    fireEvent.change(within(dialog).getByLabelText('Kwota po nadpisaniu (EUR)'), {target: {value: '90.01'}});
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('387,04 PLN');
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
+    await waitFor(() => expect(mockEntry).toHaveBeenCalledWith({variables: {input: expect.objectContaining({amountOverride: '90.01', exchangeRate: '4.30'})}}));
+});
+
+test.each(['0', '-0.01'])('allows a manual amount of %s and clearing restores the strategy result', async value => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
+    const input = within(dialog).getByLabelText('Kwota po nadpisaniu (PLN)');
+    fireEvent.change(input, {target: {value}});
+    expect(within(dialog).getByRole('button', {name: 'Zapisz wpis'})).toBeEnabled();
+    expect(within(dialog).getByRole('alert')).toHaveTextContent(value === '0' ? '0,00 PLN' : '-0,01 PLN');
+    fireEvent.change(input, {target: {value: ''}});
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('200,00 PLN');
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
+    await waitFor(() => expect(mockEntry.mock.calls[0][0].variables.input.amountOverride).toBeNull());
+});
+
+test.each(['1.001', '100000000000000000'])('blocks an invalid manual amount: %s', async value => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
+    fireEvent.change(within(dialog).getByLabelText('Kwota po nadpisaniu (PLN)'), {target: {value}});
+    expect(within(dialog).getByRole('button', {name: 'Zapisz wpis'})).toBeDisabled();
+    expect(within(dialog).getByText(/Kwota może mieć maksymalnie/)).toBeInTheDocument();
+    expect(mockEntry).not.toHaveBeenCalled();
+});
+
+test('clears the manual override after changing the strategy or document', async () => {
+    const queryResult = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
+        companyAccountingDocuments: [document, {...document, publicId: 'document-2', documentNumber: 'INV/2'}],
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
+    const input = within(dialog).getByLabelText('Kwota po nadpisaniu (PLN)');
+    fireEvent.change(input, {target: {value: '90'}});
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Strategia przeliczenia/}));
+    await userEvent.click(screen.getByRole('option', {name: /Eksploatacja auta/}));
+    expect(input).toHaveValue(null);
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('150,00 PLN');
+    fireEvent.change(input, {target: {value: '90'}});
+    await userEvent.click(within(dialog).getByRole('combobox', {name: /Dokument księgowy/}));
+    await userEvent.click(screen.getByRole('option', {name: 'INV/2'}));
+    expect(input).toHaveValue(null);
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('150,00 PLN');
+});
+
+
+test('normalizes trailing zeros in the manual amount before submission', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
+    fireEvent.change(within(dialog).getByLabelText('Kwota po nadpisaniu (PLN)'), {target: {value: '1.000'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
+    await waitFor(() => expect(mockEntry.mock.calls[0][0].variables.input.amountOverride).toBe('1.00'));
 });

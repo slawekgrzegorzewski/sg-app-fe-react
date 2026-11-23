@@ -28,11 +28,14 @@ import {
     AccountingDocumentFieldsFragment,
     AccountingDocumentInput,
     AccountingDocumentType,
+    CounterpartyKind,
     CompanyAccounting as CompanyAccountingQuery,
     CompanyAccountingQuery as CompanyAccountingData,
     CompanyLedgerEntryInput,
     CreateAccountingDocument,
     CreateAccountingDocumentMutation,
+    CreateCounterpartyFromDocument,
+    CreateCounterpartyFromDocumentMutation,
     CreateCompanyLedgerEntry,
     CreateCompanyLedgerEntryMutation,
     LedgerColumn,
@@ -61,6 +64,8 @@ const documentTypes = [
     [AccountingDocumentType.SalesVatInvoice, 'Faktura VAT sprzedaży'],
     [AccountingDocumentType.PurchaseVatInvoice, 'Faktura VAT zakupu'],
     [AccountingDocumentType.Receipt, 'Paragon'],
+    [AccountingDocumentType.Zus, 'ZUS'],
+    [AccountingDocumentType.InsurancePolicy, 'Polisa'],
     [AccountingDocumentType.Other, 'Inny dokument'],
 ] as const;
 
@@ -75,6 +80,19 @@ const ledgerColumns = [
 
 function isIncomeColumn(column?: LedgerColumn) {
     return column === LedgerColumn.Sales || column === LedgerColumn.OtherIncome;
+}
+
+function requiredCounterpartyKind(documentType?: AccountingDocumentType) {
+    switch (documentType) {
+        case AccountingDocumentType.SalesVatInvoice:
+            return CounterpartyKind.Client;
+        case AccountingDocumentType.PurchaseVatInvoice:
+        case AccountingDocumentType.Zus:
+        case AccountingDocumentType.InsurancePolicy:
+            return CounterpartyKind.Supplier;
+        default:
+            return null;
+    }
 }
 
 function defaultLedgerColumn(documentType?: AccountingDocumentType) {
@@ -102,7 +120,10 @@ export function CompanyAccounting() {
         });
     const [createEntry, entryState] = useMutation<CreateCompanyLedgerEntryMutation>(CreateCompanyLedgerEntry);
     const [createDocument, createState] = useMutation<CreateAccountingDocumentMutation>(CreateAccountingDocument);
-    const busy = entryState.loading || createState.loading;
+    const [createCounterpartyFromDocument, fromDocumentState] = useMutation<CreateCounterpartyFromDocumentMutation>(CreateCounterpartyFromDocument);
+    const busy = entryState.loading || createState.loading || fromDocumentState.loading;
+    const [fromDocumentKind, setFromDocumentKind] = useState(CounterpartyKind.Supplier);
+    const counterparties = data?.counterparties ?? [];
     const ledger = data?.companyLedger;
     const availableDocuments = data?.companyAccountingDocuments.filter(document => !document.postedToLedger) ?? [];
     const ledgerCurrency = ledger?.currency ?? 'PLN';
@@ -112,7 +133,9 @@ export function CompanyAccounting() {
     const sameCurrency = entryDocument?.currency === ledgerCurrency;
     const isIncomeEntry = isIncomeColumn(entryDraft?.ledgerColumn);
     const canChooseEntryDirection = entryDocument?.documentType !== AccountingDocumentType.SalesVatInvoice
-        && entryDocument?.documentType !== AccountingDocumentType.PurchaseVatInvoice;
+        && entryDocument?.documentType !== AccountingDocumentType.PurchaseVatInvoice
+        && entryDocument?.documentType !== AccountingDocumentType.Zus
+        && entryDocument?.documentType !== AccountingDocumentType.InsurancePolicy;
     const availableLedgerColumns = ledgerColumns.filter(
         ([column]) => isIncomeColumn(column) === isIncomeEntry);
     const strategies = data?.ledgerCalculationStrategies ?? [];
@@ -123,6 +146,7 @@ export function CompanyAccounting() {
     const documentAmountsKnown = entryDocument?.netAmount != null && entryDocument?.vatAmount != null;
     let includedAmount = '';
     let convertedAmount = '';
+    let invalidAmountOverride = false;
     let deductibleVatAmount = '';
     let nonDeductibleVatAmount = '';
     let costBasis = '';
@@ -142,11 +166,17 @@ export function CompanyAccounting() {
                 .div(100)
                 .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
                 .toFixed(2);
+            const effectiveAmount = new Decimal(entryDraft.amountOverride ?? includedAmount);
+            if (!effectiveAmount.isFinite() || effectiveAmount.decimalPlaces() > 2
+                    || effectiveAmount.abs().gte('100000000000000000')) {
+                invalidAmountOverride = entryDraft.amountOverride != null;
+                throw new Error('Nieprawidłowa kwota');
+            }
             const rate = new Decimal(sameCurrency ? '1' : entryDraft.exchangeRate);
             if (rate.lte(0) || rate.decimalPlaces() > 8) {
                 throw new Error('Nieprawidłowy kurs');
             }
-            convertedAmount = new Decimal(includedAmount).mul(rate).toFixed(2, Decimal.ROUND_HALF_UP).replace('.', ',');
+            convertedAmount = effectiveAmount.mul(rate).toFixed(2, Decimal.ROUND_HALF_UP).replace('.', ',');
         } catch {
             convertedAmount = '';
         }
@@ -159,6 +189,9 @@ export function CompanyAccounting() {
         }
         const input = {
             ...entryDraft,
+            ...(entryDraft.amountOverride != null
+                ? {amountOverride: new Decimal(entryDraft.amountOverride).toFixed(2)}
+                : {}),
             exchangeRate: sameCurrency ? '1' : entryDraft.exchangeRate,
             ...(isIncomeEntry ? {researchAndDevelopmentExpense: '0', researchAndDevelopmentDescription: ''} : {}),
         };
@@ -420,6 +453,25 @@ export function CompanyAccounting() {
                         {selectedDocument && (
                             <Typography>{documentTypes.find(([type]) => type === selectedDocument.documentType)?.[1]}</Typography>
                         )}
+                        {selectedDocument && !selectedDocument.counterpartyPublicId && !requiredCounterpartyKind(selectedDocument.documentType) && (
+                            <TextField id="document-counterparty-kind" label="Typ kontrahenta z dokumentu" select fullWidth disabled={busy} value={fromDocumentKind} onChange={event => setFromDocumentKind(event.target.value as CounterpartyKind)}>
+                                <MenuItem value={CounterpartyKind.Client}>Klient</MenuItem>
+                                <MenuItem value={CounterpartyKind.Supplier}>Dostawca</MenuItem>
+                            </TextField>
+                        )}
+                        {selectedDocument && !selectedDocument.counterpartyPublicId && (
+                            <Button disabled={busy || !selectedDocument.counterparty.trim()} onClick={async () => {
+                                try {
+                                    const result = await createCounterpartyFromDocument({variables: {documentPublicId: selectedDocument.publicId, kind: requiredCounterpartyKind(selectedDocument.documentType) ?? fromDocumentKind}});
+                                    setSelectedDocument({...selectedDocument, counterpartyPublicId: result.data?.createCounterpartyFromDocument.publicId});
+                                    await refetch();
+                                } catch {
+                                    return;
+                                }
+                            }}>Utwórz kontrahenta z dokumentu</Button>
+                        )}
+                        {selectedDocument?.counterpartyPublicId && <Alert severity="info">Dokument jest powiązany z kontrahentem. Zachowuje dane z momentu zapisu.</Alert>}
+                        {fromDocumentState.error && <ErrorDisplay title="Nie udało się utworzyć kontrahenta" error={fromDocumentState.error}/>}
                         {selectedDocument &&
                             documentFields.map(
                                 ([key, label]) => (
@@ -464,6 +516,7 @@ export function CompanyAccounting() {
                                                setEntryDraft({
                                                    ...entryDraft,
                                                    accountingDocumentPublicId: event.target.value,
+                                                   amountOverride: null,
                                                    ledgerColumn: defaultLedgerColumn(document?.documentType),
                                                    researchAndDevelopmentExpense: '0',
                                                    researchAndDevelopmentDescription: '',
@@ -535,6 +588,7 @@ export function CompanyAccounting() {
                                     onChange={event => setEntryDraft({
                                         ...entryDraft,
                                         calculationStrategyPublicId: event.target.value,
+                                        amountOverride: null,
                                     })}
                                 >
                                     {strategies.map(strategy => <MenuItem key={strategy.publicId}
@@ -570,6 +624,21 @@ export function CompanyAccounting() {
                                     </>}
                                 </> : <Alert severity="warning">Ten typ strategii nie jest obsługiwany przez
                                     formularz.</Alert>}
+                                <TextField
+                                    id="ledger-amount-override"
+                                    label={`Kwota po nadpisaniu (${entryDocument?.currency ?? ''})`}
+                                    type="number"
+                                    fullWidth
+                                    value={entryDraft.amountOverride ?? ''}
+                                    disabled={busy || !documentAmountsKnown || !documentAvailable || !percentageParameters}
+                                    error={invalidAmountOverride}
+                                    slotProps={{htmlInput: {step: '0.01'}}}
+                                    helperText={invalidAmountOverride
+                                        ? 'Kwota może mieć maksymalnie 17 cyfr przed przecinkiem i 2 po przecinku.'
+                                        : 'Puste pole przywraca wynik strategii. Kwota przed przeliczeniem na PLN.'}
+                                    onChange={event => setEntryDraft(
+                                        {...entryDraft, amountOverride: event.target.value || null})}
+                                />
                                 {!sameCurrency && <TextField
                                     id="ledger-exchange-rate"
                                     label={`Kurs do ${ledgerCurrency}`}
@@ -672,15 +741,25 @@ export function CompanyAccounting() {
                                     label="Rodzaj dokumentu"
                                     value={draft.documentType}
                                     disabled={busy}
-                                    onChange={event => setDraft({
-                                        ...draft,
-                                        documentType: event.target.value as AccountingDocumentType
-                                    })}
+                                    onChange={event => {
+                                        const documentType = event.target.value as AccountingDocumentType;
+                                        const kind = requiredCounterpartyKind(documentType);
+                                        const selected = counterparties.find(item => item.publicId === draft.counterpartyPublicId);
+                                        setDraft({...draft, documentType, counterpartyPublicId: kind && selected?.kind !== kind ? null : draft.counterpartyPublicId});
+                                    }}
                                 >
                                     {documentTypes.map(([key, label]) => <MenuItem key={key}
                                                                                    value={key}>{label}</MenuItem>)}
                                 </TextField>
                             )}
+                            {draft && <TextField select slotProps={{select: {displayEmpty: true}, inputLabel: {shrink: true}}} id="document-counterparty" label="Kontrahent z katalogu" fullWidth disabled={busy} value={draft.counterpartyPublicId ?? ''} helperText="Możesz wybrać kontrahenta lub wpisać dane ręcznie. Dane dokumentu pozostają edytowalne." onChange={event => {
+                                const selected = counterparties.find(item => item.publicId === event.target.value);
+                                setDraft({...draft, counterpartyPublicId: selected?.publicId ?? null,
+                                    ...(selected ? {counterparty: selected.name, counterpartyAddress: selected.address, counterpartyTaxId: selected.taxId} : {})});
+                            }}>
+                                <MenuItem value="">Dane ręczne — bez kontrahenta w katalogu</MenuItem>
+                                {counterparties.filter(item => item.active && (!requiredCounterpartyKind(draft.documentType) || item.kind === requiredCounterpartyKind(draft.documentType))).map(item => <MenuItem key={item.publicId} value={item.publicId}>{item.name} · {item.kind === CounterpartyKind.Client ? 'Klient' : 'Dostawca'}{item.taxId ? ` · ${item.taxId}` : ''}</MenuItem>)}
+                            </TextField>}
                             {draft &&
                                 documentFields.map(
                                     ([key, label]) => (

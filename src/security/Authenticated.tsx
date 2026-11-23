@@ -1,9 +1,8 @@
+import {createAuthenticatedCache} from './apollo-cache';
 import {
     ApolloClient,
     ApolloLink,
-    defaultDataIdFromObject,
     ErrorLike,
-    InMemoryCache,
     Observable,
     ServerError,
     ServerParseError,
@@ -16,7 +15,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Navigate, useParams} from 'react-router-dom';
 import {logOut, useCurrentUser} from '../utils/users/use-current-user';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
-import {GetCurrentUser, GetCurrentUserQuery, Institution, SwitchDomain, SwitchDomainMutation, User} from '../types';
+import {GetCurrentUser, GetCurrentUserQuery, SwitchDomain, SwitchDomainMutation, User} from '../types';
 import getUserApplications, {ApplicationId, applications} from '../utils/applications/applications-access';
 import {logError} from '../utils/logger';
 import {backdropHandle} from '../utils/GlobalBackdropContext';
@@ -112,32 +111,9 @@ const errorHandlerLink = new ErrorLink(({error, operation}) => {
     logError(`GraphQL operation "${operation.operationName}" failed`, error);
 });
 
-const cache = new InMemoryCache({
-    dataIdFromObject: object => {
-        switch (object.__typename) {
-            case 'Task': {
-                const timeRecords = (object.timeRecords ?? []) as {__ref?: string}[];
-                if (timeRecords.length > 0) {
-                    const datesPart = timeRecords
-                        .map(timeRecord => timeRecord.__ref)
-                        .sort()
-                        .join(':');
-                    return `Task:${object.id}:${timeRecords.length}:${datesPart}`;
-                }
-                return `Task:${object.id}:0`;
-            }
-            case 'Institution': {
-                const institution = object as Institution;
-                return `Institution:${institution.id}:${institution.bic}`;
-            }
-            default:
-                return defaultDataIdFromObject(object);
-        }
-    },
-});
 
 const apolloClient = new ApolloClient({
-    cache: cache,
+    cache: createAuthenticatedCache(),
     link: ApolloLink.from([backdropLink, errorHandlerLink, authMiddleware, httpLink]),
 });
 

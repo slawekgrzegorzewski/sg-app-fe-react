@@ -28,7 +28,7 @@ import {getBackendUrl} from './utils/backend-url';
 const httpLink = new HttpLink({uri: getBackendUrl() + '/auth/graphql'});
 
 const apolloClient = new ApolloClient({
-    cache: new InMemoryCache(),
+    cache: new InMemoryCache({possibleTypes: {Counterparty: ['Client', 'Supplier']}}),
     link: httpLink,
 });
 
