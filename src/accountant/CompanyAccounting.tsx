@@ -32,6 +32,8 @@ import {
     CompanyAccounting as CompanyAccountingQuery,
     CompanyAccountingQuery as CompanyAccountingData,
     CompanyLedgerEntryInput,
+    UpdateCompanyLedgerEntry,
+    CompanyLedgerFieldsFragment,
     CreateAccountingDocument,
     CreateAccountingDocumentMutation,
     CreateCounterpartyFromDocument,
@@ -107,6 +109,7 @@ export function CompanyAccounting() {
     const [month, setMonth] = useState(
         dayjs().format('YYYY-MM'));
     const [message, setMessage] = useState('');
+    const [editingEntry, setEditingEntry] = useState<CompanyLedgerFieldsFragment['entries'][number] | null>(null);
     const [entryDraft, setEntryDraft] = useState<CompanyLedgerEntryInput | null>(null);
     const [selectedDocument, setSelectedDocument] = useState<AccountingDocumentFieldsFragment | null>(null);
     const [creating, setCreating] = useState(false);
@@ -120,17 +123,18 @@ export function CompanyAccounting() {
             fetchPolicy: 'network-only',
         });
     const [createEntry, entryState] = useMutation<CreateCompanyLedgerEntryMutation>(CreateCompanyLedgerEntry);
+    const [updateEntry, updateState] = useMutation(UpdateCompanyLedgerEntry);
     const [createDocument, createState] = useMutation<CreateAccountingDocumentMutation>(CreateAccountingDocument);
     const [createCounterpartyFromDocument, fromDocumentState] = useMutation<CreateCounterpartyFromDocumentMutation>(CreateCounterpartyFromDocument);
-    const busy = entryState.loading || createState.loading || fromDocumentState.loading;
+    const busy = updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
     const [fromDocumentKind, setFromDocumentKind] = useState(CounterpartyKind.Supplier);
     const counterparties = data?.counterparties ?? [];
     const ledger = data?.companyLedger;
     const availableDocuments = data?.companyLedgerAvailableDocuments.filter(document => !document.postedToLedger) ?? [];
     const ledgerCurrency = ledger?.currency ?? 'PLN';
-    const entryDocument = availableDocuments.find(
+    const entryDocument = editingEntry?.accountingDocument ?? availableDocuments.find(
         document => document.publicId === entryDraft?.accountingDocumentPublicId);
-    const documentAvailable = Boolean(entryDocument && !entryDocument.postedToLedger);
+    const documentAvailable = Boolean(entryDocument && (editingEntry || !entryDocument.postedToLedger));
     const sameCurrency = entryDocument?.currency === ledgerCurrency;
     const isIncomeEntry = isIncomeColumn(entryDraft?.ledgerColumn);
     const canChooseEntryDirection = entryDocument?.documentType !== AccountingDocumentType.SalesVatInvoice
@@ -197,10 +201,13 @@ export function CompanyAccounting() {
             ...(isIncomeEntry ? {researchAndDevelopmentExpense: '0', researchAndDevelopmentDescription: ''} : {}),
         };
         try {
-            await createEntry(
-                {variables: {input}});
+            if (editingEntry) {
+                await updateEntry({variables: {publicId: editingEntry.publicId, input}});
+            } else {
+                await createEntry({variables: {input}});
+            }
             setEntryDraft(null);
-            setMessage('Dodano wpis do księgi.');
+            setMessage(editingEntry ? 'Zapisano zmiany wpisu.' : 'Dodano wpis do księgi.');
             await refetch();
         } catch {
             setMessage('');
@@ -261,6 +268,8 @@ export function CompanyAccounting() {
                             disabled={!validMonth || loading || Boolean(error) || busy || !availableDocuments.length || !strategies.length}
                             onClick={() => {
                                 entryState.reset();
+                                updateState.reset();
+                                setEditingEntry(null);
                                 setEntryDraft({
                                     accountingDocumentPublicId: availableDocuments[0]?.publicId ?? '',
                                     calculationStrategyPublicId: strategies[0]?.publicId ?? '',
@@ -324,6 +333,7 @@ export function CompanyAccounting() {
                                             ))}
                                         <TableCell>Opis kosztów B+R</TableCell>
                                         <TableCell>Uwagi</TableCell>
+                                        <TableCell/>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -367,6 +377,29 @@ export function CompanyAccounting() {
                                                     ))}
                                                 <TableCell>{entry.researchAndDevelopmentDescription}</TableCell>
                                                 <TableCell>{entry.comments}</TableCell>
+                                                <TableCell>
+                                                    <Button disabled={busy} onClick={() => {
+                                                        entryState.reset();
+                                                        updateState.reset();
+                                                        setEditingEntry(entry);
+                                                        setEntryDraft({
+                                                            accountingDocumentPublicId: entry.accountingDocument.publicId,
+                                                            calculationStrategyPublicId: strategies.some(strategy => strategy.publicId === entry.calculationStrategyPublicId)
+                                                                    ? entry.calculationStrategyPublicId!
+                                                                    : '',
+                                                            amountOverride: entry.includedAmount == null ? null : String(entry.includedAmount),
+                                                            exchangeRate: String(entry.exchangeRate ?? 1),
+                                                            ledgerColumn: entry.ledgerColumn ?? defaultLedgerColumn(entry.accountingDocument.documentType),
+                                                            ledgerMonth: month,
+                                                            entryDate: entry.entryDate,
+                                                            entryOrder: entry.entryOrder,
+                                                            additionalColumnValue: String(entry.additionalColumnValue ?? 0),
+                                                            researchAndDevelopmentExpense: String(entry.researchAndDevelopmentExpense ?? 0),
+                                                            researchAndDevelopmentDescription: entry.researchAndDevelopmentDescription ?? '',
+                                                            comments: entry.comments,
+                                                        });
+                                                    }}>Edytuj wpis</Button>
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                 </TableBody>
@@ -495,7 +528,7 @@ export function CompanyAccounting() {
             >
                 <Box component="form" onSubmit={event => void handleCreateEntry(event)}
                      sx={{display: 'flex', flexDirection: 'column', minHeight: 0}}>
-                    <DialogTitle id="create-ledger-entry-title" sx={{pr: 7}}>Dodaj wpis do księgi</DialogTitle>
+                    <DialogTitle id="create-ledger-entry-title" sx={{pr: 7}}>{editingEntry ? 'Edytuj wpis KPiR' : 'Dodaj wpis do księgi'}</DialogTitle>
                     <IconButton aria-label="Zamknij formularz wpisu" disabled={busy} onClick={() => setEntryDraft(null)}
                                 sx={{position: 'absolute', right: 8, top: 8}}>
                         <CloseIcon/>
@@ -505,8 +538,10 @@ export function CompanyAccounting() {
                             <Stack spacing={2}>
                                 <TextField select id="ledger-document" label="Dokument księgowy" fullWidth required
                                            value={documentAvailable ? entryDraft.accountingDocumentPublicId : ''}
-                                           disabled={busy}
-                                           helperText="Dokumenty z tego i wcześniejszych miesięcy, nieujęte w żadnej KPiR."
+                                           disabled={busy || Boolean(editingEntry)}
+                                           helperText={editingEntry
+                                               ? 'Dokument przypisany do wpisu pozostaje bez zmian.'
+                                               : 'Dokumenty z tego i wcześniejszych miesięcy, nieujęte w żadnej KPiR.'}
                                            onChange={event => {
                                                const document = availableDocuments.find(
                                                    candidate => candidate.publicId === event.target.value);
@@ -521,12 +556,16 @@ export function CompanyAccounting() {
                                                    exchangeRate: document?.currency === ledgerCurrency ? '1' : '',
                                                });
                                            }}>
-                                    {availableDocuments.map(document => (
+                                    {(editingEntry ? [editingEntry.accountingDocument] : availableDocuments).map(document => (
                                         <MenuItem key={document.publicId} value={document.publicId}>
                                             {document.documentNumber} · {dayjs(document.documentDate).format('DD.MM.YYYY')}
                                         </MenuItem>
                                     ))}
                                 </TextField>
+                                {editingEntry && <Alert severity="info">
+                                    Edytujesz istniejący wpis. Obecna kwota jest zachowana jako kwota po nadpisaniu.
+                                    Wyczyść ją, aby przeliczyć wpis według wybranej strategii.
+                                </Alert>}
                                 {entryDraft && !documentAvailable && (
                                     <Alert severity="warning">Ten dokument nie jest już dostępny do wpisu w KPiR. Wybierz inny
                                         dokument.</Alert>
@@ -699,17 +738,16 @@ export function CompanyAccounting() {
                                                ...entryDraft,
                                                comments: event.target.value
                                            })}/>
-                                {entryState.error &&
+                                {(entryState.error || updateState.error) &&
                                     <ErrorDisplay title="Nie udało się zapisać wpisu do księgi"
-                                                  error={entryState.error}/>}
+                                                  error={(updateState.error ?? entryState.error)!}/>}
                             </Stack>
                         )}
                     </DialogContent>
                     <DialogActions>
                         <Button color="inherit" disabled={busy} onClick={() => setEntryDraft(null)}>Anuluj</Button>
                         <Button type="submit" variant="contained"
-                                disabled={busy || !convertedAmount || !documentAmountsKnown || !documentAvailable}>Zapisz
-                            wpis</Button>
+                                disabled={busy || !convertedAmount || !documentAmountsKnown || !documentAvailable}>{editingEntry ? 'Zapisz zmiany' : 'Zapisz wpis'}</Button>
                     </DialogActions>
                 </Box>
             </Dialog>

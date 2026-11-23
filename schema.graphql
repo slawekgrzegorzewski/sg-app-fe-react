@@ -49,6 +49,7 @@ type Query {
 }
 
 type Mutation{
+    updateCompanyLedgerEntry(publicId: UUID!, input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
     createCompanyLedgerEntry(input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
     saveCounterparty(publicId: UUID, input: CounterpartyInput!): Counterparty!
     createCounterpartyFromDocument(documentPublicId: UUID!, kind: CounterpartyKind): Counterparty!
@@ -1288,6 +1289,7 @@ type CompanyLedger {
 }
 
 type CompanyLedgerEntry {
+    calculationStrategyPublicId: UUID
     includedAmount: BigDecimal
     exchangeRate: BigDecimal
     ledgerColumn: LedgerColumn

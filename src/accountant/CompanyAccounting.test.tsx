@@ -8,6 +8,7 @@ import {
     AccountingDocumentType,
     CreateAccountingDocument,
     CreateCompanyLedgerEntry,
+    UpdateCompanyLedgerEntry,
     CreateCounterpartyFromDocument,
     LedgerCalculationStrategyType,
     LedgerColumn
@@ -19,6 +20,7 @@ jest.mock('../application/components/dispatchers/AccountantDispatcher', () => ({
 }));
 
 const mockEntry = jest.fn();
+const mockUpdate = jest.fn();
 const mockCreate = jest.fn();
 const mockRefetch = jest.fn();
 const strategies = [
@@ -87,9 +89,10 @@ beforeEach(() => {
         },
     });
     (useMutation as unknown as jest.Mock).mockImplementation(query => [
-        query === CreateCompanyLedgerEntry ? mockEntry : query === CreateAccountingDocument ? mockCreate : jest.fn(),
+        query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : query === CreateAccountingDocument ? mockCreate : jest.fn(),
         {loading: false, reset: jest.fn()},
     ]);
+    mockUpdate.mockResolvedValue({data: {updateCompanyLedgerEntry: {publicId: 'entry-1'}}});
     mockEntry.mockResolvedValue({data: {createCompanyLedgerEntry: {publicId: 'entry-1'}}});
     mockCreate.mockResolvedValue({data: {createAccountingDocument: document}});
 });
@@ -144,7 +147,7 @@ test('opens document details and creates a document independently', async () => 
 test('keeps the entry form open and displays a save failure', async () => {
     mockEntry.mockRejectedValue(new Error('Nie udało się zapisać danych'));
     (useMutation as unknown as jest.Mock).mockImplementation(query => [
-        query === CreateCompanyLedgerEntry ? mockEntry : mockCreate,
+        query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : mockCreate,
         {
             loading: false,
             reset: jest.fn(),
@@ -681,4 +684,29 @@ test('posts an unposted document from a previous year into the selected ledger m
     fireEvent.change(date, {target: {value: '2025-12-20'}});
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
     await waitFor(() => expect(mockEntry).toHaveBeenCalledWith({variables: {input: expect.objectContaining({accountingDocumentPublicId: 'older-document', entryDate: '2025-12-20', ledgerMonth: expect.stringMatching(/^\d{4}-\d{2}$/)})}}));
+});
+
+
+test('edits a posted entry without creating a duplicate and preserves its original amount', async () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+        companyLedgerAvailableDocuments: [],
+        companyLedger: {yearMonth: '2026-11', entries: [{
+            publicId: 'entry-1', calculationStrategyPublicId: 'full', accountingDocument: {...document, postedToLedger: true},
+            includedAmount: 88.25, exchangeRate: 1, ledgerColumn: LedgerColumn.OtherExpense,
+            entryOrder: 1, entryDate: '2025-12-20', comments: 'Przed zmianą',
+        }]},
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Edytuj wpis'}));
+    const dialog = screen.getByRole('dialog', {name: 'Edytuj wpis KPiR'});
+    expect(within(dialog).getByRole('combobox', {name: 'Dokument księgowy'})).toHaveAttribute('aria-disabled', 'true');
+    expect(within(dialog).getByLabelText('Kwota po nadpisaniu (PLN)')).toHaveValue(88.25);
+    fireEvent.change(within(dialog).getByLabelText('Uwagi'), {target: {value: 'Po zmianie'}});
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz zmiany'}));
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith({variables: {
+        publicId: 'entry-1', input: expect.objectContaining({amountOverride: '88.25', comments: 'Po zmianie', entryDate: '2025-12-20'}),
+    }}));
+    expect(mockEntry).not.toHaveBeenCalled();
+    expect(mockRefetch).toHaveBeenCalled();
 });

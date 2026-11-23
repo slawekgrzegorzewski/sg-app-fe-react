@@ -28,6 +28,7 @@ fragment CompanyLedgerFields on CompanyLedger {
     yearMonth
     entries {
         publicId
+        calculationStrategyPublicId
         includedAmount
         exchangeRate
         ledgerColumn
@@ -103,4 +104,8 @@ mutation CreateCounterpartyFromDocument($documentPublicId: UUID!, $kind: Counter
 
 query GetCounterparties {
     counterparties { ...CounterpartyFields }
+}
+
+mutation UpdateCompanyLedgerEntry($publicId: UUID!, $input: CompanyLedgerEntryInput!) {
+    updateCompanyLedgerEntry(publicId: $publicId, input: $input) { publicId }
 }

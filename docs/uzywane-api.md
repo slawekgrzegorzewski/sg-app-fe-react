@@ -322,3 +322,7 @@ nowe pole GraphQL, potem frontend. Zmiana nie wymaga migracji SQL.
 Miesiąc docelowej KPiR jest wysyłany jako `CompanyLedgerEntryInput.ledgerMonth`.
 `entryDate` jest datą zdarzenia i może pochodzić z wcześniejszego miesiąca lub roku.
 Wymagany jest backend z migracją V63 przed wdrożeniem frontendu.
+
+Edycja KPiR korzysta z `updateCompanyLedgerEntry(publicId, input)`.
+Zapytanie księgi pobiera też `calculationStrategyPublicId` z ostatniego zdarzenia wpisu.
+Dokument i miesiąc KPiR pozostają stałe. Wymagany backend z migracją V64 przed frontendem.
