@@ -40,6 +40,7 @@ import {
     CreateCompanyLedgerEntryMutation,
     LedgerColumn,
 } from '../types';
+import {MonthNavigation} from '../application/components/MonthNavigation';
 import {AccountantSettingsContext} from '../application/components/dispatchers/AccountantDispatcher';
 import {ErrorDisplay, LoadingIndicator} from '../application/components/QueryState';
 
@@ -125,9 +126,9 @@ export function CompanyAccounting() {
     const [fromDocumentKind, setFromDocumentKind] = useState(CounterpartyKind.Supplier);
     const counterparties = data?.counterparties ?? [];
     const ledger = data?.companyLedger;
-    const availableDocuments = data?.companyAccountingDocuments.filter(document => !document.postedToLedger) ?? [];
+    const availableDocuments = data?.companyLedgerAvailableDocuments.filter(document => !document.postedToLedger) ?? [];
     const ledgerCurrency = ledger?.currency ?? 'PLN';
-    const entryDocument = data?.companyAccountingDocuments.find(
+    const entryDocument = availableDocuments.find(
         document => document.publicId === entryDraft?.accountingDocumentPublicId);
     const documentAvailable = Boolean(entryDocument && !entryDocument.postedToLedger);
     const sameCurrency = entryDocument?.currency === ledgerCurrency;
@@ -243,18 +244,13 @@ export function CompanyAccounting() {
                 <Paper variant="outlined" sx={{p: {xs: 2, sm: 3}}}>
                     <Stack spacing={2}>
                         <Typography variant="h5" component="h2">Miesiąc księgowy</Typography>
-                        <TextField
-                            id="company-accounting-month"
-                            label="Miesiąc księgowy"
-                            type="month"
-                            value={month}
+                        <MonthNavigation
+                            month={dayjs(`${month}-01`)}
                             disabled={busy}
-                            sx={theme => ({colorScheme: theme.palette.mode})}
-                            onChange={event => {
-                                setMonth(event.target.value);
+                            onChange={selectedMonth => {
+                                setMonth(selectedMonth.format('YYYY-MM'));
                                 setMessage('');
                             }}
-                            slotProps={{inputLabel: {shrink: true}}}
                         />
                         <Typography variant="body2" color="text.secondary">
                             Dokument może pozostać poza KPiR. Wpis księgi obejmuje wybraną część kwoty dokumentu,
@@ -285,9 +281,8 @@ export function CompanyAccounting() {
                             Brak dostępnych strategii przeliczenia do KPiR. Dodanie wpisu wymaga konfiguracji strategii
                             przez administratora.
                         </Alert>}
-                        {!data?.companyAccountingDocuments.length && !loading && !error && (
-                            <Typography color="text.secondary">Aby dodać pierwszy wpis, utwórz poniżej dokument
-                                księgowy.</Typography>
+                        {!availableDocuments.length && !loading && !error && (
+                            <Typography color="text.secondary">Brak niezaksięgowanych dokumentów z tego lub wcześniejszych miesięcy.</Typography>
                         )}
                         {message && <Alert severity="success">{message}</Alert>}
                     </Stack>
@@ -408,7 +403,7 @@ export function CompanyAccounting() {
                         >
                             Dodaj dokument księgowy
                         </Button>
-                        {Boolean(data?.companyAccountingDocuments.length) && !availableDocuments.length && (
+                        {Boolean(data?.companyAccountingDocuments.length) && data?.companyAccountingDocuments.every(document => document.postedToLedger) && (
                             <Alert severity="info">Wszystkie dokumenty z tego miesiąca są już ujęte w KPiR.</Alert>
                         )}
                         {!data?.companyAccountingDocuments.length && (
@@ -510,8 +505,9 @@ export function CompanyAccounting() {
                                 <TextField select id="ledger-document" label="Dokument księgowy" fullWidth required
                                            value={documentAvailable ? entryDraft.accountingDocumentPublicId : ''}
                                            disabled={busy}
+                                           helperText="Dokumenty z tego i wcześniejszych miesięcy, nieujęte w żadnej KPiR."
                                            onChange={event => {
-                                               const document = data?.companyAccountingDocuments.find(
+                                               const document = availableDocuments.find(
                                                    candidate => candidate.publicId === event.target.value);
                                                setEntryDraft({
                                                    ...entryDraft,
@@ -525,12 +521,12 @@ export function CompanyAccounting() {
                                            }}>
                                     {availableDocuments.map(document => (
                                         <MenuItem key={document.publicId} value={document.publicId}>
-                                            {document.documentNumber}
+                                            {document.documentNumber} · {dayjs(document.documentDate).format('DD.MM.YYYY')}
                                         </MenuItem>
                                     ))}
                                 </TextField>
-                                {entryDocument?.postedToLedger && (
-                                    <Alert severity="warning">Ten dokument jest już ujęty w KPiR. Wybierz inny
+                                {entryDraft && !documentAvailable && (
+                                    <Alert severity="warning">Ten dokument nie jest już dostępny do wpisu w KPiR. Wybierz inny
                                         dokument.</Alert>
                                 )}
                                 {canChooseEntryDirection && (

@@ -41,6 +41,7 @@ Ten dokument opisuje zasady przyjęte podczas przebudowy stron Kostek, Okresów 
 - Zamknięcie formularza otwartego z dialogu nadrzędnego powinno przywracać dialog nadrzędny, jeśli taki przepływ rozpoczął operację.
 - Potwierdzenie działania destrukcyjnego jasno wskazuje element i konsekwencje operacji. Przycisk zatwierdzający używa koloru błędu.
 - Pola daty powinny wizualnie pasować do pozostałych pól formularza i korzystać z polskiej lokalizacji.
+- Wybór miesiąca w KPiR i okresach rozliczeniowych korzysta ze wspólnego `MonthNavigation`: polska nazwa miesiąca, strzałki oraz kalendarz z wyborem miesiąca i roku.
 - Wartości pól pozostają kontrolowane przez cały cykl życia komponentu; początkowa wartość nie może zmieniać się z `undefined` na wartość zdefiniowaną.
 
 ## Stany widoku

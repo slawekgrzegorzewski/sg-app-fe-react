@@ -13,6 +13,7 @@ type Query {
     ledgerCalculationStrategies: [LedgerCalculationStrategy!]!
     counterparties: [Counterparty!]!
     companyAccountingDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
+    companyLedgerAvailableDocuments(yearMonth: YearMonth!): [AccountingDocument!]!
     currentUser: CurrentUserProfile!
     financeManagement: FinanceManagement!
     billingPeriod(yearMonth: YearMonth): BillingPeriodResponse!

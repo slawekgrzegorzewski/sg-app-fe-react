@@ -63,6 +63,12 @@ const document = {
 };
 
 function renderPage(isCompany = true) {
+    const result = (useQuery as unknown as jest.Mock)();
+    if (result?.data && !result.data.companyLedgerAvailableDocuments) {
+        (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+            companyLedgerAvailableDocuments: result.data.companyAccountingDocuments ?? [],
+        }});
+    }
     return render(
         <AccountantSettingsContext.Provider value={{accountantSettings: {isCompany}, refreshSettings: jest.fn()}}>
             <CompanyAccounting/>
@@ -268,7 +274,7 @@ test('resets the column and hidden cost fields after selecting a sales document'
     const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
     fireEvent.change(within(dialog).getByLabelText(/Koszty działalności B\+R/), {target: {value: '25'}});
     await userEvent.click(within(dialog).getByRole('combobox', {name: /Dokument księgowy/}));
-    await userEvent.click(screen.getByRole('option', {name: 'SPR/2'}));
+    await userEvent.click(screen.getByRole('option', {name: /^SPR\/2 ·/}));
     expect(within(dialog).getByRole('combobox', {name: /Kolumna KPiR/})).toHaveTextContent('Sprzedaż towarów i usług');
     expect(within(dialog).queryByLabelText(/Koszty działalności B\+R/)).not.toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
@@ -302,7 +308,7 @@ test('hides the exchange rate and resets it to one when switching to the ledger 
     await userEvent.click(screen.getByRole('option', {name: 'Eksploatacja auta w środkach trwałych — użytek mieszany (odliczenie 50% VAT)'}));
     fireEvent.change(within(dialog).getByLabelText(/Kurs do PLN/), {target: {value: '4.30'}});
     await userEvent.click(within(dialog).getByRole('combobox', {name: /Dokument księgowy/}));
-    await userEvent.click(screen.getByRole('option', {name: 'PLN/2'}));
+    await userEvent.click(screen.getByRole('option', {name: /^PLN\/2 ·/}));
     expect(within(dialog).queryByLabelText(/Kurs do/)).not.toBeInTheDocument();
     expect(within(dialog).getByRole('alert')).toHaveTextContent('150,00 PLN');
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
@@ -457,9 +463,9 @@ test('offers only unposted documents and selects the first available document', 
     await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
     const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
     await userEvent.click(within(dialog).getByRole('combobox', {name: /Dokument księgowy/}));
-    expect(screen.getByRole('option', {name: 'INV/2'})).toBeInTheDocument();
-    expect(screen.queryByRole('option', {name: 'INV/1'})).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('option', {name: 'INV/2'}));
+    expect(screen.getByRole('option', {name: /^INV\/2 ·/})).toBeInTheDocument();
+    expect(screen.queryByRole('option', {name: /^INV\/1 ·/})).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('option', {name: /^INV\/2 ·/}));
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
     expect(mockEntry).toHaveBeenCalledWith({variables: {input: expect.objectContaining({accountingDocumentPublicId: 'document-2'})}});
 });
@@ -474,6 +480,7 @@ test('disables saving when a document becomes posted while the form is open', as
             ledgerCalculationStrategies: strategies,
             companyLedger: {yearMonth: '2026-09', entries: []},
             companyAccountingDocuments: [{...document, postedToLedger: true}],
+            companyLedgerAvailableDocuments: [],
         },
     });
     rerender(
@@ -482,7 +489,7 @@ test('disables saving when a document becomes posted while the form is open', as
         </AccountantSettingsContext.Provider>
     );
     const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
-    expect(within(dialog).getByText('Ten dokument jest już ujęty w KPiR. Wybierz inny dokument.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Ten dokument nie jest już dostępny do wpisu w KPiR. Wybierz inny dokument.')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', {name: 'Zapisz wpis'})).toBeDisabled();
     expect(mockEntry).not.toHaveBeenCalled();
 });
@@ -642,7 +649,7 @@ test('clears the manual override after changing the strategy or document', async
     expect(within(dialog).getByRole('alert')).toHaveTextContent('150,00 PLN');
     fireEvent.change(input, {target: {value: '90'}});
     await userEvent.click(within(dialog).getByRole('combobox', {name: /Dokument księgowy/}));
-    await userEvent.click(screen.getByRole('option', {name: 'INV/2'}));
+    await userEvent.click(screen.getByRole('option', {name: /^INV\/2 ·/}));
     expect(input).toHaveValue(null);
     expect(within(dialog).getByRole('alert')).toHaveTextContent('150,00 PLN');
 });
@@ -655,4 +662,19 @@ test('normalizes trailing zeros in the manual amount before submission', async (
     fireEvent.change(within(dialog).getByLabelText('Kwota po nadpisaniu (PLN)'), {target: {value: '1.000'}});
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
     await waitFor(() => expect(mockEntry.mock.calls[0][0].variables.input.amountOverride).toBe('1.00'));
+});
+
+
+test('posts an unposted document from a previous year into the selected ledger month', async () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+        companyAccountingDocuments: [],
+        companyLedgerAvailableDocuments: [{...document, publicId: 'older-document', documentNumber: 'OLD/1', documentDate: '2025-12-15'}],
+    }});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'});
+    expect(within(dialog).getByRole('combobox', {name: 'Dokument księgowy'})).toHaveTextContent('OLD/1 · 15.12.2025');
+    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz wpis'}));
+    await waitFor(() => expect(mockEntry).toHaveBeenCalledWith({variables: {input: expect.objectContaining({accountingDocumentPublicId: 'older-document', entryDate: expect.stringMatching(/^\d{4}-\d{2}-01$/)})}}));
 });

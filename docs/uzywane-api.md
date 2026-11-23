@@ -311,3 +311,10 @@ w zdarzeniu opisuje [model księgowości backendu](../../sg-app/docs/agents/ksie
 
 Klient Apollo używany po zalogowaniu definiuje `possibleTypes` dla interfejsu
 `Counterparty` (`Client`, `Supplier`), aby odczyt fragmentów zachowywał dane obu typów.
+
+
+`CompanyAccounting` pobiera również `companyLedgerAvailableDocuments(yearMonth)`:
+niezaksięgowane dokumenty z bieżącego i wcześniejszych miesięcy. Formularz wpisu
+korzysta z tej listy, pokazując numer i datę dokumentu. Lista dokumentów na stronie
+nadal pokazuje miesiąc wystawienia. Najpierw należy wdrożyć backend udostępniający
+nowe pole GraphQL, potem frontend. Zmiana nie wymaga migracji SQL.

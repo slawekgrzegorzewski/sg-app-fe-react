@@ -74,6 +74,9 @@ query CompanyAccounting($yearMonth: YearMonth!) {
     companyLedger(yearMonth: $yearMonth) {
         ...CompanyLedgerFields
     }
+    companyLedgerAvailableDocuments(yearMonth: $yearMonth) {
+        ...AccountingDocumentFields
+    }
     companyAccountingDocuments(yearMonth: $yearMonth) {
         ...AccountingDocumentFields
     }
