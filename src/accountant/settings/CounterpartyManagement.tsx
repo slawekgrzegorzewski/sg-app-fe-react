@@ -23,19 +23,9 @@ import {
     SaveCounterpartyMutation
 } from '../../types';
 import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
+import {getPastedTaxId} from '../utils/taxId';
 
 const taxIdPattern = /^(?=.*\p{N})[\p{L}\p{N}]+(?:[ ./-][\p{L}\p{N}]+)*$/u;
-
-function normalizePastedTaxId(value: string) {
-    const normalized = value.trim()
-        .replace(/^(?:NIP|VAT(?:\s*(?:ID|NO\.?|NUMBER))?|TIN|EIN)\s*:\s*/i, '')
-        .toUpperCase();
-    const withoutSeparators = normalized.replace(/[\s-]/g, '');
-    if (/^(?:PL)?[0-9]{10}$/.test(withoutSeparators)) {
-        return withoutSeparators;
-    }
-    return normalized;
-}
 
 type Props = {
     kind: CounterpartyKind;
@@ -219,15 +209,7 @@ export function CounterpartyManagement({kind}: Props) {
                                         maxLength: 100,
                                         'aria-required': true,
                                         onPaste: (event: React.ClipboardEvent<HTMLInputElement>) => {
-                                            event.preventDefault();
-                                            const input = event.currentTarget;
-                                            const start = input.selectionStart ?? input.value.length;
-                                            const end = input.selectionEnd ?? start;
-                                            const pasted = event.clipboardData.getData('text');
-                                            const before = input.value.slice(0, start);
-                                            const after = input.value.slice(end);
-                                            const taxId = normalizePastedTaxId(
-                                                    before + pasted + after);
+                                            const taxId = getPastedTaxId(event);
                                             setDraft({...draft, taxId});
                                         },
                                     },

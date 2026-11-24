@@ -299,11 +299,6 @@ i wiąże go z dokumentem. Pozostałe dane dokumentu pozostają zachowane.
 Model i ograniczenia opisuje [dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#kontrahenci-i-kopia-danych-dokumentu).
 Wymagany jest najpierw backend z uzupełnioną V62, następnie frontend.
 
-Przy dodawaniu i edycji kontrahenta formularz katalogu wymaga 10 cyfr NIP-u
-z opcjonalnym dwuliterowym kodem kraju przed cyframi. Przy wklejaniu usuwa
-znaki spoza formatu, zamienia litery kodu na wielkie i pozwala uzupe?ni?
-wklejony fragment przed zapisaniem.
-
 `Counterparty` jest wspólnym interfejsem GraphQL typów `Client` i `Supplier`.
 `CounterpartyInput` wymaga `kind` (`CLIENT` lub `SUPPLIER`), którego nie zmieniamy
 dla istniejącego kontrahenta. Formularz dokumentu filtruje katalog według jego typu:
@@ -356,4 +351,6 @@ oraz obecność lub brak prefiksu. Nie dopisuje kodu kraju. Przykładowo
 dają `PL9671238785`.
 Pozostałe identyfikatory zachowują litery, cyfry i separatory. Wklejanie nie usuwa
 niedozwolonych znaków, które mogłyby oznaczać pomyłkę. Normalizacja dotyczy
-wyłącznie wklejania do formularza kontrahenta; nie zmienia istniejących danych.
+wklejania do formularzy tworzenia i edycji kontrahenta oraz dokumentu księgowego;
+nie zmienia istniejących danych automatycznie. Formularze wpisów KPiR wybierają
+dokument, z którego pobierany jest NIP — nie mają osobnego pola edycji NIP-u.

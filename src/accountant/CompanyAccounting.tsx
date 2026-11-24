@@ -23,6 +23,7 @@ import {
     Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import {getPastedTaxId} from './utils/taxId';
 import {AccountingDocumentAttachment} from './AccountingDocumentAttachment';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -916,6 +917,15 @@ export function CompanyAccounting() {
                                             slotProps={{
                                                 inputLabel: {shrink: true},
                                                 htmlInput: {
+                                                    ...(key === 'counterpartyTaxId' ? {
+                                                        onPaste: (event: React.ClipboardEvent<HTMLInputElement>) => {
+                                                            const counterpartyTaxId = getPastedTaxId(event);
+                                                            setDraft(
+                                                                    current => current
+                                                                            ? {...current, counterpartyTaxId}
+                                                                            : null);
+                                                        },
+                                                    } : {}),
                                                     step: '0.01', ...(key === 'currency' ? {
                                                         pattern: '[A-Z]{3}',
                                                         maxLength: 3

@@ -831,3 +831,56 @@ test('adds and removes a PDF in the saved document details', async () => {
     expect(remove).toHaveBeenCalledWith({variables: {publicId: 'document-1'}});
     expect(await details.findByText('Brak załącznika PDF.')).toBeInTheDocument();
 });
+
+
+describe.each(['create', 'edit'])('tax ID paste in document %s form', mode => {
+    test.each([
+        ['PL967-123-87-85', 'PL9671238785'],
+        ['967-123-87-85', '9671238785'],
+        ['PL 967-123-87-85', 'PL9671238785'],
+        ['NL123456789B01', 'NL123456789B01'],
+        ['CHE-123.456.789', 'CHE-123.456.789'],
+    ])('saves pasted %s as %s', async (
+            pasted,
+            expected) => {
+        const user = userEvent.setup();
+        renderPage();
+        if (mode === 'edit') {
+            await user.click(
+                    screen.getByRole('button', {name: 'INV/1'}));
+            await user.click(
+                    screen.getByRole('button', {name: 'Edytuj dokument'}));
+        } else {
+            await user.click(
+                    screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+        }
+        const dialog = screen.getByRole(
+                'dialog',
+                {name: mode === 'edit' ? 'Edytuj dokument księgowy' : 'Dodaj dokument księgowy'});
+        if (mode === 'create') {
+            await user.type(
+                    within(dialog).getByLabelText(/Numer dokumentu/),
+                    'INV/2');
+            fireEvent.change(
+                    within(dialog).getByLabelText(/Kwota netto/),
+                    {target: {value: '100'}});
+            fireEvent.change(
+                    within(dialog).getByLabelText(/Kwota VAT/),
+                    {target: {value: '23'}});
+        }
+        const input = within(dialog).getByLabelText('NIP kontrahenta') as HTMLInputElement;
+        await user.click(input);
+        input.select();
+        await user.paste(pasted);
+        expect(input).toHaveValue(expected);
+        await user.click(
+                within(dialog).getByRole(
+                        'button',
+                        {name: mode === 'edit' ? 'Zapisz zmiany dokumentu' : 'Zapisz dokument'}));
+        await waitFor(
+                () => expect(mode === 'edit' ? mockUpdateDocument : mockCreate).toHaveBeenCalledWith(
+                        expect.objectContaining(
+                                {variables: expect.objectContaining(
+                                        {input: expect.objectContaining({counterpartyTaxId: expected})})})));
+    });
+});
