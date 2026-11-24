@@ -345,3 +345,15 @@ Edycja dokumentu księgowego używa aktywnej mutacji `updateAccountingDocument(p
 Formularz jest wspólny z tworzeniem i dostępny w szczegółach dokumentu przez „Edytuj dokument”.
 Po zapisie odświeża dokumenty i księgę; kwoty zapisanego wpisu zmienia się osobno.
 Rodzaj i waluta dokumentu ujętego w KPiR pozostają zablokowane.
+
+Formularz kontrahenta akceptuje międzynarodowe identyfikatory podatkowe zgodnie
+z [regułą backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md).
+Wklejanie zamienia litery na wielkie i usuwa początkowe etykiety zakończone
+dwukropkiem, np. `NIP:` lub `VAT:`. Dla numeru złożonego z dziesięciu cyfr,
+z opcjonalnym prefiksem `PL`, usuwa białe znaki i łączniki, zachowując zera wiodące
+oraz obecność lub brak prefiksu. Nie dopisuje kodu kraju. Przykładowo
+`967-123-87-85` daje `9671238785`, a `PL967-123-87-85` i `PL 967-123-87-85`
+dają `PL9671238785`.
+Pozostałe identyfikatory zachowują litery, cyfry i separatory. Wklejanie nie usuwa
+niedozwolonych znaków, które mogłyby oznaczać pomyłkę. Normalizacja dotyczy
+wyłącznie wklejania do formularza kontrahenta; nie zmienia istniejących danych.

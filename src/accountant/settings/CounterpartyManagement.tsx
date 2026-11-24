@@ -24,12 +24,17 @@ import {
 } from '../../types';
 import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
 
-const taxIdPattern = /^(?:[A-Za-z]{2})?[0-9]{10}$/;
+const taxIdPattern = /^(?=.*\p{N})[\p{L}\p{N}]+(?:[ ./-][\p{L}\p{N}]+)*$/u;
 
 function normalizePastedTaxId(value: string) {
-    const prefix = value.split(/[0-9]/, 1)[0];
-    const countryCode = prefix.match(/(?:^|[^A-Za-z])([A-Za-z]{1,2})[^A-Za-z]*$/)?.[1] ?? '';
-    return countryCode.toUpperCase() + value.replace(/[^0-9]/g, '');
+    const normalized = value.trim()
+        .replace(/^(?:NIP|VAT(?:\s*(?:ID|NO\.?|NUMBER))?|TIN|EIN)\s*:\s*/i, '')
+        .toUpperCase();
+    const withoutSeparators = normalized.replace(/[\s-]/g, '');
+    if (/^(?:PL)?[0-9]{10}$/.test(withoutSeparators)) {
+        return withoutSeparators;
+    }
+    return normalized;
 }
 
 type Props = {
@@ -52,7 +57,7 @@ export function CounterpartyManagement({kind}: Props) {
     const [draft, setDraft] = useState<CounterpartyInput | null>(null);
     const [publicId, setPublicId] = useState<string | null>(null);
     const [taxIdValidationRequested, setTaxIdValidationRequested] = useState(false);
-    const invalidTaxId = !taxIdPattern.test(draft?.taxId ?? '');
+    const invalidTaxId = !taxIdPattern.test(draft?.taxId?.trim() ?? '') || (draft?.taxId?.trim().length ?? 0) > 100;
     const showTaxIdError = taxIdValidationRequested && invalidTaxId;
     const [save, state] = useMutation<SaveCounterpartyMutation>(SaveCounterparty);
 
@@ -207,7 +212,7 @@ export function CounterpartyManagement({kind}: Props) {
                                 value={draft.taxId}
                                 error={showTaxIdError}
                                 helperText={showTaxIdError
-                                        ? 'Wpisz 10 cyfr, opcjonalnie poprzedzonych dwuliterowym kodem kraju.'
+                                        ? 'Wpisz identyfikator podatkowy: litery, cyfry oraz spacje, kropki, ukośniki lub łączniki między nimi (do 100 znaków).'
                                         : undefined}
                                 slotProps={{
                                     htmlInput: {
