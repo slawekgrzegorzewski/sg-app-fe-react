@@ -20,7 +20,7 @@ beforeEach(() => {
                     publicId: 'client-1',
                     name: 'Klient testowy',
                     address: 'Adres klienta',
-                    taxId: '123',
+                    taxId: '1234567890',
                     active: true
                 },
                 {
@@ -50,12 +50,24 @@ test.each([
     expect(within(dialog).queryByLabelText('Typ kontrahenta')).not.toBeInTheDocument();
     await userEvent.type(within(dialog).getByLabelText(/Nazwa kontrahenta/), 'Nowa firma');
     await userEvent.type(within(dialog).getByLabelText('Adres kontrahenta'), 'Nowy adres');
-    await userEvent.type(within(dialog).getByLabelText('NIP kontrahenta'), '789');
-    await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz kontrahenta'}));
+    const user = userEvent.setup();
+    const taxId = within(dialog).getByLabelText('NIP kontrahenta');
+    const saveButton = within(dialog).getByRole('button', {name: 'Zapisz kontrahenta'});
+    await user.click(saveButton);
+    expect(taxId).toHaveAttribute('aria-invalid', 'true');
+    await user.click(taxId);
+    await user.paste('NIP: pl 789-12x');
+    expect(taxId).toHaveValue('PL78912');
+    await user.click(saveButton);
+    expect(save).not.toHaveBeenCalled();
+    await user.click(taxId);
+    await user.paste('-345 67!');
+    expect(taxId).toHaveValue('PL7891234567');
+    await user.click(saveButton);
     await waitFor(() => expect(save).toHaveBeenCalledWith({
         variables: {
             publicId: null,
-            input: {kind, name: 'Nowa firma', address: 'Nowy adres', taxId: '789', active: true}
+            input: {kind, name: 'Nowa firma', address: 'Nowy adres', taxId: 'PL7891234567', active: true}
         }
     }));
     expect(refetch).toHaveBeenCalledTimes(1);
@@ -72,7 +84,7 @@ test('edits full client details and archives without deleting the counterparty',
     await waitFor(() => expect(save).toHaveBeenCalledWith({
         variables: {
             publicId: 'client-1',
-            input: {kind: 'CLIENT', name: 'Klient testowy', address: 'Nowy adres', taxId: '123', active: true}
+            input: {kind: 'CLIENT', name: 'Klient testowy', address: 'Nowy adres', taxId: '1234567890', active: true}
         }
     }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -80,7 +92,7 @@ test('edits full client details and archives without deleting the counterparty',
     await waitFor(() => expect(save).toHaveBeenLastCalledWith({
         variables: {
             publicId: 'client-1',
-            input: {kind: 'CLIENT', name: 'Klient testowy', address: 'Adres klienta', taxId: '123', active: false}
+            input: {kind: 'CLIENT', name: 'Klient testowy', address: 'Adres klienta', taxId: '1234567890', active: false}
         }
     }));
 });

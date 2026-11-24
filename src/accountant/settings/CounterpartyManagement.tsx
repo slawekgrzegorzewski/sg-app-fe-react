@@ -24,6 +24,14 @@ import {
 } from '../../types';
 import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
 
+const taxIdPattern = /^(?:[A-Za-z]{2})?[0-9]{10}$/;
+
+function normalizePastedTaxId(value: string) {
+    const prefix = value.split(/[0-9]/, 1)[0];
+    const countryCode = prefix.match(/(?:^|[^A-Za-z])([A-Za-z]{1,2})[^A-Za-z]*$/)?.[1] ?? '';
+    return countryCode.toUpperCase() + value.replace(/[^0-9]/g, '');
+}
+
 type Props = {
     kind: CounterpartyKind;
 };
@@ -43,6 +51,9 @@ export function CounterpartyManagement({kind}: Props) {
     const dialogId = `counterparty-${kind}-title`;
     const [draft, setDraft] = useState<CounterpartyInput | null>(null);
     const [publicId, setPublicId] = useState<string | null>(null);
+    const [taxIdValidationRequested, setTaxIdValidationRequested] = useState(false);
+    const invalidTaxId = !taxIdPattern.test(draft?.taxId ?? '');
+    const showTaxIdError = taxIdValidationRequested && invalidTaxId;
     const [save, state] = useMutation<SaveCounterpartyMutation>(SaveCounterparty);
 
     async function submit(
@@ -82,6 +93,7 @@ export function CounterpartyManagement({kind}: Props) {
                     disabled={state.loading}
                     onClick={() => {
                         state.reset();
+                        setTaxIdValidationRequested(false);
                         setPublicId(null);
                         setDraft({kind, name: '', address: '', taxId: '', active: true});
                     }}
@@ -113,6 +125,7 @@ export function CounterpartyManagement({kind}: Props) {
                                 disabled={state.loading}
                                 onClick={() => {
                                     state.reset();
+                                    setTaxIdValidationRequested(false);
                                     setPublicId(counterparty.publicId);
                                     setDraft({
                                         kind: counterparty.kind,
@@ -151,7 +164,8 @@ export function CounterpartyManagement({kind}: Props) {
                     component="form"
                     onSubmit={event => {
                         event.preventDefault();
-                        if (draft?.name.trim()) {
+                        setTaxIdValidationRequested(true);
+                        if (draft?.name.trim() && !invalidTaxId) {
                             void submit(draft, publicId);
                         }
                     }}
@@ -191,7 +205,28 @@ export function CounterpartyManagement({kind}: Props) {
                                 fullWidth
                                 disabled={state.loading}
                                 value={draft.taxId}
-                                slotProps={{htmlInput: {maxLength: 100}}}
+                                error={showTaxIdError}
+                                helperText={showTaxIdError
+                                        ? 'Wpisz 10 cyfr, opcjonalnie poprzedzonych dwuliterowym kodem kraju.'
+                                        : undefined}
+                                slotProps={{
+                                    htmlInput: {
+                                        maxLength: 100,
+                                        'aria-required': true,
+                                        onPaste: (event: React.ClipboardEvent<HTMLInputElement>) => {
+                                            event.preventDefault();
+                                            const input = event.currentTarget;
+                                            const start = input.selectionStart ?? input.value.length;
+                                            const end = input.selectionEnd ?? start;
+                                            const pasted = event.clipboardData.getData('text');
+                                            const before = input.value.slice(0, start);
+                                            const after = input.value.slice(end);
+                                            const taxId = normalizePastedTaxId(
+                                                    before + pasted + after);
+                                            setDraft({...draft, taxId});
+                                        },
+                                    },
+                                }}
                                 onChange={event => setDraft({...draft, taxId: event.target.value})}
                             />
                             <Typography
