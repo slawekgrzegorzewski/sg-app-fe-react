@@ -11,6 +11,7 @@ import {
     UpdateCompanyLedgerEntry,
     UpdateAccountingDocument,
     UploadAccountingDocumentAttachment,
+    DownloadAccountingDocumentAttachment,
     DeleteAccountingDocumentAttachment,
     CreateCounterpartyFromDocument,
     LedgerCalculationStrategyType,
@@ -883,4 +884,48 @@ describe.each(['create', 'edit'])('tax ID paste in document %s form', mode => {
                                 {variables: expect.objectContaining(
                                         {input: expect.objectContaining({counterpartyTaxId: expected})})})));
     });
+});
+
+
+test('shows the attachment name and explicit status for each document without downloading files', () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue(
+            {
+                ...result,
+                data: {...result.data, companyAccountingDocuments: [
+                    {...document, attachmentFileName: 'faktura.pdf'},
+                    {...document, publicId: 'document-2', documentNumber: 'INV/2', attachmentFileName: null},
+                ]},
+            });
+    renderPage();
+    const attached = within(
+            screen.getByRole('region', {name: 'Załącznik dokumentu INV/1'}));
+    expect(attached.getByText('PDF załączony')).toBeInTheDocument();
+    expect(attached.getByRole('button', {name: 'Pobierz PDF: faktura.pdf'})).toBeInTheDocument();
+    const missing = within(
+            screen.getByRole('region', {name: 'Załącznik dokumentu INV/2'}));
+    expect(missing.getByText('Brak załącznika')).toBeInTheDocument();
+    expect(missing.queryByRole('button')).not.toBeInTheDocument();
+    expect((useApolloClient as jest.Mock)().query).not.toHaveBeenCalled();
+});
+
+test('downloads the selected document attachment on demand and displays a recoverable error', async () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue(
+            {
+                ...result,
+                data: {...result.data, companyAccountingDocuments: [{...document, attachmentFileName: 'faktura.pdf'}]},
+            });
+    const query = jest.fn().mockRejectedValue(new Error('Unavailable'));
+    (useApolloClient as unknown as jest.Mock).mockReturnValue({query});
+    renderPage();
+    await userEvent.click(
+            screen.getByRole('button', {name: 'Pobierz PDF: faktura.pdf'}));
+    expect(query).toHaveBeenCalledWith({
+        query: DownloadAccountingDocumentAttachment,
+        variables: {publicId: 'document-1'},
+        fetchPolicy: 'no-cache',
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się pobrać pliku PDF.');
+    expect(screen.getByRole('button', {name: 'Pobierz PDF: faktura.pdf'})).toBeEnabled();
 });

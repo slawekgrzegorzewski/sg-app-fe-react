@@ -511,16 +511,41 @@ export function CompanyAccounting() {
                         )}
                         {data?.companyAccountingDocuments.map(
                             document => (
-                                <Box key={document.publicId} sx={{overflowWrap: 'anywhere'}}>
-                                    <Button color="inherit" onClick={() => setSelectedDocument(document)}>
-                                        {document.documentNumber}
-                                    </Button>
-                                    <Typography variant="body2">
-                                        {documentTypes.find(([type]) => type === document.documentType)?.[1]}
-                                        {' · Brutto: '}{document.amount == null ? 'Kwota nieuzupełniona' : amount(document.amount)}
-                                        {' '}{document.currency} · {document.description}
-                                        {document.postedToLedger && ' · Ujęty w KPiR'}
-                                    </Typography>
+                                <Box
+                                    key={document.publicId}
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: {xs: 'column', sm: 'row'},
+                                        gap: 2,
+                                        py: 1.5,
+                                        borderBottom: 1,
+                                        borderColor: 'divider',
+                                        '&:last-child': {borderBottom: 0},
+                                        overflowWrap: 'anywhere',
+                                    }}
+                                >
+                                    <Box sx={{flex: 1, minWidth: 0}}>
+                                        <Button color="inherit" onClick={() => setSelectedDocument(document)}>
+                                            {document.documentNumber}
+                                        </Button>
+                                        <Typography variant="body2">
+                                            {documentTypes.find(([type]) => type === document.documentType)?.[1]}
+                                            {' · Brutto: '}{document.amount == null ? 'Kwota nieuzupełniona' : amount(document.amount)}
+                                            {' '}{document.currency} · {document.description}
+                                            {document.postedToLedger && ' · Ujęty w KPiR'}
+                                        </Typography>
+                                    </Box>
+                                    <Box
+                                        component="section"
+                                        aria-label={`Załącznik dokumentu ${document.documentNumber}`}
+                                        sx={{width: {xs: '100%', sm: 280}, minWidth: 0, flexShrink: 0}}
+                                    >
+                                        <AccountingDocumentAttachment
+                                            publicId={document.publicId}
+                                            fileName={document.attachmentFileName}
+                                            readOnly
+                                        />
+                                    </Box>
                                 </Box>
                             ))}
                     </Stack>

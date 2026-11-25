@@ -1,6 +1,9 @@
 import {useRef, useState} from 'react';
 import {useApolloClient, useMutation} from '@apollo/client/react';
-import {Alert, Button, Stack, Typography} from '@mui/material';
+import {Alert, Button, Chip, Stack, Typography} from '@mui/material';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import LinkOffIcon from '@mui/icons-material/LinkOff';
 import {DeleteButton} from '../utils/buttons/DeleteButton';
 import {
     DeleteAccountingDocumentAttachment,
@@ -14,12 +17,18 @@ import {
 type AccountingDocumentAttachmentProps = {
     publicId: string;
     fileName?: string | null;
+} & ({
+    readOnly: true;
+    onChange?: never;
+} | {
+    readOnly?: false;
     onChange: (fileName: string | null) => Promise<void>;
-};
+});
 
 const maxPdfSize = 10 * 1024 * 1024;
 
-export function AccountingDocumentAttachment({publicId, fileName, onChange}: AccountingDocumentAttachmentProps) {
+export function AccountingDocumentAttachment(
+        {publicId, fileName, onChange, readOnly}: AccountingDocumentAttachmentProps) {
     const input = useRef<HTMLInputElement>(null);
     const operationInProgress = useRef(false);
     const [busy, setBusy] = useState(false);
@@ -59,7 +68,7 @@ export function AccountingDocumentAttachment({publicId, fileName, onChange}: Acc
                     if (!result.data?.uploadAccountingDocumentAttachment) {
                         throw new Error('Missing attachment name');
                     }
-                    await onChange(result.data.uploadAccountingDocumentAttachment);
+                    await onChange?.(result.data.uploadAccountingDocumentAttachment);
                 },
                 'Nie udało się przesłać pliku. Sprawdź, czy to prawidłowy PDF, i spróbuj ponownie.');
     }
@@ -97,9 +106,38 @@ export function AccountingDocumentAttachment({publicId, fileName, onChange}: Acc
                     if (!result.data?.deleteAccountingDocumentAttachment) {
                         throw new Error('Attachment was not removed');
                     }
-                    await onChange(null);
+                    await onChange?.(null);
                 },
                 'Nie udało się usunąć pliku PDF.');
+    }
+
+    if (readOnly) {
+        return (
+            <Stack spacing={0.5} alignItems="flex-start" aria-busy={busy} sx={{minWidth: 0}}>
+                <Chip
+                    size="small"
+                    sx={{color: 'text.primary'}}
+                    variant="outlined"
+                    color={fileName ? 'success' : 'warning'}
+                    icon={fileName ? <AttachFileIcon/> : <LinkOffIcon/>}
+                    label={fileName ? 'PDF załączony' : 'Brak załącznika'}
+                />
+                {fileName && (
+                    <Button
+                        size="small"
+                        color="inherit"
+                        startIcon={<PictureAsPdfOutlinedIcon/>}
+                        disabled={busy}
+                        onClick={() => void downloadAttachment()}
+                        aria-label={`Pobierz PDF: ${fileName}`}
+                        sx={{maxWidth: '100%', textTransform: 'none', textAlign: 'left', overflowWrap: 'anywhere'}}
+                    >
+                        {fileName}
+                    </Button>
+                )}
+                {error && <Alert severity="error">{error}</Alert>}
+            </Stack>
+        );
     }
 
     return (

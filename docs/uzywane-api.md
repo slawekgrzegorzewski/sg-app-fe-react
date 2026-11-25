@@ -265,6 +265,11 @@ jeden załącznik PDF (do 10 MB). Aktywne operacje to `UploadAccountingDocumentA
 (GraphQL multipart), `DownloadAccountingDocumentAttachment` (pobranie na żądanie) oraz
 `DeleteAccountingDocumentAttachment`. Przed wdrożeniem frontendu należy zastosować
 migrację V66 backendu.
+Lista dokumentów pokazuje po prawej nazwę pliku PDF z możliwością pobrania na żądanie.
+Status z ikoną i tekstem „PDF załączony” lub „Brak załącznika” pozwala szybko
+rozróżnić dokumenty; na telefonie załącznik znajduje się pod opisem dokumentu.
+Lista nie pobiera zawartości plików automatycznie. Zarządzanie załącznikiem pozostaje
+w szczegółach dokumentu.
 
 Źródłem zasad modelu i ręcznego wprowadzania danych jest [dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md).
 Najpierw należy wdrożyć backend z migracją V61, następnie frontend.
