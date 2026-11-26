@@ -232,7 +232,7 @@ test.each([
     expect(Boolean(screen.queryByRole('option', {name: 'Pozostałe wydatki'}))).toBe(costsVisible);
 });
 
-test.each([AccountingDocumentType.Receipt, AccountingDocumentType.Other])(
+test.each([AccountingDocumentType.Receipt, AccountingDocumentType.OtherExpense])(
     'lets users choose the direction for %s and clears hidden cost amounts',
     async documentType => {
         (useQuery as unknown as jest.Mock).mockReturnValue({
@@ -545,7 +545,11 @@ test('selects catalog counterparty and allows editing its document snapshot', as
     await waitFor(() => expect(mockCreate).toHaveBeenCalledWith({variables: {input: expect.objectContaining({counterpartyPublicId: 'party-1', counterparty: 'Nazwa na dokumencie', counterpartyAddress: 'Adres katalogowy', counterpartyTaxId: '123'})}}));
 });
 
-test('keeps catalog management in settings and can create a counterparty from a document', async () => {
+test.each([AccountingDocumentType.PurchaseVatInvoice, AccountingDocumentType.OtherExpense])(
+        'creates a supplier from a %s document', async documentType => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue(
+            {...result, data: {...result.data, companyAccountingDocuments: [{...document, documentType}]}});
     const from = jest.fn().mockResolvedValue({data: {createCounterpartyFromDocument: {publicId: 'party-2'}}});
     (useMutation as unknown as jest.Mock).mockImplementation(query => [query === CreateCounterpartyFromDocument ? from : mockCreate, {loading: false, reset: jest.fn()}]);
     renderPage();
@@ -558,7 +562,12 @@ test('keeps catalog management in settings and can create a counterparty from a 
 });
 
 
-test('filters clients and suppliers and clears the catalog link when document type changes', async () => {
+test.each([
+    [AccountingDocumentType.SalesVatInvoice, 'Faktura VAT sprzedaży'],
+    [AccountingDocumentType.OtherIncome, 'Inny dokument przychodowy'],
+])('filters clients and clears the supplier link when switching to %s', async (
+        documentType,
+        label) => {
     const queryResult = (useQuery as unknown as jest.Mock)();
     (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
         counterparties: [
@@ -573,7 +582,7 @@ test('filters clients and suppliers and clears the catalog link when document ty
     expect(screen.queryByRole('option', {name: /Klient testowy/})).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('option', {name: /Dostawca testowy/}));
     await userEvent.click(within(dialog).getByRole('combobox', {name: /Rodzaj dokumentu/}));
-    await userEvent.click(screen.getByRole('option', {name: 'Faktura VAT sprzedaży'}));
+    await userEvent.click(screen.getByRole('option', {name: label}));
     expect(within(dialog).getByRole('combobox', {name: /Kontrahent z katalogu/})).toHaveTextContent('Dane ręczne');
     expect(within(dialog).getByLabelText('Kontrahent')).toHaveValue('Dostawca testowy');
     await userEvent.click(within(dialog).getByRole('combobox', {name: /Kontrahent z katalogu/}));
@@ -584,13 +593,14 @@ test('filters clients and suppliers and clears the catalog link when document ty
     fireEvent.change(within(dialog).getByLabelText(/Kwota netto/), {target: {value: '100'}});
     fireEvent.change(within(dialog).getByLabelText(/Kwota VAT/), {target: {value: '23'}});
     await userEvent.click(within(dialog).getByRole('button', {name: 'Zapisz dokument'}));
-    await waitFor(() => expect(mockCreate).toHaveBeenCalledWith({variables: {input: expect.objectContaining({counterpartyPublicId: 'client-1', documentType: 'SALES_VAT_INVOICE'})}}));
+    await waitFor(() => expect(mockCreate).toHaveBeenCalledWith({variables: {input: expect.objectContaining({counterpartyPublicId: 'client-1', documentType})}}));
 });
 
-test('creates a client from a sales document', async () => {
+test.each([AccountingDocumentType.SalesVatInvoice, AccountingDocumentType.OtherIncome])(
+        'creates a client from a %s document', async documentType => {
     const queryResult = (useQuery as unknown as jest.Mock)();
     (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
-        companyAccountingDocuments: [{...document, documentType: AccountingDocumentType.SalesVatInvoice}],
+        companyAccountingDocuments: [{...document, documentType}],
     }});
     const from = jest.fn().mockResolvedValue({data: {createCounterpartyFromDocument: {publicId: 'client-1'}}});
     (useMutation as unknown as jest.Mock).mockImplementation(query => [query === CreateCounterpartyFromDocument ? from : mockCreate, {loading: false, reset: jest.fn()}]);
@@ -954,4 +964,89 @@ test('posts an other income document to other income and hides expense columns',
     await waitFor(
             () => expect(mockEntry).toHaveBeenCalledWith(
                     {variables: {input: expect.objectContaining({ledgerColumn: LedgerColumn.OtherIncome})}}));
+});
+
+
+test('offers only clients when editing an other income document', async () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue(
+            {...result, data: {...result.data,
+                companyAccountingDocuments: [{...document, documentType: AccountingDocumentType.OtherIncome}],
+                counterparties: [
+                    {kind: 'CLIENT', publicId: 'client-1', name: 'Klient', address: '', taxId: '1', active: true},
+                    {kind: 'SUPPLIER', publicId: 'supplier-1', name: 'Dostawca', address: '', taxId: '2', active: true},
+                ],
+            }});
+    renderPage();
+    await userEvent.click(
+            screen.getByRole('button', {name: 'INV/1'}));
+    await userEvent.click(
+            screen.getByRole('button', {name: 'Edytuj dokument'}));
+    const dialog = within(
+            screen.getByRole('dialog', {name: 'Edytuj dokument księgowy'}));
+    await userEvent.click(
+            dialog.getByRole('combobox', {name: 'Kontrahent z katalogu'}));
+    expect(screen.queryByRole('option', {name: /Dostawca/})).not.toBeInTheDocument();
+    await userEvent.click(
+            screen.getByRole('option', {name: /Klient ·/}));
+    await userEvent.click(
+            dialog.getByRole('button', {name: 'Zapisz zmiany dokumentu'}));
+    await waitFor(
+            () => expect(mockUpdateDocument).toHaveBeenCalledWith(
+                    {variables: {publicId: 'document-1', input: expect.objectContaining({
+                        counterpartyPublicId: 'client-1', documentType: AccountingDocumentType.OtherIncome,
+                    })}}));
+});
+
+
+test.each(['create', 'edit'])('offers only suppliers for other expense in %s form', async mode => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue(
+            {...result, data: {...result.data,
+                companyAccountingDocuments: [{...document, documentType: AccountingDocumentType.OtherExpense}],
+                counterparties: [
+                    {kind: 'CLIENT', publicId: 'client-1', name: 'Klient', address: '', taxId: '1', active: true},
+                    {kind: 'SUPPLIER', publicId: 'supplier-1', name: 'Dostawca', address: '', taxId: '2', active: true},
+                ],
+            }});
+    renderPage();
+    if (mode === 'edit') {
+        await userEvent.click(
+                screen.getByRole('button', {name: 'INV/1'}));
+        await userEvent.click(
+                screen.getByRole('button', {name: 'Edytuj dokument'}));
+    } else {
+        await userEvent.click(
+                screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    }
+    const dialog = within(
+            screen.getByRole('dialog', {name: mode === 'edit'
+                    ? 'Edytuj dokument księgowy' : 'Dodaj dokument księgowy'}));
+    if (mode === 'create') {
+        await userEvent.click(
+                dialog.getByRole('combobox', {name: 'Rodzaj dokumentu'}));
+        await userEvent.click(
+                screen.getByRole('option', {name: 'Inny dokument kosztowy'}));
+        fireEvent.change(
+                dialog.getByLabelText(/Numer dokumentu/),
+                {target: {value: 'OTHER/2'}});
+        fireEvent.change(
+                dialog.getByLabelText(/Kwota netto/),
+                {target: {value: '100'}});
+        fireEvent.change(
+                dialog.getByLabelText(/Kwota VAT/),
+                {target: {value: '0'}});
+    }
+    await userEvent.click(
+            dialog.getByRole('combobox', {name: 'Kontrahent z katalogu'}));
+    expect(screen.queryByRole('option', {name: /Klient ·/})).not.toBeInTheDocument();
+    await userEvent.click(
+            screen.getByRole('option', {name: /Dostawca ·/}));
+    await userEvent.click(
+            dialog.getByRole('button', {name: mode === 'edit' ? 'Zapisz zmiany dokumentu' : 'Zapisz dokument'}));
+    await waitFor(
+            () => expect(mode === 'edit' ? mockUpdateDocument : mockCreate).toHaveBeenCalledWith(
+                    expect.objectContaining({variables: expect.objectContaining({input: expect.objectContaining({
+                        counterpartyPublicId: 'supplier-1', documentType: AccountingDocumentType.OtherExpense,
+                    })})})));
 });

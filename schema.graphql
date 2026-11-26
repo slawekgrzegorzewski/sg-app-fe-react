@@ -1216,7 +1216,7 @@ enum AccountingDocumentType {
     ZUS
     INSURANCE_POLICY
     OTHER_INCOME
-    OTHER
+    OTHER_EXPENSE
 }
 enum LedgerColumn {
     SALES

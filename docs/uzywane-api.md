@@ -307,9 +307,9 @@ Wymagany jest najpierw backend z uzupełnioną V62, następnie frontend.
 `Counterparty` jest wspólnym interfejsem GraphQL typów `Client` i `Supplier`.
 `CounterpartyInput` wymaga `kind` (`CLIENT` lub `SUPPLIER`), którego nie zmieniamy
 dla istniejącego kontrahenta. Formularz dokumentu filtruje katalog według jego typu:
-sprzedaż — klienci; zakup, ZUS i polisy — dostawcy; paragony i pozostałe — oba typy.
+sprzedaż i inne przychody — klienci; zakup, ZUS, polisy i inne koszty — dostawcy; paragony — oba typy.
 `CreateCounterpartyFromDocument` przekazuje `kind`: rozpoznany z rodzaju dokumentu
-albo wybrany przez użytkownika dla paragonów i pozostałych dokumentów.
+albo wybrany przez użytkownika dla paragonów.
 
 
 `CreateCompanyLedgerEntry` obsługuje opcjonalne `input.amountOverride`.
@@ -363,5 +363,10 @@ dokument, z którego pobierany jest NIP — nie mają osobnego pola edycji NIP-u
 „Inny dokument przychodowy” (`OTHER_INCOME`), np. przychód z pakietu MultiSport
 lub Lux Med, jest dostępny przy tworzeniu i edycji dokumentów. W KPiR domyślnie
 wybiera „Pozostałe przychody” i udostępnia wyłącznie kolumny przychodowe.
-Kontrahent może pochodzić z dowolnego rodzaju katalogu albo zostać wpisany ręcznie.
+Kontrahenta można wybrać wyłącznie z klientów albo wpisać jego dane ręcznie.
+Tworzenie kontrahenta z takiego dokumentu tworzy klienta.
 Najpierw należy wdrożyć backend z migracją V67, następnie frontend.
+
+„Inny dokument kosztowy” korzysta z `OTHER_EXPENSE` zamiast `OTHER`. Formularze
+pokazują dla niego wyłącznie dostawców; tworzenie kontrahenta z dokumentu również
+tworzy dostawcę. Najpierw należy wdrożyć backend z migracją V68, potem frontend.

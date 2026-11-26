@@ -92,7 +92,7 @@ const documentTypes = [
     [AccountingDocumentType.Zus, 'ZUS'],
     [AccountingDocumentType.InsurancePolicy, 'Polisa'],
     [AccountingDocumentType.OtherIncome, 'Inny dokument przychodowy'],
-    [AccountingDocumentType.Other, 'Inny dokument kosztowy'],
+    [AccountingDocumentType.OtherExpense, 'Inny dokument kosztowy'],
 ] as const;
 
 const ledgerColumns = [
@@ -111,10 +111,12 @@ function isIncomeColumn(column?: LedgerColumn) {
 function requiredCounterpartyKind(documentType?: AccountingDocumentType) {
     switch (documentType) {
         case AccountingDocumentType.SalesVatInvoice:
+        case AccountingDocumentType.OtherIncome:
             return CounterpartyKind.Client;
         case AccountingDocumentType.PurchaseVatInvoice:
         case AccountingDocumentType.Zus:
         case AccountingDocumentType.InsurancePolicy:
+        case AccountingDocumentType.OtherExpense:
             return CounterpartyKind.Supplier;
         default:
             return null;
