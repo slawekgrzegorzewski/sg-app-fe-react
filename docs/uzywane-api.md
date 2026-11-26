@@ -359,3 +359,9 @@ niedozwolonych znaków, które mogłyby oznaczać pomyłkę. Normalizacja dotycz
 wklejania do formularzy tworzenia i edycji kontrahenta oraz dokumentu księgowego;
 nie zmienia istniejących danych automatycznie. Formularze wpisów KPiR wybierają
 dokument, z którego pobierany jest NIP — nie mają osobnego pola edycji NIP-u.
+
+„Inny dokument przychodowy” (`OTHER_INCOME`), np. przychód z pakietu MultiSport
+lub Lux Med, jest dostępny przy tworzeniu i edycji dokumentów. W KPiR domyślnie
+wybiera „Pozostałe przychody” i udostępnia wyłącznie kolumny przychodowe.
+Kontrahent może pochodzić z dowolnego rodzaju katalogu albo zostać wpisany ręcznie.
+Najpierw należy wdrożyć backend z migracją V67, następnie frontend.

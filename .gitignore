@@ -28,3 +28,5 @@ yarn-error.log*
 .idea
 src/__generated__
 /src/types.ts
+
+/.codex/config.toml

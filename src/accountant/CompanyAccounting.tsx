@@ -91,7 +91,8 @@ const documentTypes = [
     [AccountingDocumentType.Receipt, 'Paragon'],
     [AccountingDocumentType.Zus, 'ZUS'],
     [AccountingDocumentType.InsurancePolicy, 'Polisa'],
-    [AccountingDocumentType.Other, 'Inny dokument'],
+    [AccountingDocumentType.OtherIncome, 'Inny dokument przychodowy'],
+    [AccountingDocumentType.Other, 'Inny dokument kosztowy'],
 ] as const;
 
 const ledgerColumns = [
@@ -121,9 +122,14 @@ function requiredCounterpartyKind(documentType?: AccountingDocumentType) {
 }
 
 function defaultLedgerColumn(documentType?: AccountingDocumentType) {
-    return documentType === AccountingDocumentType.SalesVatInvoice
-        ? LedgerColumn.Sales
-        : LedgerColumn.OtherExpense;
+    switch (documentType) {
+        case AccountingDocumentType.SalesVatInvoice:
+            return LedgerColumn.Sales;
+        case AccountingDocumentType.OtherIncome:
+            return LedgerColumn.OtherIncome;
+        default:
+            return LedgerColumn.OtherExpense;
+    }
 }
 
 export function CompanyAccounting() {
@@ -164,7 +170,8 @@ export function CompanyAccounting() {
     const canChooseEntryDirection = entryDocument?.documentType !== AccountingDocumentType.SalesVatInvoice
         && entryDocument?.documentType !== AccountingDocumentType.PurchaseVatInvoice
         && entryDocument?.documentType !== AccountingDocumentType.Zus
-        && entryDocument?.documentType !== AccountingDocumentType.InsurancePolicy;
+        && entryDocument?.documentType !== AccountingDocumentType.InsurancePolicy
+        && entryDocument?.documentType !== AccountingDocumentType.OtherIncome;
     const availableLedgerColumns = ledgerColumns.filter(
         ([column]) => isIncomeColumn(column) === isIncomeEntry);
     const strategies = data?.ledgerCalculationStrategies ?? [];

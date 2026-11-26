@@ -929,3 +929,29 @@ test('downloads the selected document attachment on demand and displays a recove
     expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się pobrać pliku PDF.');
     expect(screen.getByRole('button', {name: 'Pobierz PDF: faktura.pdf'})).toBeEnabled();
 });
+
+
+test('posts an other income document to other income and hides expense columns', async () => {
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue(
+            {...result, data: {...result.data, companyAccountingDocuments: [
+                {...document, documentType: AccountingDocumentType.OtherIncome},
+            ]}});
+    renderPage();
+    await userEvent.click(
+            screen.getByRole('button', {name: 'Dodaj wpis do księgi'}));
+    const dialog = within(
+            screen.getByRole('dialog', {name: 'Dodaj wpis do księgi'}));
+    expect(dialog.queryByLabelText('Rodzaj wpisu')).not.toBeInTheDocument();
+    expect(dialog.getByRole('combobox', {name: 'Kolumna KPiR'})).toHaveTextContent('Pozostałe przychody');
+    await userEvent.click(
+            dialog.getByRole('combobox', {name: 'Kolumna KPiR'}));
+    expect(screen.queryByRole('option', {name: 'Pozostałe wydatki'})).not.toBeInTheDocument();
+    await userEvent.click(
+            screen.getByRole('option', {name: 'Pozostałe przychody'}));
+    await userEvent.click(
+            dialog.getByRole('button', {name: 'Zapisz wpis'}));
+    await waitFor(
+            () => expect(mockEntry).toHaveBeenCalledWith(
+                    {variables: {input: expect.objectContaining({ledgerColumn: LedgerColumn.OtherIncome})}}));
+});
