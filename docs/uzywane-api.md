@@ -372,6 +372,14 @@ Najpierw należy wdrożyć backend z migracją V67, następnie frontend.
 pokazują dla niego wyłącznie dostawców; tworzenie kontrahenta z dokumentu również
 tworzy dostawcę. Najpierw należy wdrożyć backend z migracją V68, potem frontend.
 
+## Wyszukiwanie kontrahenta po NIP-ie
+
+Gdy pełny polski NIP nie ma dokładnego dopasowania w katalogu danego typu, akcja
+„Pobierz z Wykazu podatników VAT” wysyła NIP i bieżącą datę z przeglądarki do
+[publicznego API MF](https://wykazpodatnikowvat.mf.gov.pl/api/), bez poświadczeń.
+Wynik uzupełnia nazwę i dostępny adres w formularzu dodawania. Zapis wymaga
+zatwierdzenia formularza.
+
 ## Konflikty NIP-ów w katalogu kontrahentów
 
 Aktywna mutacja `SaveCounterpartyWithConflict` zastępuje `SaveCounterparty` w zarządzaniu klientami

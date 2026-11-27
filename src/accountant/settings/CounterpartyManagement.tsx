@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {useQuery} from '@apollo/client/react';
 import {
+    Alert,
     Box,
     Button,
     Dialog,
@@ -13,6 +14,7 @@ import {
     TextField,
     Typography
 } from '@mui/material';
+import dayjs from 'dayjs';
 import CloseIcon from '@mui/icons-material/Close';
 import {
     CounterpartyKind,
@@ -21,7 +23,7 @@ import {
     CounterpartyInput,
 } from '../../types';
 import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
-import {getPastedTaxId} from '../utils/taxId';
+import {counterpartyTaxIdKey, getPastedTaxId} from '../utils/taxId';
 import {useCounterpartyConflict} from './CounterpartyConflictDialog';
 
 const taxIdPattern = /^(?=.*\p{N})[\p{L}\p{N}]+(?:[ ./-][\p{L}\p{N}]+)*$/u;
@@ -34,10 +36,18 @@ export function CounterpartyManagement({kind}: Props) {
     const {data, loading, error, refetch} = useQuery<GetCounterpartiesQuery>(GetCounterparties, {
         fetchPolicy: 'network-only',
     });
+    const [taxIdSearch, setTaxIdSearch] = useState('');
+    const [registryLoading, setRegistryLoading] = useState(false);
+    const [registryMessage, setRegistryMessage] = useState('');
+    const taxIdSearchKey = counterpartyTaxIdKey(taxIdSearch);
     const counterparties = (data?.counterparties ?? [])
         .filter(counterparty => counterparty.kind === kind)
         .sort(
                 (left, right) => left.name.localeCompare(right.name, 'pl'));
+    const visibleCounterparties = counterparties.filter(
+            counterparty => !taxIdSearchKey || counterpartyTaxIdKey(counterparty.taxId ?? '').includes(taxIdSearchKey));
+    const canSearchRegistry = /^[0-9]{10}$/.test(taxIdSearchKey) && !visibleCounterparties.some(
+            counterparty => counterpartyTaxIdKey(counterparty.taxId ?? '') === taxIdSearchKey);
     const isClient = kind === CounterpartyKind.Client;
     const title = isClient ? 'Klienci' : 'Dostawcy';
     const addLabel = isClient ? 'Dodaj klienta' : 'Dodaj dostawcę';
@@ -49,6 +59,43 @@ export function CounterpartyManagement({kind}: Props) {
     const invalidTaxId = !taxIdPattern.test(draft?.taxId?.trim() ?? '') || (draft?.taxId?.trim().length ?? 0) > 100;
     const showTaxIdError = taxIdValidationRequested && invalidTaxId;
     const state = useCounterpartyConflict();
+
+    async function searchRegistry() {
+        setRegistryLoading(true);
+        setRegistryMessage('');
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 10000);
+        try {
+            const date = dayjs().format('YYYY-MM-DD');
+            const endpoint = 'https://wykazpodatnikowvat.mf.gov.pl/api/search/nip';
+            const response = await fetch(
+                    `${endpoint}/${taxIdSearchKey}?date=${date}`,
+                    {credentials: 'omit', signal: controller.signal});
+            if (!response.ok) {
+                throw new Error('Błąd HTTP wykazu');
+            }
+            const body = await response.json();
+            const subject = body?.result?.subject;
+            if (subject === null) {
+                setRegistryMessage('Nie znaleziono kontrahenta w Wykazie podatników VAT.');
+                return;
+            }
+            if (subject?.nip !== taxIdSearchKey || typeof subject.name !== 'string' || !subject.name.trim()) {
+                throw new Error('Niepełne dane w odpowiedzi wykazu');
+            }
+            const address = [subject.residenceAddress, subject.workingAddress].find(
+                    value => typeof value === 'string' && value.trim()) ?? '';
+            state.reset();
+            setTaxIdValidationRequested(false);
+            setPublicId(null);
+            setDraft({kind, name: subject.name.trim(), address: address.trim(), taxId: taxIdSearchKey, active: true});
+        } catch {
+            setRegistryMessage('Nie udało się pobrać danych z Wykazu podatników VAT. Spróbuj ponownie.');
+        } finally {
+            window.clearTimeout(timeout);
+            setRegistryLoading(false);
+        }
+    }
 
     async function submit(
             input: CounterpartyInput,
@@ -87,7 +134,7 @@ export function CounterpartyManagement({kind}: Props) {
                 <Button
                     variant="outlined"
                     color="inherit"
-                    disabled={state.loading}
+                    disabled={state.loading || registryLoading}
                     onClick={() => {
                         state.reset();
                         setTaxIdValidationRequested(false);
@@ -95,13 +142,34 @@ export function CounterpartyManagement({kind}: Props) {
                         setDraft({kind, name: '', address: '', taxId: '', active: true});
                     }}
                 >{addLabel}</Button>
+                <TextField
+                    id={`counterparty-${kind}-tax-id-search`}
+                    label="Szukaj po NIP-ie"
+                    type="search"
+                    size="small"
+                    value={taxIdSearch}
+                    disabled={registryLoading}
+                    onChange={event => {
+                        setTaxIdSearch(event.target.value);
+                        setRegistryMessage('');
+                    }}
+                />
+                {canSearchRegistry && <Button
+                    variant="outlined"
+                    loading={registryLoading}
+                    disabled={state.loading || registryLoading}
+                    onClick={() => void searchRegistry()}
+                >Pobierz z Wykazu podatników VAT</Button>}
+                {registryMessage && <Alert severity="info">{registryMessage}</Alert>}
                 {state.error && !draft && <ErrorDisplay
                     title="Nie udało się zapisać kontrahenta"
                     error={state.error}
                 />}
                 {!counterparties.length &&
                     <Typography color="text.secondary">{isClient ? 'Brak klientów.' : 'Brak dostawców.'}</Typography>}
-                {counterparties.map(counterparty => (
+                {counterparties.length > 0 && visibleCounterparties.length === 0 &&
+                    <Typography role="status" color="text.secondary">Brak kontrahentów o podanym NIP-ie.</Typography>}
+                {visibleCounterparties.map(counterparty => (
                     <Box
                         key={counterparty.publicId}
                         sx={{overflowWrap: 'anywhere'}}
@@ -119,7 +187,7 @@ export function CounterpartyManagement({kind}: Props) {
                         >
                             <Button
                                 color="inherit"
-                                disabled={state.loading}
+                                disabled={state.loading || registryLoading}
                                 onClick={() => {
                                     state.reset();
                                     setTaxIdValidationRequested(false);
@@ -135,7 +203,7 @@ export function CounterpartyManagement({kind}: Props) {
                             >{editLabel}</Button>
                             <Button
                                 color="inherit"
-                                disabled={state.loading}
+                                disabled={state.loading || registryLoading}
                                 onClick={() => void submit({
                                     kind: counterparty.kind,
                                     name: counterparty.name,

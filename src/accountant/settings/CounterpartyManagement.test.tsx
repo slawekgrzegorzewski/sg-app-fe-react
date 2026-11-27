@@ -76,6 +76,37 @@ test.each([
     expect(refetch).toHaveBeenCalledTimes(1);
 });
 
+
+test('prefers an exact catalog match and opens an editable draft for a registry result', async () => {
+    const originalFetch = global.fetch;
+    const fetchRegistry = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+            result: {subject: {nip: '5260250274', name: 'Podmiot testowy', residenceAddress: 'Adres z wykazu'}},
+        }),
+    });
+    global.fetch = fetchRegistry;
+    try {
+        render(<ClientsManagement/>);
+        const search = screen.getByRole('searchbox', {name: 'Szukaj po NIP-ie'});
+        fireEvent.change(search, {target: {value: 'PL 123-456-78-90'}});
+        expect(screen.getByText('Klient testowy')).toBeInTheDocument();
+        expect(screen.queryByRole('button', {name: /Pobierz z Wykazu/})).not.toBeInTheDocument();
+
+        fireEvent.change(search, {target: {value: 'PL 526-025-02-74'}});
+        await userEvent.click(
+                screen.getByRole('button', {name: /Pobierz z Wykazu/}));
+        const dialog = await screen.findByRole('dialog', {name: 'Dodaj klienta'});
+        expect(within(dialog).getByLabelText(/Nazwa kontrahenta/)).toHaveValue('Podmiot testowy');
+        expect(within(dialog).getByLabelText('Adres kontrahenta')).toHaveValue('Adres z wykazu');
+        expect(within(dialog).getByLabelText('NIP kontrahenta')).toHaveValue('5260250274');
+        expect(fetchRegistry).toHaveBeenCalledTimes(1);
+        expect(save).not.toHaveBeenCalled();
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
 test('edits full client details and archives without deleting the counterparty', async () => {
     render(<ClientsManagement/>);
     await userEvent.click(screen.getByRole('button', {name: 'Edytuj klienta'}));
