@@ -900,7 +900,7 @@ describe.each(['create', 'edit'])('tax ID paste in document %s form', mode => {
 
 
 
-test.each(['typing', 'paste'])('uses the local supplier after %s a matching NIP', async method => {
+test.each(['typing', 'paste', 'editing'])('uses the local supplier after %s a matching NIP', async method => {
     const supplier = {
         publicId: 'supplier-by-nip',
         kind: 'SUPPLIER',
@@ -912,15 +912,35 @@ test.each(['typing', 'paste'])('uses the local supplier after %s a matching NIP'
     const result = (useQuery as unknown as jest.Mock)();
     (useQuery as unknown as jest.Mock).mockReturnValue({
         ...result,
-        data: {...result.data, counterparties: [supplier]},
+        data: {
+            ...result.data,
+            companyAccountingDocuments: [{...document, counterpartyPublicId: 'previous-supplier'}],
+            counterparties: [
+                supplier,
+                {...supplier, publicId: 'previous-supplier', name: document.counterparty,
+                    address: document.counterpartyAddress, taxId: document.counterpartyTaxId},
+            ],
+        },
     });
     renderPage();
     const user = userEvent.setup();
-    await user.click(
-            screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    if (method === 'editing') {
+        await user.click(
+                screen.getByRole('button', {name: 'INV/1'}));
+        await user.click(
+                screen.getByRole('button', {name: 'Edytuj dokument'}));
+    } else {
+        await user.click(
+                screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    }
     const form = within(
-            screen.getByRole('dialog', {name: 'Dodaj dokument księgowy'}));
+            screen.getByRole('dialog', {
+                name: method === 'editing' ? 'Edytuj dokument księgowy' : 'Dodaj dokument księgowy',
+            }));
     const input = form.getByLabelText('NIP kontrahenta');
+    if (method === 'editing') {
+        await user.clear(input);
+    }
     if (method === 'paste') {
         await user.click(input);
         await user.paste('NIP: PL 526-025-02-74');
@@ -936,7 +956,7 @@ test.each(['typing', 'paste'])('uses the local supplier after %s a matching NIP'
     expect(form.getByLabelText('Kontrahent')).toHaveValue('');
 });
 
-test('fills document counterparty details from the VAT registry after an explicit lookup', async () => {
+test.each(['create', 'edit'])('fills %s document counterparty details after an explicit registry lookup', async mode => {
     const originalFetch = global.fetch;
     const fetchRegistry = jest.fn().mockResolvedValue({
         ok: true,
@@ -947,19 +967,30 @@ test('fills document counterparty details from the VAT registry after an explici
     global.fetch = fetchRegistry;
     try {
         renderPage();
-        await userEvent.click(
-                screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+        if (mode === 'edit') {
+            await userEvent.click(
+                    screen.getByRole('button', {name: 'INV/1'}));
+            await userEvent.click(
+                    screen.getByRole('button', {name: 'Edytuj dokument'}));
+        } else {
+            await userEvent.click(
+                    screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+        }
         const form = within(
-                screen.getByRole('dialog', {name: 'Dodaj dokument księgowy'}));
+                screen.getByRole('dialog', {name: mode === 'edit' ? 'Edytuj dokument księgowy' : 'Dodaj dokument księgowy'}));
         const input = form.getByLabelText('NIP kontrahenta');
         fireEvent.change(input, {target: {value: 'PL 526-025-02-74'}});
         expect(fetchRegistry).not.toHaveBeenCalled();
-        await userEvent.click(
-                form.getByRole('button', {name: /Pobierz z Wykazu/}));
+        const lookupButton = form.getByRole('button', {name: /Pobierz z Wykazu/});
+        await userEvent.click(input);
+        await userEvent.tab();
+        expect(lookupButton).toHaveFocus();
+        await userEvent.click(lookupButton);
         expect(form.getByLabelText('Kontrahent')).toHaveValue('Podmiot z wykazu');
         expect(form.getByLabelText('Adres kontrahenta')).toHaveValue('Adres z wykazu');
         expect(fetchRegistry).toHaveBeenCalledTimes(1);
         expect(mockCreate).not.toHaveBeenCalled();
+        expect(mockUpdateDocument).not.toHaveBeenCalled();
         expect(mockCounterpartySave).not.toHaveBeenCalled();
     } finally {
         global.fetch = originalFetch;

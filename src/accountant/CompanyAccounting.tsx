@@ -179,7 +179,7 @@ export function CompanyAccounting() {
     const draftCounterpartyKind = requiredCounterpartyKind(draft?.documentType) ?? manualCounterpartyKind;
     const draftTaxIdKey = counterpartyTaxIdKey(draft?.counterpartyTaxId ?? '');
     const matchingCounterparty = !draft?.counterpartyPublicId && findCounterparty(draftTaxIdKey);
-    const canLookupRegistry = Boolean(draft && !editingDocument && !loading && !error
+    const canLookupRegistry = Boolean(draft && !loading && !error
             && !draft.counterpartyPublicId && !matchingCounterparty && /^[0-9]{10}$/.test(draftTaxIdKey));
 
     function findCounterparty(taxIdKey: string) {
@@ -198,9 +198,6 @@ export function CompanyAccounting() {
                         return current;
                     }
                     const next = {...current, counterpartyTaxId: taxId};
-                    if (editingDocument) {
-                        return next;
-                    }
                     const key = counterpartyTaxIdKey(taxId);
                     if (key !== counterpartyTaxIdKey(current.counterpartyTaxId) && current.counterpartyPublicId) {
                         const previous = counterparties.find(item => item.publicId === current.counterpartyPublicId);
@@ -1140,55 +1137,56 @@ export function CompanyAccounting() {
                             {draft &&
                                 documentFields.map(
                                     ([key, label]) => (
-                                        <TextField
-                                            key={key}
-                                            id={`accounting-document-${key}`}
-                                            label={label}
-                                            type={key === 'documentDate' ? 'date' : ['netAmount', 'vatAmount'].includes(key) ? 'number' : 'text'}
-                                            sx={theme => ({colorScheme: theme.palette.mode})}
-                                            value={draft[key]}
-                                            required={['documentNumber', 'documentDate', 'netAmount', 'vatAmount', 'currency'].includes(key)}
-                                            fullWidth
-                                            disabled={busy || (key === 'currency' && Boolean(editingDocument?.postedToLedger))}
-                                            slotProps={{
-                                                inputLabel: {shrink: true},
-                                                htmlInput: {
-                                                    ...(key === 'counterpartyTaxId' ? {
-                                                        onPaste: (event: React.ClipboardEvent<HTMLInputElement>) => {
-                                                            changeDocumentTaxId(
-                                                                    getPastedTaxId(event));
-                                                        },
-                                                    } : {}),
-                                                    step: '0.01', ...(key === 'currency' ? {
-                                                        pattern: '[A-Z]{3}',
-                                                        maxLength: 3
-                                                    } : {})
-                                                }
-                                            }}
-                                            onChange={event => {
-                                                const value = event.target.value;
-                                                if (key === 'counterpartyTaxId') {
-                                                    changeDocumentTaxId(value);
-                                                    return;
-                                                }
-                                                setDraft(
-                                                        current => current
-                                                                ? {...current, [key]: key === 'currency'
-                                                                    ? value.toUpperCase()
-                                                                    : value}
-                                                                : null);
-                                            }}
-                                        />
+                                        <React.Fragment key={key}>
+                                            <TextField
+                                                id={`accounting-document-${key}`}
+                                                label={label}
+                                                type={key === 'documentDate' ? 'date' : ['netAmount', 'vatAmount'].includes(key) ? 'number' : 'text'}
+                                                sx={theme => ({colorScheme: theme.palette.mode})}
+                                                value={draft[key]}
+                                                required={['documentNumber', 'documentDate', 'netAmount', 'vatAmount', 'currency'].includes(key)}
+                                                fullWidth
+                                                disabled={busy || (key === 'currency' && Boolean(editingDocument?.postedToLedger))}
+                                                slotProps={{
+                                                    inputLabel: {shrink: true},
+                                                    htmlInput: {
+                                                        ...(key === 'counterpartyTaxId' ? {
+                                                            onPaste: (event: React.ClipboardEvent<HTMLInputElement>) => {
+                                                                changeDocumentTaxId(
+                                                                        getPastedTaxId(event));
+                                                            },
+                                                        } : {}),
+                                                        step: '0.01', ...(key === 'currency' ? {
+                                                            pattern: '[A-Z]{3}',
+                                                            maxLength: 3
+                                                        } : {})
+                                                    }
+                                                }}
+                                                onChange={event => {
+                                                    const value = event.target.value;
+                                                    if (key === 'counterpartyTaxId') {
+                                                        changeDocumentTaxId(value);
+                                                        return;
+                                                    }
+                                                    setDraft(
+                                                            current => current
+                                                                    ? {...current, [key]: key === 'currency'
+                                                                        ? value.toUpperCase()
+                                                                        : value}
+                                                                    : null);
+                                                }}
+                                            />
+                                            {key === 'counterpartyTaxId' && canLookupRegistry && (
+                                                <Button
+                                                    variant="outlined"
+                                                    loading={registryLoading}
+                                                    disabled={busy}
+                                                    onClick={() => void lookupDocumentCounterparty()}
+                                                >Pobierz z Wykazu podatników VAT</Button>
+                                            )}
+                                            {key === 'counterpartyTaxId' && canLookupRegistry && registryMessage && <Alert severity="info">{registryMessage}</Alert>}
+                                        </React.Fragment>
                                     ))}
-                            {canLookupRegistry && (
-                                <Button
-                                    variant="outlined"
-                                    loading={registryLoading}
-                                    disabled={busy}
-                                    onClick={() => void lookupDocumentCounterparty()}
-                                >Pobierz z Wykazu podatników VAT</Button>
-                            )}
-                            {canLookupRegistry && registryMessage && <Alert severity="info">{registryMessage}</Alert>}
                             {editingDocument?.postedToLedger && (
                                 <Alert severity="info">
                                     Dokument jest ujęty w KPiR. Edycja nie przelicza zapisanego wpisu.
