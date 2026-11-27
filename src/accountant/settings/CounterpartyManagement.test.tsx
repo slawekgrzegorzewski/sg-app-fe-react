@@ -10,7 +10,9 @@ const save = jest.fn();
 const refetch = jest.fn();
 beforeEach(() => {
     jest.clearAllMocks();
-    save.mockResolvedValue({data: {}});
+    save.mockImplementation(async ({variables}) => ({data: {saveCounterpartyWithConflict: {
+        saved: {publicId: variables.publicId ?? 'new-id', ...variables.input}, conflict: null,
+    }}}));
     refetch.mockResolvedValue({data: {}});
     (useQuery as unknown as jest.Mock).mockReturnValue({
         loading: false, refetch, data: {
@@ -156,4 +158,75 @@ test('replaces the selected tax ID with a normalized Polish number', async () =>
     input.setSelectionRange(0, input.value.length);
     await user.paste('PL 967-123-87-85');
     expect(input).toHaveValue('PL9671238785');
+});
+
+test('compares conflicting data and saves selected fields into the existing entry', async () => {
+    const existing = {
+        publicId: 'client-1', kind: 'CLIENT', name: 'Klient testowy', address: 'Adres klienta',
+        taxId: '1234567890', active: true,
+    };
+    save.mockResolvedValueOnce({data: {saveCounterpartyWithConflict: {saved: null, conflict: existing}}});
+    render(<ClientsManagement/>);
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj klienta'}));
+    const form = screen.getByRole('dialog');
+    fireEvent.change(within(form).getByLabelText(/Nazwa kontrahenta/), {target: {value: 'Nowa nazwa'}});
+    fireEvent.change(within(form).getByLabelText('Adres kontrahenta'), {target: {value: 'Nowy adres'}});
+    fireEvent.change(within(form).getByLabelText('NIP kontrahenta'), {target: {value: 'PL1234567890'}});
+    await userEvent.click(within(form).getByRole('button', {name: 'Zapisz kontrahenta'}));
+    const conflict = await screen.findByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'});
+    expect(within(conflict).getByRole('region', {name: 'Istniejące dane'})).toHaveTextContent('Klient testowy');
+    expect(within(conflict).getByRole('region', {name: 'Nowe dane'})).toHaveTextContent('Nowa nazwa');
+    await userEvent.click(within(conflict).getByRole('button', {name: 'Użyj istniejącego: adres kontrahenta'}));
+    await userEvent.click(within(conflict).getByRole('button', {name: 'Zapisz scalone dane'}));
+    await waitFor(() => expect(save).toHaveBeenLastCalledWith({variables: {
+        publicId: 'client-1',
+        input: {kind: 'CLIENT', name: 'Nowa nazwa', address: 'Adres klienta', taxId: 'PL1234567890', active: true},
+        expected: {kind: 'CLIENT', name: 'Klient testowy', address: 'Adres klienta', taxId: '1234567890', active: true},
+    }}));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+});
+
+test.each(['Użyj istniejącego wpisu', 'Anuluj'])(
+    'resolves catalog conflict with %s without another write', async action => {
+        save.mockResolvedValueOnce({data: {saveCounterpartyWithConflict: {saved: null, conflict: {
+            publicId: 'client-1', kind: 'CLIENT', name: 'Istniejący', address: '', taxId: '123', active: true,
+        }}}});
+        render(<ClientsManagement/>);
+        await userEvent.click(screen.getByRole('button', {name: 'Dodaj klienta'}));
+        const form = screen.getByRole('dialog');
+        fireEvent.change(within(form).getByLabelText(/Nazwa kontrahenta/), {target: {value: 'Nowy'}});
+        fireEvent.change(within(form).getByLabelText('NIP kontrahenta'), {target: {value: '123'}});
+        await userEvent.click(within(form).getByRole('button', {name: 'Zapisz kontrahenta'}));
+        const conflict = await screen.findByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'});
+        await userEvent.click(within(conflict).getByRole('button', {name: action}));
+        expect(save).toHaveBeenCalledTimes(1);
+        await waitFor(() => expect(Boolean(screen.queryByRole('dialog', {name: 'Dodaj klienta'})))
+                .toBe(action === 'Anuluj'));
+    });
+
+test('refreshes a stale comparison and preserves it when a merge request fails', async () => {
+    const existing = {publicId: 'client-1', kind: 'CLIENT', name: 'Pierwotny', address: '', taxId: '123', active: true};
+    const changed = {...existing, name: 'Zmieniony w międzyczasie'};
+    save.mockResolvedValueOnce({data: {saveCounterpartyWithConflict: {saved: null, conflict: existing}}})
+        .mockResolvedValueOnce({data: {saveCounterpartyWithConflict: {saved: null, conflict: changed}}})
+        .mockRejectedValueOnce(new Error('Brak połączenia'));
+    render(<ClientsManagement/>);
+    await userEvent.click(screen.getByRole('button', {name: 'Dodaj klienta'}));
+    const form = screen.getByRole('dialog');
+    fireEvent.change(within(form).getByLabelText(/Nazwa kontrahenta/), {target: {value: 'Nowy'}});
+    fireEvent.change(within(form).getByLabelText('NIP kontrahenta'), {target: {value: '123'}});
+    await userEvent.click(within(form).getByRole('button', {name: 'Zapisz kontrahenta'}));
+    let conflict = await screen.findByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'});
+    await userEvent.click(within(conflict).getByRole('button', {name: 'Zapisz scalone dane'}));
+    expect(await screen.findByText(/Dane w katalogu zmieniły się/)).toBeInTheDocument();
+    conflict = screen.getByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'});
+    expect(within(conflict).getByRole('region', {name: 'Istniejące dane'})).toHaveTextContent(changed.name);
+    await userEvent.click(within(conflict).getByRole('button', {name: 'Zapisz scalone dane'}));
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(3));
+    expect(screen.getByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'})).toBeInTheDocument();
+    expect(save).toHaveBeenLastCalledWith({variables: {
+        publicId: 'client-1',
+        input: {kind: 'CLIENT', name: 'Nowy', address: '', taxId: '123', active: true},
+        expected: {kind: 'CLIENT', name: changed.name, address: '', taxId: '123', active: true},
+    }});
 });

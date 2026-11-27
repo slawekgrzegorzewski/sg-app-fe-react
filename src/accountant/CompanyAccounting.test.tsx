@@ -7,6 +7,7 @@ import {AccountantSettingsContext} from '../application/components/dispatchers/A
 import {
     AccountingDocumentType,
     CreateAccountingDocument,
+    SaveCounterpartyWithConflict,
     CreateCompanyLedgerEntry,
     UpdateCompanyLedgerEntry,
     UpdateAccountingDocument,
@@ -27,6 +28,7 @@ const mockEntry = jest.fn();
 const mockUpdate = jest.fn();
 const mockUpdateDocument = jest.fn();
 const mockCreate = jest.fn();
+const mockCounterpartySave = jest.fn();
 const mockRefetch = jest.fn();
 const strategies = [
     {
@@ -95,7 +97,7 @@ beforeEach(() => {
         },
     });
     (useMutation as unknown as jest.Mock).mockImplementation(query => [
-        query === UpdateAccountingDocument ? mockUpdateDocument : query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : query === CreateAccountingDocument ? mockCreate : jest.fn(),
+        query === SaveCounterpartyWithConflict ? mockCounterpartySave : query === UpdateAccountingDocument ? mockUpdateDocument : query === UpdateCompanyLedgerEntry ? mockUpdate : query === CreateCompanyLedgerEntry ? mockEntry : query === CreateAccountingDocument ? mockCreate : jest.fn(),
         {loading: false, reset: jest.fn()},
     ]);
     mockUpdate.mockResolvedValue({data: {updateCompanyLedgerEntry: {publicId: 'entry-1'}}});
@@ -1049,4 +1051,92 @@ test.each(['create', 'edit'])('offers only suppliers for other expense in %s for
                     expect.objectContaining({variables: expect.objectContaining({input: expect.objectContaining({
                         counterpartyPublicId: 'supplier-1', documentType: AccountingDocumentType.OtherExpense,
                     })})})));
+});
+
+test.each([
+    ['Użyj istniejącego wpisu', false],
+    ['Nadpisz nowymi danymi', false],
+    ['Zapisz scalone dane', false],
+    ['Użyj istniejącego wpisu', true],
+    ['Nadpisz nowymi danymi', true],
+    ['Zapisz scalone dane', true],
+] as const)('resolves manual document tax ID with %s (editing: %s)', async (action, editing) => {
+    const supplier = {
+        publicId: 'supplier-match', kind: 'SUPPLIER', name: 'Firma z katalogu', address: 'Adres z katalogu',
+        taxId: 'PL9671238785', active: true,
+    };
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+        counterparties: [supplier, {...supplier, publicId: 'client-same-tax-id', kind: 'CLIENT'}],
+    }});
+    mockCounterpartySave.mockImplementation(async ({variables}) => ({data: {saveCounterpartyWithConflict: {
+        saved: {...supplier, ...variables.input}, conflict: null,
+    }}}));
+    mockUpdateDocument.mockResolvedValue({data: {updateAccountingDocument: document}});
+    renderPage();
+    if (editing) {
+        await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+        await userEvent.click(screen.getByRole('button', {name: 'Edytuj dokument'}));
+    } else {
+        await userEvent.click(screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    }
+    const form = screen.getByRole('dialog');
+    if (!editing) {
+        fireEvent.mouseDown(within(form).getByRole('combobox', {name: 'Rodzaj dokumentu'}));
+        await userEvent.click(screen.getByRole('option', {name: 'Faktura VAT zakupu'}));
+        fireEvent.change(within(form).getByLabelText(/Numer dokumentu/), {target: {value: 'NOWY/1'}});
+    }
+    fireEvent.change(within(form).getByLabelText('Kontrahent'), {target: {value: 'Nowa nazwa'}});
+    fireEvent.change(within(form).getByLabelText('Adres kontrahenta'), {target: {value: 'Nowy adres'}});
+    fireEvent.change(within(form).getByLabelText('NIP kontrahenta'), {target: {value: '967-123-87-85'}});
+    expect(within(form).getByText(/Ten NIP jest już w katalogu/)).toBeInTheDocument();
+    await userEvent.click(within(form).getByRole('button', {name: editing ? 'Zapisz zmiany dokumentu' : 'Zapisz dokument'}));
+    const conflict = await screen.findByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'});
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockUpdateDocument).not.toHaveBeenCalled();
+    if (action === 'Zapisz scalone dane') {
+        await userEvent.click(within(conflict).getByRole('button', {name: 'Użyj istniejącego: adres kontrahenta'}));
+        fireEvent.change(within(conflict).getByLabelText(/Nazwa kontrahenta/), {target: {value: 'Scalona nazwa'}});
+    }
+    await userEvent.click(within(conflict).getByRole('button', {name: action}));
+    const expectedName = action === 'Użyj istniejącego wpisu' ? supplier.name
+            : action === 'Zapisz scalone dane' ? 'Scalona nazwa' : 'Nowa nazwa';
+    const expectedAddress = action === 'Nadpisz nowymi danymi' ? 'Nowy adres' : supplier.address;
+    const mutation = editing ? mockUpdateDocument : mockCreate;
+    await waitFor(() => expect(mutation).toHaveBeenCalledWith({variables: expect.objectContaining({
+        input: expect.objectContaining({
+            counterpartyPublicId: supplier.publicId, counterparty: expectedName, counterpartyAddress: expectedAddress,
+        }),
+    })}));
+    expect(mockCounterpartySave).toHaveBeenCalledTimes(action === 'Użyj istniejącego wpisu' ? 0 : 1);
+    const expectedSave = action === 'Użyj istniejącego wpisu'
+            ? undefined
+            : {variables: {
+                publicId: supplier.publicId,
+                input: expect.objectContaining({name: expectedName, address: expectedAddress}),
+                expected: {kind: supplier.kind, name: supplier.name, address: supplier.address,
+                    taxId: supplier.taxId, active: true},
+            }};
+    expect(mockCounterpartySave.mock.calls[0]?.[0]).toEqual(expectedSave);
+});
+
+test('reuses identical supplier from a saved document without asking to merge', async () => {
+    const queryResult = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,
+        counterparties: [{kind: 'SUPPLIER', publicId: 'supplier-1', name: document.counterparty,
+            address: document.counterpartyAddress, taxId: `PL${document.counterpartyTaxId}`, active: true}],
+    }});
+    const from = jest.fn().mockResolvedValue({data: {createCounterpartyFromDocument: {publicId: 'supplier-1'}}});
+    (useMutation as unknown as jest.Mock).mockImplementation(query => [
+        query === CreateCounterpartyFromDocument ? from : mockCounterpartySave,
+        {loading: false, reset: jest.fn()},
+    ]);
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Utwórz kontrahenta z dokumentu'}));
+    await waitFor(() => expect(from).toHaveBeenCalledWith({variables: {
+        documentPublicId: 'document-1', kind: 'SUPPLIER', counterpartyPublicId: 'supplier-1',
+    }}));
+    expect(screen.queryByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'})).not.toBeInTheDocument();
+    expect(mockCounterpartySave).not.toHaveBeenCalled();
 });

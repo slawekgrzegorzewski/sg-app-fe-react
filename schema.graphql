@@ -53,7 +53,8 @@ type Mutation{
     updateCompanyLedgerEntry(publicId: UUID!, input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
     createCompanyLedgerEntry(input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
     saveCounterparty(publicId: UUID, input: CounterpartyInput!): Counterparty!
-    createCounterpartyFromDocument(documentPublicId: UUID!, kind: CounterpartyKind): Counterparty!
+    saveCounterpartyWithConflict(publicId: UUID, input: CounterpartyInput!, expected: CounterpartyInput): CounterpartySaveResult!
+    createCounterpartyFromDocument(documentPublicId: UUID!, kind: CounterpartyKind, counterpartyPublicId: UUID): Counterparty!
     createAccountingDocument(input: AccountingDocumentInput!): AccountingDocument!
     updateAccountingDocument(publicId: UUID!, input: AccountingDocumentInput!): AccountingDocument!
     uploadAccountingDocumentAttachment(input: AccountingDocumentAttachmentUploadInput!): String!
@@ -733,6 +734,11 @@ input InstallmentCreationInput {
 enum CounterpartyKind {
     CLIENT
     SUPPLIER
+}
+
+type CounterpartySaveResult {
+    saved: Counterparty
+    conflict: Counterparty
 }
 
 interface Counterparty {

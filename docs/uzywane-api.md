@@ -87,7 +87,7 @@ Mutacje:
 - okresy i rozliczenia: `CreateBillingPeriod`, `FinishBillingPeriod`, `CreateIncome`, `CreateExpense`, `CreateTransfer`, `MutuallyCancel`, `ImportBankTransactions`;
 - integracja bankowa: `StartPermissionRequest`, `ConfirmPermission`, `TriggerFetchBankAccountData`;
 - kategorie rozliczeń: `CreateBillingCategory`, `UpdateBillingCategory`, `DeleteBillingCategory`;
-- klienci i dostawcy: `SaveCounterparty`;
+- klienci i dostawcy: `SaveCounterpartyWithConflict`;
 - skarbonki: `CreatePiggyBank`, `UpdatePiggyBank`, `DeletePiggyBank`;
 - ustawienia: `UpdateAccountantSettings`.
 
@@ -291,8 +291,9 @@ Przed frontendem należy wdrożyć backend z migracją V62.
 
 Księgowość firmy pobiera teraz `counterparties` w zapytaniu `CompanyAccounting`.
 Zarządzanie katalogiem znajduje się w Ustawienia → Firma, w sekcjach Klienci i Dostawcy.
-Sekcje pobierają `GetCounterparties`, filtrują po `kind` i wywołują `saveCounterparty(publicId, input)` do tworzenia,
-edytowania, archiwizowania i przywracania. Starsze operacje `GetAllClients`,
+Sekcje pobierają `GetCounterparties`, filtrują po `kind` i wywołują `saveCounterpartyWithConflict(publicId, input, expected)` do tworzenia,
+edytowania, archiwizowania i przywracania. Starsza operacja `SaveCounterparty` pozostaje zadeklarowana i nie jest wywoływana.
+Starsze operacje `GetAllClients`,
 `GetAllSuppliers` oraz `Create/Update/DeleteClient` i `Create/Update/DeleteSupplier`
 pozostają zadeklarowane, ale ustawienia ich nie wywołują. Strona księgowości nie
 wyświetla katalogu; formularz dokumentu pozwala wybrać
@@ -370,3 +371,23 @@ Najpierw należy wdrożyć backend z migracją V67, następnie frontend.
 „Inny dokument kosztowy” korzysta z `OTHER_EXPENSE` zamiast `OTHER`. Formularze
 pokazują dla niego wyłącznie dostawców; tworzenie kontrahenta z dokumentu również
 tworzy dostawcę. Najpierw należy wdrożyć backend z migracją V68, potem frontend.
+
+## Konflikty NIP-ów w katalogu kontrahentów
+
+Aktywna mutacja `SaveCounterpartyWithConflict` zastępuje `SaveCounterparty` w zarządzaniu klientami
+oraz dostawcami. Zwraca zapisany/użyty wpis lub istniejące dane wymagające porównania.
+Przy identycznych danych API używa istniejącego wpisu bez tworzenia kolejnego. Przy różnicach wspólny
+dialog pokazuje istniejące dane po lewej, edytowalny wynik pośrodku, a nowe dane po prawej. Każde pole
+można przejąć z jednej ze stron. Można też użyć istniejącego wpisu lub nadpisać go nowymi danymi.
+Nadpisanie i scalenie przesyłają `expected`, więc zmiana danych w trakcie porównania wymaga ponownego rozstrzygnięcia.
+
+Tworzenie i edycja dokumentu pokazują dopasowanie NIP-u do właściwego typu kontrahenta oraz wymagają
+rozstrzygnięcia przed zapisem danych ręcznych. Przed zapisem odświeżają `CompanyAccounting`, aby sprawdzić
+aktualny katalog. Wybrany wynik uzupełnia dane i ID kontrahenta w formularzu. Przy paragonie typ do
+wyszukania można wskazać ręcznie. Zarchiwizowanego wpisu nie można użyć w nowym powiązaniu bez przywrócenia.
+`CreateCounterpartyFromDocument` może przesłać `counterpartyPublicId` wybrany po porównaniu danych.
+Zmiana katalogu nie zmienia danych wcześniejszych dokumentów.
+
+Regułę normalizacji i unikalności oraz migrację V69 opisuje
+[model kontrahentów backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#unikalność-nip-u-i-scalanie-kontrahentów).
+Wdrażaj backend z V69 przed frontendem korzystającym z nowej mutacji.

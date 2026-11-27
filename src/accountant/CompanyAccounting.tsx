@@ -23,7 +23,8 @@ import {
     Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import {getPastedTaxId} from './utils/taxId';
+import {counterpartyTaxIdKey, getPastedTaxId} from './utils/taxId';
+import {useCounterpartyConflict} from './settings/CounterpartyConflictDialog';
 import {AccountingDocumentAttachment} from './AccountingDocumentAttachment';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -158,9 +159,100 @@ export function CompanyAccounting() {
     const [createDocument, createState] = useMutation<CreateAccountingDocumentMutation>(CreateAccountingDocument);
     const [createCounterpartyFromDocument, fromDocumentState] = useMutation<CreateCounterpartyFromDocumentMutation>(CreateCounterpartyFromDocument);
     const [updateDocument, documentUpdateState] = useMutation(UpdateAccountingDocument);
-    const busy = documentUpdateState.loading || updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
+    const counterpartyConflict = useCounterpartyConflict();
+    const busy = counterpartyConflict.loading || documentUpdateState.loading || updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
     const [fromDocumentKind, setFromDocumentKind] = useState(CounterpartyKind.Supplier);
     const counterparties = data?.counterparties ?? [];
+    const [manualCounterpartyKind, setManualCounterpartyKind] = useState(CounterpartyKind.Supplier);
+    const draftCounterpartyKind = requiredCounterpartyKind(draft?.documentType) ?? manualCounterpartyKind;
+    const matchingCounterparty = !draft?.counterpartyPublicId && counterparties.find(
+            item => item.kind === draftCounterpartyKind
+                    && Boolean(counterpartyTaxIdKey(draft?.counterpartyTaxId ?? ''))
+                    && counterpartyTaxIdKey(item.taxId) === counterpartyTaxIdKey(draft?.counterpartyTaxId ?? ''));
+
+    async function resolveDocumentCounterparty(
+            input: AccountingDocumentInput,
+            catalog = counterparties) {
+        if (input.counterpartyPublicId) {
+            return input;
+        }
+        const kind = requiredCounterpartyKind(input.documentType) ?? manualCounterpartyKind;
+        const key = counterpartyTaxIdKey(input.counterpartyTaxId);
+        const existing = key && catalog.find(
+                item => item.kind === kind && counterpartyTaxIdKey(item.taxId) === key);
+        if (!existing) {
+            return input;
+        }
+        const selected = await counterpartyConflict.review(
+                existing,
+                {
+                    kind,
+                    name: input.counterparty,
+                    address: input.counterpartyAddress,
+                    taxId: input.counterpartyTaxId,
+                    active: true,
+                },
+                true);
+        if (!selected) {
+            return null;
+        }
+        const resolved = {
+            ...input,
+            counterpartyPublicId: selected.publicId,
+            counterparty: selected.name,
+            counterpartyAddress: selected.address,
+            counterpartyTaxId: selected.taxId,
+        };
+        setDraft(resolved);
+        return resolved;
+    }
+
+    async function createFromDocument() {
+        if (!selectedDocument) {
+            return;
+        }
+        const kind = requiredCounterpartyKind(selectedDocument.documentType) ?? fromDocumentKind;
+        try {
+            const refreshed = await refetch();
+            const catalog = refreshed?.data?.counterparties ?? counterparties;
+            const key = counterpartyTaxIdKey(selectedDocument.counterpartyTaxId);
+            const existing = key && catalog.find(
+                    item => item.kind === kind && counterpartyTaxIdKey(item.taxId) === key);
+            let resolvedPublicId: string | undefined;
+            const identical = existing && existing.active
+                    && existing.name.trim() === selectedDocument.counterparty.trim()
+                    && existing.address.trim() === selectedDocument.counterpartyAddress.trim();
+            if (existing && identical) {
+                resolvedPublicId = existing.publicId;
+            } else if (existing) {
+                const selected = await counterpartyConflict.review(
+                        existing,
+                        {
+                            kind,
+                            name: selectedDocument.counterparty,
+                            address: selectedDocument.counterpartyAddress,
+                            taxId: selectedDocument.counterpartyTaxId,
+                            active: true,
+                        },
+                        true);
+                if (!selected) {
+                    return;
+                }
+                resolvedPublicId = selected.publicId;
+            }
+            const result = await createCounterpartyFromDocument(
+                    {variables: {
+                        documentPublicId: selectedDocument.publicId,
+                        kind,
+                        ...(resolvedPublicId ? {counterpartyPublicId: resolvedPublicId} : {}),
+                    }});
+            setSelectedDocument(
+                    {...selectedDocument, counterpartyPublicId: result.data?.createCounterpartyFromDocument.publicId});
+            await refetch();
+        } catch {
+            return;
+        }
+    }
     const ledger = data?.companyLedger;
     const availableDocuments = data?.companyLedgerAvailableDocuments.filter(document => !document.postedToLedger) ?? [];
     const ledgerCurrency = ledger?.currency ?? 'PLN';
@@ -256,12 +348,19 @@ export function CompanyAccounting() {
 
     async function handleCreate(event: React.FormEvent) {
         event.preventDefault();
+        if (!draft) {
+            return;
+        }
         try {
+            const refreshed = await refetch();
+            const input = await resolveDocumentCounterparty(draft, refreshed?.data?.counterparties ?? counterparties);
+            if (!input) {
+                return;
+            }
             if (editingDocument) {
-                await updateDocument({variables: {publicId: editingDocument.publicId, input: draft}});
+                await updateDocument({variables: {publicId: editingDocument.publicId, input}});
             } else {
-                await createDocument(
-                        {variables: {input: draft}});
+                await createDocument({variables: {input}});
             }
             setMessage(editingDocument ? 'Zapisano zmiany dokumentu.' : 'Dodano dokument księgowy.');
             setCreating(false);
@@ -589,15 +688,10 @@ export function CompanyAccounting() {
                             </TextField>
                         )}
                         {selectedDocument && !selectedDocument.counterpartyPublicId && (
-                            <Button disabled={busy || !selectedDocument.counterparty.trim()} onClick={async () => {
-                                try {
-                                    const result = await createCounterpartyFromDocument({variables: {documentPublicId: selectedDocument.publicId, kind: requiredCounterpartyKind(selectedDocument.documentType) ?? fromDocumentKind}});
-                                    setSelectedDocument({...selectedDocument, counterpartyPublicId: result.data?.createCounterpartyFromDocument.publicId});
-                                    await refetch();
-                                } catch {
-                                    return;
-                                }
-                            }}>Utwórz kontrahenta z dokumentu</Button>
+                            <Button
+                                disabled={busy || !selectedDocument.counterparty.trim()}
+                                onClick={() => void createFromDocument()}
+                            >Utwórz kontrahenta z dokumentu</Button>
                         )}
                         {selectedDocument?.counterpartyPublicId && <Alert severity="info">Dokument jest powiązany z kontrahentem. Zachowuje dane z momentu zapisu.</Alert>}
                         {fromDocumentState.error && <ErrorDisplay title="Nie udało się utworzyć kontrahenta" error={fromDocumentState.error}/>}
@@ -909,6 +1003,10 @@ export function CompanyAccounting() {
                     </IconButton>
                     <DialogContent dividers>
                         <Stack spacing={2}>
+                            {counterpartyConflict.error && <ErrorDisplay
+                                title="Nie udało się zapisać kontrahenta"
+                                error={counterpartyConflict.error}
+                            />}
                             {draft && (
                                 <TextField
                                     select
@@ -935,6 +1033,27 @@ export function CompanyAccounting() {
                                 <MenuItem value="">Dane ręczne — bez kontrahenta w katalogu</MenuItem>
                                 {counterparties.filter(item => (item.active || item.publicId === draft.counterpartyPublicId) && (!requiredCounterpartyKind(draft.documentType) || item.kind === requiredCounterpartyKind(draft.documentType))).map(item => <MenuItem key={item.publicId} value={item.publicId}>{item.name} · {item.kind === CounterpartyKind.Client ? 'Klient' : 'Dostawca'}{item.taxId ? ` · ${item.taxId}` : ''}</MenuItem>)}
                             </TextField>}
+                            {draft && !requiredCounterpartyKind(draft.documentType) && !draft.counterpartyPublicId && (
+                                <TextField
+                                    id="manual-document-counterparty-kind"
+                                    label="Typ kontrahenta"
+                                    select
+                                    value={manualCounterpartyKind}
+                                    onChange={event => setManualCounterpartyKind(event.target.value as CounterpartyKind)}
+                                >
+                                    <MenuItem value={CounterpartyKind.Client}>Klient</MenuItem>
+                                    <MenuItem value={CounterpartyKind.Supplier}>Dostawca</MenuItem>
+                                </TextField>
+                            )}
+                            {matchingCounterparty && <Alert severity="info">
+                                Ten NIP jest już w katalogu: {matchingCounterparty.name}.
+                                Wybierz istniejące dane, nadpisz wpis lub scal dane.
+                                <Button
+                                    color="inherit"
+                                    disabled={busy}
+                                    onClick={() => draft && void resolveDocumentCounterparty(draft)}
+                                >Porównaj dane kontrahenta</Button>
+                            </Alert>}
                             {draft &&
                                 documentFields.map(
                                     ([key, label]) => (
@@ -998,6 +1117,7 @@ export function CompanyAccounting() {
                     </DialogActions>
                 </Box>
             </Dialog>
+            {counterpartyConflict.dialog}
         </Stack>
     );
 }

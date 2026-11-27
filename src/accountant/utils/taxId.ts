@@ -20,3 +20,8 @@ export function getPastedTaxId(event: ClipboardEvent<HTMLInputElement>) {
     return normalizePastedTaxId(
             input.value.slice(0, start) + pasted + input.value.slice(end));
 }
+
+export function counterpartyTaxIdKey(taxId: string) {
+    const key = taxId.toUpperCase().replace(/[\s./-]/g, '');
+    return /^PL[0-9]{10}$/.test(key) ? key.slice(2) : key;
+}

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {useMutation, useQuery} from '@apollo/client/react';
+import {useQuery} from '@apollo/client/react';
 import {
     Box,
     Button,
@@ -19,11 +19,10 @@ import {
     GetCounterparties,
     GetCounterpartiesQuery,
     CounterpartyInput,
-    SaveCounterparty,
-    SaveCounterpartyMutation
 } from '../../types';
 import {ErrorDisplay, LoadingIndicator} from '../../application/components/QueryState';
 import {getPastedTaxId} from '../utils/taxId';
+import {useCounterpartyConflict} from './CounterpartyConflictDialog';
 
 const taxIdPattern = /^(?=.*\p{N})[\p{L}\p{N}]+(?:[ ./-][\p{L}\p{N}]+)*$/u;
 
@@ -49,13 +48,16 @@ export function CounterpartyManagement({kind}: Props) {
     const [taxIdValidationRequested, setTaxIdValidationRequested] = useState(false);
     const invalidTaxId = !taxIdPattern.test(draft?.taxId?.trim() ?? '') || (draft?.taxId?.trim().length ?? 0) > 100;
     const showTaxIdError = taxIdValidationRequested && invalidTaxId;
-    const [save, state] = useMutation<SaveCounterpartyMutation>(SaveCounterparty);
+    const state = useCounterpartyConflict();
 
     async function submit(
             input: CounterpartyInput,
             id: string | null) {
         try {
-            await save({variables: {publicId: id, input}});
+            const saved = await state.save(input, id);
+            if (!saved) {
+                return;
+            }
             await refetch();
             setDraft(null);
         } catch {
@@ -243,6 +245,7 @@ export function CounterpartyManagement({kind}: Props) {
                     </DialogActions>
                 </Box>
             </Dialog>
+            {state.dialog}
         </Paper>
     );
 }

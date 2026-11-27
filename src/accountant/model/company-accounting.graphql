@@ -114,8 +114,8 @@ mutation CreateAccountingDocument($input: AccountingDocumentInput!) {
 mutation SaveCounterparty($publicId: UUID, $input: CounterpartyInput!) {
     saveCounterparty(publicId: $publicId, input: $input) { ...CounterpartyFields }
 }
-mutation CreateCounterpartyFromDocument($documentPublicId: UUID!, $kind: CounterpartyKind) {
-    createCounterpartyFromDocument(documentPublicId: $documentPublicId, kind: $kind) { ...CounterpartyFields }
+mutation CreateCounterpartyFromDocument($documentPublicId: UUID!, $kind: CounterpartyKind, $counterpartyPublicId: UUID) {
+    createCounterpartyFromDocument(documentPublicId: $documentPublicId, kind: $kind, counterpartyPublicId: $counterpartyPublicId) { ...CounterpartyFields }
 }
 
 query GetCounterparties {
@@ -143,4 +143,11 @@ query DownloadAccountingDocumentAttachment($publicId: UUID!) {
 
 mutation DeleteAccountingDocumentAttachment($publicId: UUID!) {
     deleteAccountingDocumentAttachment(publicId: $publicId)
+}
+
+mutation SaveCounterpartyWithConflict($publicId: UUID, $input: CounterpartyInput!, $expected: CounterpartyInput) {
+    saveCounterpartyWithConflict(publicId: $publicId, input: $input, expected: $expected) {
+        saved { ...CounterpartyFields }
+        conflict { ...CounterpartyFields }
+    }
 }
