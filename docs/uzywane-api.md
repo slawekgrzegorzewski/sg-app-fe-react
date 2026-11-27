@@ -338,6 +338,8 @@ Zapytanie księgi pobiera też `calculationStrategyPublicId` z ostatniego zdarze
 Dokument i miesiąc KPiR pozostają stałe. Wymagany backend z migracją V64 przed frontendem.
 
 `CompanyAccounting` pobiera `companyLedger.monthSummary` i `yearToDateSummary`.
+Formularz dodawania wpisu używa `companyLedger.nextEntryOrder` jako propozycji numeru.
+[Regułę numeracji opisuje dokumentacja backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#numeracja-nowych-wpisów).
 Stopka KPiR pokazuje sumy miesiąca i narastająco od stycznia do wybranego miesiąca
 w PLN, także dla miesięcy bez wpisów. Najpierw wdrażamy backend z polami podsumowań;
 migracja bazy nie jest potrzebna.

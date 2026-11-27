@@ -92,7 +92,7 @@ beforeEach(() => {
         loading: false, refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {yearMonth: '2026-09', entries: []},
+            companyLedger: {nextEntryOrder: 18, yearMonth: '2026-09', entries: []},
             companyAccountingDocuments: [document]
         },
     });
@@ -123,7 +123,7 @@ test('creates a manual ledger entry with exact decimal input and document refere
         variables: {
             input: expect.objectContaining({
                 accountingDocumentPublicId: 'document-1',
-                entryOrder: 1,
+                entryOrder: 18,
                 calculationStrategyPublicId: 'full',
                 exchangeRate: '1',
                 ledgerColumn: LedgerColumn.OtherExpense,
@@ -174,7 +174,7 @@ test('keeps the entry form open and displays a save failure', async () => {
 test('requires a document before creating ledger entries', () => {
     (useQuery as unknown as jest.Mock).mockReturnValue({
         loading: false, refetch: mockRefetch,
-        data: {ledgerCalculationStrategies: strategies, companyLedger: {entries: []}, companyAccountingDocuments: []},
+        data: {ledgerCalculationStrategies: strategies, companyLedger: {nextEntryOrder: 1, entries: []}, companyAccountingDocuments: []},
     });
     renderPage();
     expect(screen.getByRole('button', {name: 'Dodaj wpis do księgi'})).toBeDisabled();
@@ -185,7 +185,7 @@ test('posts a percentage of a foreign document using the explicit exchange rate'
         loading: false,
         refetch: mockRefetch,
         data: {
-            ledgerCalculationStrategies: strategies, companyLedger: {entries: []},
+            ledgerCalculationStrategies: strategies, companyLedger: {nextEntryOrder: 1, entries: []},
             companyAccountingDocuments: [{...document, amount: 100, netAmount: 100, currency: 'EUR'}],
         },
     });
@@ -218,7 +218,7 @@ test.each([
         refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {entries: []},
+            companyLedger: {nextEntryOrder: 1, entries: []},
             companyAccountingDocuments: [{...document, documentType}]
         },
     });
@@ -242,7 +242,7 @@ test.each([AccountingDocumentType.Receipt, AccountingDocumentType.OtherExpense])
             refetch: mockRefetch,
             data: {
                 ledgerCalculationStrategies: strategies,
-                companyLedger: {entries: []},
+                companyLedger: {nextEntryOrder: 1, entries: []},
                 companyAccountingDocuments: [{...document, documentType}]
             },
         });
@@ -271,7 +271,7 @@ test('resets the column and hidden cost fields after selecting a sales document'
         loading: false,
         refetch: mockRefetch,
         data: {
-            ledgerCalculationStrategies: strategies, companyLedger: {entries: []},
+            ledgerCalculationStrategies: strategies, companyLedger: {nextEntryOrder: 1, entries: []},
             companyAccountingDocuments: [document, {
                 ...document,
                 publicId: 'sales-2',
@@ -305,7 +305,7 @@ test('hides the exchange rate and resets it to one when switching to the ledger 
         loading: false,
         refetch: mockRefetch,
         data: {
-            ledgerCalculationStrategies: strategies, companyLedger: {currency: 'PLN', entries: []},
+            ledgerCalculationStrategies: strategies, companyLedger: {nextEntryOrder: 1, currency: 'PLN', entries: []},
             companyAccountingDocuments: [
                 {...document, currency: 'EUR'},
                 {...document, publicId: 'pln-2', documentNumber: 'PLN/2'},
@@ -333,7 +333,7 @@ test('previews mixed use car costs and submits the selected strategy without cli
         loading: false, refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {entries: []},
+            companyLedger: {nextEntryOrder: 1, entries: []},
             companyAccountingDocuments: [{...document, netAmount: 100, vatAmount: 23, amount: 123}]
         }
     });
@@ -369,7 +369,7 @@ test.each([
         refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {entries: []},
+            companyLedger: {nextEntryOrder: 1, entries: []},
             companyAccountingDocuments: [{...document, netAmount: net, vatAmount: vat, amount: net + vat}]
         }
     });
@@ -389,7 +389,7 @@ test('blocks posting documents without net and VAT amounts', async () => {
         loading: false, refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {entries: []},
+            companyLedger: {nextEntryOrder: 1, entries: []},
             companyAccountingDocuments: [{...document, netAmount: null, vatAmount: null}]
         }
     });
@@ -413,7 +413,7 @@ test('shows fixed cost and VAT deduction parameters and switches previews', asyn
 test('blocks entries when the system strategy catalog is empty', () => {
     (useQuery as unknown as jest.Mock).mockReturnValue({
         loading: false, refetch: mockRefetch,
-        data: {ledgerCalculationStrategies: [], companyLedger: {entries: []}, companyAccountingDocuments: [document]}
+        data: {ledgerCalculationStrategies: [], companyLedger: {nextEntryOrder: 1, entries: []}, companyAccountingDocuments: [document]}
     });
     renderPage();
     expect(screen.getByText(/Brak dostępnych strategii/)).toBeInTheDocument();
@@ -428,7 +428,7 @@ test('blocks a strategy with an unsupported parameter variant', async () => {
                 publicId: 'future',
                 name: 'Przyszła strategia',
                 parameters: {__typename: 'FutureParameters', value: 10}
-            }], companyLedger: {entries: []}, companyAccountingDocuments: [document]
+            }], companyLedger: {nextEntryOrder: 1, entries: []}, companyAccountingDocuments: [document]
         }
     });
     renderPage();
@@ -444,7 +444,7 @@ test('blocks posting a document already included in another month while preservi
         refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {yearMonth: '2026-09', entries: []},
+            companyLedger: {nextEntryOrder: 1, yearMonth: '2026-09', entries: []},
             companyAccountingDocuments: [{...document, postedToLedger: true}],
         },
     });
@@ -463,7 +463,7 @@ test('offers only unposted documents and selects the first available document', 
         refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {yearMonth: '2026-09', entries: []},
+            companyLedger: {nextEntryOrder: 1, yearMonth: '2026-09', entries: []},
             companyAccountingDocuments: [
                 {...document, postedToLedger: true},
                 {...document, publicId: 'document-2', documentNumber: 'INV/2'},
@@ -489,7 +489,7 @@ test('disables saving when a document becomes posted while the form is open', as
         refetch: mockRefetch,
         data: {
             ledgerCalculationStrategies: strategies,
-            companyLedger: {yearMonth: '2026-09', entries: []},
+            companyLedger: {nextEntryOrder: 1, yearMonth: '2026-09', entries: []},
             companyAccountingDocuments: [{...document, postedToLedger: true}],
             companyLedgerAvailableDocuments: [],
         },
@@ -528,7 +528,7 @@ test.each([
 
 test('selects catalog counterparty and allows editing its document snapshot', async () => {
     (useQuery as unknown as jest.Mock).mockReturnValue({loading: false, refetch: mockRefetch, data: {
-        companyLedger: {entries: []}, companyAccountingDocuments: [document], ledgerCalculationStrategies: strategies,
+        companyLedger: {nextEntryOrder: 1, entries: []}, companyAccountingDocuments: [document], ledgerCalculationStrategies: strategies,
         counterparties: [{kind: 'SUPPLIER', publicId: 'party-1', name: 'Firma katalogowa', address: 'Adres katalogowy', taxId: '123', active: true}],
     }});
     renderPage();
@@ -709,7 +709,7 @@ test('edits a posted entry without creating a duplicate and preserves its origin
     const result = (useQuery as unknown as jest.Mock)();
     (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
         companyLedgerAvailableDocuments: [],
-        companyLedger: {yearMonth: '2026-11', entries: [{
+        companyLedger: {nextEntryOrder: 1, yearMonth: '2026-11', entries: [{
             publicId: 'entry-1', calculationStrategyPublicId: 'full', accountingDocument: {...document, postedToLedger: true},
             includedAmount: 88.25, exchangeRate: 1, ledgerColumn: LedgerColumn.OtherExpense,
             entryOrder: 1, entryDate: '2025-12-20', comments: 'Przed zmianą',
@@ -734,7 +734,7 @@ test('shows monthly and year-to-date totals even when the selected month has no 
     const result = (useQuery as unknown as jest.Mock)();
     const zero = {providedGoodsAndServicesValue: 0, otherIncome: 0, totalIncome: 0, purchasedGoodsAndMaterialsValue: 0, additionalCostOfPurchase: 0, remunerationInCashOrInKind: 0, otherExpense: 0, totalExpense: 0, additionalColumnValue: 0, researchAndDevelopmentExpense: 0};
     (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
-        companyLedger: {yearMonth: '2026-11', entries: [], monthSummary: zero,
+        companyLedger: {nextEntryOrder: 1, yearMonth: '2026-11', entries: [], monthSummary: zero,
             yearToDateSummary: {...zero, providedGoodsAndServicesValue: 123.45, totalIncome: 123.45, otherExpense: -0.01, totalExpense: -0.01}},
     }});
     renderPage();

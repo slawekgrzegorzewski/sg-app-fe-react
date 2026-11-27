@@ -417,8 +417,11 @@ export function CompanyAccounting() {
                         </Typography>
                         <Button
                             variant="contained"
-                            disabled={!validMonth || loading || Boolean(error) || busy || !availableDocuments.length || !strategies.length}
+                            disabled={!validMonth || !ledger || loading || Boolean(error) || busy || !availableDocuments.length || !strategies.length}
                             onClick={() => {
+                                if (!ledger) {
+                                    return;
+                                }
                                 entryState.reset();
                                 updateState.reset();
                                 setEditingEntry(null);
@@ -429,7 +432,7 @@ export function CompanyAccounting() {
                                     ledgerColumn: defaultLedgerColumn(availableDocuments[0]?.documentType),
                                     ledgerMonth: month,
                                     entryDate: availableDocuments[0]?.documentDate ?? `${month}-01`,
-                                    entryOrder: Math.max(0, ...(ledger?.entries.map(entry => entry.entryOrder) ?? [])) + 1,
+                                    entryOrder: ledger.nextEntryOrder,
                                     additionalColumnValue: '0',
                                     researchAndDevelopmentExpense: '0',
                                     researchAndDevelopmentDescription: '',

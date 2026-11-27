@@ -89,6 +89,7 @@ query CompanyAccounting($yearMonth: YearMonth!) {
         }
     }
     companyLedger(yearMonth: $yearMonth) {
+        nextEntryOrder
         ...CompanyLedgerFields
     }
     companyLedgerAvailableDocuments(yearMonth: $yearMonth) {

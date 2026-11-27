@@ -1318,6 +1318,7 @@ type CompanyLedgerSummary {
 }
 
 type CompanyLedger {
+    nextEntryOrder: Int!
     monthSummary: CompanyLedgerSummary!
     yearToDateSummary: CompanyLedgerSummary!
     currency: String!
