@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import {counterpartyTaxIdKey, getPastedTaxId} from './utils/taxId';
+import {lookupVatRegistry} from './utils/vatRegistry';
 import {useCounterpartyConflict} from './settings/CounterpartyConflictDialog';
 import {AccountingDocumentAttachment} from './AccountingDocumentAttachment';
 import dayjs from 'dayjs';
@@ -169,15 +170,83 @@ export function CompanyAccounting() {
     const [createCounterpartyFromDocument, fromDocumentState] = useMutation<CreateCounterpartyFromDocumentMutation>(CreateCounterpartyFromDocument);
     const [updateDocument, documentUpdateState] = useMutation(UpdateAccountingDocument);
     const counterpartyConflict = useCounterpartyConflict();
-    const busy = counterpartyConflict.loading || documentUpdateState.loading || updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
+    const [registryLoading, setRegistryLoading] = useState(false);
+    const [registryMessage, setRegistryMessage] = useState('');
+    const busy = registryLoading || counterpartyConflict.loading || documentUpdateState.loading || updateState.loading || entryState.loading || createState.loading || fromDocumentState.loading;
     const [fromDocumentKind, setFromDocumentKind] = useState(CounterpartyKind.Supplier);
     const counterparties = data?.counterparties ?? [];
     const [manualCounterpartyKind, setManualCounterpartyKind] = useState(CounterpartyKind.Supplier);
     const draftCounterpartyKind = requiredCounterpartyKind(draft?.documentType) ?? manualCounterpartyKind;
-    const matchingCounterparty = !draft?.counterpartyPublicId && counterparties.find(
-            item => item.kind === draftCounterpartyKind
-                    && Boolean(counterpartyTaxIdKey(draft?.counterpartyTaxId ?? ''))
-                    && counterpartyTaxIdKey(item.taxId) === counterpartyTaxIdKey(draft?.counterpartyTaxId ?? ''));
+    const draftTaxIdKey = counterpartyTaxIdKey(draft?.counterpartyTaxId ?? '');
+    const matchingCounterparty = !draft?.counterpartyPublicId && findCounterparty(draftTaxIdKey);
+    const canLookupRegistry = Boolean(draft && !editingDocument && !loading && !error
+            && !draft.counterpartyPublicId && !matchingCounterparty && /^[0-9]{10}$/.test(draftTaxIdKey));
+
+    function findCounterparty(taxIdKey: string) {
+        if (!taxIdKey) {
+            return undefined;
+        }
+        return counterparties.find(
+                item => item.kind === draftCounterpartyKind && counterpartyTaxIdKey(item.taxId) === taxIdKey);
+    }
+
+    function changeDocumentTaxId(taxId: string) {
+        setRegistryMessage('');
+        setDraft(
+                current => {
+                    if (!current) {
+                        return current;
+                    }
+                    const next = {...current, counterpartyTaxId: taxId};
+                    if (editingDocument) {
+                        return next;
+                    }
+                    const key = counterpartyTaxIdKey(taxId);
+                    if (key !== counterpartyTaxIdKey(current.counterpartyTaxId) && current.counterpartyPublicId) {
+                        const previous = counterparties.find(item => item.publicId === current.counterpartyPublicId);
+                        next.counterpartyPublicId = null;
+                        if (previous?.name === next.counterparty) {
+                            next.counterparty = '';
+                        }
+                        if (previous?.address === next.counterpartyAddress) {
+                            next.counterpartyAddress = '';
+                        }
+                    }
+                    const match = findCounterparty(key);
+                    if (!next.counterpartyPublicId && match?.active
+                            && (!next.counterparty.trim() || next.counterparty.trim() === match.name.trim())
+                            && (!next.counterpartyAddress.trim() || next.counterpartyAddress.trim() === match.address.trim())) {
+                        next.counterpartyPublicId = match.publicId;
+                        next.counterparty = match.name;
+                        next.counterpartyAddress = match.address;
+                    }
+                    return next;
+                });
+    }
+
+    async function lookupDocumentCounterparty() {
+        if (!draft || !canLookupRegistry || busy) {
+            return;
+        }
+        setRegistryLoading(true);
+        setRegistryMessage('');
+        try {
+            const subject = await lookupVatRegistry(draftTaxIdKey);
+            if (!subject) {
+                setRegistryMessage('Nie znaleziono kontrahenta w Wykazie podatników VAT.');
+                return;
+            }
+            setDraft(
+                    current => current === draft
+                            ? {...current, counterparty: subject.name,
+                                counterpartyAddress: subject.address || current.counterpartyAddress}
+                            : current);
+        } catch {
+            setRegistryMessage('Nie udało się pobrać danych z Wykazu podatników VAT. Spróbuj ponownie.');
+        } finally {
+            setRegistryLoading(false);
+        }
+    }
 
     async function resolveDocumentCounterparty(
             input: AccountingDocumentInput,
@@ -349,6 +418,7 @@ export function CompanyAccounting() {
 
     function closeDocumentForm() {
         if (!busy) {
+            setRegistryMessage('');
             setCreating(false);
             setSelectedDocument(editingDocument);
         }
@@ -356,7 +426,7 @@ export function CompanyAccounting() {
 
     async function handleCreate(event: React.FormEvent) {
         event.preventDefault();
-        if (!draft) {
+        if (!draft || registryLoading) {
             return;
         }
         try {
@@ -372,6 +442,7 @@ export function CompanyAccounting() {
             }
             setMessage(editingDocument ? 'Zapisano zmiany dokumentu.' : 'Dodano dokument księgowy.');
             setCreating(false);
+            setRegistryMessage('');
             await refetch();
         } catch {
             setMessage('');
@@ -1050,6 +1121,7 @@ export function CompanyAccounting() {
                                     label="Typ kontrahenta"
                                     select
                                     value={manualCounterpartyKind}
+                                    disabled={busy}
                                     onChange={event => setManualCounterpartyKind(event.target.value as CounterpartyKind)}
                                 >
                                     <MenuItem value={CounterpartyKind.Client}>Klient</MenuItem>
@@ -1083,11 +1155,8 @@ export function CompanyAccounting() {
                                                 htmlInput: {
                                                     ...(key === 'counterpartyTaxId' ? {
                                                         onPaste: (event: React.ClipboardEvent<HTMLInputElement>) => {
-                                                            const counterpartyTaxId = getPastedTaxId(event);
-                                                            setDraft(
-                                                                    current => current
-                                                                            ? {...current, counterpartyTaxId}
-                                                                            : null);
+                                                            changeDocumentTaxId(
+                                                                    getPastedTaxId(event));
                                                         },
                                                     } : {}),
                                                     step: '0.01', ...(key === 'currency' ? {
@@ -1096,16 +1165,30 @@ export function CompanyAccounting() {
                                                     } : {})
                                                 }
                                             }}
-                                            onChange={event =>
+                                            onChange={event => {
+                                                const value = event.target.value;
+                                                if (key === 'counterpartyTaxId') {
+                                                    changeDocumentTaxId(value);
+                                                    return;
+                                                }
                                                 setDraft(
-                                                    current =>
-                                                        current ? {
-                                                            ...current,
-                                                            [key]: key === 'currency' ? event.target.value.toUpperCase() : event.target.value
-                                                        } : null)
-                                            }
+                                                        current => current
+                                                                ? {...current, [key]: key === 'currency'
+                                                                    ? value.toUpperCase()
+                                                                    : value}
+                                                                : null);
+                                            }}
                                         />
                                     ))}
+                            {canLookupRegistry && (
+                                <Button
+                                    variant="outlined"
+                                    loading={registryLoading}
+                                    disabled={busy}
+                                    onClick={() => void lookupDocumentCounterparty()}
+                                >Pobierz z Wykazu podatników VAT</Button>
+                            )}
+                            {canLookupRegistry && registryMessage && <Alert severity="info">{registryMessage}</Alert>}
                             {editingDocument?.postedToLedger && (
                                 <Alert severity="info">
                                     Dokument jest ujęty w KPiR. Edycja nie przelicza zapisanego wpisu.

@@ -899,6 +899,73 @@ describe.each(['create', 'edit'])('tax ID paste in document %s form', mode => {
 });
 
 
+
+test.each(['typing', 'paste'])('uses the local supplier after %s a matching NIP', async method => {
+    const supplier = {
+        publicId: 'supplier-by-nip',
+        kind: 'SUPPLIER',
+        name: 'Dostawca z katalogu',
+        address: 'Adres z katalogu',
+        taxId: 'PL5260250274',
+        active: true,
+    };
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({
+        ...result,
+        data: {...result.data, counterparties: [supplier]},
+    });
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(
+            screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+    const form = within(
+            screen.getByRole('dialog', {name: 'Dodaj dokument księgowy'}));
+    const input = form.getByLabelText('NIP kontrahenta');
+    if (method === 'paste') {
+        await user.click(input);
+        await user.paste('NIP: PL 526-025-02-74');
+    } else {
+        await user.type(input, '526-025-02-74');
+    }
+    expect(form.getByLabelText('Kontrahent')).toHaveValue(supplier.name);
+    expect(form.getByLabelText('Adres kontrahenta')).toHaveValue(supplier.address);
+    expect(form.getByRole('combobox', {name: 'Kontrahent z katalogu'})).toHaveTextContent(supplier.name);
+    expect(form.queryByRole('button', {name: /Pobierz z Wykazu/})).not.toBeInTheDocument();
+
+    await user.clear(input);
+    expect(form.getByLabelText('Kontrahent')).toHaveValue('');
+});
+
+test('fills document counterparty details from the VAT registry after an explicit lookup', async () => {
+    const originalFetch = global.fetch;
+    const fetchRegistry = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+            result: {subject: {nip: '5260250274', name: 'Podmiot z wykazu', workingAddress: 'Adres z wykazu'}},
+        }),
+    });
+    global.fetch = fetchRegistry;
+    try {
+        renderPage();
+        await userEvent.click(
+                screen.getByRole('button', {name: 'Dodaj dokument księgowy'}));
+        const form = within(
+                screen.getByRole('dialog', {name: 'Dodaj dokument księgowy'}));
+        const input = form.getByLabelText('NIP kontrahenta');
+        fireEvent.change(input, {target: {value: 'PL 526-025-02-74'}});
+        expect(fetchRegistry).not.toHaveBeenCalled();
+        await userEvent.click(
+                form.getByRole('button', {name: /Pobierz z Wykazu/}));
+        expect(form.getByLabelText('Kontrahent')).toHaveValue('Podmiot z wykazu');
+        expect(form.getByLabelText('Adres kontrahenta')).toHaveValue('Adres z wykazu');
+        expect(fetchRegistry).toHaveBeenCalledTimes(1);
+        expect(mockCreate).not.toHaveBeenCalled();
+        expect(mockCounterpartySave).not.toHaveBeenCalled();
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
 test('shows the attachment name and explicit status for each document without downloading files', () => {
     const result = (useQuery as unknown as jest.Mock)();
     (useQuery as unknown as jest.Mock).mockReturnValue(

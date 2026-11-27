@@ -382,6 +382,13 @@ Gdy pełny polski NIP nie ma dokładnego dopasowania w katalogu danego typu, akc
 Wynik uzupełnia nazwę i dostępny adres w formularzu dodawania. Zapis wymaga
 zatwierdzenia formularza.
 
+Podczas dodawania dokumentu wpisanie lub wklejenie NIP-u sprawdza katalog typu
+właściwego dla dokumentu. Aktywny wpis uzupełnia formularz, gdy pola są puste lub
+zgodne z katalogiem. Różnice można rozstrzygnąć w dialogu porównania. Gdy katalog
+nie zawiera pełnego polskiego NIP-u, jawna akcja pobiera dane z tego samego API
+i uzupełnia formularz dokumentu. Po zapisie dokumentu wpis można dodać do
+katalogu akcją „Utwórz kontrahenta z dokumentu”.
+
 ## Konflikty NIP-ów w katalogu kontrahentów
 
 Aktywna mutacja `SaveCounterpartyWithConflict` zastępuje `SaveCounterparty` w zarządzaniu klientami

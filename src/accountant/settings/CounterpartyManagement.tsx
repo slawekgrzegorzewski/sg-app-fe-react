@@ -14,7 +14,7 @@ import {
     TextField,
     Typography
 } from '@mui/material';
-import dayjs from 'dayjs';
+import {lookupVatRegistry} from '../utils/vatRegistry';
 import CloseIcon from '@mui/icons-material/Close';
 import {
     CounterpartyKind,
@@ -63,36 +63,19 @@ export function CounterpartyManagement({kind}: Props) {
     async function searchRegistry() {
         setRegistryLoading(true);
         setRegistryMessage('');
-        const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), 10000);
         try {
-            const date = dayjs().format('YYYY-MM-DD');
-            const endpoint = 'https://wykazpodatnikowvat.mf.gov.pl/api/search/nip';
-            const response = await fetch(
-                    `${endpoint}/${taxIdSearchKey}?date=${date}`,
-                    {credentials: 'omit', signal: controller.signal});
-            if (!response.ok) {
-                throw new Error('Błąd HTTP wykazu');
-            }
-            const body = await response.json();
-            const subject = body?.result?.subject;
-            if (subject === null) {
+            const subject = await lookupVatRegistry(taxIdSearchKey);
+            if (!subject) {
                 setRegistryMessage('Nie znaleziono kontrahenta w Wykazie podatników VAT.');
                 return;
             }
-            if (subject?.nip !== taxIdSearchKey || typeof subject.name !== 'string' || !subject.name.trim()) {
-                throw new Error('Niepełne dane w odpowiedzi wykazu');
-            }
-            const address = [subject.residenceAddress, subject.workingAddress].find(
-                    value => typeof value === 'string' && value.trim()) ?? '';
             state.reset();
             setTaxIdValidationRequested(false);
             setPublicId(null);
-            setDraft({kind, name: subject.name.trim(), address: address.trim(), taxId: taxIdSearchKey, active: true});
+            setDraft({kind, ...subject, taxId: taxIdSearchKey, active: true});
         } catch {
             setRegistryMessage('Nie udało się pobrać danych z Wykazu podatników VAT. Spróbuj ponownie.');
         } finally {
-            window.clearTimeout(timeout);
             setRegistryLoading(false);
         }
     }
