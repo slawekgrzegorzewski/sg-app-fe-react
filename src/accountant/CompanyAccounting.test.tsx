@@ -1120,6 +1120,39 @@ test.each([
     expect(mockCounterpartySave.mock.calls[0]?.[0]).toEqual(expectedSave);
 });
 
+test('reuses the active catalog entry after clearing the counterparty selection', async () => {
+    const supplier = {
+        publicId: 'supplier-1',
+        kind: 'SUPPLIER',
+        name: document.counterparty,
+        address: document.counterpartyAddress,
+        taxId: `PL${document.counterpartyTaxId}`,
+        active: true,
+    };
+    const linkedDocument = {...document, counterpartyPublicId: supplier.publicId};
+    const result = (useQuery as unknown as jest.Mock)();
+    (useQuery as unknown as jest.Mock).mockReturnValue({...result, data: {...result.data,
+        companyAccountingDocuments: [linkedDocument],
+        counterparties: [supplier],
+    }});
+    mockUpdateDocument.mockResolvedValue({data: {updateAccountingDocument: linkedDocument}});
+    renderPage();
+    await userEvent.click(screen.getByRole('button', {name: 'INV/1'}));
+    await userEvent.click(screen.getByRole('button', {name: 'Edytuj dokument'}));
+    const form = within(screen.getByRole('dialog', {name: 'Edytuj dokument księgowy'}));
+    await userEvent.click(form.getByRole('combobox', {name: 'Kontrahent z katalogu'}));
+    await userEvent.click(screen.getByRole('option', {name: /Dane ręczne/}));
+    await userEvent.click(form.getByRole('button', {name: 'Zapisz zmiany dokumentu'}));
+
+    await waitFor(
+            () => expect(mockUpdateDocument).toHaveBeenCalledWith(
+                    expect.objectContaining({variables: expect.objectContaining({input: expect.objectContaining({
+                        counterpartyPublicId: supplier.publicId,
+                    })})})));
+    expect(screen.queryByRole('dialog', {name: 'Kontrahent o tym NIP-ie już istnieje'})).not.toBeInTheDocument();
+    expect(mockCounterpartySave).not.toHaveBeenCalled();
+});
+
 test('reuses identical supplier from a saved document without asking to merge', async () => {
     const queryResult = (useQuery as unknown as jest.Mock)();
     (useQuery as unknown as jest.Mock).mockReturnValue({...queryResult, data: {...queryResult.data,

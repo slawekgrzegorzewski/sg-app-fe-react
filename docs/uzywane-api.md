@@ -381,9 +381,10 @@ dialog pokazuje istniejące dane po lewej, edytowalny wynik pośrodku, a nowe da
 można przejąć z jednej ze stron. Można też użyć istniejącego wpisu lub nadpisać go nowymi danymi.
 Nadpisanie i scalenie przesyłają `expected`, więc zmiana danych w trakcie porównania wymaga ponownego rozstrzygnięcia.
 
-Tworzenie i edycja dokumentu pokazują dopasowanie NIP-u do właściwego typu kontrahenta oraz wymagają
-rozstrzygnięcia przed zapisem danych ręcznych. Przed zapisem odświeżają `CompanyAccounting`, aby sprawdzić
-aktualny katalog. Wybrany wynik uzupełnia dane i ID kontrahenta w formularzu. Przy paragonie typ do
+Przed zapisem dokumentu formularz odświeża `CompanyAccounting`, aby sprawdzić aktualny katalog.
+Gdy ręczne dane mają ten sam znormalizowany NIP oraz zgodną nazwę i adres aktywnego kontrahenta
+właściwego typu, formularz automatycznie używa jego wpisu. Przy różnicach lub zarchiwizowanym wpisie
+formularz pokazuje dialog porównania. Wybrany wynik uzupełnia dane i ID kontrahenta w formularzu. Przy paragonie typ do
 wyszukania można wskazać ręcznie. Zarchiwizowanego wpisu nie można użyć w nowym powiązaniu bez przywrócenia.
 `CreateCounterpartyFromDocument` może przesłać `counterpartyPublicId` wybrany po porównaniu danych.
 Zmiana katalogu nie zmienia danych wcześniejszych dokumentów.

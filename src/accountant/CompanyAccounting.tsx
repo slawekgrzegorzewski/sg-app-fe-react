@@ -32,6 +32,7 @@ import {
     AccountingDocumentFieldsFragment,
     AccountingDocumentInput,
     AccountingDocumentType,
+    CounterpartyFieldsFragment,
     CounterpartyKind,
     CompanyAccounting as CompanyAccountingQuery,
     CompanyAccountingQuery as CompanyAccountingData,
@@ -109,6 +110,14 @@ function isIncomeColumn(column?: LedgerColumn) {
     return column === LedgerColumn.Sales || column === LedgerColumn.OtherIncome;
 }
 
+function canReuseCounterparty(
+        existing: CounterpartyFieldsFragment,
+        document: Pick<AccountingDocumentInput, 'counterparty' | 'counterpartyAddress'>) {
+    return existing.active
+            && existing.name.trim() === document.counterparty.trim()
+            && existing.address.trim() === document.counterpartyAddress.trim();
+}
+
 function requiredCounterpartyKind(documentType?: AccountingDocumentType) {
     switch (documentType) {
         case AccountingDocumentType.SalesVatInvoice:
@@ -183,16 +192,18 @@ export function CompanyAccounting() {
         if (!existing) {
             return input;
         }
-        const selected = await counterpartyConflict.review(
-                existing,
-                {
-                    kind,
-                    name: input.counterparty,
-                    address: input.counterpartyAddress,
-                    taxId: input.counterpartyTaxId,
-                    active: true,
-                },
-                true);
+        const selected = canReuseCounterparty(existing, input)
+                ? existing
+                : await counterpartyConflict.review(
+                        existing,
+                        {
+                            kind,
+                            name: input.counterparty,
+                            address: input.counterpartyAddress,
+                            taxId: input.counterpartyTaxId,
+                            active: true,
+                        },
+                        true);
         if (!selected) {
             return null;
         }
@@ -219,10 +230,7 @@ export function CompanyAccounting() {
             const existing = key && catalog.find(
                     item => item.kind === kind && counterpartyTaxIdKey(item.taxId) === key);
             let resolvedPublicId: string | undefined;
-            const identical = existing && existing.active
-                    && existing.name.trim() === selectedDocument.counterparty.trim()
-                    && existing.address.trim() === selectedDocument.counterpartyAddress.trim();
-            if (existing && identical) {
+            if (existing && canReuseCounterparty(existing, selectedDocument)) {
                 resolvedPublicId = existing.publicId;
             } else if (existing) {
                 const selected = await counterpartyConflict.review(
@@ -1045,7 +1053,7 @@ export function CompanyAccounting() {
                                     <MenuItem value={CounterpartyKind.Supplier}>Dostawca</MenuItem>
                                 </TextField>
                             )}
-                            {matchingCounterparty && <Alert severity="info">
+                            {draft && matchingCounterparty && !canReuseCounterparty(matchingCounterparty, draft) && <Alert severity="info">
                                 Ten NIP jest już w katalogu: {matchingCounterparty.name}.
                                 Wybierz istniejące dane, nadpisz wpis lub scal dane.
                                 <Button
