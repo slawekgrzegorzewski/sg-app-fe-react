@@ -12,7 +12,7 @@ Dokument opisuje połączenia sieciowe wykonywane bezpośrednio przez kod aplika
 | Zewnętrzny skrypt Google      | `https://accounts.google.com/gsi/client`                     | pozyskanie poświadczenia Google Identity Services                                  |
 | Keycloak                      | `https://auth.grzegorzewski.pl`                              | logowanie i odnawianie tokena dostępu dla uwierzytelnionych żądań                  |
 
-W plikach `.graphql` zdefiniowano łącznie 97 operacji: 25 zapytań i 72 mutacje. Kod aplikacji wywołuje 89 z nich: 23 zapytania i 66 mutacji. Nie znaleziono subskrypcji GraphQL, połączeń WebSocket, `EventSource`, biblioteki Axios ani innych bezpośrednich wywołań `fetch` poza pobieraniem załącznika zadania.
+Operacje GraphQL są zdefiniowane w plikach `.graphql`; aktywne połączenia poszczególnych modułów opisano poniżej. Import KSeF wykorzystuje cztery zapytania i jedną mutację. Nie znaleziono subskrypcji GraphQL, połączeń WebSocket, `EventSource`, biblioteki Axios ani innych bezpośrednich wywołań `fetch` poza pobieraniem załącznika zadania.
 
 ## Trenażer CFOP
 
@@ -410,3 +410,25 @@ Zmiana katalogu nie zmienia danych wcześniejszych dokumentów.
 Regułę normalizacji i unikalności oraz migrację V69 opisuje
 [model kontrahentów backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#unikalność-nip-u-i-scalanie-kontrahentów).
 Wdrażaj backend z V69 przed frontendem korzystającym z nowej mutacji.
+
+## Import faktur z KSeF
+
+Panel na stronie księgowości firmy korzysta z uwierzytelnionego `/graphql`:
+`GetKsefImports` (konfiguracja bez sekretu i ostatnie importy),
+`StartKsefImport` (kolejkowanie odczytu), `GetKsefImportInvoices`
+(wyniki wskazanego importu lub wszystkie źródła domeny, strony po 50) oraz
+`DownloadKsefInvoiceXml` (oryginalny XML). Wszystkie pięć operacji jest aktywnie
+wywoływanych przez UI; przeglądarka nie łączy się bezpośrednio z API KSeF.
+Token KSeF pozostaje na serwerze. Stan aktywnego importu jest odświeżany co 3 sekundy;
+po zakończeniu lub przerwaniu odświeżamy również dokumenty księgowe.
+
+Panel jest domyślnie zwinięty, aby lista importowanych faktur nie przesłaniała KPiR.
+Wybór zakupów/sprzedaży dotyczy odczytu już wystawionych faktur. Daty formularza
+określają trwały zapis w KSeF w UTC, a data dokumentu księgowego pochodzi z faktury.
+Faktury nierozpoznane lub o niespójnych kwotach pokazujemy z uzasadnieniem i XML-em.
+Import nie tworzy wpisu KPiR.
+
+Model, konfiguracja i zasady deduplikacji mają jedno źródło w
+[dokumentacji backendu](../../sg-app/docs/agents/ksiegowosc-firmowa.md#pobieranie-i-import-faktur-z-ksef).
+Wdrożyć migrację V70 i backend przed frontendem. Po aktualizacji schematu uruchomić
+`npm run codegen`; wygenerowany `src/types.ts` nie jest wersjonowany.

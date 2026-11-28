@@ -9,6 +9,10 @@ scalar YearMonth
 scalar Year
 
 type Query {
+    ksefConnection: KsefConnection!
+    ksefImports: [KsefImport!]!
+    ksefImportInvoices(importPublicId: UUID, page: Int! = 0): [KsefInvoice!]!
+    ksefInvoiceXml(publicId: UUID!): KsefInvoiceXml!
     companyLedger(yearMonth: YearMonth!): CompanyLedger!
     ledgerCalculationStrategies: [LedgerCalculationStrategy!]!
     counterparties: [Counterparty!]!
@@ -50,6 +54,7 @@ type Query {
 }
 
 type Mutation{
+    startKsefImport(input: KsefImportInput!): KsefImport!
     updateCompanyLedgerEntry(publicId: UUID!, input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
     createCompanyLedgerEntry(input: CompanyLedgerEntryInput!): CompanyLedgerEntry!
     saveCounterparty(publicId: UUID, input: CounterpartyInput!): Counterparty!
@@ -1260,6 +1265,73 @@ input CounterpartyInput {
     taxId: String!
     active: Boolean!
 }
+
+enum KsefEnvironment {
+    TEST
+    DEMO
+    PRODUCTION
+}
+
+enum KsefInvoiceDirection {
+    PURCHASE
+    SALES
+}
+
+enum KsefImportStatus {
+    PENDING
+    RUNNING
+    COMPLETED
+    FAILED
+}
+
+enum KsefInvoiceStatus {
+    IMPORTED
+    REVIEW_REQUIRED
+}
+
+type KsefConnection {
+    configured: Boolean!
+    nip: String
+    environment: KsefEnvironment
+}
+
+input KsefImportInput {
+    dateFrom: LocalDate!
+    dateTo: LocalDate!
+    direction: KsefInvoiceDirection! = PURCHASE
+}
+
+type KsefImport {
+    publicId: UUID!
+    environment: KsefEnvironment!
+    direction: KsefInvoiceDirection!
+    dateFrom: LocalDate!
+    dateTo: LocalDate!
+    status: KsefImportStatus!
+    createdAt: String!
+    finishedAt: String
+    effectiveTo: String
+    importedCount: Int!
+    duplicateCount: Int!
+    reviewCount: Int!
+    errorMessage: String
+}
+
+type KsefInvoice {
+    publicId: UUID!
+    ksefNumber: String!
+    invoiceNumber: String!
+    invoiceType: String!
+    status: KsefInvoiceStatus!
+    reviewReason: String
+    accountingDocumentPublicId: UUID
+}
+
+type KsefInvoiceXml {
+    fileName: String!
+    contentBase64: String!
+}
+
 type AccountingDocument {
     attachmentFileName: String
     counterpartyPublicId: UUID

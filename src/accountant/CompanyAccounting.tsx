@@ -27,6 +27,7 @@ import {counterpartyTaxIdKey, getPastedTaxId} from './utils/taxId';
 import {lookupVatRegistry} from './utils/vatRegistry';
 import {useCounterpartyConflict} from './settings/CounterpartyConflictDialog';
 import {AccountingDocumentAttachment} from './AccountingDocumentAttachment';
+import {KsefImportPanel} from './KsefImportPanel';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
 import {
@@ -468,6 +469,7 @@ export function CompanyAccounting() {
         <Stack alignItems="center" sx={{width: '100%', px: {xs: 1, sm: 2}, py: 2}}>
             <Stack spacing={3} sx={{width: '100%', maxWidth: 960, minWidth: 0}}>
                 <Typography variant="h3">Księgowość firmy</Typography>
+                <KsefImportPanel onImported={refetch} />
                 <Paper variant="outlined" sx={{p: {xs: 2, sm: 3}}}>
                     <Stack spacing={2}>
                         <Typography variant="h5" component="h2">Miesiąc księgowy</Typography>

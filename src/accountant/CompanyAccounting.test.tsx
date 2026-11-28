@@ -19,6 +19,8 @@ import {
     LedgerColumn
 } from '../types';
 
+jest.mock('./KsefImportPanel', () => ({KsefImportPanel: () => null}));
+
 jest.mock('@apollo/client/react', () => ({useApolloClient: jest.fn(), useMutation: jest.fn(), useQuery: jest.fn()}));
 jest.mock('../application/components/dispatchers/AccountantDispatcher', () => ({
     AccountantSettingsContext: require('react').createContext({accountantSettings: {isCompany: false}}),

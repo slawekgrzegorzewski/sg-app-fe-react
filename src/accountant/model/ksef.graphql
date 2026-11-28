@@ -1,0 +1,51 @@
+fragment KsefImportFields on KsefImport {
+    publicId
+    environment
+    direction
+    dateFrom
+    dateTo
+    status
+    createdAt
+    finishedAt
+    effectiveTo
+    importedCount
+    duplicateCount
+    reviewCount
+    errorMessage
+}
+
+query GetKsefImports {
+    ksefConnection {
+        configured
+        nip
+        environment
+    }
+    ksefImports {
+        ...KsefImportFields
+    }
+}
+
+query GetKsefImportInvoices($importPublicId: UUID, $page: Int! = 0) {
+    ksefImportInvoices(importPublicId: $importPublicId, page: $page) {
+        publicId
+        ksefNumber
+        invoiceNumber
+        invoiceType
+        status
+        reviewReason
+        accountingDocumentPublicId
+    }
+}
+
+query DownloadKsefInvoiceXml($publicId: UUID!) {
+    ksefInvoiceXml(publicId: $publicId) {
+        fileName
+        contentBase64
+    }
+}
+
+mutation StartKsefImport($input: KsefImportInput!) {
+    startKsefImport(input: $input) {
+        ...KsefImportFields
+    }
+}
